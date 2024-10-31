@@ -1,0 +1,11 @@
+summer:
+  date_from: 01.04
+  date_to: 01.11
+  est_fuel_cons_for_paint_dry: 0.6
+  est_fuel_cons_for_base_dry: 0.7
+
+winter:
+    date_from: 01.11
+    date_to: 01.04
+    est_fuel_cons_for_paint_dry: 0.6
+    est_fuel_cons_for_base_dry: 0.7
