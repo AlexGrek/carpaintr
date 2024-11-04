@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import LoginPage from './components/pages/LoginPage'
 import AdminPage from './components/pages/AdminPage'
@@ -8,10 +6,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useNavigate } from 'react-router-dom';
 import LandingPage from './components/pages/LandingPage.jsx'
 import CompanyInfoPage from './components/pages/CompanyInfoPage.jsx'
+import CalcPage from './components/pages/CalcPage.jsx';
 
 
-
-const CalcPage = () => <h2>Calculator Page</h2>;
 const HistoryPage = () => <h2>History Page</h2>;
 const AboutUsPage = () => <h2>About Us Page</h2>;
 

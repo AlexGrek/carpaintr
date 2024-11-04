@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"carpaintr/data"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -116,6 +118,11 @@ func main() {
 		log.Printf("Failed to load initial users: %v\n", err)
 	}
 
+	err = data.InitializeDataDirectoryStructure()
+	if err != nil {
+		log.Fatal("Failed to load initial users: %v\n", err)
+	}
+
 	// Load admin emails from admins.txt
 	err = loadAdmins("admins.txt")
 	if err != nil {
@@ -126,16 +133,45 @@ func main() {
 	fs := http.FileServer(http.Dir("./frontend"))
 	http.Handle("/", fs)
 
+	r := mux.NewRouter()
+
 	// API routes
-	http.HandleFunc("/api/v1/admin/register", handleAdminRegister)
-	http.HandleFunc("/api/v1/login", handleLogin)
-	http.HandleFunc("/api/v1/get", handleGet)
-	http.HandleFunc("/api/v1/getcompanyinfo", handleGetCompanyInfo)
-	http.HandleFunc("/api/v1/admin/status", handleAdminStatus)
-	http.HandleFunc("/api/v1/admin/updatecompanyinfo", handleAdminUpdateCompanyInfo)
+	r.HandleFunc("/api/v1/admin/register", handleAdminRegister)
+	r.HandleFunc("/api/v1/login", handleLogin)
+	r.HandleFunc("/api/v1/get", handleGet)
+	r.HandleFunc("/api/v1/getcompanyinfo", handleGetCompanyInfo)
+	r.HandleFunc("/api/v1/admin/status", handleAdminStatus)
+	r.HandleFunc("/api/v1/admin/updatecompanyinfo", handleAdminUpdateCompanyInfo)
+	r.HandleFunc("/api/v1/carmakes", carMakesHandler).Methods("GET")
+	r.HandleFunc("/api/v1/carmodels/{make}", carModelsHandler).Methods("GET")
 
 	log.Println("Server started at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", r))
+}
+
+// Handler for /api/v1/carmakes - returns the list of car vendors
+func carMakesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	data, err := data.ListCarBrands(data.CreateEnvPathConfig())
+	if err != nil {
+		http.Error(w, "Error reading car brands", http.StatusInternalServerError)
+		log.Fatal(err)
+	}
+	json.NewEncoder(w).Encode(data)
+}
+
+// Handler for /api/v1/carmodels/{make} - returns models for a specified make
+func carModelsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	make := vars["make"]
+
+	models, err := data.ReadCarYamlFile(make, data.CreateEnvPathConfig())
+	if err != nil {
+		http.Error(w, "Error reading cars of the brand", http.StatusInternalServerError)
+		log.Fatal(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(models)
 }
 
 func handleAdminUpdateCompanyInfo(w http.ResponseWriter, r *http.Request) {

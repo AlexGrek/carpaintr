@@ -47,12 +47,12 @@ const AdminPage = () => {
       ) : (
         <>
           <h3>Admin Status</h3>
-          <Input
+          {/* <Input
             componentClass="textarea"
             value={adminStatus}
             readOnly
             style={{ width: '100%', height: '400px' }}
-          />
+          /> */}
           <AdminTools />
         </>
       )}

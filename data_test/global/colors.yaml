@@ -1,0 +1,93 @@
+# Most Popular Car Paint Colors with Hex Values and Rarity
+
+black:
+  hex: "#000000"
+  rarity: common
+
+white:
+  hex: "#FFFFFF"
+  rarity: very-common
+
+gray:
+  hex: "#808080"
+  rarity: very-common
+
+silver:
+  hex: "#C0C0C0"
+  rarity: very-common
+
+red:
+  hex: "#FF0000"
+  rarity: common
+
+blue:
+  hex: "#0000FF"
+  rarity: common
+
+dark-blue:
+  hex: "#000080"
+  rarity: uncommon
+
+navy:
+  hex: "#000080"
+  rarity: uncommon
+
+midnight-blue:
+  hex: "#191970"
+  rarity: rare
+
+dark-gray:
+  hex: "#696969"
+  rarity: common
+
+charcoal:
+  hex: "#36454F"
+  rarity: uncommon
+
+pearl-white:
+  hex: "#F0EAD6"
+  rarity: uncommon
+
+bronze:
+  hex: "#CD7F32"
+  rarity: rare
+
+gold:
+  hex: "#FFD700"
+  rarity: rare
+
+dark-green:
+  hex: "#013220"
+  rarity: uncommon
+
+green:
+  hex: "#008000"
+  rarity: common
+
+maroon:
+  hex: "#800000"
+  rarity: uncommon
+
+brown:
+  hex: "#8B4513"
+  rarity: uncommon
+
+beige:
+  hex: "#F5F5DC"
+  rarity: common
+
+cream:
+  hex: "#FFFDD0"
+  rarity: rare
+
+burgundy:
+  hex: "#800020"
+  rarity: rare
+
+slate-gray:
+  hex: "#708090"
+  rarity: uncommon
+
+deep-red:
+  hex: "#8B0000"
+  rarity: rare

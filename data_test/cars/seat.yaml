@@ -1,0 +1,128 @@
+# Seat Car Catalog from 1990 to 2024
+# Includes models, generations, pricing, and key characteristics
+
+# Compact Cars
+"ibiza": 
+  body: ["hatchback", "sedan", "st"]
+  class: "subcompact"
+  gen: ["1993-2002", "2002-2008", "2008-2017", "2017-"]
+  is_suv: false
+  price:
+    mk3: 14000
+    mk4: 16000
+    mk5: 18000
+    mk6: 20000
+    current_gen: 22000
+
+"leon": 
+  body: ["hatchback", "st", "cupra"]
+  class: "compact"
+  gen: ["1999-2005", "2005-2012", "2012-2020", "2020-"]
+  is_suv: false
+  price:
+    mk1: 19000
+    mk2: 22000
+    mk3: 24000
+    mk4: 27000
+    current_gen: 32000
+
+"toledo": 
+  body: ["sedan", "liftback"]
+  class: "compact"
+  gen: ["1991-1999", "1999-2004", "2004-2009", "2012-2019"]
+  is_suv: false
+  price:
+    mk1: 16000
+    mk2: 18000
+    mk3: 20000
+    mk4: 22000
+
+# SUVs and Crossovers
+"arona": 
+  body: ["suv"]
+  class: "subcompact suv"
+  gen: ["2017-"]
+  is_suv: true
+  price:
+    base_model: 22000
+
+"ateca": 
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2016-"]
+  is_suv: true
+  price:
+    base_model: 28000
+
+"tarraco": 
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2018-"]
+  is_suv: true
+  price:
+    base_model: 35000
+
+# Performance Models
+"cupra": 
+  models: ["leon", "formentor"]
+  body: ["hatchback", "suv"]
+  class: "high-performance"
+  gen: ["2020-"]
+  is_suv: false
+  price:
+    leon: 40000
+    formentor: 45000
+
+# Electric and Hybrid Models
+"born": 
+  body: ["hatchback"]
+  class: "electric compact"
+  gen: ["2021-"]
+  is_suv: false
+  powertrain: "electric"
+  price:
+    base_model: 35000
+
+"el-born": 
+  body: ["hatchback"]
+  class: "electric concept"
+  gen: ["2019-2021"]
+  is_suv: false
+  powertrain: "electric"
+  price:
+    concept: 40000
+
+# Smaller Models
+"mii": 
+  body: ["hatchback", "electric"]
+  class: "city car"
+  gen: ["2011-2021"]
+  is_suv: false
+  price:
+    petrol_model: 14000
+    electric_model: 24000
+
+"altea": 
+  body: ["mpv", "freetrack"]
+  class: "compact mpv"
+  gen: ["2004-2015"]
+  is_suv: false
+  price:
+    base_model: 22000
+
+# Historical Models
+"cordoba": 
+  body: ["sedan", "coupe"]
+  class: "subcompact"
+  gen: ["1993-2002"]
+  is_suv: false
+  price:
+    base_model: 15000
+
+"exeo": 
+  body: ["sedan", "st"]
+  class: "mid-size"
+  gen: ["2008-2013"]
+  is_suv: false
+  price:
+    base_model: 26000
