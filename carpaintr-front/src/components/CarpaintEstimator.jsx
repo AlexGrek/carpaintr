@@ -72,13 +72,16 @@ const VehicleSelect = ({ selectedMake, setMake, setModel, setYear }) => {
 // 2. Current Date Display Component
 const CurrentDateDisplay = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [season, setSeason] = useState('');
+    const [season, setSeason] = useState(null);
+    const [seasonDetails, setSeasonDetails] = useState(null);
 
     useEffect(() => {
         authFetch('/api/v1/season')
+            .then(response => response.json())
             .then((data) => {
                 setCurrentDate(new Date());
                 setSeason(data.season);
+                setSeasonDetails(data.details);
             })
             .catch(console.error);
     }, []);
@@ -87,6 +90,7 @@ const CurrentDateDisplay = () => {
         <div>
             <DatePicker value={currentDate} disabled />
             <p>Season: {season}</p>
+            <p><small>{JSON.stringify(seasonDetails)}</small></p>
         </div>
     );
 };

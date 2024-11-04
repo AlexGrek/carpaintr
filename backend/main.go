@@ -120,7 +120,7 @@ func main() {
 
 	err = data.InitializeDataDirectoryStructure()
 	if err != nil {
-		log.Fatal("Failed to load initial users: %v\n", err)
+		log.Fatalf("Failed to load initial users: %v\n", err)
 	}
 
 	// Load admin emails from admins.txt
@@ -139,6 +139,7 @@ func main() {
 	r.HandleFunc("/api/v1/admin/register", handleAdminRegister)
 	r.HandleFunc("/api/v1/login", handleLogin)
 	r.HandleFunc("/api/v1/get", handleGet)
+	r.HandleFunc("/api/v1/season", handleSeason)
 	r.HandleFunc("/api/v1/getcompanyinfo", handleGetCompanyInfo)
 	r.HandleFunc("/api/v1/admin/status", handleAdminStatus)
 	r.HandleFunc("/api/v1/admin/updatecompanyinfo", handleAdminUpdateCompanyInfo)
@@ -387,6 +388,34 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Hello, %s", email)
+}
+
+func handleSeason(w http.ResponseWriter, r *http.Request) {
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	_, err := validateJWT(tokenString)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	season, seasonData, err := data.GetCurrentSeason(data.CreateEnvPathConfig())
+	if err != nil {
+		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := map[string]interface{}{
+		"season":  season,
+		"details": seasonData,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
 
 // JWT Token generation
