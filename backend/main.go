@@ -140,6 +140,7 @@ func main() {
 	r.HandleFunc("/api/v1/login", handleLogin)
 	r.HandleFunc("/api/v1/get", handleGet)
 	r.HandleFunc("/api/v1/season", handleSeason)
+	r.HandleFunc("/api/v1/basecolors", handleBaseColors)
 	r.HandleFunc("/api/v1/getcompanyinfo", handleGetCompanyInfo)
 	r.HandleFunc("/api/v1/admin/status", handleAdminStatus)
 	r.HandleFunc("/api/v1/admin/updatecompanyinfo", handleAdminUpdateCompanyInfo)
@@ -416,6 +417,29 @@ func handleSeason(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
+}
+
+func handleBaseColors(w http.ResponseWriter, r *http.Request) {
+	tokenString := r.Header.Get("Authorization")
+	if tokenString == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	_, err := validateJWT(tokenString)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	colors, err := data.GetBaseColors(data.CreateEnvPathConfig())
+	if err != nil {
+		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(colors)
 }
 
 // JWT Token generation

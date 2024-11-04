@@ -118,23 +118,29 @@ const DummyComponent = () => <div style={{ padding: '10px', border: '1px solid g
 
 // 4. Color Picker Component
 const ColorPicker = ({ setColor, selectedColor }) => {
-    const [baseColors, setBaseColors] = useState([]);
+    const [baseColors, setBaseColors] = useState({});
 
     useEffect(() => {
-        authFetch('/api/v1/basecolors').then(setBaseColors).catch(console.error);
+        authFetch('/api/v1/basecolors').then(response => response.json()).then(setBaseColors).catch(console.error);
     }, []);
+
+    const displayColors = Object.keys(baseColors).map((key) => ({
+        cssColor: baseColors[key].Hex,
+        id: key,
+    }));
 
     return (
         <Grid>
             <Row>
-                {baseColors.map((color) => (
-                    <Col key={color.id} xs={2}>
+                {displayColors.map((color) => (
+                    <Col key={color.id} xs={4}>
                         <div
                             style={{
-                                width: '20px',
-                                height: '20px',
+                                width: '40px',
+                                margin: '2px',
+                                height: '40px',
                                 backgroundColor: color.cssColor,
-                                border: selectedColor === color.id ? '2px solid black' : 'none',
+                                outline: selectedColor === color.id ? '2px solid black' : 'none',
                                 cursor: 'pointer',
                             }}
                             onClick={() => setColor(color.id)}
