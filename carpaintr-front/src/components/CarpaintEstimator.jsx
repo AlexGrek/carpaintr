@@ -1,42 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { SelectPicker, Button, DatePicker, Grid, Col, Row } from 'rsuite';
+import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
+import SelectionInput from './SelectionInput'
+import { Panel, PanelGroup, Toggle } from 'rsuite';
+import CarBodyPartsSelector from './CarBodyPartsSelector';
+import { useGlobalCallbacks } from "./GlobalCallbacksContext";
+import ColorGrid from './ColorGrid';
 
 // Parent component to hold only selected values
 const CarPaintEstimator = () => {
+    const { showReportIssueForm } = useGlobalCallbacks();
     const [make, setMake] = useState(null);
     const [model, setModel] = useState(null);
     const [year, setYear] = useState(null);
+    const [bodyType, setBodyType] = useState(null);
     const [color, setColor] = useState(null);
     const [selectedParts, setSelectedParts] = useState([]);
+    const [activePanel, setActivePanel] = useState(1);
+    const [paintType, setPaintType] = useState(null);
 
-    const handlePartSelection = (part) => {
-        setSelectedParts((prev) =>
-            prev.includes(part) ? prev.filter((p) => p !== part) : [...prev, part]
-        );
-    };
+
+    const activeKey = () => {
+        if (make != null && year != null && model != null) {
+            return 2
+        }
+        return 1
+    }
+
+    const handleSetYear = (year) => {
+        setYear(year)
+        setActivePanel(2)
+    }
+
+    const paintTypesAndTranslations = {
+        "simple": "Без вкраплень",
+        "metallic": "Металлік",
+        "pearl": "Перламутр",
+        "special": "Спец еффект"
+    }
 
     return (
         <div>
-            <p>Car paint estimator component</p>
-            <VehicleSelect selectedMake={make} setMake={setMake} setModel={setModel} setYear={setYear} />
-            <CurrentDateDisplay />
-            {model != null && <CarParts handlePartSelection={handlePartSelection} selectedParts={selectedParts} />}
-            {selectedParts.length > 0 && <ColorPicker setColor={setColor} selectedColor={color} />}
+            <Stack wrap justifyContent='space-between'>
+                <h3>Розрахунок вартості ремонту</h3>
+                <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm}>
+                    Повідомити про проблему
+                </Button>
+            </Stack>
+            <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(ev, a) => setActivePanel(ev)}>
+                <Panel header={year == null ? "Автомобіль" : `${make} ${model} ${year}`} eventKey={1}>
+                    <VehicleSelect selectedBodyType={bodyType} selectedMake={make} selectedModel={model} setMake={setMake} setBodyType={setBodyType} setModel={setModel} setYear={handleSetYear} />
+                </Panel>
+                <Panel header="Колір та тип фарби" eventKey={2}>
+                    <ColorPicker setColor={setColor} selectedColor={color} />
+                    <VStack justifyContent='center' alignItems='center' style={{ margin: "40px" }}>
+                        <SelectionInput name="Тип фарби" values={Object.keys(paintTypesAndTranslations)} labels={paintTypesAndTranslations} selectedValue={paintType} onChange={setPaintType} placeholder="Select paint type" />
+                    </VStack>
+                    <Button onClick={() => setActivePanel(3)} disabled={paintType == null || color == null} color='green' appearance='primary'>Прийняти</Button>
+                </Panel>
+                <Panel header="Роботи" eventKey={3}>
+                    {bodyType != null && <CarBodyPartsSelector selectedParts={selectedParts} onChange={setSelectedParts} />}
+                </Panel>
+                <Panel header="Додатково" eventKey={4}>
+                    <CurrentDateDisplay />
+                </Panel>
+            </PanelGroup>
         </div>
     );
 };
 
 // 1. Vehicle Select Component
-const VehicleSelect = ({ selectedMake, setMake, setModel, setYear }) => {
+const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear }) => {
     const [makes, setMakes] = useState([]);
-    const [models, setModels] = useState([]);
+    const [models, setModels] = useState({});
+    const [bodyTypes, setBodyTypes] = useState([]);
 
     useEffect(() => {
         authFetch('/api/v1/carmakes').then(response => response.json()).then(setMakes).catch(console.error);
     }, []);
 
     useEffect(() => {
+        setBodyTypes([])
+        setModel(null)
+        setModels({})
+        setBodyType(null)
         if (selectedMake == null) {
             return;
         }
@@ -51,19 +98,29 @@ const VehicleSelect = ({ selectedMake, setMake, setModel, setYear }) => {
         setMake(selectedMake);
     };
 
-    const modelOptions = Object.keys(models).map((key) => ({
-        label: `${key}`,
-        value: key,
-    }));
+    const handleModelSelect = (selectedModel) => {
+        setModel(selectedModel)
+        console.log(`Model: ${selectedModel}`)
+        console.log(`Model object: ${JSON.stringify(models[selectedModel])}`)
+        setBodyTypes(models[selectedModel]["Body"])
+    }
+
+    const modelOptions = Object.keys(models);
+
+    const capitalizeFirstLetter = (val) => {
+        return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+    }
 
     return (
         <div>
-            <SelectPicker data={makes.map(item => ({ label: item, value: item }))} onSelect={handleMakeSelect} placeholder="Select Make" />
-            {selectedMake != null && <SelectPicker data={modelOptions} onSelect={setModel} placeholder="Select Model" />}
+            <SelectionInput name="Марка" values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder="Select Make" />
+            {selectedMake != null && <SelectionInput name="Модель" selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder="Select Model" />}
+            {selectedModel != null && <SelectionInput name="Тип кузова" selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder="Select Model" />}
             <SelectPicker
+                disabled={selectedModel == null}
                 data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
                 onSelect={setYear}
-                placeholder="Select Year"
+                placeholder="Рік випуску"
             />
         </div>
     );
@@ -95,27 +152,6 @@ const CurrentDateDisplay = () => {
     );
 };
 
-// 3. Car Parts Component
-const CarParts = ({ handlePartSelection, selectedParts }) => {
-    const parts = ['Hood', 'Roof', 'Left Door', 'Right Door', 'Trunk'];
-
-    return (
-        <Grid>
-            {parts.map((part) => (
-                <Col key={part} xs={4}>
-                    <Button onClick={() => handlePartSelection(part)}>
-                        {part}
-                    </Button>
-                    {selectedParts.includes(part) && <DummyComponent />}
-                </Col>
-            ))}
-        </Grid>
-    );
-};
-
-// Dummy Component for expanding car parts
-const DummyComponent = () => <div style={{ padding: '10px', border: '1px solid gray' }}>Form for car part details</div>;
-
 // 4. Color Picker Component
 const ColorPicker = ({ setColor, selectedColor }) => {
     const [baseColors, setBaseColors] = useState({});
@@ -126,29 +162,14 @@ const ColorPicker = ({ setColor, selectedColor }) => {
 
     const displayColors = Object.keys(baseColors).map((key) => ({
         cssColor: baseColors[key].Hex,
+        colorName: key,
         id: key,
-    }));
+    })).sort((a, b) => a.cssColor.localeCompare(b.cssColor));
 
     return (
-        <Grid>
-            <Row>
-                {displayColors.map((color) => (
-                    <Col key={color.id} xs={4}>
-                        <div
-                            style={{
-                                width: '40px',
-                                margin: '2px',
-                                height: '40px',
-                                backgroundColor: color.cssColor,
-                                outline: selectedColor === color.id ? '2px solid black' : 'none',
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => setColor(color.id)}
-                        />
-                    </Col>
-                ))}
-            </Row>
-        </Grid>
+        <div>
+            <ColorGrid colors={displayColors} selectedColor={selectedColor} onChange={setColor} />
+        </div>
     );
 };
 

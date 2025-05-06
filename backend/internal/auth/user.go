@@ -74,6 +74,32 @@ func (s *UserService) AuthenticateUser(email, password string) bool {
 	return err == nil
 }
 
+// ChangePassword changes a user's password if the current password is correct
+func (s *UserService) ChangePassword(email, currentPassword, newPassword string) error {
+	// First verify the current password
+	if !s.AuthenticateUser(email, currentPassword) {
+		return fmt.Errorf("current password is incorrect")
+	}
+
+	// Hash the new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("error hashing new password: %v", err)
+	}
+
+	// Update the password in the database
+	result := s.DB.Model(&User{}).Where("email = ?", email).Update("password", string(hashedPassword))
+	if result.Error != nil {
+		return fmt.Errorf("error updating password: %v", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
 // LoadInitialUsers loads initial users from a map
 func (s *UserService) LoadInitialUsers(initialUsers map[string]string) error {
 	for email, password := range initialUsers {
@@ -83,4 +109,29 @@ func (s *UserService) LoadInitialUsers(initialUsers map[string]string) error {
 		}
 	}
 	return nil
+}
+
+// ListUsers returns all users in the system
+func (s *UserService) ListUsers() ([]User, error) {
+	var users []User
+	result := s.DB.Model(&User{}).Select("id, email, created_at, updated_at").Find(&users)
+	if result.Error != nil {
+		return nil, fmt.Errorf("error fetching users: %v", result.Error)
+	}
+
+	// Create a sanitized list of users (without password hashes)
+	sanitizedUsers := make([]User, len(users))
+	for i, user := range users {
+		sanitizedUsers[i] = User{
+			Model: gorm.Model{
+				ID:        user.ID,
+				CreatedAt: user.CreatedAt,
+				UpdatedAt: user.UpdatedAt,
+			},
+			Email: user.Email,
+			// Password field is intentionally left empty for security
+		}
+	}
+
+	return sanitizedUsers, nil
 }

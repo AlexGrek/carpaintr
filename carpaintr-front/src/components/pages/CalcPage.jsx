@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Input, Message, Loader } from 'rsuite';
-import { useNavigate } from 'react-router-dom';
-import { authFetch } from '../../utils/authFetch';
-import AdminTools from '../AdminTools';
 import CarPaintEstimator from '../CarpaintEstimator';
+import TopBarUser from '../layout/TopBarUser';
 
 const CalcPage = () => {
-    return <div><h2>Car paint cost estimator</h2>
+    return <div><TopBarUser/><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
         <CarPaintEstimator /></div>
+    </div>
 }
 
 export default CalcPage

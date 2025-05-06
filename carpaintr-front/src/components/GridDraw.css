@@ -1,0 +1,29 @@
+.grid-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-size: cover;
+  }
+  
+  .grid-controls {
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    margin-bottom: 10pt;
+    margin-top: 8pt;
+  }
+
+  .grid-controls > * {
+    margin: auto;
+  }
+  
+  .grid {
+    display: grid;
+    cursor: pointer;
+    margin: auto;
+  }
+  
+  .grid-cell {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  

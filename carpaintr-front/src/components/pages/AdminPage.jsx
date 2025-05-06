@@ -46,7 +46,8 @@ const AdminPage = () => {
         </Message>
       ) : (
         <>
-          <h3>Admin Status</h3>
+        <div className='police-line'></div>
+          <h3>Панель адміністратора</h3>
           {/* <Input
             componentClass="textarea"
             value={adminStatus}

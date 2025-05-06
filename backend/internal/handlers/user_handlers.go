@@ -64,3 +64,34 @@ func (h *UserHandlers) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		"message": "User registered successfully",
 	})
 }
+
+type ChPassRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+func (h *UserHandlers) HandleChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := r.Context()
+	user := ctx.Value("user").(models.User)
+
+	var chPass ChPassRequest
+	if err := json.NewDecoder(r.Body).Decode(&chPass); err != nil {
+		middleware.HandleError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err := h.UserService.ChangePassword(user.Email, chPass.CurrentPassword, chPass.NewPassword)
+	if err != nil {
+		middleware.HandleError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	middleware.RespondJSON(w, http.StatusCreated, map[string]string{
+		"message": "Password changed successfully",
+	})
+}

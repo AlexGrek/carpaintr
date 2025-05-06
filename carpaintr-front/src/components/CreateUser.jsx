@@ -12,7 +12,7 @@ const CreateUser = () => {
 
   const handleCreateUser = async () => {
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      setError("Паролі не співпадають");
       return;
     }
 
@@ -28,7 +28,7 @@ const CreateUser = () => {
 
       if (!userResponse.ok) {
         const errorData = await userResponse.json();
-        throw new Error(errorData.message || 'Failed to create user');
+        throw new Error(errorData.message || 'Помилка');
       }
 
       // After user creation, create company info
@@ -49,7 +49,7 @@ const CreateUser = () => {
 
       if (!companyResponse.ok) {
         const errorData = await companyResponse.json();
-        throw new Error(errorData.message || 'Failed to update company info');
+        throw new Error(errorData.message || 'Помилка оновлення даних компанії');
       }
 
       setSuccess(true);
@@ -63,25 +63,25 @@ const CreateUser = () => {
   return (
     <div>
       {error && <Message type="error" showIcon>{error}</Message>}
-      {success && <Message type="success" showIcon>Successfully created user!</Message>}
+      {success && <Message type="success" showIcon>Користувача створено успішно!</Message>}
       <Form layout="vertical">
         <Form.Group controlId="email">
-          <Form.ControlLabel>Email</Form.ControlLabel>
+          <Form.ControlLabel>Електронна пошта</Form.ControlLabel>
           <Input type="email" value={email} onChange={setEmail} required />
         </Form.Group>
         <Form.Group controlId="password">
-          <Form.ControlLabel>Password</Form.ControlLabel>
+          <Form.ControlLabel>Пароль</Form.ControlLabel>
           <Input type="password" value={password} onChange={setPassword} required />
         </Form.Group>
         <Form.Group controlId="confirmPassword">
-          <Form.ControlLabel>Confirm Password</Form.ControlLabel>
+          <Form.ControlLabel>Підтвердити пароль</Form.ControlLabel>
           <Input type="password" value={confirmPassword} onChange={setConfirmPassword} required />
         </Form.Group>
         <Form.Group controlId="companyName">
-          <Form.ControlLabel>Company Name</Form.ControlLabel>
+          <Form.ControlLabel>Назва компанії</Form.ControlLabel>
           <Input value={companyName} onChange={setCompanyName} required />
         </Form.Group>
-        <Button appearance="primary" onClick={handleCreateUser}>Create</Button>
+        <Button appearance="primary" onClick={handleCreateUser}>Створити</Button>
       </Form>
     </div>
   );

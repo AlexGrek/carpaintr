@@ -76,7 +76,13 @@ func main() {
 	r.HandleFunc("/api/v1/season", m.Middleware(handlers.HandleSeason))
 	r.HandleFunc("/api/v1/basecolors", m.Middleware(handlers.HandleBaseColors))
 	r.HandleFunc("/api/v1/getcompanyinfo", m.Middleware(handlers.HandleGetCompanyInfo))
+	r.HandleFunc("/api/v1/changepassword", m.Middleware(userHandlers.HandleChangePassword))
+	r.HandleFunc("/api/v1/getlicenses", m.Middleware(handlers.HandleGetAllLicensesInfo))
+	r.HandleFunc("/api/v1/haveactivelicense", m.Middleware(handlers.HandleHasActiveLicense))
+
 	r.HandleFunc("/api/v1/admin/status", admin(adminHandlers.HandleAdminStatus))
+	r.HandleFunc("/api/v1/admin/listusers", admin(adminHandlers.HandleListUsers))
+	r.HandleFunc("/api/v1/admin/manageuser", admin(adminHandlers.HandleManagementRequest))
 	r.HandleFunc("/api/v1/admin/updatecompanyinfo", admin(adminHandlers.HandleAdminUpdateCompanyInfo))
 	r.HandleFunc("/api/v1/carmakes", m.Middleware(handlers.CarMakesHandler)).Methods("GET")
 	r.HandleFunc("/api/v1/carmodels/{make}", m.Middleware(handlers.CarModelsHandler)).Methods("GET")

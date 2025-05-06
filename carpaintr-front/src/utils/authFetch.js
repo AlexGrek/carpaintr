@@ -9,3 +9,7 @@ export const authFetch = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
     return response;
 };
+
+export const logout = () => {
+    localStorage.removeItem('authToken');
+};

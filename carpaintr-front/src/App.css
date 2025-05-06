@@ -13,3 +13,16 @@
     transform: rotate(360deg);
   }
 }
+
+.police-line {
+  width: 100%; /* Full viewport width */
+  height: 50px; /* Adjust the height as needed */
+  background: repeating-linear-gradient(
+    45deg,
+    yellow 0,
+    yellow 25px,
+    black 25px,
+    black 50px
+  );
+  border-radius: 8pt;
+}

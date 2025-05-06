@@ -1,0 +1,39 @@
+.color-grid-container {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    padding: 16px;
+  }
+  
+  .color-card {
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    transform: scale(1);
+  }
+  
+  .color-card:hover {
+    transform: scale(1.03);
+  }
+  
+  .selected-card {
+    outline: 2px solid #007bff;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.5);
+    transform: scale(1.05);
+  }
+  
+  .color-preview {
+    height: 60px;
+    background-color: transparent;
+  }
+  
+  .label {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 8px;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+  }
+  

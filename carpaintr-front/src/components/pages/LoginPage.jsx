@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button, Message, useToaster, Input, Container } from 'rsuite';
+import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -37,22 +37,23 @@ const LoginPage = () => {
   };
 
   return (
-    <Container style={{ maxWidth: 400, margin: 'auto', padding: '2rem' }}>
-      <Form fluid>
+    <Container style={{ maxWidth: 400, margin: 'auto', padding: '2rem', marginTop: '8em' }}>
+      <Panel bordered><Form fluid>
         <Form.Group>
-          <Form.ControlLabel>Username</Form.ControlLabel>
+          <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
           <Input value={username} onChange={value => setUsername(value)} />
         </Form.Group>
         <Form.Group>
-          <Form.ControlLabel>Password</Form.ControlLabel>
+          <Form.ControlLabel>Пароль</Form.ControlLabel>
           <Input type="password" value={password} onChange={value => setPassword(value)} />
         </Form.Group>
         <Form.Group>
           <Button appearance="primary" onClick={handleLogin} loading={loading}>
-            Log In
+            Увійти
           </Button>
         </Form.Group>
       </Form>
+      </Panel>
     </Container>
   );
 };
