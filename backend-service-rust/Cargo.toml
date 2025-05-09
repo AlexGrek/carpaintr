@@ -1,0 +1,25 @@
+[package]
+name = "rust-web-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8" # Updated to 0.8
+tokio = { version = "1.36", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.5.0", features = ["fs", "trace"] } # Bumped slightly for compatibility
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sled = "0.34"
+bcrypt = "0.15"
+jsonwebtoken = "8"
+chrono = { version = "0.4", features = ["serde"] }
+moka = { version = "0.12", features = ["sync", "future"] }
+uuid = { version = "1.7", features = ["v4", "serde"] }
+env_logger = "0.11"
+log = "0.4"
+dotenv = "0.15"
+anyhow = "1.0"
+percent-encoding = "2.3"
+thiserror = "1.0"
+async-trait = "0.1" # Required for custom extractor
