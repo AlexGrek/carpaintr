@@ -56,10 +56,15 @@ pub async fn jwt_auth_middleware(
     let path = parts.uri.path();
     // Explicitly bypass auth for register and login paths
     // Check the full path including the scope prefix /api/v1
-    if path == "/api/v1/register" || path == "/api/v1/login" {
+
+    log::warn!("Path: {}", path);
+
+    if path == "/register" || path == "/login" {
          let req = Request::from_parts(parts, body);
          return Ok(next.run(req).await);
     }
+
+    
 
 
     let auth_header = parts.headers

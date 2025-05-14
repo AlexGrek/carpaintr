@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
+use crate::license_manager::{GenerateLicenseByDaysRequest, GenerateLicenseByDateRequest}; // Import new structs
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -40,4 +41,16 @@ pub struct LicenseData {
 #[derive(Debug, Serialize)]
 pub struct AdminStatus {
     pub is_admin: bool,
+}
+
+// Add the new license generation request structs here
+pub mod license_requests {
+    use super::*;
+
+    #[derive(Debug, Deserialize)]
+    #[serde(untagged)] // Allows deserialization from either format
+    pub enum GenerateLicenseRequest {
+        ByDays(GenerateLicenseByDaysRequest),
+        ByDate(GenerateLicenseByDateRequest),
+    }
 }

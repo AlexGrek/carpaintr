@@ -1,9 +1,7 @@
 use moka::sync::Cache;
 use std::sync::Arc;
 use crate::{
-    models::LicenseData,
-    errors::AppError,
-    state::AppState,
+    errors::AppError, models::LicenseData, state::AppState, utils::{sanitize_email_for_path, user_directory_from_email}
 };
 use std::path::PathBuf;
 use tokio::fs;
@@ -37,18 +35,9 @@ impl LicenseCache {
         Arc::new(Self { cache, data_dir })
     }
 
-    // Sanitize email for use in a file path
-    // This is a basic sanitization; a production system might need more robust handling
-    // to avoid path traversal issues, though percent-encoding non-alphanumeric chars helps.
-    fn sanitize_email_for_path(&self, email: &str) -> String {
-        percent_encode(email.as_bytes(), NON_ALPHANUMERIC).to_string()
-        // A more robust approach might involve base64 encoding or UUIDs
-    }
-
     // This function is async because it uses tokio::fs
     async fn load_license_from_disk(&self, email: &str) -> Result<LicenseData, AppError> {
-        let safe_email = self.sanitize_email_for_path(email);
-        let user_data_dir = self.data_dir.join(safe_email);
+        let user_data_dir = user_directory_from_email(&self.data_dir, email)?;
         let license_path = user_data_dir.join(LICENSE_FILE_NAME);
 
         // Use tokio::fs for async file operations

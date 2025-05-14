@@ -29,6 +29,8 @@ mod errors;
 mod middleware;
 mod models;
 mod state;
+mod license_manager;
+mod utils;
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
@@ -38,6 +40,7 @@ async fn main() -> tokio::io::Result<()> {
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "data/sled_db".to_string());
     let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "supersecretjwtkey".to_string());
+    let jwt_license_secret = env::var("LICENSE_JWT_SECRET").unwrap_or_else(|_| "licensejwtsecretkey".to_string());
     let admin_file_path = env::var("ADMIN_FILE_PATH").unwrap_or_else(|_| "admins.txt".to_string());
     let data_dir_path = env::var("DATA_DIR_PATH").unwrap_or_else(|_| "data".to_string());
     let license_cache_size: u64 = env::var("LICENSE_CACHE_SIZE")
@@ -55,6 +58,8 @@ async fn main() -> tokio::io::Result<()> {
         db,
         auth,
         license_cache,
+        jwt_license_secret,
+        data_dir_path: PathBuf::from(data_dir_path),
         admin_file_path: PathBuf::from(admin_file_path),
     });
 
@@ -74,11 +79,13 @@ async fn main() -> tokio::io::Result<()> {
                     "/license/invalidate/{email}",
                     post(api::v1::license::invalidate_license_cache_admin),
                 )
+                .route("/gen_license", post(api::v1::admin::generate_license))
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     admin_check_middleware,
                 )),
         )
+        .route("/license_upload", post(api::v1::user::upload_license))
         .nest(
             "/user",
             Router::new()
@@ -106,19 +113,14 @@ async fn main() -> tokio::io::Result<()> {
     }
 
     // Define our combined app properly for SPA + API:
-    let app = Router::new()
-        // First, nest the API routes at /api/v1
-        .nest("/api/v1", api_router)
-        // Use fallback to serve static files and handle SPA routes
-        // The static_service is now used within the fallback logic implicitly
-        // or you can explicitly use `fallback_service` if you prefer,
-        // but your spa_fallback already handles the index.html part.
-        // If you want to serve other static files via ServeDir, you'd typically
-        // combine ServeDir with your SPA fallback in a more complex fallback logic.
-        // For a simple SPA, relying on the spa_fallback for index.html is common.
-        .fallback(spa_fallback) // This now handles all non-matching routes, including the root.
-        .with_state(shared_state)
-        .layer(TraceLayer::new_for_http());
+let spa_router = Router::new()
+    .fallback(spa_fallback); // SPA fallback only applies to non-API routes
+
+let app = Router::new()
+    .nest("/api/v1", api_router) // API routes with proper 404 handling
+    .merge(spa_router)           // Merge non-API fallback routes
+    .with_state(shared_state)
+    .layer(TraceLayer::new_for_http());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
     log::info!("Starting server at http://127.0.0.1:8080");

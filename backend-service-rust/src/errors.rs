@@ -42,6 +42,10 @@ pub enum AppError {
     MissingExtension(String),
     #[error("Unknown error")]
     Unknown,
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
+    #[error("Bad request: {0}")]
+    BadRequest(String)
 }
 
 #[derive(Serialize)]
