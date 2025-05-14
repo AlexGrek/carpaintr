@@ -4,7 +4,7 @@ use crate::{
     state::AppState,
     errors::AppError,
     middleware::AuthenticatedUser, // Use our custom extractor
-    cache::get_license_cache,
+    cache::license_cache::get_license_cache,
 };
 
 pub async fn get_license(

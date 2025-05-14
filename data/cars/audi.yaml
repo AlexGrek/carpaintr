@@ -2,123 +2,142 @@
 # Includes models, generations, and key characteristics
 
 # Sedans and Coupes
-"a3": 
+"a3":
   body: ["sedan", "hatchback", "cabriolet"]
   class: "compact premium"
   gen: ["1996-2003", "2003-2012", "2012-2020", "2020-"]
   is_suv: false
+  estimated_price: 33000
 
-"a4": 
+"a4":
   body: ["sedan", "avant", "cabriolet"]
   class: "mid premium"
   gen: ["1994-2001", "2001-2004", "2004-2008", "2008-2015", "2015-2023", "2023-"]
   is_suv: false
+  estimated_price: 38000
 
-"a5": 
+"a5":
   body: ["coupe", "sportback", "cabriolet"]
   class: "mid premium"
   gen: ["2007-2016", "2016-2023", "2023-"]
   is_suv: false
+  estimated_price: 48000
 
-"a6": 
+"a6":
   body: ["sedan", "avant"]
   class: "executive"
   gen: ["1994-1997", "1997-2004", "2004-2011", "2011-2018", "2018-"]
   is_suv: false
+  estimated_price: 50000
 
-"a8": 
+"a8":
   body: ["sedan", "long"]
   class: "luxury"
   gen: ["1994-2002", "2002-2010", "2010-2017", "2017-"]
   is_suv: false
+  estimated_price: 70000
 
 # Sports Cars
-"tt": 
+"tt":
   body: ["coupe", "roadster"]
   class: "sports"
   gen: ["1998-2006", "2006-2014", "2014-2023"]
   is_suv: false
+  estimated_price: 43000
 
-"r8": 
+"r8":
   body: ["coupe", "spyder"]
   class: "supercar"
   gen: ["2007-2015", "2015-2023"]
   is_suv: false
+  estimated_price: 145000
 
 # SUVs and Crossovers
-"q3": 
+"q3":
   body: ["suv", "crossover"]
   class: "compact suv"
   gen: ["2011-2018", "2018-"]
   is_suv: true
+  estimated_price: 38000
 
-"q5": 
+"q5":
   body: ["suv", "crossover"]
   class: "mid-size suv"
   gen: ["2008-2017", "2017-2023", "2023-"]
   is_suv: true
+  estimated_price: 43000
 
-"q7": 
+"q7":
   body: ["suv"]
   class: "full-size suv"
   gen: ["2005-2015", "2015-2023", "2023-"]
   is_suv: true
+  estimated_price: 58000
 
-"q8": 
+"q8":
   body: ["suv", "coupe"]
   class: "luxury suv"
   gen: ["2018-"]
   is_suv: true
+  estimated_price: 78000
 
 # Compact and Subcompact
-"a1": 
+"a1":
   body: ["hatchback", "sportback"]
   class: "subcompact premium"
   gen: ["2010-2018", "2018-2024"]
   is_suv: false
+  estimated_price: 28000
 
 # Performance Variants
-"rs3": 
+"rs3":
   body: ["sedan", "sportback"]
   class: "high-performance compact"
   gen: ["2011-2015", "2015-2021", "2021-"]
   is_suv: false
+  estimated_price: 60000
 
-"rs4": 
+"rs4":
   body: ["avant"]
   class: "high-performance mid"
   gen: ["2000-2001", "2005-2008", "2012-2015", "2017-2023"]
   is_suv: false
+  estimated_price: 70000
 
-"rs5": 
+"rs5":
   body: ["coupe", "sportback"]
   class: "high-performance mid"
   gen: ["2010-2015", "2018-2023"]
   is_suv: false
+  estimated_price: 78000
 
-"rs6": 
+"rs6":
   body: ["avant"]
   class: "high-performance executive"
   gen: ["2002-2004", "2008-2010", "2013-2019", "2019-"]
   is_suv: false
+  estimated_price: 110000
 
-"rs7": 
+"rs7":
   body: ["sportback"]
   class: "high-performance luxury"
   gen: ["2013-2019", "2019-"]
   is_suv: false
+  estimated_price: 120000
 
 # Electric and Hybrid Models
-"e-tron": 
+"e-tron":
   body: ["suv", "sportback"]
   class: "electric suv"
   gen: ["2019-"]
   is_suv: true
   powertrain: "electric"
+  estimated_price: 78000
 
-"q4-e-tron": 
+"q4-e-tron":
   body: ["suv", "sportback"]
   class: "compact electric suv"
   gen: ["2021-"]
   is_suv: true
   powertrain: "electric"
+  estimated_price: 53000

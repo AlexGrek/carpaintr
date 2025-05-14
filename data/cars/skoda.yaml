@@ -2,35 +2,39 @@
 # Includes models, generations, and key characteristics
 
 # Compact Cars
-"fabia": 
+"fabia":
   body: ["hatchback", "combi", "sedan"]
   class: "compact"
   gen: ["1999-2007", "2007-2014", "2014-2021", "2021-"]
   is_suv: false
+  estimated_price: 20000
 
-"rapid": 
+"rapid":
   body: ["sedan", "spaceback"]
   class: "compact"
   gen: ["2012-2019"]
   is_suv: false
+  estimated_price: 18000
 
 # Mid-Size Cars
-"octavia": 
+"octavia":
   body: ["liftback", "combi", "scout"]
   class: "mid-size"
   gen: ["1996-2004", "2004-2013", "2013-2020", "2020-"]
   is_suv: false
   variants:
     - "rs" # performance version
+  estimated_price: 25000
 
 # SUVs and Crossovers
-"karoq": 
+"karoq":
   body: ["suv"]
   class: "compact suv"
   gen: ["2017-"]
   is_suv: true
+  estimated_price: 30000
 
-"kodiaq": 
+"kodiaq":
   body: ["suv"]
   class: "mid-size suv"
   gen: ["2016-"]
@@ -38,38 +42,43 @@
   variants:
     - "sportline"
     - "scout"
+  estimated_price: 38000
 
-"enyaq": 
+"enyaq":
   body: ["suv", "coupe"]
   class: "electric suv"
   gen: ["2020-"]
   is_suv: true
   powertrain: "electric"
+  estimated_price: 45000
 
 # Small Cars
-"citigo": 
+"citigo":
   body: ["hatchback"]
   class: "city car"
   gen: ["2011-2020"]
   is_suv: false
   powertrain: ["petrol", "electric"]
+  estimated_price: 15000
 
 # Performance Models
-"rs": 
+"rs":
   models: ["octavia", "fabia"]
   body: ["liftback", "combi", "hatchback"]
   class: "high-performance"
   gen: ["2000-"]
   is_suv: false
+  estimated_price: 40000
 
 # Historical Models
-"felicia": 
+"felicia":
   body: ["hatchback", "combi", "pickup"]
   class: "compact"
   gen: ["1994-2001"]
   is_suv: false
+  estimated_price: 10000
 
-"superb": 
+"superb":
   body: ["liftback", "combi"]
   class: "executive"
   gen: ["2001-2008", "2008-2015", "2015-2023", "2023-"]
@@ -77,17 +86,20 @@
   variants:
     - "laurin & klement"
     - "sportline"
+  estimated_price: 33000
 
 # Electric and Hybrid Models
-"scala": 
+"scala":
   body: ["hatchback"]
   class: "compact"
   gen: ["2019-"]
   is_suv: false
   powertrain: ["petrol", "mild hybrid"]
+  estimated_price: 22000
 
-"kamiq": 
+"kamiq":
   body: ["suv"]
   class: "small suv"
   gen: ["2019-"]
   is_suv: true
+  estimated_price: 23000

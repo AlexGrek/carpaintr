@@ -8,7 +8,7 @@ use axum::{
 };
 // Removed: use tower_http::handle_error::HandleErrorLayer; // Not used in this file
 
-use crate::{cache::get_license_cache, errors::AppError, state::AppState};
+use crate::{cache::license_cache::get_license_cache, errors::AppError, state::AppState};
 
 use std::collections::HashSet;
 use std::fs::File;

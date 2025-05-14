@@ -2,127 +2,101 @@
 # Includes models, generations, pricing, and key characteristics
 
 # Compact Cars
-"ibiza": 
+"ibiza":
   body: ["hatchback", "sedan", "st"]
   class: "subcompact"
   gen: ["1993-2002", "2002-2008", "2008-2017", "2017-"]
   is_suv: false
-  price:
-    mk3: 14000
-    mk4: 16000
-    mk5: 18000
-    mk6: 20000
-    current_gen: 22000
+  estimated_price: 20000
 
-"leon": 
+"leon":
   body: ["hatchback", "st", "cupra"]
   class: "compact"
   gen: ["1999-2005", "2005-2012", "2012-2020", "2020-"]
   is_suv: false
-  price:
-    mk1: 19000
-    mk2: 22000
-    mk3: 24000
-    mk4: 27000
-    current_gen: 32000
+  estimated_price: 28000
 
-"toledo": 
+"toledo":
   body: ["sedan", "liftback"]
   class: "compact"
   gen: ["1991-1999", "1999-2004", "2004-2009", "2012-2019"]
   is_suv: false
-  price:
-    mk1: 16000
-    mk2: 18000
-    mk3: 20000
-    mk4: 22000
+  estimated_price: 20000
 
 # SUVs and Crossovers
-"arona": 
+"arona":
   body: ["suv"]
   class: "subcompact suv"
   gen: ["2017-"]
   is_suv: true
-  price:
-    base_model: 22000
+  estimated_price: 25000
 
-"ateca": 
+"ateca":
   body: ["suv"]
   class: "compact suv"
   gen: ["2016-"]
   is_suv: true
-  price:
-    base_model: 28000
+  estimated_price: 30000
 
-"tarraco": 
+"tarraco":
   body: ["suv"]
   class: "mid-size suv"
   gen: ["2018-"]
   is_suv: true
-  price:
-    base_model: 35000
+  estimated_price: 35000
 
 # Performance Models
-"cupra": 
+"cupra":
   models: ["leon", "formentor"]
   body: ["hatchback", "suv"]
   class: "high-performance"
   gen: ["2020-"]
   is_suv: false
-  price:
-    leon: 40000
-    formentor: 45000
+  estimated_price: 40000
 
 # Electric and Hybrid Models
-"born": 
+"born":
   body: ["hatchback"]
   class: "electric compact"
   gen: ["2021-"]
   is_suv: false
   powertrain: "electric"
-  price:
-    base_model: 35000
+  estimated_price: 45000
 
-"el-born": 
+"el-born":
   body: ["hatchback"]
   class: "electric concept"
   gen: ["2019-2021"]
   is_suv: false
   powertrain: "electric"
-  price:
-    concept: 40000
+  estimated_price: 45000
 
 # Smaller Models
-"mii": 
+"mii":
   body: ["hatchback", "electric"]
   class: "city car"
   gen: ["2011-2021"]
   is_suv: false
-  price:
-    petrol_model: 14000
-    electric_model: 24000
+  estimated_price: 18000
 
-"altea": 
+"altea":
   body: ["mpv", "freetrack"]
   class: "compact mpv"
   gen: ["2004-2015"]
   is_suv: false
-  price:
-    base_model: 22000
+  estimated_price: 22000
 
 # Historical Models
-"cordoba": 
+"cordoba":
   body: ["sedan", "coupe"]
   class: "subcompact"
   gen: ["1993-2002"]
   is_suv: false
-  price:
-    base_model: 15000
+  estimated_price: 15000
 
-"exeo": 
+"exeo":
   body: ["sedan", "st"]
   class: "mid-size"
   gen: ["2008-2013"]
   is_suv: false
-  price:
-    base_model: 26000
+  estimated_price: 25000

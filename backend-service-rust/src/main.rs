@@ -9,8 +9,8 @@ use axum::{
 
 use crate::{
     auth::Auth,
-    cache::LicenseCache,
-    db::UserDb,
+    cache::license_cache::LicenseCache,
+    db::users::UserDb,
     middleware::{
         admin_check_middleware, jwt_auth_middleware, license_expiry_middleware,
     },
@@ -32,6 +32,7 @@ mod models;
 mod state;
 mod license_manager;
 mod utils;
+mod calc;
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {

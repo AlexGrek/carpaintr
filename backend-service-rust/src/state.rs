@@ -1,4 +1,4 @@
-use crate::{db::UserDb, auth::Auth, cache::LicenseCache};
+use crate::{db::users::UserDb, auth::Auth, cache::license_cache::LicenseCache};
 use std::{path::{PathBuf}, sync::Arc};
 
 pub struct AppState {

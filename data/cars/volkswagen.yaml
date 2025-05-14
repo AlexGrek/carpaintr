@@ -2,20 +2,21 @@
 # Includes models, generations, pricing, and key characteristics
 
 # Compact Cars
-"golf": 
+"golf":
   body: ["hatchback", "variant", "cabriolet"]
   class: "compact"
   gen: ["1991-1997", "1997-2003", "2003-2008", "2008-2012", "2012-2019", "2019-"]
   is_suv: false
-  price: 
+  price:
     mk3: 22000
     mk4: 24000
     mk5: 26000
     mk6: 28000
     mk7: 30000
     mk8: 35000
+  estimated_price: 30000
 
-"polo": 
+"polo":
   body: ["hatchback", "sedan"]
   class: "subcompact"
   gen: ["1994-2001", "2001-2005", "2005-2009", "2009-2017", "2017-"]
@@ -25,8 +26,9 @@
     mk5: 18000
     mk6: 20000
     mk7: 22000
+  estimated_price: 20000
 
-"passat": 
+"passat":
   body: ["sedan", "variant", "alltrack"]
   class: "mid-size"
   gen: ["1993-1996", "1996-2005", "2005-2010", "2010-2014", "2014-2019", "2019-"]
@@ -36,9 +38,10 @@
     b6: 32000
     b7: 35000
     b8: 38000
+  estimated_price: 35000
 
 # SUVs and Crossovers
-"tiguan": 
+"tiguan":
   body: ["suv"]
   class: "compact suv"
   gen: ["2007-2016", "2016-"]
@@ -46,8 +49,9 @@
   price:
     first_gen: 32000
     second_gen: 38000
+  estimated_price: 35000
 
-"touareg": 
+"touareg":
   body: ["suv"]
   class: "mid-size luxury suv"
   gen: ["2002-2010", "2010-2018", "2018-"]
@@ -56,16 +60,18 @@
     first_gen: 45000
     second_gen: 55000
     third_gen: 65000
+  estimated_price: 55000
 
-"t-roc": 
+"t-roc":
   body: ["suv", "cabriolet"]
   class: "compact suv"
   gen: ["2017-"]
   is_suv: true
-  price: 
+  price:
     base_model: 28000
+  estimated_price: 30000
 
-"id.4": 
+"id.4":
   body: ["suv"]
   class: "electric suv"
   gen: ["2020-"]
@@ -73,26 +79,29 @@
   powertrain: "electric"
   price:
     base_model: 45000
+  estimated_price: 45000
 
 # Luxury/Executive Cars
-"arteon": 
+"arteon":
   body: ["liftback", "shooting brake"]
   class: "executive"
   gen: ["2017-"]
   is_suv: false
   price:
     base_model: 45000
+  estimated_price: 45000
 
-"cc": 
+"cc":
   body: ["coupe"]
   class: "mid-size"
   gen: ["2008-2017"]
   is_suv: false
   price:
     base_model: 35000
+  estimated_price: 35000
 
 # Compact MPVs and Practical Cars
-"touran": 
+"touran":
   body: ["mpv"]
   class: "compact mpv"
   gen: ["2003-2015", "2015-"]
@@ -100,17 +109,19 @@
   price:
     first_gen: 28000
     second_gen: 32000
+  estimated_price: 30000
 
-"golf-sportsvan": 
+"golf-sportsvan":
   body: ["mpv"]
   class: "compact mpv"
   gen: ["2014-2020"]
   is_suv: false
   price:
     base_model: 26000
+  estimated_price: 26000
 
 # Electric Models
-"id.3": 
+"id.3":
   body: ["hatchback"]
   class: "compact electric"
   gen: ["2019-"]
@@ -118,9 +129,10 @@
   powertrain: "electric"
   price:
     base_model: 35000
+  estimated_price: 38000
 
 # Performance Models
-"golf-gti": 
+"golf-gti":
   body: ["hatchback"]
   class: "hot hatch"
   gen: ["1991-1997", "1997-2003", "2003-2008", "2008-2012", "2012-2019", "2019-"]
@@ -130,8 +142,9 @@
     mk6: 38000
     mk7: 40000
     mk8: 45000
+  estimated_price: 40000
 
-"golf-r": 
+"golf-r":
   body: ["hatchback"]
   class: "performance compact"
   gen: ["2002-2008", "2008-2012", "2012-2019", "2019-"]
@@ -141,12 +154,14 @@
     mk6: 45000
     mk7: 50000
     mk8: 55000
+  estimated_price: 50000
 
 # Commercial/Utility Vehicles
-"transporter": 
+"transporter":
   body: ["van", "kombi", "camper"]
   class: "commercial van"
   gen: ["1990-2003", "2003-2015", "2015-"]
   is_suv: false
   price:
     base_model: 30000
+  estimated_price: 35000

@@ -1,7 +1,7 @@
 use axum::{response::IntoResponse, Json, extract::{State, Multipart}};
 use std::{sync::Arc};
 use crate::{
-    cache::get_license_cache, errors::AppError, license_manager::{decode_license_token, save_license_file, LicenseData}, middleware::AuthenticatedUser, models::CompanyInfo, state::AppState, utils // Import the new CompanyInfo struct
+    cache::license_cache::get_license_cache, errors::AppError, license_manager::{decode_license_token, save_license_file, LicenseData}, middleware::AuthenticatedUser, models::CompanyInfo, state::AppState, utils // Import the new CompanyInfo struct
 };
 use chrono::Utc; // Import Utc
 use tokio::fs; // Import tokio::fs for async file operations
