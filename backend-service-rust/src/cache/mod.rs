@@ -1,19 +1,9 @@
 use moka::sync::Cache;
 use std::{sync::Arc, time::Duration};
 use crate::{
-    errors::AppError, license_manager::LicenseData, state::AppState, utils::{sanitize_email_for_path, user_directory_from_email}
+    errors::AppError, license_manager::LicenseData, state::AppState
 };
 use std::path::PathBuf;
-use tokio::fs;
-use serde_json;
-use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
-
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-
-
-const LICENSE_CACHE_MAX_SIZE: u64 = 100; // Configurable limit
-const LICENSE_FILE_NAME: &str = "license.json";
 
 // Note: Using sync cache here because moka::async::Cache requires a tokio runtime
 // to be available when methods are called, which can be tricky with Actix-web's

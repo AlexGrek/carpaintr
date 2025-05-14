@@ -1,11 +1,8 @@
 use std::string::FromUtf8Error;
 
-use sled::{Db, Tree};
-use crate::{
-    models::User,
-    errors::AppError,
-};
+use crate::{errors::AppError, models::User};
 use serde_json;
+use sled::{Db, Tree};
 
 const USERS_TREE_NAME: &str = "users";
 
@@ -47,10 +44,10 @@ impl UserDb {
     }
 
     pub fn delete_user_by_email(&self, email: &str) -> Result<(), AppError> {
-         let key = email.as_bytes();
-         self.users_tree.remove(key)?;
-         self.users_tree.flush()?;
-         Ok(())
+        let key = email.as_bytes();
+        self.users_tree.remove(key)?;
+        self.users_tree.flush()?;
+        Ok(())
     }
 
     // New function to get all user emails
@@ -59,18 +56,24 @@ impl UserDb {
         // Iterate over all key-value pairs in the users tree
         for item in self.users_tree.iter() {
             let (key, _) = item?; // We only need the key (email)
-            let email = String::from_utf8(key.to_vec()) 
-                .map_err(|e: FromUtf8Error| AppError::InternalServerError(format!("Failed to convert key to string: {}", e)))?; // Convert key (bytes) to String
+            let email = String::from_utf8(key.to_vec()).map_err(|e: FromUtf8Error| {
+                AppError::InternalServerError(format!("Failed to convert key to string: {}", e))
+            })?; // Convert key (bytes) to String
             emails.push(email);
         }
         Ok(emails)
     }
 
     // New function to change a user's password hash
-    pub fn change_user_password_hash(&self, email: &str, new_password_hash: String) -> Result<(), AppError> {
+    pub fn change_user_password_hash(
+        &self,
+        email: &str,
+        new_password_hash: String,
+    ) -> Result<(), AppError> {
         let key = email.as_bytes();
         // Retrieve the user to update
-        let mut user = self.find_user_by_email(email)?
+        let mut user = self
+            .find_user_by_email(email)?
             .ok_or(AppError::UserNotFound)?; // Return UserNotFound if user doesn't exist
 
         // Update the password hash
@@ -84,5 +87,3 @@ impl UserDb {
         Ok(())
     }
 }
-
-
