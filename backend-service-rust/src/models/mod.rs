@@ -38,6 +38,16 @@ pub struct LicenseData {
     pub expiry_date: DateTime<Utc>,
 }
 
+
+// Struct to represent the company information stored in company.json
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompanyInfo {
+    pub email: String,
+    pub license: Option<String>, // Assuming license can be null
+    pub company_name: String,
+    pub current_time: DateTime<Utc>, // Use DateTime<Utc> for timestamp
+}
+
 #[derive(Debug, Serialize)]
 pub struct AdminStatus {
     pub is_admin: bool,

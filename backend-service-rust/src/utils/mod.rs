@@ -11,7 +11,7 @@ pub fn sanitize_email_for_path(email: &str) -> String {
 }
 
 pub fn user_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
-    let full_path = data_dir.join(email);
+    let full_path = data_dir.join(sanitize_email_for_path(email));
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
 }

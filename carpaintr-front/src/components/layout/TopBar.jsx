@@ -48,7 +48,10 @@ const TopBar = () => {
               {isLoggedIn ? (
                 <Stack><Nav.Item onClick={() => navigate('/calc')}>Calculate</Nav.Item><Nav.Item onClick={handleLogout}>Logout</Nav.Item></Stack>
               ) : (
-                <Nav.Item onClick={() => navigate('/login')}>Log In</Nav.Item>
+                <span>
+                  <Nav.Item onClick={() => navigate('/login')}>Увійти</Nav.Item>
+                  <Nav.Item onClick={() => navigate('/register')}>Зареєструватися</Nav.Item>
+                </span>
               )}
             </>
           )}

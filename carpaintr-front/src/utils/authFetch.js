@@ -3,7 +3,7 @@ export const authFetch = async (url, options = {}) => {
 
     const headers = {
         ...options.headers,
-        Authorization: token ? `${token}` : '',
+        Authorization: token ? `Bearer ${token}` : '',
     };
 
     const response = await fetch(url, { ...options, headers });

@@ -5,3 +5,4 @@
 /release.zip
 /userdata
 node_modules
+/backend-service-rust/data

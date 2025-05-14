@@ -7,6 +7,7 @@ import CompanyInfoPage from './components/pages/CompanyInfoPage.jsx'
 import CalcPage from './components/pages/CalcPage.jsx';
 import {GlobalCallbacksProvider} from './components/GlobalCallbacksContext.jsx'
 import CabinetPage from './components/pages/CabinetPage.jsx';
+import RegistrationPage from './components/pages/RegistrationPage.jsx';
 
 
 const HistoryPage = () => <h2>History Page</h2>;
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegistrationPage />} />
           <Route path="/calc" element={<CalcPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/company" element={<CompanyInfoPage />} />
