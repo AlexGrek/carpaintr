@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use sled::{Db, Tree};
 use crate::{
     models::User,
@@ -50,4 +52,37 @@ impl UserDb {
          self.users_tree.flush()?;
          Ok(())
     }
+
+    // New function to get all user emails
+    pub fn get_all_user_emails(&self) -> Result<Vec<String>, AppError> {
+        let mut emails = Vec::new();
+        // Iterate over all key-value pairs in the users tree
+        for item in self.users_tree.iter() {
+            let (key, _) = item?; // We only need the key (email)
+            let email = String::from_utf8(key.to_vec()) 
+                .map_err(|e: FromUtf8Error| AppError::InternalServerError(format!("Failed to convert key to string: {}", e)))?; // Convert key (bytes) to String
+            emails.push(email);
+        }
+        Ok(emails)
+    }
+
+    // New function to change a user's password hash
+    pub fn change_user_password_hash(&self, email: &str, new_password_hash: String) -> Result<(), AppError> {
+        let key = email.as_bytes();
+        // Retrieve the user to update
+        let mut user = self.find_user_by_email(email)?
+            .ok_or(AppError::UserNotFound)?; // Return UserNotFound if user doesn't exist
+
+        // Update the password hash
+        user.password_hash = new_password_hash;
+
+        // Serialize the updated user and insert back into the tree
+        let value = serde_json::to_vec(&user)?;
+        self.users_tree.insert(key, value)?;
+        self.users_tree.flush()?; // Ensure data is written to disk
+
+        Ok(())
+    }
 }
+
+

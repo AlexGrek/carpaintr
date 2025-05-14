@@ -63,6 +63,11 @@ async fn main() -> tokio::io::Result<()> {
         admin_file_path: PathBuf::from(admin_file_path),
     });
 
+    // Define a fallback handler for API routes that don't match
+    async fn api_fallback() -> impl IntoResponse {
+        (StatusCode::NOT_FOUND, "API endpoint not found").into_response()
+    }
+
     // Define the API router with built-in error handling through Result returns
     let api_router = Router::new()
         .route("/register", post(api::v1::auth::register))
@@ -74,6 +79,14 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/check_admin_status",
                     get(api::v1::admin::check_admin_status),
+                )
+                .route(
+                    "/listusers",
+                    get(api::v1::admin::list_users),
+                )
+                 .route(
+                    "/manageuser",
+                    post(api::v1::admin::manage_user),
                 )
                 .route(
                     "/license/invalidate/{email}",
@@ -99,7 +112,10 @@ async fn main() -> tokio::io::Result<()> {
         .layer(from_fn_with_state(
             shared_state.clone(),
             jwt_auth_middleware,
-        ));
+        ))
+        // Add the API fallback here
+        .fallback(api_fallback);
+
 
     // We need a special fallback handler for React Router
     // This fallback handler will serve index.html for any non-API, non-file routes

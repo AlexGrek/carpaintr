@@ -1,5 +1,5 @@
 use axum::{response::IntoResponse, Json, extract::{State, Multipart}};
-use std::{path::Path, sync::Arc};
+use std::{sync::Arc};
 use crate::{
     errors::AppError,
     middleware::AuthenticatedUser,
@@ -11,7 +11,6 @@ use crate::{
 };
 use chrono::Utc; // Import Utc
 use tokio::fs; // Import tokio::fs for async file operations
-use std::path::PathBuf; // Import PathBuf
 use serde_json; // Import serde_json
 
 // This handler is protected by the license_expiry_middleware applied to the /user scope
@@ -57,7 +56,7 @@ pub async fn upload_license(
     }
 
     // If valid, save the license file
-    save_license_file(&user_email, &token, Path::new(&app_state.data_dir_path)).await?;
+    save_license_file(&user_email, &token, &app_state.data_dir_path).await?;
 
     // Invalidate the user's license cache entry to force a reload from the new file
     let license_cache = get_license_cache(&app_state);

@@ -172,15 +172,15 @@ const ManageUsers = () => {
       </Drawer>
       <p>Користувачі в системі <Button startIcon={<ReloadIcon />} onClick={fetchData}> Оновити </Button></p>
       {users.map(user => {
-        const email = user.Email
+        const email = user
         return <Panel bordered collapsible key={email} header={email}>
-          <DisplayUserData data={user} />
+          {/* <DisplayUserData data={user} /> */}
           <ButtonGroup>
             <Button onClick={() => withConfirmation(user, "Видалити користувача", async () => handleDeleteUser(email))}>Видалити</Button>
             <Button onClick={() => handleChPassUser(email, "temporary_password_42")}>Змінити пароль</Button>
             <Button onClick={() => handleLicenseManagementClick(user)}>Керування ліцензіями</Button>
           </ButtonGroup>
-          <code>{JSON.stringify(user)}</code>
+          {/* <code>{JSON.stringify(user)}</code> */}
         </Panel>
       })}
     </div>

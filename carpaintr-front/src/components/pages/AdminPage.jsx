@@ -13,7 +13,7 @@ const AdminPage = () => {
   useEffect(() => {
     const fetchAdminStatus = async () => {
       try {
-        const response = await authFetch('/api/v1/admin/status');
+        const response = await authFetch('/api/v1/admin/check_admin_status');
         
         if (!response.ok) {
           throw new Error("You don't have access");

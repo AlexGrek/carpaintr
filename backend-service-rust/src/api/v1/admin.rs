@@ -1,13 +1,8 @@
-use axum::{response::IntoResponse, Json, extract::{State, Json as AxumJson}};
+use axum::{extract::{Json as AxumJson, State}, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
 use chrono::{Utc, Duration};
 use crate::{
-    errors::AppError,
-    middleware::AuthenticatedUser,
-    models::AdminStatus,
-    state::AppState,
-    license_manager::{generate_license_token, save_license_file}, // Import necessary functions
-    models::license_requests::GenerateLicenseRequest, // Import the combined request enum
+    errors::AppError, license_manager::{generate_license_token, save_license_file}, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState // Import the combined request enum
 };
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
@@ -45,4 +40,42 @@ pub async fn generate_license(
 
     // Return the generated token (or a confirmation message)
     Ok(Json(format!("License generated and saved for {}. Token: {}", user_email, token)))
+}
+
+// New handler to list all users by email (admin only)
+pub async fn list_users(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    // In a real application, you would add logic here to verify the authenticated user is an admin
+    // For now, we assume the admin_check_middleware handles this.
+
+    let emails = app_state.db.get_all_user_emails()?; // Call the new function from UserDb
+
+    Ok(Json(emails)) // Return the list of emails as JSON
+}
+
+pub async fn manage_user(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Json(request): Json<ManageUserRequest>, // Extract the request payload
+) -> Result<impl IntoResponse, AppError> {
+    // In a real application, you would add logic here to verify the authenticated user is an admin
+    // For now, we assume the admin_check_middleware handles this.
+
+    match request {
+        ManageUserRequest::Delete { email } => {
+            // Handle delete action
+            app_state.db.delete_user_by_email(&email)?;
+            Ok(StatusCode::OK) // Return 200 OK on successful deletion
+        }
+        ManageUserRequest::ChangePassword { email, data } => {
+            // Handle change_password action
+            // Hash the new password
+            let hashed_password = app_state.auth.hash_password(&data)?;
+            // Update the user's password hash in the database
+            app_state.db.change_user_password_hash(&email, hashed_password)?;
+            Ok(StatusCode::OK) // Return 200 OK on successful password change
+        }
+    }
 }

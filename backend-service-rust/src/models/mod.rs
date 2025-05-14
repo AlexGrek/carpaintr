@@ -53,6 +53,16 @@ pub struct AdminStatus {
     pub is_admin: bool,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(tag = "action")] // Use the "action" field to determine which variant to deserialize
+pub enum ManageUserRequest {
+    #[serde(rename = "delete")]
+    Delete { email: String },
+    #[serde(rename = "change_pass")]
+    ChangePassword { email: String, data: String },
+}
+
+
 // Add the new license generation request structs here
 pub mod license_requests {
     use super::*;
