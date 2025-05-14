@@ -1,17 +1,20 @@
 use axum::{response::IntoResponse, Json, extract::{State, Multipart}};
 use std::{sync::Arc};
 use crate::{
-    errors::AppError,
-    middleware::AuthenticatedUser,
-    state::AppState,
-    license_manager::{decode_license_token, save_license_file}, // Import necessary functions
-    cache::get_license_cache, // Import get_license_cache
-    utils,
-    models::CompanyInfo, // Import the new CompanyInfo struct
+    cache::get_license_cache, errors::AppError, license_manager::{decode_license_token, save_license_file, LicenseData}, middleware::AuthenticatedUser, models::CompanyInfo, state::AppState, utils // Import the new CompanyInfo struct
 };
 use chrono::Utc; // Import Utc
 use tokio::fs; // Import tokio::fs for async file operations
 use serde_json; // Import serde_json
+use serde::Serialize; // Import Serialize for the response struct
+
+// Define a simple response struct for the boolean result
+#[derive(Debug, Serialize)]
+pub struct ActiveLicenseResponse {
+    pub has_active_license: bool,
+    pub license: Option<LicenseData>
+}
+
 
 // This handler is protected by the license_expiry_middleware applied to the /user scope
 pub async fn get_calc_details(
@@ -34,14 +37,16 @@ pub async fn upload_license(
     let field = field.ok_or(AppError::BadRequest("No file uploaded".to_string()))?;
 
     let filename = field.file_name().ok_or(AppError::BadRequest("Missing filename".to_string()))?.to_string();
-    if !filename.ends_with(".license") {
-        return Err(AppError::BadRequest("Invalid file extension. Must be .license".to_string()));
+    // Allow both .license and .jwt extensions
+    if !filename.ends_with(".license") && !filename.ends_with(".jwt") {
+        return Err(AppError::BadRequest("Invalid file extension. Must be .license or .jwt".to_string()));
     }
 
     let data = field.bytes().await.map_err(|_| AppError::InternalServerError("Failed to read file data".to_string()))?;
     let token = String::from_utf8(data.to_vec()).map_err(|_| AppError::BadRequest("Invalid file content".to_string()))?;
 
     // Decode and validate the license token
+    // This will return AppError::LicenseExpired if expired or AppError::Unauthorized if invalid signature
     let claims = decode_license_token(&token, app_state.jwt_license_secret.as_bytes())?;
 
     // Check if the license is for the authenticated user
@@ -50,10 +55,9 @@ pub async fn upload_license(
     }
 
     // Check if the license is expired (decode_license_token already does this, but explicit check is good)
-    let current_time = Utc::now().timestamp() as usize;
-    if claims.exp < current_time {
-        return Err(AppError::InvalidData("License has expired".to_string()));
-    }
+    // Although decode_license_token handles this via error kind, a direct check using chrono
+    // might be clearer if needed, but relying on the error kind is sufficient here.
+    // Let's rely on the error kind from decode_license_token which is handled by AppError.
 
     // If valid, save the license file
     save_license_file(&user_email, &token, &app_state.data_dir_path).await?;
@@ -104,4 +108,31 @@ pub async fn get_company_info(
 
     // Return the CompanyInfo as a JSON response
     Ok(Json(company_info))
+}
+
+// New handler to check if the authenticated user has an active license
+pub async fn get_active_license(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let license_cache = get_license_cache(&app_state);
+
+    // Attempt to get the license from the cache or load it from disk.
+    // The get_license method handles decoding and expiration checks.
+    match license_cache.get_license(&user_email).await {
+        Ok(license) => {
+            // If get_license succeeds, it means a valid, non-expired license was found.
+            Ok(Json(ActiveLicenseResponse { has_active_license: !license.is_expired(), license: Some(license) }))
+        }
+        Err(AppError::LicenseExpired) | Err(AppError::FileNotFound) | Err(AppError::LicenseNotFound) => {
+            // If the error is LicenseExpired, FileNotFound, or LicenseNotFound,
+            // the user does not have an active license.
+            Ok(Json(ActiveLicenseResponse { has_active_license: false, license: None }))
+        }
+        Err(e) => {
+            // Propagate other errors (e.g., IO errors, JWT errors other than expired)
+            // These indicate a problem fetching or validating the license beyond just absence/expiration.
+            Err(e)
+        }
+    }
 }

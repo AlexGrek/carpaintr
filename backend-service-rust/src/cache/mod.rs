@@ -1,12 +1,16 @@
 use moka::sync::Cache;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use crate::{
-    errors::AppError, models::LicenseData, state::AppState, utils::{sanitize_email_for_path, user_directory_from_email}
+    errors::AppError, license_manager::LicenseData, state::AppState, utils::{sanitize_email_for_path, user_directory_from_email}
 };
 use std::path::PathBuf;
 use tokio::fs;
 use serde_json;
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
 
 const LICENSE_CACHE_MAX_SIZE: u64 = 100; // Configurable limit
 const LICENSE_FILE_NAME: &str = "license.json";
@@ -23,45 +27,32 @@ const LICENSE_FILE_NAME: &str = "license.json";
 pub struct LicenseCache {
     cache: Cache<String, LicenseData>, // Key: email
     data_dir: PathBuf,
+    jwt_license_secret: String
 }
 
 impl LicenseCache {
-    pub fn new(data_dir: PathBuf, max_size: u64) -> Arc<Self> {
+    pub fn new(data_dir: PathBuf, max_size: u64, secret: String) -> Arc<Self> {
         let cache: Cache<String, LicenseData> = Cache::builder()
             .max_capacity(max_size)
-            // Optionally add time-to-live or time-to-idle policies here
-            // .time_to_live(Duration::from_secs(60 * 60)) // Example: 1 hour TTL
+            .time_to_live(Duration::from_secs(60 * 60))
             .build();
-        Arc::new(Self { cache, data_dir })
+        Arc::new(Self { cache, data_dir, jwt_license_secret: secret })
     }
 
     // This function is async because it uses tokio::fs
     async fn load_license_from_disk(&self, email: &str) -> Result<LicenseData, AppError> {
-        let user_data_dir = user_directory_from_email(&self.data_dir, email)?;
-        let license_path = user_data_dir.join(LICENSE_FILE_NAME);
-
-        // Use tokio::fs for async file operations
-        // Check existence first to return a more specific error if file is genuinely missing
-        if !tokio::fs::metadata(&license_path).await.is_ok() {
-             return Err(AppError::FileNotFound);
-        }
-
-        let content = fs::read_to_string(&license_path).await.map_err(|e| AppError::IoError(e))?;
-        let license_data: LicenseData = serde_json::from_str(&content)?;
-        Ok(license_data)
+        let token = crate::license_manager::read_latest_license_file(email, &self.data_dir).await?;
+        let data = crate::license_manager::decode_license_token(&token, &self.jwt_license_secret.as_bytes())?;
+        Ok(LicenseData::new(data))
     }
 
-    // This method needs to be async because it might call load_license_from_disk
-    // Note: Moka's sync cache `get` is synchronous. The async nature comes from
-    // awaiting the potential disk load.
     pub async fn get_license(&self, email: &str) -> Result<LicenseData, AppError> {
+
         // Attempt to get from cache synchronously
         if let Some(license) = self.cache.get(email) {
-            log::debug!("Cache hit for license: {}", email);
             return Ok(license);
         }
 
-        log::debug!("Cache miss for license: {}", email);
         // If not in cache, load from disk asynchronously
         let license_data = self.load_license_from_disk(email).await?;
         // Insert into cache. `insert` is synchronous for the sync cache.

@@ -30,11 +30,12 @@ const TopBarUser = () => {
   };
 
   return (
-    <Navbar appearance="inverse" className="top-bar-user">
-      <Navbar.Brand>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src="/logo.png" alt="CarPaintr Logo" height="30" />
-          <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>CarPaintr</span>
+    <Navbar appearance="inverse" className="top-bar-user" style={{marginBottom: "18pt"}}>
+      <Navbar.Brand style={{ margin: '0', padding: 0, paddingLeft: '8pt' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+          <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" />
+          <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" />
+          <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>autolab</span>
         </div>
       </Navbar.Brand>
       <Nav pullRight>

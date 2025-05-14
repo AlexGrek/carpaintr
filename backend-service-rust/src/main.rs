@@ -1,8 +1,9 @@
+use api::v1::admin::{delete_user_license_handler, generate_license_handler, get_user_license_handler, list_user_licenses_handler};
 use axum::{
     http::StatusCode,
     middleware::from_fn_with_state,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 
@@ -17,8 +18,8 @@ use crate::{
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
-use tower_http::
-    trace::TraceLayer
+use tower_http::{services::ServeDir, 
+    trace::TraceLayer}
 ;
 
 mod api;
@@ -52,7 +53,7 @@ async fn main() -> tokio::io::Result<()> {
 
     let db = UserDb::new(&database_url).expect("Failed to initialize database");
     let auth = Auth::new(jwt_secret.as_bytes());
-    let license_cache = LicenseCache::new(PathBuf::from(data_dir_path.clone()), license_cache_size);
+    let license_cache = LicenseCache::new(PathBuf::from(data_dir_path.clone()), license_cache_size, jwt_license_secret.clone());
 
     let shared_state = Arc::new(AppState {
         db,
@@ -91,14 +92,17 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/license/invalidate/{email}",
                     post(api::v1::license::invalidate_license_cache_admin),
-                )
-                .route("/gen_license", post(api::v1::admin::generate_license))
+                ).route("/license/generate", post(generate_license_handler))
+                .route("/license/list/{user_email}", get(list_user_licenses_handler))
+                .route("/license/{user_email}/{license_filename}", delete(delete_user_license_handler))
+                .route("/license/{user_email}/{license_filename}", get(get_user_license_handler))
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     admin_check_middleware,
                 )),
         )
         .route("/license_upload", post(api::v1::user::upload_license))
+        .route("/getactivelicense", get(api::v1::user::get_active_license))
         .route("/getcompanyinfo", get(api::v1::user::get_company_info))
         .nest(
             "/user",
@@ -130,12 +134,12 @@ async fn main() -> tokio::io::Result<()> {
     }
 
     // Define our combined app properly for SPA + API:
-let spa_router = Router::new()
-    .fallback(spa_fallback); // SPA fallback only applies to non-API routes
+let spa_fallback_service = Router::new().fallback(spa_fallback);
 
 let app = Router::new()
     .nest("/api/v1", api_router) // API routes with proper 404 handling
-    .merge(spa_router)           // Merge non-API fallback routes
+    // Add the static files service as a fallback before the SPA fallback
+    .fallback_service(ServeDir::new("static").fallback(spa_fallback_service))
     .with_state(shared_state)
     .layer(TraceLayer::new_for_http());
 

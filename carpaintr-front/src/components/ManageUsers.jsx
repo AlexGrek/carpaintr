@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, ButtonGroup, Drawer, Panel } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import ReloadIcon from '@rsuite/icons/Reload';
+import LicenseManager from './LicenseManager';
 
 const DisplayUserData = ({ data }) => {
   const formatDate = (dateString) => {
@@ -148,11 +149,12 @@ const ManageUsers = () => {
     <div>
       <Drawer open={licenseEditorOpen} onClose={handleLicenseEditorClose}>
         <Drawer.Header>
-          {editingUser && editingUser.Email}
+          {editingUser}
         </Drawer.Header>
         <Drawer.Body>
           {editingUser && <div>
             <p>License management stuff</p>
+            <LicenseManager userEmail={editingUser}/>
           </div>}
         </Drawer.Body>
       </Drawer>

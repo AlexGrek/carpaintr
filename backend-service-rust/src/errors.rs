@@ -24,6 +24,8 @@ pub enum AppError {
     Forbidden,
     #[error("License expired")]
     LicenseExpired,
+    #[error("License not found")]
+    LicenseNotFound,
     #[error("User not found")]
     UserNotFound,
     #[error("Invalid credentials")]
@@ -59,6 +61,7 @@ impl IntoResponse for AppError {
             AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Forbidden => StatusCode::FORBIDDEN,
             AppError::LicenseExpired => StatusCode::FORBIDDEN,
+            AppError::LicenseNotFound => StatusCode::FORBIDDEN,
             AppError::UserNotFound => StatusCode::NOT_FOUND,
             AppError::InvalidCredentials => StatusCode::UNAUTHORIZED,
             AppError::UserExists => StatusCode::CONFLICT,

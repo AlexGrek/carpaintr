@@ -33,11 +33,6 @@ pub struct Claims {
     pub exp: usize, // Expiration time
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)] // Clone needed for caching
-pub struct LicenseData {
-    pub expiry_date: DateTime<Utc>,
-}
-
 
 // Struct to represent the company information stored in company.json
 #[derive(Debug, Serialize, Deserialize)]

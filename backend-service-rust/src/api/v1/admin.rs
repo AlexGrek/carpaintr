@@ -1,8 +1,19 @@
-use axum::{extract::{Json as AxumJson, State}, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    extract::{Json as AxumJson, Path, State},
+    http::{header, Response, StatusCode},
+    response::IntoResponse,
+    Json,
+};
 use std::sync::Arc;
 use chrono::{Utc, Duration};
 use crate::{
-    errors::AppError, license_manager::{generate_license_token, save_license_file}, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState // Import the combined request enum
+    errors::AppError,
+    license_manager::{
+        delete_license_file, generate_license_token, list_license_files, read_license_file, read_license_file_by_name, save_license_file // Import new functions
+    },
+    middleware::AuthenticatedUser,
+    models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest},
+    state::AppState,
 };
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
@@ -16,11 +27,11 @@ pub async fn check_admin_status(
 }
 
 // Handler for generating license files
-pub async fn generate_license(
-    // This handler is protected by the admin middleware
+// This handler is protected by the admin middleware
+pub async fn generate_license_handler(
     AuthenticatedUser(_admin_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
-    AxumJson(request): AxumJson<GenerateLicenseRequest>, // Use the combined enum
+    AxumJson(request): AxumJson<GenerateLicenseRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let (user_email, expiry_date) = match request {
         GenerateLicenseRequest::ByDays(req) => {
@@ -38,31 +49,75 @@ pub async fn generate_license(
     // Save the license file
     save_license_file(&user_email, &token, &app_state.data_dir_path).await?;
 
+    // Invalidate the cache for this user's license
+    app_state.license_cache.invalidate_license(&user_email);
+
     // Return the generated token (or a confirmation message)
-    Ok(Json(format!("License generated and saved for {}. Token: {}", user_email, token)))
+    Ok(Json(format!("License generated and saved for {}.", user_email)))
 }
 
-// New handler to list all users by email (admin only)
+// New handler to list all license files for a specific user (admin only)
+pub async fn list_user_licenses_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Path(user_email): Path<String>, // Extract user email from the path
+) -> Result<impl IntoResponse, AppError> {
+    // Call the new function to list license files
+    let license_files = list_license_files(&user_email, &app_state.data_dir_path).await?;
+
+    Ok(Json(license_files)) // Return the list of filenames as JSON
+}
+
+// New handler to delete a specific license file for a user (admin only)
+pub async fn delete_user_license_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Path((user_email, license_filename)): Path<(String, String)>, // Extract email and filename from path
+) -> Result<impl IntoResponse, AppError> {
+    // Call the new function to delete the license file
+    delete_license_file(&user_email, &license_filename, &app_state.data_dir_path).await?;
+
+    // Invalidate the cache for this user's license
+    // Note: If a user could have multiple *active* licenses cached under the same email key,
+    // invalidating the single key might not be sufficient. However, based on the LicenseCache
+    // structure caching a single LicenseData per email, this is appropriate.
+    app_state.license_cache.invalidate_license(&user_email);
+
+    Ok(StatusCode::OK) // Return 200 OK on successful deletion
+}
+
+
+
+pub async fn get_user_license_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Path((user_email, license_filename)): Path<(String, String)>, // Extract email and filename from path
+) -> Result<impl IntoResponse, AppError> {
+    // Call the new function to delete the license file
+    let jwt = read_license_file_by_name(&user_email, &app_state.data_dir_path, &license_filename).await?;
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+        .body(jwt)
+        .unwrap())
+}
+
+// Existing handler to list all users by email (admin only)
 pub async fn list_users(
     AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real application, you would add logic here to verify the authenticated user is an admin
-    // For now, we assume the admin_check_middleware handles this.
-
     let emails = app_state.db.get_all_user_emails()?; // Call the new function from UserDb
 
     Ok(Json(emails)) // Return the list of emails as JSON
 }
 
+// Existing handler to manage user (delete, change password) (admin only)
 pub async fn manage_user(
     AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
     State(app_state): State<Arc<AppState>>,
     Json(request): Json<ManageUserRequest>, // Extract the request payload
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real application, you would add logic here to verify the authenticated user is an admin
-    // For now, we assume the admin_check_middleware handles this.
-
     match request {
         ManageUserRequest::Delete { email } => {
             // Handle delete action

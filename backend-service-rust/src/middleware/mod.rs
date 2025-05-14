@@ -17,7 +17,6 @@ use crate::{
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::collections::HashSet;
-use chrono::Utc;
 use std::sync::Arc;
 // Removed: use async_trait::async_trait; // Not needed for native async traits
 
@@ -54,10 +53,6 @@ pub async fn jwt_auth_middleware(
     let (mut parts, body) = req.into_parts();
 
     let path = parts.uri.path();
-    // Explicitly bypass auth for register and login paths
-    // Check the full path including the scope prefix /api/v1
-
-    log::warn!("Path: {}", path);
 
     if path == "/register" || path == "/login" {
          let req = Request::from_parts(parts, body);
@@ -111,11 +106,9 @@ pub async fn admin_check_middleware(
 }
 
 
-// Middleware to check license expiry for user endpoints
-// Signature: (AuthenticatedUser, State<Arc<AppState>>, Request<Body>, Next)
 pub async fn license_expiry_middleware(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Extractor 1
-    State(app_state): State<Arc<AppState>>,           // Extractor 2
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
     req: Request<Body>, // Request<Body>
     next: Next,         // Next
 ) -> Result<Response, AppError> {
@@ -123,15 +116,15 @@ pub async fn license_expiry_middleware(
 
     match license_cache.get_license(&user_email).await {
         Ok(license_data) => {
-            if license_data.expiry_date > Utc::now() {
+            if !license_data.is_expired() {
                  Ok(next.run(req).await)
             } else {
+                license_cache.invalidate_license(&user_email);
                 Err(AppError::LicenseExpired)
             }
         }
         Err(e) => {
-            log::error!("Failed to get license for expiry check: {}", e);
-            Err(e)
+            Err(AppError::LicenseExpired)
         }
     }
 }

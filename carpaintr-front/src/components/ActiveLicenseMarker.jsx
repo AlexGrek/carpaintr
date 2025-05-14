@@ -3,14 +3,14 @@ import { Loader, Tag } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 
 const ActiveLicenseMarker = () => {
-    const [licenseStatus, setLicenseStatus] = useState([]);
+    const [licenseStatus, setLicenseStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchLicenses = async () => {
             try {
-                const response = await authFetch('/api/v1/haveactivelicense');
+                const response = await authFetch('/api/v1/getactivelicense');
                 if (!response.ok) {
                     throw new Error(`Error: ${response.statusText}`);
                 }
@@ -34,8 +34,12 @@ const ActiveLicenseMarker = () => {
         console.log(error)
     }
 
+    if (licenseStatus == null) {
+        return <Tag color="grey">Завантаження ліцензії...</Tag>
+    }
+
     return (
-        <Tag color={licenseStatus ? "green" : "red"}>{licenseStatus ? "Ліцензія активна" : "Ліцензія не активна"}</Tag>
+        <Tag color={licenseStatus["has_active_license"] ? "green" : "red"}>{licenseStatus["has_active_license"] ? `Ліцензія активна (Залишок днів: ${licenseStatus.license.days_left + 1})` : "Ліцензія неактивна"}</Tag>
     );
 };
 

@@ -55,6 +55,7 @@ const RegistrationPage = () => {
       <Panel bordered>
         {/* rsuite Form component with fluid layout */}
         <Form fluid>
+          <img src="/autolab_large_bw.png" alt="CarPaintr Logo" height="200pt" />
           {/* Form group for the email input */}
           <Form.Group>
             <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
