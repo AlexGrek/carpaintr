@@ -6,6 +6,7 @@ import { Panel, PanelGroup, Toggle } from 'rsuite';
 import CarBodyPartsSelector from './CarBodyPartsSelector';
 import { useGlobalCallbacks } from "./GlobalCallbacksContext";
 import ColorGrid from './ColorGrid';
+import { useNavigate } from "react-router-dom";
 
 // Parent component to hold only selected values
 const CarPaintEstimator = () => {
@@ -75,9 +76,30 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
 
+    const navigate = useNavigate();
+
+    const handleError = (reason) => {
+        console.error(reason)
+        navigate("/cabinet");
+    }
+
     useEffect(() => {
-        authFetch('/api/v1/carmakes').then(response => response.json()).then(setMakes).catch(console.error);
-    }, []);
+    authFetch('/api/v1/user/carmakes')
+        .then(response => {
+            if (response.status === 403) {
+                navigate("/cabinet");
+                return; // stop here, don't try to parse JSON
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) setMakes(data); // only set if data was parsed
+        })
+        .catch(handleError);
+}, []);
 
     useEffect(() => {
         setBodyTypes([])
@@ -88,7 +110,7 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
             return;
         }
         setModel(null); // Reset model selection on make change
-        authFetch(`/api/v1/carmodels/${selectedMake}`)
+        authFetch(`/api/v1/user/carmodels/${selectedMake}`)
             .then(response => response.json())
             .then(setModels)
             .catch(console.error);
@@ -102,7 +124,12 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
         setModel(selectedModel)
         console.log(`Model: ${selectedModel}`)
         console.log(`Model object: ${JSON.stringify(models[selectedModel])}`)
-        setBodyTypes(models[selectedModel]["Body"])
+        if (models[selectedModel] != undefined) {
+            setBodyTypes(models[selectedModel]["body"])
+        } else {
+            setBodyTypes([])
+            setBodyType(null)
+        }
     }
 
     const modelOptions = Object.keys(models);
@@ -133,7 +160,7 @@ const CurrentDateDisplay = () => {
     const [seasonDetails, setSeasonDetails] = useState(null);
 
     useEffect(() => {
-        authFetch('/api/v1/season')
+        authFetch('/api/v1/user/season')
             .then(response => response.json())
             .then((data) => {
                 setCurrentDate(new Date());
@@ -157,7 +184,7 @@ const ColorPicker = ({ setColor, selectedColor }) => {
     const [baseColors, setBaseColors] = useState({});
 
     useEffect(() => {
-        authFetch('/api/v1/basecolors').then(response => response.json()).then(setBaseColors).catch(console.error);
+        authFetch('/api/v1/user/basecolors').then(response => response.json()).then(setBaseColors).catch(console.error);
     }, []);
 
     const displayColors = Object.keys(baseColors).map((key) => ({
