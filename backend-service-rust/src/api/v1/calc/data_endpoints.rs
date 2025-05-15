@@ -1,13 +1,14 @@
 use crate::{
-    errors::AppError,
-    middleware::AuthenticatedUser,
-    state::AppState,
-    utils::{list_files_user_common, sanitize_alphanumeric_and_dashes}, // Import the new CompanyInfo struct
+    calc::seasons::get_current_season_info, errors::AppError, middleware::AuthenticatedUser, state::AppState, utils::{list_files_user_common, sanitize_alphanumeric_and_dashes, sanitize_alphanumeric_and_dashes_and_dots} // Import the new CompanyInfo struct
 };
 use axum::{extract::State, response::IntoResponse, Json};
 use std::{path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
+const GLOBAL: &'static str = "global";
+const SEASONS_YAML: &'static str = "seasons.yaml";
+const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
+const COLORS_YAML: &'static str = "colors.yaml";
 
 pub async fn list_car_makes(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -34,4 +35,29 @@ pub async fn get_cars_by(
     let cars_data = crate::calc::cars::parse_car_yaml(&cars_path)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(Json(cars_data))
+}
+
+pub async fn get_global_file(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+     axum::extract::Path(path): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+     // Read the file content
+    let file_path = PathBuf::from(&GLOBAL).join(sanitize_alphanumeric_and_dashes_and_dots(&path));
+    let path_in_userspace = crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
+            .await
+            .map_err(|e| AppError::IoError(e))?;
+    let string = tokio::fs::read_to_string(path_in_userspace).await.map_err(|_e| AppError::FileNotFound)?;
+    Ok(string)
+}
+
+pub async fn get_season(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let file_path = PathBuf::from(&GLOBAL).join(&SEASONS_YAML);
+    let path_in_userspace = crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
+            .await
+            .map_err(|e| AppError::IoError(e))?;
+    Ok(Json(get_current_season_info(&path_in_userspace).map_err(|e| AppError::InternalServerError(e.to_string()))?))
 }

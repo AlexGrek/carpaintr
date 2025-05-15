@@ -110,6 +110,8 @@ async fn main() -> tokio::io::Result<()> {
             Router::new()
                 .route("/get_calc_details", get(api::v1::user::get_calc_details))
                 .route("/carmakes", get(api::v1::calc::data_endpoints::list_car_makes))
+                .route("/season", get(api::v1::calc::data_endpoints::get_season))
+                .route("/global/{path}", get(api::v1::calc::data_endpoints::get_global_file))
                 .route("/carmodels/{maker}", get(api::v1::calc::data_endpoints::get_cars_by))
                 .layer(from_fn_with_state(
                     shared_state.clone(),

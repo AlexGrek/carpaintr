@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack } from 'rsuite';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'
 import { Panel, PanelGroup, Toggle } from 'rsuite';
 import CarBodyPartsSelector from './CarBodyPartsSelector';
@@ -164,8 +164,8 @@ const CurrentDateDisplay = () => {
             .then(response => response.json())
             .then((data) => {
                 setCurrentDate(new Date());
-                setSeason(data.season);
-                setSeasonDetails(data.details);
+                setSeason(data.season_name === "summer" ? "Літо" : "Зима");
+                setSeasonDetails(JSON.stringify(data));
             })
             .catch(console.error);
     }, []);
@@ -173,7 +173,7 @@ const CurrentDateDisplay = () => {
     return (
         <div>
             <DatePicker value={currentDate} disabled />
-            <p>Season: {season}</p>
+            <p>Розрахунковий сезон: {season}</p>
             <p><small>{JSON.stringify(seasonDetails)}</small></p>
         </div>
     );
@@ -184,14 +184,18 @@ const ColorPicker = ({ setColor, selectedColor }) => {
     const [baseColors, setBaseColors] = useState({});
 
     useEffect(() => {
-        authFetch('/api/v1/user/basecolors').then(response => response.json()).then(setBaseColors).catch(console.error);
-    }, []);
+        let fetchData = async () => {
+            let data = await authFetchYaml('/api/v1/user/global/colors.yaml')
+            setBaseColors(data)
+            }
+        fetchData()
+        }, []);
 
     const displayColors = Object.keys(baseColors).map((key) => ({
-        cssColor: baseColors[key].Hex,
+        hex: baseColors[key].hex,
         colorName: key,
         id: key,
-    })).sort((a, b) => a.cssColor.localeCompare(b.cssColor));
+    })).sort((a, b) => a.hex.localeCompare(b.hex));
 
     return (
         <div>

@@ -114,3 +114,9 @@ pub fn sanitize_alphanumeric_and_dashes(input: &str) -> String {
         .collect()
 }
 
+pub fn sanitize_alphanumeric_and_dashes_and_dots(input: &str) -> String {
+    input.chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
+        .collect()
+}
+
