@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autolab-api
+  labels:
+    app: autolab-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autolab-api
+  template:
+    metadata:
+      labels:
+        app: autolab-api
+    spec:
+      containers:
+      - name: autolab-api
+        image: localhost:5000/autolab-api:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: autolab-secret
+              key: SECRET_KEY
+        - name: LICENSE_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: autolab-secret
+              key: SECRET_KEY_LICENSE
+        - name: DATABASE_URL
+          value: "/app/data/sled_db"
+        - name: ADMIN_FILE_PATH
+          value: "/etc/secrets/admins.txt"
+        - name: DATA_DIR_PATH
+          value: "/app/data"
+        - name: LICENSE_CACHE_SIZE
+          value: "100"
+        volumeMounts:
+        - name: autolab-api-storage
+          mountPath: /app/data
+      volumes:
+      - name: autolab-api-storage
+        hostPath:
+          path: /etc/autolab-data  # directory on your host
+          type: DirectoryOrCreate    # will create it if it doesn't exist
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: autolab-api
+spec:
+  selector:
+    app: autolab-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
