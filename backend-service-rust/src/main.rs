@@ -33,6 +33,7 @@ mod state;
 mod license_manager;
 mod utils;
 mod calc;
+mod transactionalfs;
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
