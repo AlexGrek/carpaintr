@@ -29,14 +29,14 @@ WORKDIR /app/backend-service-rust
 RUN cargo build --release
 
 # ---------- Runtime Stage ----------
-FROM debian:stable-slim
+FROM debian:stable
 
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy only the binary and static files
-COPY --from=backend /app/backend-service-rust/target/release/backend /app/backend
+COPY --from=backend /app/backend-service-rust/target/release/rust-web-service /app/backend
 COPY --from=backend /app/backend-service-rust/static /app/static
 
 EXPOSE 8080

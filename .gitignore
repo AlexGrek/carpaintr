@@ -4,6 +4,6 @@
 /backend/build
 /release.zip
 /userdata
-node_modules
+/node_modules
 /backend-service-rust/data
 carpaintr.zip

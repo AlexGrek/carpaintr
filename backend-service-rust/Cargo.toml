@@ -24,3 +24,4 @@ percent-encoding = "2.3"
 thiserror = "1.0"
 async-trait = "0.1" # Required for custom extractor
 serde_yaml = "0.9.34"
+
