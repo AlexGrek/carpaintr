@@ -14,6 +14,7 @@ spec:
       labels:
         app: autolab-api
     spec:
+      terminationGracePeriodSeconds: 2
       containers:
       - name: autolab-api
         image: localhost:5000/autolab-api:latest
@@ -32,17 +33,17 @@ spec:
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: autolab-secret
+              name: autolab-api-secret
               key: SECRET_KEY
         - name: LICENSE_JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: autolab-secret
+              name: autolab-api-secret
               key: SECRET_KEY_LICENSE
         - name: DATABASE_URL
           value: "/app/data/sled_db"
         - name: ADMIN_FILE_PATH
-          value: "/etc/secrets/admins.txt"
+          value: "/var/secrets/admins.txt"
         - name: DATA_DIR_PATH
           value: "/app/data"
         - name: LICENSE_CACHE_SIZE
@@ -50,11 +51,20 @@ spec:
         volumeMounts:
         - name: autolab-api-storage
           mountPath: /app/data
+        - name: secret-volume
+          mountPath: /var/secrets/
+          readOnly: true
       volumes:
       - name: autolab-api-storage
         hostPath:
           path: /etc/autolab-data  # directory on your host
           type: DirectoryOrCreate    # will create it if it doesn't exist
+      - name: secret-volume
+        secret:
+          secretName: autolab-api-secret
+          items:
+            - key: admins.txt
+              path: admins.txt
 ---
 apiVersion: v1
 kind: Service

@@ -39,6 +39,9 @@ WORKDIR /app
 COPY --from=backend /app/backend-service-rust/target/release/rust-web-service /app/backend
 COPY --from=backend /app/backend-service-rust/static /app/static
 
+COPY data/ /var/initialdata
+COPY entrypoint.sh /entrypoint.sh
+
 EXPOSE 8080
 
-CMD ["/app/backend"]
+CMD ["bash", "/entrypoint.sh"]

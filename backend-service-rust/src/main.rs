@@ -52,6 +52,8 @@ async fn main() -> tokio::io::Result<()> {
 
     std::fs::create_dir_all(&data_dir_path)?;
 
+    check_admin_file(&admin_file_path);
+
     let db = UserDb::new(&database_url).expect("Failed to initialize database");
     let auth = Auth::new(jwt_secret.as_bytes());
     let license_cache = LicenseCache::new(PathBuf::from(data_dir_path.clone()), license_cache_size, jwt_license_secret.clone());
@@ -148,9 +150,19 @@ let app = Router::new()
     .with_state(shared_state)
     .layer(TraceLayer::new_for_http());
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
-    log::info!("Starting server at http://127.0.0.1:8080");
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
+    log::info!("Starting server at http://0.0.0.0:8080");
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+// check if admins file is available, if not - print error into the log, if yes - print info with admins file path
+fn check_admin_file(path: &str) {
+    let admin_file_path = PathBuf::from(path);
+    if admin_file_path.exists() {
+        log::info!("Admin file found at: {}", admin_file_path.display());
+    } else {
+        log::error!("Admin file NOT found at: {}. Admin functionality might be limited.", admin_file_path.display());
+    }
 }

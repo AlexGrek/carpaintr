@@ -7,3 +7,4 @@
 /node_modules
 /backend-service-rust/data
 carpaintr.zip
+k8s-deploy/secret.yaml
