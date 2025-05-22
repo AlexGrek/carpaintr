@@ -1,4 +1,4 @@
-.PHONY: docker-build docker-push all deploy-service redeploy
+.PHONY: docker-build docker-push all deploy-service redeploy dev frontend backend
 
 NAME?=autolab-api
 IMAGE_NAME?=localhost:5000/$(NAME)
@@ -31,3 +31,16 @@ deploy-service:
 # kubectl apply -f pvc-pv.yaml
 	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/k3s-deployment.yaml
 	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/traefik-ingressroute.yaml
+
+# dev targets
+
+dev:
+	@$(MAKE) frontend &
+	@$(MAKE) backend &
+	wait
+
+frontend:
+	cd carpaintr-front && npm run dev
+
+backend:
+	cd backend-service-rust && cargo watch -x run
