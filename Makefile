@@ -35,12 +35,14 @@ deploy-service:
 # dev targets
 
 dev:
-	@$(MAKE) frontend &
-	@$(MAKE) backend &
-	wait
-
-frontend:
-	cd carpaintr-front && npm run dev
-
-backend:
-	cd backend-service-rust && cargo watch -x run
+	@bash -c '\
+		if [ ! -d carpaintr-front/node_modules ]; then \
+			echo "Installing frontend dependencies..."; \
+			cd carpaintr-front && npm install || exit $$?; \
+			cd ..; \
+		fi; \
+		echo "Starting frontend and backend..."; \
+		trap "echo Killing...; kill 0" SIGINT; \
+		(cd carpaintr-front && npm run dev) & \
+		(cd backend-service-rust && cargo watch -x run) & \
+		wait'
