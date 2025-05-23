@@ -7,8 +7,8 @@ use std::{path::PathBuf, sync::Arc};
 const CARS: &'static str = "cars";
 const GLOBAL: &'static str = "global";
 const SEASONS_YAML: &'static str = "seasons.yaml";
-const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
-const COLORS_YAML: &'static str = "colors.yaml";
+// const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
+// const COLORS_YAML: &'static str = "colors.yaml";
 
 pub async fn list_car_makes(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user

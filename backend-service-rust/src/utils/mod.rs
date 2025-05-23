@@ -4,7 +4,7 @@ use tokio::fs;
 use tokio::io;
 use std::path::Path;
 
-const COMMON: &'static str = "common";
+pub const COMMON: &'static str = "common";
 
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
@@ -65,16 +65,26 @@ pub async fn list_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &
     return list_unique_file_names_two(&user_dir, &common_dir).await;
 }
 
-pub async fn get_file_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath_to_file: &P) -> io::Result<String> {
-    let user_file_path = user_directory_from_email(data_dir, email)?.join(subpath_to_file);
-    let common_file_path = common_directory(data_dir)?.join(subpath_to_file);
+// pub async fn get_file_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath_to_file: &P) -> io::Result<String> {
+//     let user_file_path = user_directory_from_email(data_dir, email)?.join(subpath_to_file);
+//     let common_file_path = common_directory(data_dir)?.join(subpath_to_file);
 
-    if fs::metadata(&user_file_path).await.is_ok() {
+//     if fs::metadata(&user_file_path).await.is_ok() {
+//         // File exists in user directory, read from there
+//         fs::read_to_string(user_file_path).await
+//     } else if fs::metadata(&common_file_path).await.is_ok() {
+//         // File doesn't exist in user directory, check common directory
+//         fs::read_to_string(common_file_path).await
+//     } else {
+//         // File not found in either location
+//         Err(io::Error::new(io::ErrorKind::NotFound, "File not found in user or common directory"))
+//     }
+// }
+
+pub async fn get_file_by_path<P: AsRef<Path>>(path: &P) -> io::Result<String> {
+    if fs::metadata(&path).await.is_ok() {
         // File exists in user directory, read from there
-        fs::read_to_string(user_file_path).await
-    } else if fs::metadata(&common_file_path).await.is_ok() {
-        // File doesn't exist in user directory, check common directory
-        fs::read_to_string(common_file_path).await
+        fs::read_to_string(path).await
     } else {
         // File not found in either location
         Err(io::Error::new(io::ErrorKind::NotFound, "File not found in user or common directory"))

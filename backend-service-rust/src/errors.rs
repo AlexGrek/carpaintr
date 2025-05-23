@@ -4,6 +4,8 @@ use axum::Json;
 use serde::Serialize;
 use thiserror::Error;
 
+use crate::transactionalfs::TransactionalFsError;
+
 #[derive(Error, Debug)]
 pub enum AppError {
     #[error("Database error")]
@@ -48,6 +50,22 @@ pub enum AppError {
     InternalServerError(String),
     #[error("Bad request: {0}")]
     BadRequest(String)
+}
+
+// Implement the From trait for TransactionalFsError to AppError
+impl From<TransactionalFsError> for AppError {
+    fn from(err: TransactionalFsError) -> Self {
+        match err {
+            TransactionalFsError::Io(e) => AppError::IoError(e),
+            TransactionalFsError::FileNotFound(_) => AppError::FileNotFound, // Map TransactionalFs's specific FileNotFound to AppError's
+            TransactionalFsError::GitCommand(msg) => AppError::InternalServerError(format!("Git command failed: {}", msg)),
+            TransactionalFsError::Path(msg) => AppError::InternalServerError(format!("Path error: {}", msg)),
+            TransactionalFsError::CommitNotFound(hash) => AppError::BadRequest(format!("Git commit not found: {}", hash)), // Might be a bad request if user provided hash
+            TransactionalFsError::GitLogParseError(msg) => AppError::InternalServerError(format!("Git log parsing error: {}", msg)),
+            // If you added a TransactionalFs variant to AppError, it would look like:
+            // _ => AppError::TransactionalFs(err.to_string()),
+        }
+    }
 }
 
 #[derive(Serialize)]
