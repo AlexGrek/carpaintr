@@ -127,7 +127,9 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/list_user_files", get(api::editor_endpoints::get_user_file_list))
                 .route("/list_common_files", get(api::editor_endpoints::get_common_file_list))
                 .route("/read_user_file/{path}", get(api::editor_endpoints::read_user_file))
+                .route("/delete_user_file/{path}", delete(api::editor_endpoints::delete_user_file))
                 .route("/upload_user_file/{path}", post(api::editor_endpoints::upload_user_file))
+                .route("/read_common_file/{path}", get(api::editor_endpoints::read_common_file))
         )
         .layer(from_fn_with_state(
             shared_state.clone(),

@@ -18,7 +18,7 @@ const LoginPage = () => {
         body: JSON.stringify({ email: username, password: password })
       });
 
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         throw new Error('Unauthorized: Incorrect username or password.');
       }
 

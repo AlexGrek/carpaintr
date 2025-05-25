@@ -16,7 +16,7 @@ pub enum AppError {
     JwtError(#[from] jsonwebtoken::errors::Error),
     #[error("Password hashing error")]
     BcryptError(#[from] bcrypt::BcryptError),
-    #[error("I/O error")]
+    #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("File not found")]
     FileNotFound,

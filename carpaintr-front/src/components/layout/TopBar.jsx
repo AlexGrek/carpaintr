@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navbar, Nav, Loader, Message, Stack } from 'rsuite';
+import { Navbar, Nav, Loader, Stack } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/authFetch';
 

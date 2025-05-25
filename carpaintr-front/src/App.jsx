@@ -8,6 +8,8 @@ import CalcPage from './components/pages/CalcPage.jsx';
 import {GlobalCallbacksProvider} from './components/GlobalCallbacksContext.jsx'
 import CabinetPage from './components/pages/CabinetPage.jsx';
 import RegistrationPage from './components/pages/RegistrationPage.jsx';
+import FileEditorPage from './components/pages/FileEditorPage.jsx';
+import UsersDashboard from './components/pages/UsersDashboard.jsx';
 
 
 const HistoryPage = () => <h2>History Page</h2>;
@@ -27,6 +29,8 @@ function App() {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/aboutus" element={<AboutUsPage />} />
           <Route path="/cabinet" element={<CabinetPage />} />
+          <Route path="/fileeditor" element={<FileEditorPage />} />'
+          <Route path="/dashboard" element={<UsersDashboard />} />'
         </Routes>
       </Router>
     </GlobalCallbacksProvider>

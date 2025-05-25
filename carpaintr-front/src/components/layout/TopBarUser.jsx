@@ -3,6 +3,7 @@ import { Navbar, Dropdown, Nav } from 'rsuite';
 import { useNavigate } from "react-router-dom";
 import OffRoundIcon from '@rsuite/icons/OffRound';
 import { logout } from '../../utils/authFetch';
+import './TopBarUser.css';
 
 const TopBarUser = () => {
   const navigate = useNavigate();
@@ -32,10 +33,10 @@ const TopBarUser = () => {
   return (
     <Navbar appearance="inverse" className="top-bar-user" style={{marginBottom: "18pt"}}>
       <Navbar.Brand style={{ margin: '0', padding: 0, paddingLeft: '8pt' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
-          <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" />
-          <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" />
-          <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>autolab</span>
+        <div>
+          {/* <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" /> */}
+          {/* <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" /> */}
+          <span className='topbar-header-brand' onClick={() => navigate('/')}>autolab</span>
         </div>
       </Navbar.Brand>
       <Nav pullRight>

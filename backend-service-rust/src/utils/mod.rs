@@ -82,6 +82,8 @@ pub async fn list_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &
 // }
 
 pub async fn get_file_by_path<P: AsRef<Path>>(path: &P) -> io::Result<String> {
+    let path2 = path.as_ref().to_owned();
+    log::info!("Reading file: {:?}", path2);
     if fs::metadata(&path).await.is_ok() {
         // File exists in user directory, read from there
         fs::read_to_string(path).await
@@ -95,12 +97,9 @@ pub async fn get_file_path_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email
     // Construct the potential path in the user's directory
     let user_file_path = user_directory_from_email(data_dir, email)?.join(subpath_to_file);
 
-    log::warn!("{user_file_path:?}");
-
     // Check if the file exists in the user's directory
     if fs::metadata(&user_file_path).await.is_ok() {
         // File exists in user directory, return that path
-        log::warn!("{user_file_path:?} metadata is OK");
         Ok(user_file_path)
     } else {
         // File doesn't exist in user directory, construct the path in the common directory
@@ -109,7 +108,6 @@ pub async fn get_file_path_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email
         // Check if the file exists in the common directory
         if fs::metadata(&common_file_path).await.is_ok() {
             // File exists in common directory, return that path
-            log::warn!("{common_file_path:?} common is OK");
             Ok(common_file_path)
         } else {
             // File not found in either location

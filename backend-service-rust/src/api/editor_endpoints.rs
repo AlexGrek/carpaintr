@@ -45,7 +45,31 @@ pub async fn read_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let data = get_file_by_path(&user_path.join(sanitize_alphanumeric_and_dashes_and_dots(&path)))
+    let data = get_file_by_path(&user_path.join(&path))
+        .await
+        .map_err(|e| AppError::IoError(e))?;
+    Ok(data)
+}
+
+pub async fn delete_user_file(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path(path): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
+    fs_manager.delete_file(std::path::Path::new(&path), &format!("File {} deleted.", &path)).await?;
+    Ok("File deleted")
+}
+
+pub async fn read_common_file(
+    AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path(path): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    // Read the file content
+    let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
+    let data = get_file_by_path(&user_path.join(&path))
         .await
         .map_err(|e| AppError::IoError(e))?;
     Ok(data)
@@ -60,7 +84,7 @@ pub async fn upload_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Expecting a single file field
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
     let field = multipart
         .next_field()
         .await
@@ -81,6 +105,6 @@ pub async fn upload_user_file(
             &format!("File {:?} updated at {:?}", &path, chrono::Local::now()),
         )
         .await?;
-
-    Ok(Json("License uploaded and validated successfully"))
+    log::info!("File uploaded as {:?} by {:?}", &path, &user_email);
+    Ok(Json("File uploaded and validated successfully"))
 }

@@ -31,7 +31,6 @@ pub async fn get_cars_by(
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
             .map_err(|e| AppError::IoError(e))?;
-    log::warn!("Opening file {cars_path:?}");
     let cars_data = crate::calc::cars::parse_car_yaml(&cars_path)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(Json(cars_data))
