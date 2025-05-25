@@ -7,8 +7,8 @@ import { authFetch } from '../../../utils/authFetch';
 const Header = () => {
     return (
         <header>
-            <nav className="container">
-                <div className="logo">AutoLab</div>
+            <nav className="container landing">
+                <div className="logo">autolab</div>
                 <ul className="nav-links">
                     <li><a href="#features">Features</a></li>
                     <li><a href="#benefits">Benefits</a></li>

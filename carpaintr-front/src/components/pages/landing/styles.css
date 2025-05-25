@@ -14,6 +14,7 @@
 
 .container {
     max-width: 1200px;
+    text-align: center;
     margin: 0 auto;
     padding: 0 20px;
 }
@@ -30,16 +31,18 @@ header {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-nav {
+nav.landing {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
 }
 
 .logo {
     font-size: 1.8rem;
-    font-weight: 800;
     color: #ea580c;
+    font-family: 'nunito', sans-serif;
+    font-size: 28pt;
+    cursor: pointer;
 }
 
 .nav-links {
@@ -193,6 +196,10 @@ nav {
     background: white;
 }
 
+.apps-list {
+    padding: 20pt 0;
+}
+
 .section-header {
     text-align: center;
     margin-bottom: 4rem;
@@ -215,7 +222,7 @@ nav {
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .feature-card {
@@ -226,6 +233,10 @@ nav {
     text-align: center;
     transition: all 0.3s ease;
     border: 1px solid #e5e7eb;
+}
+
+.app-card.feature-card {
+    padding: 1rem;
 }
 
 .feature-card:hover {

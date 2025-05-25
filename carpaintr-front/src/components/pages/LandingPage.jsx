@@ -4,10 +4,7 @@ import TopBar from '../layout/TopBar';
 import AutoLabLanding from './landing/Landing';
 
 const LandingPage = () => (
-  <Container>
-    <TopBar />
     <AutoLabLanding />
-  </Container>
 );
 
 export default LandingPage;

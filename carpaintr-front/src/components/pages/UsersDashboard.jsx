@@ -58,11 +58,10 @@ const DashboardNavigationButtons = () => {
     ];
 
     return (
-        <section className="features" id="features">
+        <section className="apps-list">
             <div className="container">
                 <div className="section-header">
                     <h2>Available apps</h2>
-                    <p>Complete business management solution combining AI-powered pricing with intelligent task tracking</p>
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (
@@ -83,7 +82,7 @@ const DashboardNavigationButtons = () => {
 const FeatureCard = ({ icon, title, description, link }) => {
     const nav = useNavigate();
     return (
-        <div className="feature-card" style={{cursor: 'pointer'}} onClick={() => nav(link)}>
+        <div className="feature-card app-card" style={{cursor: 'pointer'}} onClick={() => nav(link)}>
             <div className="feature-icon">{icon}</div>
             <h3>{title}</h3>
             <p>{description}</p>

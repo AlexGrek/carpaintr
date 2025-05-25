@@ -50,9 +50,9 @@ const RegistrationPage = () => {
 
   return (
     // Container to center the form on the page
-    <Container style={{ maxWidth: 400, margin: 'auto', padding: '2rem', marginTop: '8em' }}>
+    <Container className='auth-page'>
       {/* Panel to give a bordered look to the form area */}
-      <Panel bordered>
+      <Panel style={{ maxWidth: 400, margin: 'auto', padding: '2rem', marginTop: '8em', backgroundColor: 'white' }} bordered>
         {/* rsuite Form component with fluid layout */}
         <Form fluid>
           <img src="/autolab_large_bw.png" alt="CarPaintr Logo" height="200pt" />

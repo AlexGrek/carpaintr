@@ -36,7 +36,7 @@ const TopBarUser = () => {
         <div>
           {/* <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" /> */}
           {/* <img src="/autolab_large.png" alt="CarPaintr Logo" height="100pt" /> */}
-          <span className='topbar-header-brand' onClick={() => navigate('/')}>autolab</span>
+          <span className='topbar-header-brand' onClick={() => navigate('/dashboard')}>autolab</span>
         </div>
       </Navbar.Brand>
       <Nav pullRight>

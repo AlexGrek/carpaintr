@@ -37,8 +37,8 @@ const LoginPage = () => {
   };
 
   return (
-    <Container style={{ maxWidth: 400, margin: 'auto', padding: '2rem', marginTop: '8em' }}>
-      <Panel bordered><Form fluid>
+    <Container className='auth-page' >
+      <Panel style={{ maxWidth: 400, margin: 'auto', padding: '2rem', marginTop: '8em', backgroundColor: 'white' }} bordered><Form fluid>
         <img src="/autolab_large_bw.png" alt="CarPaintr Logo" height="200pt" />
         <Form.Group>
           <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
