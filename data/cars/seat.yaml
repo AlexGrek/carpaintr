@@ -8,6 +8,8 @@
   gen: ["1993-2002", "2002-2008", "2008-2017", "2017-"]
   is_suv: false
   estimated_price: 20000
+  euro_class: "B"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "sedan", "wagon"]
 
 "leon":
   body: ["hatchback", "st", "cupra"]
@@ -15,6 +17,8 @@
   gen: ["1999-2005", "2005-2012", "2012-2020", "2020-"]
   is_suv: false
   estimated_price: 28000
+  euro_class: "C"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "wagon"]
 
 "toledo":
   body: ["sedan", "liftback"]
@@ -22,6 +26,8 @@
   gen: ["1991-1999", "1999-2004", "2004-2009", "2012-2019"]
   is_suv: false
   estimated_price: 20000
+  euro_class: "C"
+  euro_body_types: ["sedan", "liftback"]
 
 # SUVs and Crossovers
 "arona":
@@ -30,6 +36,8 @@
   gen: ["2017-"]
   is_suv: true
   estimated_price: 25000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
 
 "ateca":
   body: ["suv"]
@@ -37,6 +45,8 @@
   gen: ["2016-"]
   is_suv: true
   estimated_price: 30000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
 
 "tarraco":
   body: ["suv"]
@@ -44,6 +54,8 @@
   gen: ["2018-"]
   is_suv: true
   estimated_price: 35000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
 
 # Performance Models
 "cupra":
@@ -53,6 +65,8 @@
   gen: ["2020-"]
   is_suv: false
   estimated_price: 40000
+  euro_class: "D"
+  euro_body_types: ["hatchback 5 doors", "suv 5 doors"]
 
 # Electric and Hybrid Models
 "born":
@@ -62,6 +76,8 @@
   is_suv: false
   powertrain: "electric"
   estimated_price: 45000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
 
 "el-born":
   body: ["hatchback"]
@@ -70,6 +86,8 @@
   is_suv: false
   powertrain: "electric"
   estimated_price: 45000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
 
 # Smaller Models
 "mii":
@@ -78,6 +96,8 @@
   gen: ["2011-2021"]
   is_suv: false
   estimated_price: 18000
+  euro_class: "A"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors"]
 
 "altea":
   body: ["mpv", "freetrack"]
@@ -85,6 +105,8 @@
   gen: ["2004-2015"]
   is_suv: false
   estimated_price: 22000
+  euro_class: "C"
+  euro_body_types: ["wagon", "suv 5 doors"]
 
 # Historical Models
 "cordoba":
@@ -93,6 +115,8 @@
   gen: ["1993-2002"]
   is_suv: false
   estimated_price: 15000
+  euro_class: "B"
+  euro_body_types: ["sedan", "coupe"]
 
 "exeo":
   body: ["sedan", "st"]
@@ -100,3 +124,5 @@
   gen: ["2008-2013"]
   is_suv: false
   estimated_price: 25000
+  euro_class: "D"
+  euro_body_types: ["sedan", "wagon"]

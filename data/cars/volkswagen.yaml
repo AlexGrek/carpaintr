@@ -15,6 +15,8 @@
     mk7: 30000
     mk8: 35000
   estimated_price: 30000
+  euro_class: "C"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "wagon", "cabriolet"]
 
 "polo":
   body: ["hatchback", "sedan"]
@@ -27,6 +29,8 @@
     mk6: 20000
     mk7: 22000
   estimated_price: 20000
+  euro_class: "B"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "sedan"]
 
 "passat":
   body: ["sedan", "variant", "alltrack"]
@@ -39,6 +43,8 @@
     b7: 35000
     b8: 38000
   estimated_price: 35000
+  euro_class: "D"
+  euro_body_types: ["sedan", "wagon"]
 
 # SUVs and Crossovers
 "tiguan":
@@ -50,6 +56,8 @@
     first_gen: 32000
     second_gen: 38000
   estimated_price: 35000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
 
 "touareg":
   body: ["suv"]
@@ -61,6 +69,8 @@
     second_gen: 55000
     third_gen: 65000
   estimated_price: 55000
+  euro_class: "SUV MAX"
+  euro_body_types: ["suv 5 doors"]
 
 "t-roc":
   body: ["suv", "cabriolet"]
@@ -70,6 +80,8 @@
   price:
     base_model: 28000
   estimated_price: 30000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors", "cabriolet"]
 
 "id.4":
   body: ["suv"]
@@ -80,6 +92,8 @@
   price:
     base_model: 45000
   estimated_price: 45000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
 
 # Luxury/Executive Cars
 "arteon":
@@ -90,6 +104,8 @@
   price:
     base_model: 45000
   estimated_price: 45000
+  euro_class: "E"
+  euro_body_types: ["liftback", "wagon"]
 
 "cc":
   body: ["coupe"]
@@ -99,6 +115,8 @@
   price:
     base_model: 35000
   estimated_price: 35000
+  euro_class: "D"
+  euro_body_types: ["coupe"]
 
 # Compact MPVs and Practical Cars
 "touran":
@@ -110,6 +128,8 @@
     first_gen: 28000
     second_gen: 32000
   estimated_price: 30000
+  euro_class: "C"
+  euro_body_types: ["wagon"]
 
 "golf-sportsvan":
   body: ["mpv"]
@@ -119,6 +139,8 @@
   price:
     base_model: 26000
   estimated_price: 26000
+  euro_class: "C"
+  euro_body_types: ["wagon"]
 
 # Electric Models
 "id.3":
@@ -130,6 +152,8 @@
   price:
     base_model: 35000
   estimated_price: 38000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
 
 # Performance Models
 "golf-gti":
@@ -143,6 +167,8 @@
     mk7: 40000
     mk8: 45000
   estimated_price: 40000
+  euro_class: "C"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors"]
 
 "golf-r":
   body: ["hatchback"]
@@ -155,6 +181,8 @@
     mk7: 50000
     mk8: 55000
   estimated_price: 50000
+  euro_class: "C"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors"]
 
 # Commercial/Utility Vehicles
 "transporter":
@@ -165,3 +193,5 @@
   price:
     base_model: 30000
   estimated_price: 35000
+  euro_class: "F" # Commercial vans are usually larger, falling into F or special categories
+  euro_body_types: ["wagon"] # Interpreting "van", "kombi", "camper" as variations of wagon for Euro body types.
