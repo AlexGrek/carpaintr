@@ -27,7 +27,7 @@ const LoginPage = () => {
       const data = await response.json();
       if (data.token) {
         localStorage.setItem('authToken', data.token); // Store the token in localStorage
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toaster.push(<Message type="error">{error.message}</Message>, { placement: 'topCenter' });
