@@ -1,0 +1,231 @@
+{
+  "rows": [
+    [
+        {
+        "hex": "#FFFFFF",
+        "name_eng": "White",
+        "name_ukr": "Білий"
+      }
+    ],
+    [
+      {
+        "hex": "#D3D3D3",
+        "name_eng": "Light Gray",
+        "name_ukr": "Світло-Сірий"
+      },
+      {
+        "hex": "#808080",
+        "name_eng": "Gray",
+        "name_ukr": "Сірий"
+      },
+      {
+        "hex": "#A9A9A9",
+        "name_eng": "Dark Gray",
+        "name_ukr": "Темно-Сірий"
+      },
+      {
+        "hex": "#000000",
+        "name_eng": "Black",
+        "name_ukr": "Чорний"
+      }
+    ],
+    [
+      {
+        "hex": "#FFFF00",
+        "name_eng": "Bright Yellow",
+        "name_ukr": "Яскраво-Жовтий"
+      },
+      {
+        "hex": "#FFFF00",
+        "name_eng": "Yellow",
+        "name_ukr": "Жовтий"
+      },
+      {
+        "hex": "#FFFACD",
+        "name_eng": "Pale Yellow",
+        "name_ukr": "Блідий-Жовтий"
+      },
+      {
+        "hex": "#C88100",
+        "name_eng": "Mustard",
+        "name_ukr": "Гірчичний"
+      }
+    ],
+    [
+      {
+        "hex": "#F5F5DC",
+        "name_eng": "Bright Beige",
+        "name_ukr": "Яскраво-бежовий"
+      },
+      {
+        "hex": "#F5F5DC",
+        "name_eng": "Beige",
+        "name_ukr": "Бежовий"
+      },
+      {
+        "hex": "#F5F5DC",
+        "name_eng": "Pale Beige",
+        "name_ukr": "Блідий-Бежовий"
+      },
+      {
+        "hex": "#A67B5B",
+        "name_eng": "Dark Beige",
+        "name_ukr": "Темно-Бежовий"
+      }
+    ],
+    [
+      {
+        "hex": "#FFA500",
+        "name_eng": "Bright Orange",
+        "name_ukr": "Яскраво-оранжовий"
+      },
+      {
+        "hex": "#FFA500",
+        "name_eng": "Orange",
+        "name_ukr": "Оранжовий"
+      },
+      {
+        "hex": "#FFDEAD",
+        "name_eng": "Pale Orange",
+        "name_ukr": "Блідий- Оранж"
+      },
+      {
+        "hex": "#B22222",
+        "name_eng": "Brick",
+        "name_ukr": "Цегляний"
+      }
+    ],
+    [
+      {
+        "hex": "#FF0000",
+        "name_eng": "Bright Red",
+        "name_ukr": "Яскраво-Червоний"
+      },
+      {
+        "hex": "#FF0000",
+        "name_eng": "Red",
+        "name_ukr": "Червоний"
+      },
+      {
+        "hex": "#DE3163",
+        "name_eng": "Cherry",
+        "name_ukr": "Вишневий"
+      },
+      {
+        "hex": "#A52A2A",
+        "name_eng": "Brown",
+        "name_ukr": "Коричневий"
+      }
+    ],
+    [
+      {
+        "hex": "#EE82EE",
+        "name_eng": "Bright Violet",
+        "name_ukr": "Яскраво-Фіолет"
+      },
+      {
+        "hex": "#EE82EE",
+        "name_eng": "Violet",
+        "name_ukr": "Фіолет"
+      },
+      {
+        "hex": "#8A2BE2",
+        "name_eng": "Violet-Blue",
+        "name_ukr": "Фіолетово-синій"
+      },
+      {
+        "hex": "#4B0082",
+        "name_eng": "Dark Violet",
+        "name_ukr": "Темно-Фіолет"
+      }
+    ],
+    [
+      {
+        "hex": "#87CEFA",
+        "name_eng": "Bright Blue",
+        "name_ukr": "Яскраво-голубий"
+      },
+      {
+        "hex": "#ADD8E6",
+        "name_eng": "Blue",
+        "name_ukr": "Голубий"
+      },
+      {
+        "hex": "#B0E0E6",
+        "name_eng": "Pale Blue",
+        "name_ukr": "Блідий-Голубий"
+      },
+      {
+        "hex": "#6A5ACD",
+        "name_eng": "Gray-Blue",
+        "name_ukr": "Сіро-Голубий"
+      }
+    ],
+    [
+      {
+        "hex": "#0000FF",
+        "name_eng": "Bright Blue",
+        "name_ukr": "Яскраво-синій"
+      },
+      {
+        "hex": "#0000FF",
+        "name_eng": "Blue",
+        "name_ukr": "Синій"
+      },
+      {
+        "hex": "#ADD8E6",
+        "name_eng": "Pale Blue",
+        "name_ukr": "Блідий-Синій"
+      },
+      {
+        "hex": "#00008B",
+        "name_eng": "Dark Blue",
+        "name_ukr": "Темно-Синій"
+      }
+    ],
+    [
+      {
+        "hex": "#7CFC00",
+        "name_eng": "Bright Lime",
+        "name_ukr": "Яскраво–Салатовий"
+      },
+      {
+        "hex": "#7CFC00",
+        "name_eng": "Lime",
+        "name_ukr": "Салатовий"
+      },
+      {
+        "hex": "#ADFF2F",
+        "name_eng": "Pale Lime",
+        "name_ukr": "Блідий-Салатовий"
+      },
+      {
+        "hex": "#6B8E23",
+        "name_eng": "Olive",
+        "name_ukr": "Оливковий"
+      }
+    ],
+    [
+      {
+        "hex": "#00FF00",
+        "name_eng": "Bright Green",
+        "name_ukr": "Яскраво-зелений"
+      },
+      {
+        "hex": "#008000",
+        "name_eng": "Green",
+        "name_ukr": "Зелений"
+      },
+      {
+        "hex": "#90EE90",
+        "name_eng": "Pale Green",
+        "name_ukr": "Блідий зелений"
+      },
+      {
+        "hex": "#006400",
+        "name_eng": "Dark Green",
+        "name_ukr": "Темно-зелений"
+      }
+    ]
+  ]
+}

@@ -10,8 +10,9 @@ import ColumnsIcon from '@rsuite/icons/Columns';
 import { useGlobalCallbacks } from "./GlobalCallbacksContext";
 import './CarBodyPartsSelector.css'
 import GridDraw from "./GridDraw";
+import { authFetch, authFetchYaml } from '../utils/authFetch';
 
-const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
+const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
     // const { showReportIssueForm } = useGlobalCallbacks();
     const [unselectedParts, setUnselectedParts] = useState([
         "Hood",
@@ -26,6 +27,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
         "Right Front Fender",
     ]);
 
+    const [availableParts, setAvailableParts] = useState([]);
+
     const carPartsTranslations = {
         "Hood": "Капот",
         "Front Bumper": "Передній бампер",
@@ -38,6 +41,31 @@ const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
         "Left Front Fender": "Ліве переднє крило",
         "Right Front Fender": "Праве переднє крило"
     };
+
+    useEffect(() => {
+        if (Array.isArray(availableParts))
+            setUnselectedParts(availableParts.map(part => part["Список деталь рус"]))
+    }, [availableParts])
+
+    useEffect(() => {
+        if (carClass == null || body == null)
+            return;
+        authFetch(`/api/v1/user/carparts/${carClass}/${body}`)
+            .then(response => {
+                if (response.status === 403) {
+                    navigate("/cabinet");
+                    return; // stop here, don't try to parse JSON
+                }
+                if (!response.ok) {
+                    console.error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) setAvailableParts(data); // only set if data was parsed
+            })
+            .catch((err) => alert(err));
+    }, [body, carClass]);
 
 
     const [currentPart, setCurrentPart] = useState(null);
@@ -65,14 +93,14 @@ const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
     const generateInitialGrid = (rows, cols) => {
         const grid = [];
         for (let y = 0; y < rows; y++) {
-          const row = [];
-          for (let x = 0; x < cols; x++) {
-            row.push(Math.random() < 0.1 ? -1 : 0); // 10% chance to be disabled (-1), otherwise 0
-          }
-          grid.push(row);
+            const row = [];
+            for (let x = 0; x < cols; x++) {
+                row.push(Math.random() < 0.1 ? -1 : 0); // 10% chance to be disabled (-1), otherwise 0
+            }
+            grid.push(row);
         }
         return grid;
-      };
+    };
 
     const handlePartSelect = (part) => {
         const newPart = {
@@ -111,7 +139,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
         if (currentPart.action != part.action) {
             // we are updating first page, so...
             setDrawerTab(1)
-            console.log("drawer next tab");
         }
         setCurrentPart(part)
         // console.log(`Update!\n${JSON.stringify(part)}`)
@@ -196,14 +223,14 @@ const CarBodyPartsSelector = ({ onChange, selectedParts }) => {
                                     {drawerTab == 1 && <div>
                                         <p><i>{actions[currentPart.action]}</i></p>
                                         {(currentPart.action === "paint_one_side" || currentPart.action === "paint_two_sides") && <div>
-                                            <GridDraw gridData={currentPart.grid} onGridChange={(value) => updateCurrentPart({ ...currentPart, grid: value })}/>
-                                        <SelectionInput name="Поза зоною ремонту" values={Object.keys(outsideRepairZoneOptions)} labels={outsideRepairZoneOptions} selectedValue={currentPart.outsideRepairZone} onChange={(value) => updateCurrentPart({ ...currentPart, outsideRepairZone: value })} />
+                                            <GridDraw gridData={currentPart.grid} onGridChange={(value) => updateCurrentPart({ ...currentPart, grid: value })} />
+                                            <SelectionInput name="Поза зоною ремонту" values={Object.keys(outsideRepairZoneOptions)} labels={outsideRepairZoneOptions} selectedValue={currentPart.outsideRepairZone} onChange={(value) => updateCurrentPart({ ...currentPart, outsideRepairZone: value })} />
                                         </div>}
-                                        <Divider/>
+                                        <Divider />
                                         <Button color='green' appearance="primary" block onClick={() => setDrawerTab(2)}>
-                                                Розрахувати вартість
-                                            </Button>
-                                            <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
+                                            Розрахувати вартість
+                                        </Button>
+                                        <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
                                     </div>}
                                     {drawerTab == 2 && <div>
 

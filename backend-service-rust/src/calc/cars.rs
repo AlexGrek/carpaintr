@@ -10,7 +10,7 @@ use csv::ReaderBuilder;
 // Define the structure to represent car data
 // This handles the fields we care about (estimated_price, body, is_suv)
 // while ignoring other fields
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CarData {
     body: Vec<String>,
     #[serde(default)]
@@ -32,18 +32,33 @@ pub fn parse_car_yaml<P: AsRef<Path>>(path: P) -> Result<HashMap<String, CarData
     Ok(car_data)
 }
 
+pub fn body_type_into_t1_entry(s: &str) -> String {
+    match s {
+        "wagon" => "УНИВЕРСАЛ ".into(),
+        "pickup" => "ПИКАП".into(),
+        "sedan" => "СЕДАН".into(),
+        "liftback" => "ЛИФТБЭК 5дв".into(),
+        "hatchback 5 doors" => "ХЕТЧБЕК 5 дверей".into(),
+        "hatchback 3 doors" => "ХЕТЧБЕК 3 двери".into(),
+        "suv 3 doors" => "ВНЕДОРОЖНИК 3 дверный".into(),
+        "suv 5 doors" => "ВНЕДОРОЖНИК 5 дверный".into(),
+        "coupe" => "КУПЕ".into(),
+        x => x.into(),
+    }
+}
+
 // Function to parse the CSV file
 
 // Define a struct that matches your CSV structure
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CarPart {
-    #[serde(rename = "Список Класс ")]
+    #[serde(rename = "Список Класс")]
     pub class: String,
     
     #[serde(rename = "Список Тип")]
     pub type_field: String,
     
-    #[serde(rename = "Список деталь рус.")]
+    #[serde(rename = "Список деталь рус")]
     pub detail_rus: String,
     
     #[serde(rename = "Список деталь  укр")]
@@ -61,22 +76,22 @@ pub struct CarPart {
     #[serde(rename = "с чего сделан")]
     pub material: String,
     
-    #[serde(rename = "**• Ремонт з зовнішнім фарбуванням  ")]
+    #[serde(rename = "Ремонт з зовнішнім фарбуванням")]
     pub repair_external_paint: String,
     
-    #[serde(rename = "**• Ремонт з фарбуваням 2 сторони")]
+    #[serde(rename = "Ремонт з фарбуваням 2 сторони")]
     pub repair_two_side_paint: String,
     
-    #[serde(rename = "• Ремонт без фарбування  ")]
+    #[serde(rename = "Ремонт без фарбування")]
     pub repair_no_paint: String,
     
-    #[serde(rename = "• Заміна  оригінал деталь з фарбуванням")]
+    #[serde(rename = "Заміна  оригінал деталь з фарбуванням")]
     pub replace_original_with_paint: String,
     
-    #[serde(rename = "• Заміна Не оригінал деталь з фарбуванням")]
+    #[serde(rename = "Заміна Не оригінал деталь з фарбуванням")]
     pub replace_non_original_with_paint: String,
     
-    #[serde(rename = "• Полірування")]
+    #[serde(rename = "Полірування")]
     pub polishing: String,
 }
 

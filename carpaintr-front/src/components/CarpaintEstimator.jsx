@@ -8,18 +8,39 @@ import { useGlobalCallbacks } from "./GlobalCallbacksContext";
 import ColorGrid from './ColorGrid';
 import { useNavigate } from "react-router-dom";
 
+const CAR_CLASS_LIST = [
+    "A", "B", "C", "D", "E", "F", "SUV 1", "SUV 2", "SUV MAX"
+]
+
+const CAR_BODY_TYPES_LIST = [
+    "hatchback 3 doors",
+    "hatchback 5 doors",
+    "sedan", "cabriolet", "liftback",
+    "wagon", "coupe",
+    "suv 5 doors",  "suv 3 doors",
+    "pickup"
+]
+
 // Parent component to hold only selected values
 const CarPaintEstimator = () => {
     const { showReportIssueForm } = useGlobalCallbacks();
     const [make, setMake] = useState(null);
     const [model, setModel] = useState(null);
     const [year, setYear] = useState(null);
+    const [carClass, setCarClass] = useState(null);
     const [bodyType, setBodyType] = useState(null);
     const [color, setColor] = useState(null);
     const [selectedParts, setSelectedParts] = useState([]);
     const [activePanel, setActivePanel] = useState(1);
     const [paintType, setPaintType] = useState(null);
 
+    const [typeclass, setTypeclass] = useState(null);
+
+    useEffect(() => {
+        if (bodyType == null) {
+            return;
+        }
+    }, [bodyType])
 
     const activeKey = () => {
         if (make != null && year != null && model != null) {
@@ -49,8 +70,8 @@ const CarPaintEstimator = () => {
                 </Button>
             </Stack>
             <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(ev, a) => setActivePanel(ev)}>
-                <Panel header={year == null ? "Автомобіль" : `${make} ${model} ${year}`} eventKey={1}>
-                    <VehicleSelect selectedBodyType={bodyType} selectedMake={make} selectedModel={model} setMake={setMake} setBodyType={setBodyType} setModel={setModel} setYear={handleSetYear} />
+                <Panel header={year == null ? "Автомобіль" : `${make} ${model} ${year} / ${carClass} ${bodyType}`} eventKey={1}>
+                    <VehicleSelect selectedBodyType={bodyType} carclass={carClass} setCarClass={setCarClass} selectedMake={make} selectedModel={model} setMake={setMake} setBodyType={setBodyType} setModel={setModel} setYear={handleSetYear} />
                 </Panel>
                 <Panel header="Колір та тип фарби" eventKey={2}>
                     <ColorPicker setColor={setColor} selectedColor={color} />
@@ -60,7 +81,7 @@ const CarPaintEstimator = () => {
                     <Button onClick={() => setActivePanel(3)} disabled={paintType == null || color == null} color='green' appearance='primary'>Прийняти</Button>
                 </Panel>
                 <Panel header="Роботи" eventKey={3}>
-                    {bodyType != null && <CarBodyPartsSelector selectedParts={selectedParts} onChange={setSelectedParts} />}
+                    {bodyType != null && <CarBodyPartsSelector selectedParts={selectedParts} onChange={setSelectedParts} carClass={carClass} body={bodyType} />}
                 </Panel>
                 <Panel header="Додатково" eventKey={4}>
                     <CurrentDateDisplay />
@@ -71,7 +92,7 @@ const CarPaintEstimator = () => {
 };
 
 // 1. Vehicle Select Component
-const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear }) => {
+const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear, carclass, setCarClass }) => {
     const [makes, setMakes] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
@@ -126,6 +147,7 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
         console.log(`Model object: ${JSON.stringify(models[selectedModel])}`)
         if (models[selectedModel] != undefined) {
             setBodyTypes(models[selectedModel]["euro_body_types"])
+            setCarClass(models[selectedModel]["euro_class"])
         } else {
             setBodyTypes([])
             setBodyType(null)
@@ -146,12 +168,23 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
                 {selectedModel != null && <SelectionInput name="Тип кузова" selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder="Select Body Type" />}
             </Tabs.Tab>
             <Tabs.Tab eventKey="2" title="Type/Class">
-                <Placeholder />
+                <SelectPicker
+                data={CAR_CLASS_LIST.map((i) => ({ label: i, value: i }))}
+                onSelect={setCarClass}
+                value={carclass}
+                placeholder="КЛАС"
+                />
+                <SelectPicker
+                data={CAR_BODY_TYPES_LIST.map((i) => ({ label: i, value: i }))}
+                onSelect={setBodyType}
+                value={selectedBodyType}
+                placeholder="ТИП КУЗОВА"
+                />
             </Tabs.Tab>
 
         </Tabs>
             <SelectPicker
-                disabled={selectedModel == null}
+                disabled={!(selectedModel != null || (carclass != null && selectedBodyType != null))}
                 data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
                 onSelect={setYear}
                 placeholder="Рік випуску"
@@ -192,21 +225,21 @@ const ColorPicker = ({ setColor, selectedColor }) => {
 
     useEffect(() => {
         let fetchData = async () => {
-            let data = await authFetchYaml('/api/v1/user/global/colors.yaml')
+            let data = await authFetchYaml('/api/v1/user/global/colors.json')
             setBaseColors(data)
         }
         fetchData()
     }, []);
 
-    const displayColors = Object.keys(baseColors).map((key) => ({
-        hex: baseColors[key].hex,
-        colorName: key,
-        id: key,
-    })).sort((a, b) => a.hex.localeCompare(b.hex));
+    if (baseColors.rows == undefined) {
+        return <p/>
+    }
+
+    const displayColors = baseColors.rows
 
     return (
         <div>
-            <ColorGrid colors={displayColors} selectedColor={selectedColor} onChange={setColor} />
+            {displayColors.map((subgrid) => <ColorGrid colors={subgrid} selectedColor={selectedColor} onChange={setColor} />)}
         </div>
     );
 };
