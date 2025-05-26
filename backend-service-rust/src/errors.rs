@@ -95,6 +95,8 @@ impl IntoResponse for AppError {
             message: self.to_string(),
         });
 
+        log::warn!("Error response sent: {}", self.to_string());
+
         (status_code, body).into_response()
     }
 }

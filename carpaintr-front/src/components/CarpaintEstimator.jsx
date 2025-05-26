@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack } from 'rsuite';
+import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack, Tabs, Placeholder } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'
 import { Panel, PanelGroup, Toggle } from 'rsuite';
@@ -84,22 +84,22 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
     }
 
     useEffect(() => {
-    authFetch('/api/v1/user/carmakes')
-        .then(response => {
-            if (response.status === 403) {
-                navigate("/cabinet");
-                return; // stop here, don't try to parse JSON
-            }
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data) setMakes(data); // only set if data was parsed
-        })
-        .catch(handleError);
-}, []);
+        authFetch('/api/v1/user/carmakes')
+            .then(response => {
+                if (response.status === 403) {
+                    navigate("/cabinet");
+                    return; // stop here, don't try to parse JSON
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) setMakes(data); // only set if data was parsed
+            })
+            .catch(handleError);
+    }, []);
 
     useEffect(() => {
         setBodyTypes([])
@@ -125,7 +125,7 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
         console.log(`Model: ${selectedModel}`)
         console.log(`Model object: ${JSON.stringify(models[selectedModel])}`)
         if (models[selectedModel] != undefined) {
-            setBodyTypes(models[selectedModel]["body"])
+            setBodyTypes(models[selectedModel]["euro_body_types"])
         } else {
             setBodyTypes([])
             setBodyType(null)
@@ -139,10 +139,17 @@ const VehicleSelect = ({ selectedBodyType, setBodyType, selectedMake, selectedMo
     }
 
     return (
-        <div>
-            <SelectionInput name="Марка" values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder="Select Make" />
-            {selectedMake != null && <SelectionInput name="Модель" selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder="Select Model" />}
-            {selectedModel != null && <SelectionInput name="Тип кузова" selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder="Select Model" />}
+        <div><Tabs defaultActiveKey="1" appearance="pills">
+            <Tabs.Tab eventKey="1" title="Models" style={{width: "100%"}}>
+                <SelectionInput name="Марка" values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder="Select Make" />
+                {selectedMake != null && <SelectionInput name="Модель" selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder="Select Model" />}
+                {selectedModel != null && <SelectionInput name="Тип кузова" selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder="Select Body Type" />}
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="2" title="Type/Class">
+                <Placeholder />
+            </Tabs.Tab>
+
+        </Tabs>
             <SelectPicker
                 disabled={selectedModel == null}
                 data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
@@ -187,9 +194,9 @@ const ColorPicker = ({ setColor, selectedColor }) => {
         let fetchData = async () => {
             let data = await authFetchYaml('/api/v1/user/global/colors.yaml')
             setBaseColors(data)
-            }
+        }
         fetchData()
-        }, []);
+    }, []);
 
     const displayColors = Object.keys(baseColors).map((key) => ({
         hex: baseColors[key].hex,

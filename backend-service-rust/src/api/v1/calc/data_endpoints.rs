@@ -6,6 +6,7 @@ use std::{path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
 const GLOBAL: &'static str = "global";
+const T1: &'static str = "tables/t1.csv";
 const SEASONS_YAML: &'static str = "seasons.yaml";
 // const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
 // const COLORS_YAML: &'static str = "colors.yaml";
@@ -34,6 +35,26 @@ pub async fn get_cars_by(
     let cars_data = crate::calc::cars::parse_car_yaml(&cars_path)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(Json(cars_data))
+}
+
+pub async fn get_car_parts_by_type_class(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path(class): axum::extract::Path<String>,
+    axum::extract::Path(body_type): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    let file_path = PathBuf::from(&CARS).join(&T1);
+    let cars_path =
+        crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
+            .await
+            .map_err(|e| AppError::IoError(e))?;
+    let cars_data = crate::calc::cars::parse_csv_t1(&cars_path)
+        .map_err(|e| AppError::InternalServerError(e.to_string()))?;
+    let parts_lines: Vec<&crate::calc::cars::CarPart> = cars_data.iter().filter(|fld| fld.class == class && fld.type_field == body_type).collect();
+    if parts_lines.len() != 1 {
+        return Err(AppError::InvalidData(format!("Data for class {} and body type {} found: {}", &class, &body_type, parts_lines.len())));
+    }
+    Ok(Json(parts_lines[1].detail_rus.clone()))
 }
 
 pub async fn get_global_file(

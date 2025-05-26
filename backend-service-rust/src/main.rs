@@ -116,6 +116,7 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))
                 .route("/global/{path}", get(api::v1::calc::data_endpoints::get_global_file))
                 .route("/carmodels/{maker}", get(api::v1::calc::data_endpoints::get_cars_by))
+                .route("/carparts/{class}/{body_type}", get(api::v1::calc::data_endpoints::get_car_parts_by_type_class))
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     license_expiry_middleware,
