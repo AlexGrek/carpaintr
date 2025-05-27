@@ -7,6 +7,8 @@ import CarBodyPartsSelector from './CarBodyPartsSelector';
 import { useGlobalCallbacks } from "./GlobalCallbacksContext";
 import ColorGrid from './ColorGrid';
 import { useNavigate } from "react-router-dom";
+import Trans from '../localization/Trans';
+import { useLocale } from '../localization/LocaleContext';
 
 const CAR_CLASS_LIST = [
     "A", "B", "C", "D", "E", "F", "SUV 1", "SUV 2", "SUV MAX"

@@ -5,6 +5,8 @@ import { Panel, PanelGroup } from 'rsuite';
 import ChangePasswordMenu from '../ChangePasswordMenu';
 import ClientLicenseListing from '../ClientLicenseListing';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
+import Trans from '../../localization/Trans';
+import { useLocale } from '../../localization/LocaleContext';
 
 const CabinetPage = () => {
 

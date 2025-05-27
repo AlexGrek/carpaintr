@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
+import Trans from '../../localization/Trans';
+import { useLocale } from '../../localization/LocaleContext';
 
 const RegistrationPage = () => {
   // State for email, password, and loading status

@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Form, Button, Schema, Message } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
+import Trans from '../localization/Trans';
+import { useLocale } from '../localization/LocaleContext';
 
 const { StringType } = Schema.Types;
 

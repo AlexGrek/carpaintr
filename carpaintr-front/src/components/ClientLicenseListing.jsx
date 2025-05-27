@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Panel, Grid, Row, Col, Loader, Tag } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
+import Trans from '../localization/Trans';
+import { useLocale } from '../localization/LocaleContext';
 
 const ClientLicenseListing = () => {
     const [licenses, setLicenses] = useState([]);

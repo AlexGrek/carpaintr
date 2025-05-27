@@ -3,12 +3,15 @@ import { Input, Message, Loader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/authFetch';
 import AdminTools from '../AdminTools';
+import Trans from '../../localization/Trans';
+import { useLocale } from '../../localization/LocaleContext';
 
 const AdminPage = () => {
   const [adminStatus, setAdminStatus] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const {str} = useLocale();
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
@@ -16,7 +19,7 @@ const AdminPage = () => {
         const response = await authFetch('/api/v1/admin/check_admin_status');
         
         if (!response.ok) {
-          throw new Error("You don't have access");
+          throw new Error(str("You don't have access"));
         }
 
         const data = await response.json();
