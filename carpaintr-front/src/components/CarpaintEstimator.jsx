@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Trans from '../localization/Trans';
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations
 import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
+import { Helmet } from 'react-helmet-async';
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
@@ -57,7 +58,7 @@ const CAR_BODY_TYPES_OPTIONS = [
     "hatchback 5 doors",
     "sedan", "cabriolet", "liftback",
     "wagon", "coupe",
-    "suv 5 doors",  "suv 3 doors",
+    "suv 5 doors", "suv 3 doors",
     "pickup"
 ].map((i) => ({ label: i, value: i }));
 
@@ -196,7 +197,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
     return (
         <div>
             <Tabs defaultActiveKey="1" appearance="pills">
-                <Tabs.Tab eventKey="1" title={str("Models")} style={{width: "100%"}}>
+                <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
                     <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
                     {selectedMake !== null && <SelectionInput name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
                     {selectedModel !== null && <SelectionInput name={str("Body Type")} selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder={str("Select Body Type")} />}
@@ -345,6 +346,9 @@ const CarPaintEstimator = () => {
 
     return (
         <div>
+            <Helmet>
+                <title>Autolab - Calculator</title>
+            </Helmet>
             <Stack wrap justifyContent='space-between'>
                 <h3><Trans>Cost of repair calculation</Trans></h3>
                 <Stack spacing={10}>

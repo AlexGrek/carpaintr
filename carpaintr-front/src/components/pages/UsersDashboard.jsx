@@ -4,55 +4,74 @@ import TopBarUser from '../layout/TopBarUser';
 import { useNavigate } from 'react-router-dom';
 import { Content, Panel, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
+import Trans from '../../localization/Trans';
+import { Helmet } from 'react-helmet-async';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+
+registerTranslations('ua', {
+    "Calculation": "Розрахунок",
+    "Price estimation calculator.": "Калькулятор оцінки вартості.",
+    "Task Tracking": "Відстеження завдань",
+    "Under construction": "У розробці",
+    "AI Analytics": "Аналітика ШІ",
+    "Customization": "Налаштування",
+    "Your business, your rules.": "Ваш бізнес, ваші правила.",
+    "Your organization": "Ваша організація",
+    "Manage access and licensing.": "Керування доступом та ліцензуванням.",
+    "Available apps": "Доступні програми"
+});
 
 const UsersDashboard = () => {
-    return <div><TopBarUser/><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
+    return <div><TopBarUser /><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
         <Dashboard /></div>
     </div>
 }
 
 const Dashboard = () => {
-    let nav = useNavigate();
 
     return <Content>
+        <Helmet>
+            <title>Autolab - Dashboard</title>
+        </Helmet>
         <Panel>
-            <ActiveLicenseMarker/>
-            <br/>
-            <DashboardNavigationButtons/>
+            <ActiveLicenseMarker />
+            <br />
+            <DashboardNavigationButtons />
         </Panel>
-        </Content>
+    </Content>
 }
 
 const DashboardNavigationButtons = () => {
+    const { str } = useLocale();
     const features = [
         {
             icon: "🖩",
-            title: "Calculation",
-            description: "Price estimation calculator.",
+            title: str("Calculation"),
+            description: str("Price estimation calculator."),
             link: "/calc"
         },
         {
             icon: "📋",
-            title: "Task Tracking",
-            description: "🚧 Under construction 🚧",
+            title: str("Task Tracking"),
+            description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
             icon: "🤖",
-            title: "AI Analytics",
-            description: "🚧 Under construction 🚧",
+            title: str("AI Analytics"),
+            description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
             icon: "🛅",
-            title: "Customization",
-            description: "Your business, your rules.",
+            title: str("Customization"),
+            description: str("Your business, your rules."),
             link: "/fileeditor"
         },
         {
             icon: "🪙",
-            title: "Your organization",
-            description: "Manage access and licensing.",
+            title: str("Your organization"),
+            description: str("Manage access and licensing."),
             link: "/cabinet"
         },
     ];
@@ -61,7 +80,7 @@ const DashboardNavigationButtons = () => {
         <section className="apps-list">
             <div className="container">
                 <div className="section-header">
-                    <h2>Available apps</h2>
+                    <h2><Trans>Available apps</Trans></h2>
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (
@@ -82,7 +101,7 @@ const DashboardNavigationButtons = () => {
 const FeatureCard = ({ icon, title, description, link }) => {
     const nav = useNavigate();
     return (
-        <div className="feature-card app-card" style={{cursor: 'pointer'}} onClick={() => nav(link)}>
+        <div className="feature-card app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="feature-icon">{icon}</div>
             <h3>{title}</h3>
             <p>{description}</p>
