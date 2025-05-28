@@ -44,3 +44,28 @@ export const authFetch = async (url, options = {}) => {
 export const logout = () => {
     localStorage.removeItem('authToken');
 };
+
+export const fetchCompanyInfo = async (onError = console.error) => {
+    try {
+        const response = authFetch("/api/v1/getcompanyinfo")
+        if (!response.ok) throw new Error('Failed to fetch company information');
+        const data = await response.json();
+        if (data) {
+            localStorage.setItem("company", JSON.stringify(data));
+            return data;
+        }
+        else {
+            throw new Error('Failed to set company information: ', data);
+        }
+    } catch (e) {
+        onError(e)
+    }
+}
+
+export const getCompanyInfo = () => {
+    const data = localStorage.getItem("company");
+    if (data) {
+        return JSON.parse(data);
+    }
+    return null;
+}

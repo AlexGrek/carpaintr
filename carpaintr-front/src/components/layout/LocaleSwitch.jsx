@@ -1,7 +1,7 @@
 import { SelectPicker } from "rsuite";
 import { useLocale } from "../../localization/LocaleContext";
 
-export const LocaleSwitch = () => {
+export default LocaleSwitch = () => {
     const { currentLang, setLang } = useLocale();
 
     const data = [{
@@ -17,5 +17,5 @@ export const LocaleSwitch = () => {
         }
     }
 
-    return <SelectPicker data={data} appearance="subtle" style={{ margin: "0 2pt" }} cleanable={false} searchable={false} onChange={handleSetLang} value={currentLang} />
+    return (<SelectPicker data={data} appearance="subtle" style={{ margin: "0 2pt" }} cleanable={false} searchable={false} onChange={handleSetLang} value={currentLang} />)
   };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { authFetch } from '../../utils/authFetch';
+import { authFetch, getCompanyInfo } from '../../utils/authFetch';
 import LicenseInfoTable from '../LicenseInfoTable';
+ import { dump } from 'js-yaml';
 
 const CompanyInfoPage = () => {
   const [companyInfo, setCompanyInfo] = useState(null);
@@ -8,14 +9,11 @@ const CompanyInfoPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCompanyInfo = async () => {
+    const fetchCompanyInfoNow = async () => {
       try {
-        const response = await authFetch('/api/v1/getcompanyinfo');
-        if (!response.ok) throw new Error('Failed to fetch company information');
-
-        const data = await response.json();
+        const data = await fetchCompanyInfo();
         setCompanyInfo(data);
-        setCompanyInfoRaw(JSON.stringify(data));
+        setCompanyInfoRaw(dump(data));
       } catch (error) {
         console.error(error);
       } finally {
@@ -23,7 +21,7 @@ const CompanyInfoPage = () => {
       }
     };
 
-    fetchCompanyInfo();
+    fetchCompanyInfoNow();
   }, []);
 
   if (loading) {
@@ -33,7 +31,7 @@ const CompanyInfoPage = () => {
   return (
     <div>
       <LicenseInfoTable companyInfo={companyInfo} />
-      <textarea value={companyInfoRaw}></textarea>
+      <code>{companyInfoRaw}</code>
     </div>
   );
 };
