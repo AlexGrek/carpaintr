@@ -11,7 +11,7 @@ const CompanyInfoPage = () => {
   useEffect(() => {
     const fetchCompanyInfoNow = async () => {
       try {
-        const data = await fetchCompanyInfo();
+        const data = getCompanyInfo();
         setCompanyInfo(data);
         setCompanyInfoRaw(dump(data));
       } catch (error) {

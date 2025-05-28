@@ -1,9 +1,8 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster } from 'rsuite';
+import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
-import { Toggle } from 'rsuite';
 import { useNavigate } from "react-router-dom";
 import Trans from '../localization/Trans';
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations

@@ -31,7 +31,6 @@ const ChangePassword = () => {
         setMessage(null);
 
         try {
-            console.log("sending req")
             const response = await authFetch('/api/v1/changepassword', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import CarPaintEstimator from '../CarpaintEstimator';
 import TopBarUser from '../layout/TopBarUser';
 import { useNavigate } from 'react-router-dom';
-import { Content, Panel, Button } from 'rsuite';
+import { Content, Panel, Text, Message } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { Helmet } from 'react-helmet-async';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -18,7 +19,8 @@ registerTranslations('ua', {
     "Your business, your rules.": "Ваш бізнес, ваші правила.",
     "Your organization": "Ваша організація",
     "Manage access and licensing.": "Керування доступом та ліцензуванням.",
-    "Available apps": "Доступні програми"
+    "Available apps": "Доступні програми",
+    "Your company": "Ваша компанiя"
 });
 
 const UsersDashboard = () => {
@@ -28,14 +30,47 @@ const UsersDashboard = () => {
 }
 
 const Dashboard = () => {
+    const [company, setCompany] = useState(null);
+    const [message, setMessage] = useState(null);
+    const {str, setLang} = useLocale();
+
+    useEffect(() => {
+        if (getCompanyInfo() != null) {
+            setCompany(getCompanyInfo());
+            return;
+        }
+
+        const reportError = (err) => {
+            console.error(err);
+            setMessage({"type": "error", "title": str("Failed to get company info"), "message": `${err}`});
+            setTimeout(() => setMessage(null), 3000);
+        }
+
+        const fetchAsync = async () => {
+            const data = await fetchCompanyInfo(reportError);
+            if (data) {
+                setCompany(data);
+                if (data.lang_ui) {
+                    setLang(data.lang_ui)
+                }
+            }
+        }
+
+        fetchAsync();
+    }, [str])
 
     return <Content>
         <Helmet>
             <title>Autolab - Dashboard</title>
         </Helmet>
         <Panel>
+            {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />
             <br />
+            <Panel header={str("Your company")} shaded>
+                <h2>{company && company.company_name}</h2>
+                <Text muted>{company && company.email}</Text>
+            </Panel>
             <DashboardNavigationButtons />
         </Panel>
     </Content>

@@ -47,7 +47,7 @@ export const logout = () => {
 
 export const fetchCompanyInfo = async (onError = console.error) => {
     try {
-        const response = authFetch("/api/v1/getcompanyinfo")
+        const response = await authFetch("/api/v1/getcompanyinfo")
         if (!response.ok) throw new Error('Failed to fetch company information');
         const data = await response.json();
         if (data) {

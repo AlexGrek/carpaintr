@@ -42,7 +42,7 @@ pub fn apply_and_return_file_name(data: &mut CalculationData) -> String {
 pub fn create_new_saved_file_path(data: &CalculationData) -> String {
     let header = match &data.model {
         Some(model_info) => format!("{}_{}", model_info.brand, model_info.model),
-        None => format!("{}_{}", data.body_type, data.car_class)
+        _ => format!("{}_{}", data.body_type, data.car_class)
     };
     let file_name = format!("{}_{}_{:?}", header, data.year, data.timestamp.unwrap_or(chrono::Utc::now()));
     return format!("{}.json", sanitize_alphanumeric_and_dashes(&file_name));

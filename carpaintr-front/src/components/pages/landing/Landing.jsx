@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './styles.css';
 import { Button, Message } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
-import { authFetch } from '../../../utils/authFetch';
+import { authFetch, fetchCompanyInfo } from '../../../utils/authFetch';
 import Trans from '../../../localization/Trans';
 import { useLocale, registerTranslations } from '../../../localization/LocaleContext';
 
@@ -79,14 +79,19 @@ const Hero = () => {
       const [loading, setLoading] = useState(true);
       const [companyName, setCompanyName] = useState('');
       const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const { setLocale } = useLocale();
       const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCompanyInfo = async () => {
+        const doFetchCompanyInfo = async () => {
           try {
-            const response = await authFetch('/api/v1/getcompanyinfo');
+            const response = await fetchCompanyInfo();
             if (response.ok) {
               const data = await response.json();
+              if (data["lang_ui"]) {
+                console.log("Setting locale based on company info: " + data["lang_ui"])
+                setLocale(data["lang_ui"])
+              }
               setCompanyName(data.company_name);
               setIsLoggedIn(true);
             }
@@ -97,7 +102,7 @@ const Hero = () => {
           }
         };
 
-        fetchCompanyInfo();
+        doFetchCompanyInfo();
       }, []);
 
       const handleLogout = () => {
