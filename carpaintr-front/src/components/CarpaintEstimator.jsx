@@ -201,6 +201,7 @@ const CarPaintEstimator = () => {
     const [selectedParts, setSelectedParts] = useState([]);
     const [activePanel, setActivePanel] = useState(1);
     const [paintType, setPaintType] = useState(null);
+    const [storeFileName, setStoreFileName] = useState(null);
     const toaster = useToaster();
 
     const activeKey = () => {
@@ -252,7 +253,7 @@ const CarPaintEstimator = () => {
         };
 
         try {
-            const response = await authFetch('/api/v1/user/current_calculation', {
+            const response = await authFetch('/api/v1/user/calculationstore', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -261,6 +262,8 @@ const CarPaintEstimator = () => {
             });
             if (response.ok) {
                 showMessage('success', 'Calculation saved successfully!');
+                const data = response.json()
+                setStoreFileName(data.saved_file_path || null);
             } else {
                 const errorData = await response.json();
                 showMessage('error', `Failed to save calculation: ${errorData.message || response.statusText}`);
@@ -273,7 +276,7 @@ const CarPaintEstimator = () => {
 
     const handleLoad = useCallback(async () => {
         try {
-            const response = await authFetch('/api/v1/user/current_calculation');
+            const response = await authFetch(`/api/v1/user/calculationstore?filename=${storeFileName}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data) {
@@ -286,6 +289,7 @@ const CarPaintEstimator = () => {
                     setPaintType(data.paint_type || null);
                     setSelectedParts(data.body_parts?.map(part => part.model) || []);
                     showMessage('success', 'Calculation loaded successfully!');
+                    setStoreFileName(data.saved_file_name || null);
                 } else {
                     showMessage('info', 'No saved calculation found.');
                 }
