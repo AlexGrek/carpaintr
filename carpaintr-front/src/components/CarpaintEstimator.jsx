@@ -314,7 +314,7 @@ const CarPaintEstimator = () => {
                     <Button appearance="primary" onClick={handleSave}>
                         Save
                     </Button>
-                    <Button appearance="ghost" onClick={handleLoad}>
+                    <Button appearance="ghost" disabled={storeFileName == null} onClick={handleLoad}>
                         Load from server
                     </Button>
                     <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm}>
