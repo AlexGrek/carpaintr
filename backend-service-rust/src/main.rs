@@ -6,6 +6,8 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use env_logger::Builder;
+use log::LevelFilter;
 
 use crate::{
     auth::Auth,
@@ -39,7 +41,7 @@ mod transactionalfs;
 async fn main() -> tokio::io::Result<()> {
     dotenv().ok();
 
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "data/sled_db".to_string());
     let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "supersecretjwtkey".to_string());
@@ -50,6 +52,7 @@ async fn main() -> tokio::io::Result<()> {
         .unwrap_or_else(|_| "100".to_string())
         .parse()
         .expect("LICENSE_CACHE_SIZE must be a number");
+
 
     std::fs::create_dir_all(&data_dir_path)?;
 

@@ -18,29 +18,73 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-/// Check if `target` path is inside `base` directory
 pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
-    let base = base.as_ref().canonicalize()?;
-    let target = target.as_ref().canonicalize()?;
+    let base = base.as_ref().canonicalize()?; // base must exist
 
-    if target.starts_with(&base) {
+        // Create the target path and attempt to canonicalize it
+    let full_target = base.join(target.as_ref());
+
+        // For existing files, canonicalize to resolve symlinks
+    if full_target.exists() {
+        let canonical_target = full_target.canonicalize()?;
+        if !canonical_target.starts_with(&base) {
+            return Err(SafeFsError::PathTraversalDetected);
+        }
+    }
+
+    let target_path = normalize_path(&base.join(target.as_ref()));
+
+    if target_path.starts_with(&base) {
         Ok(())
     } else {
         Err(SafeFsError::PathTraversalDetected)
     }
 }
 
+fn normalize_path(path: &Path) -> PathBuf {
+    let path = path.to_string_lossy();
+    // Handle different separators on Windows
+    let path = path.replace('\\', "/");
+    // Remove duplicate separators
+    let path = path.split('/').filter(|s| !s.is_empty()).collect::<Vec<_>>();
+    
+    let mut stack = Vec::new();
+    for component in path {
+        match component {
+            "." => continue,
+            ".." => {
+                if !stack.is_empty() {
+                    stack.pop();
+                }
+            }
+            _ => stack.push(component),
+        }
+    }
+    
+    PathBuf::from(format!("/{}", stack.join("/")))
+}
+
+
 /// Safely write content to a file, ensuring it's within user base path
 pub async fn safe_write<P: AsRef<Path>>(base: P, target: P, content: impl AsRef<[u8]>) -> Result<(), SafeFsError> {
     safety_check(&base, &target)?;
+    log::debug!("Safely writing file {:?}", target.as_ref());
     fs::create_dir_all(target.as_ref().parent().unwrap()).await?;
     fs::write(target, content).await?;
+    Ok(())
+}
+
+pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
+    safety_check(&base, &target)?;
+    log::debug!("Safely ensuring directory {:?}", target.as_ref());
+    std::fs::create_dir_all(&target)?;
     Ok(())
 }
 
 /// Safely read content from a file, ensuring it's within user base path
 pub async fn safe_read<P: AsRef<Path>>(base: P, target: P) -> Result<Vec<u8>, SafeFsError> {
     safety_check(&base, &target)?;
+    log::debug!("Safely reading file {:?}", target.as_ref());
     let data = fs::read(target).await?;
     Ok(data)
 }

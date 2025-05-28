@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
 import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
@@ -69,7 +70,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
         fetchData();
     }, []); // Empty dependency array means this runs once on mount
 
-    if (baseColors.rows === undefined) {
+    if (baseColors == null || baseColors.rows === undefined) {
         return <Placeholder.Paragraph rows={3} />; // Show a placeholder while loading
     }
 
@@ -248,6 +249,7 @@ const CarPaintEstimator = () => {
             car_class: carClass || "",
             color: color || "",
             paint_type: paintType || "",
+            saved_file_name: storeFileName || null,
             body_parts: selectedParts.length > 0 ? selectedParts.map(part => ({ brand: make || "", model: part })) : null,
             // timestamp will be added on the backend
         };
@@ -262,7 +264,8 @@ const CarPaintEstimator = () => {
             });
             if (response.ok) {
                 showMessage('success', 'Calculation saved successfully!');
-                const data = response.json()
+                const data = await response.json();
+                console.log("Got data: " + JSON.stringify(data));
                 setStoreFileName(data.saved_file_path || null);
             } else {
                 const errorData = await response.json();
@@ -272,7 +275,7 @@ const CarPaintEstimator = () => {
             console.error("Error saving calculation:", error);
             showMessage('error', `Error saving calculation: ${error.message}`);
         }
-    }, [make, model, year, bodyType, carClass, color, paintType, selectedParts, showMessage]);
+    }, [make, model, year, bodyType, carClass, color, paintType, selectedParts, showMessage, storeFileName]);
 
     const handleLoad = useCallback(async () => {
         try {
@@ -301,7 +304,7 @@ const CarPaintEstimator = () => {
             console.error("Error loading calculation:", error);
             showMessage('error', `Error loading calculation: ${error.message}`);
         }
-    }, [showMessage]);
+    }, [showMessage, storeFileName]);
 
     return (
         <div>

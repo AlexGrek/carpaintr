@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::utils::{safe_read, safe_write, sanitize_alphanumeric_and_dashes, user_directory_from_email};
+use crate::utils::{safe_read, safe_write, safe_ensure_directory_exists, sanitize_alphanumeric_and_dashes, user_directory_from_email};
 use crate::{
     state::AppState,
     errors::AppError,
@@ -59,9 +59,10 @@ pub async fn save_calculation(
     let file_name = apply_and_return_file_name(&mut req);
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let calcs_path = user_path.join(&CALCULATIONS);
+    safe_ensure_directory_exists(&user_path, &calcs_path);
     let file_path = calcs_path.join(&file_name);
 
-        // Serialize to JSON
+    
     let json = serde_json::to_string_pretty(&req)?; // or `to_vec` for bytes
 
     // Save to file
@@ -76,7 +77,6 @@ pub async fn get_calculation_file(
     Query(q): Query<FileQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     let filename = q.filename;
-
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let file_path = user_path.join(&CALCULATIONS).join(filename);
 
