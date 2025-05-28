@@ -5,6 +5,7 @@ use serde::Serialize;
 use thiserror::Error;
 
 use crate::transactionalfs::TransactionalFsError;
+use crate::utils::SafeFsError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -62,8 +63,17 @@ impl From<TransactionalFsError> for AppError {
             TransactionalFsError::Path(msg) => AppError::InternalServerError(format!("Path error: {}", msg)),
             TransactionalFsError::CommitNotFound(hash) => AppError::BadRequest(format!("Git commit not found: {}", hash)), // Might be a bad request if user provided hash
             TransactionalFsError::GitLogParseError(msg) => AppError::InternalServerError(format!("Git log parsing error: {}", msg)),
-            // If you added a TransactionalFs variant to AppError, it would look like:
+            TransactionalFsError::SafetyError(_) => AppError::Forbidden
             // _ => AppError::TransactionalFs(err.to_string()),
+        }
+    }
+}
+
+impl From<SafeFsError> for AppError {
+    fn from(err: SafeFsError) -> Self {
+        match err {
+            SafeFsError::PathTraversalDetected => AppError::Forbidden,
+            SafeFsError::Io(e) => AppError::IoError(e)
         }
     }
 }

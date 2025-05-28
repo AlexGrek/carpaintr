@@ -4,7 +4,7 @@ use crate::{
     state::AppState,
     transactionalfs::{GitTransactionalFs, TransactionalFs},
     utils::{
-        get_file_by_path, sanitize_alphanumeric_and_dashes_and_dots, user_directory_from_email,
+        get_file_by_path, user_directory_from_email,
         COMMON,
     }, // Import the new CompanyInfo struct
 };
@@ -14,8 +14,6 @@ use axum::{
     Json,
 };
 use std::{path::PathBuf, sync::Arc};
-
-// const GLOBAL: &'static str = "global";
 
 pub async fn get_common_file_list(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -58,7 +56,12 @@ pub async fn delete_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
-    fs_manager.delete_file(std::path::Path::new(&path), &format!("File {} deleted.", &path)).await?;
+    fs_manager
+        .delete_file(
+            std::path::Path::new(&path),
+            &format!("File {} deleted.", &path),
+        )
+        .await?;
     Ok("File deleted")
 }
 

@@ -1,3 +1,4 @@
+use thiserror::Error;
 use std::{path::PathBuf};
 use std::collections::HashSet;
 use tokio::fs;
@@ -8,9 +9,42 @@ pub const COMMON: &'static str = "common";
 
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
-    // Sanitize email for use in a file path
-    // This is a basic sanitization; a production system might need more robust handling
-    // to avoid path traversal issues, though percent-encoding non-alphanumeric chars helps.
+#[derive(Debug, Error)]
+pub enum SafeFsError {
+    #[error("Path traversal attempt detected: target is outside base directory")]
+    PathTraversalDetected,
+    
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
+
+/// Check if `target` path is inside `base` directory
+pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
+    let base = base.as_ref().canonicalize()?;
+    let target = target.as_ref().canonicalize()?;
+
+    if target.starts_with(&base) {
+        Ok(())
+    } else {
+        Err(SafeFsError::PathTraversalDetected)
+    }
+}
+
+/// Safely write content to a file, ensuring it's within user base path
+pub async fn safe_write<P: AsRef<Path>>(base: P, target: P, content: impl AsRef<[u8]>) -> Result<(), SafeFsError> {
+    safety_check(&base, &target)?;
+    fs::create_dir_all(target.as_ref().parent().unwrap()).await?;
+    fs::write(target, content).await?;
+    Ok(())
+}
+
+/// Safely read content from a file, ensuring it's within user base path
+pub async fn safe_read<P: AsRef<Path>>(base: P, target: P) -> Result<Vec<u8>, SafeFsError> {
+    safety_check(&base, &target)?;
+    let data = fs::read(target).await?;
+    Ok(data)
+}
+
 pub fn sanitize_email_for_path(email: &str) -> String {
         percent_encode(email.as_bytes(), NON_ALPHANUMERIC).to_string()
         // A more robust approach might involve base64 encoding or UUIDs

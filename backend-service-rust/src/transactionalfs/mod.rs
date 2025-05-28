@@ -5,10 +5,14 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use thiserror::Error;
 
+use crate::utils::{safe_write, safety_check, SafeFsError};
+
 #[derive(Error, Debug)]
 pub enum TransactionalFsError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("Safety error: {0}")]
+    SafetyError(#[from] SafeFsError),
     #[error("Git command error: {0}")]
     GitCommand(String),
     #[error("Path error: {0}")]
@@ -114,7 +118,7 @@ impl TransactionalFs for GitTransactionalFs {
             fs::create_dir_all(parent).await?;
         }
 
-        fs::write(&full_path, new_file_content).await?;
+        safe_write(&self.root_path, &full_path, new_file_content).await?;
 
         // Perform Git operations
         self.perform_git_commit(git_message).await?;
@@ -133,6 +137,7 @@ impl TransactionalFs for GitTransactionalFs {
             return Err(TransactionalFsError::FileNotFound(full_path));
         }
 
+        safety_check(&self.root_path, &full_path)?;
         fs::remove_file(&full_path).await?;
 
         // Perform Git operations

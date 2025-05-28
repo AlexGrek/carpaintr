@@ -111,6 +111,8 @@ async fn main() -> tokio::io::Result<()> {
         .nest(
             "/user",
             Router::new()
+                .route("/calculationstore", get(api::v1::calc::persistence_endpoints::get_calculation_file))
+                .route("/calculationstore", post(api::v1::calc::persistence_endpoints::save_calculation))
                 .route("/get_calc_details", get(api::v1::user::get_calc_details))
                 .route("/carmakes", get(api::v1::calc::data_endpoints::list_car_makes))
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))

@@ -3,30 +3,32 @@ use chrono::{DateTime, Utc};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CarModel {
-    brand: String,
-    model: String
+    pub brand: String,
+    pub model: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CarBodyPart {
-    brand: String,
-    model: String
+    pub brand: String,
+    pub model: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Estimation {
-    total: i32,
-    sections: Option<Vec<String>>
+    pub total: i32,
+    pub sections: Option<Vec<String>>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CalculationData {
-    model: Option<CarModel>,
-    year: String,
-    body_type: String,
-    car_class: String,
-    color: String,
-    paint_type: String,
-    body_parts: Option<Vec<CarBodyPart>>,
-    timestamp: DateTime<Utc>
+    pub model: Option<CarModel>,
+    pub year: String,
+    pub body_type: String,
+    pub car_class: String,
+    pub color: String,
+    pub paint_type: String,
+    pub body_parts: Option<Vec<CarBodyPart>>,
+    pub timestamp: Option<DateTime<Utc>>,
+    pub notes: Option<String>,
+    pub saved_file_name: Option<String>
 }
