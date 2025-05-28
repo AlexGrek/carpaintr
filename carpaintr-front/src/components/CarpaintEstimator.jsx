@@ -6,12 +6,46 @@ import SelectionInput from './SelectionInput'; // Assuming SelectionInput is als
 import { Toggle } from 'rsuite';
 import { useNavigate } from "react-router-dom";
 import Trans from '../localization/Trans';
-import { useLocale } from '../localization/LocaleContext';
+import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations
 import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
 const ColorGrid = React.lazy(() => import('./ColorGrid')); // Used by ColorPicker
+
+registerTranslations('ua', {
+    "Loading...": "Завантаження...",
+    "Models": "Моделі",
+    "Type/Class": "Тип/Клас",
+    "Select Make": "Виберіть марку",
+    "Select Model": "Виберіть модель",
+    "Select Body Type": "Виберіть тип кузова",
+    "CLASS": "КЛАС",
+    "BODY TYPE": "ТИП КУЗОВА",
+    "Year of manufacture": "Рік випуску",
+    "Cost of repair calculation": "Розрахунок вартості ремонту",
+    "Save": "Зберегти",
+    "Load from server": "Завантажити з сервера",
+    "Report a problem": "Повідомити про проблему",
+    "Car": "Автомобіль",
+    "Color and paint type": "Колір та тип фарби",
+    "Accept": "Прийняти",
+    "Works": "Роботи",
+    "Additional": "Додатково",
+    "Calculated season": "Розрахунковий сезон",
+    "No inclusions": "Без вкраплень",
+    "Metallic": "Металік",
+    "Pearl": "Перламутр",
+    "Special effect": "Спец ефект",
+    "Calculation saved successfully!": "Розрахунок успішно збережено!",
+    "Failed to save calculation:": "Не вдалося зберегти розрахунок:",
+    "Error saving calculation:": "Помилка при збереженні розрахунку:",
+    "No saved calculation found.": "Збережених розрахунків не знайдено.",
+    "Calculation loaded successfully!": "Розрахунок успішно завантажено!",
+    "Failed to load calculation:": "Не вдалося завантажити розрахунок:",
+    "Error loading calculation:": "Помилка при завантаженні розрахунку:",
+    "Paint type": "Тип фарби"
+});
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
 const CAR_CLASS_OPTIONS = [
@@ -32,13 +66,14 @@ const CurrentDateDisplay = React.memo(() => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [season, setSeason] = useState(null);
     const [seasonDetails, setSeasonDetails] = useState(null);
+    const { str } = useLocale();
 
     useEffect(() => {
         authFetch('/api/v1/user/season')
             .then(response => response.json())
             .then((data) => {
                 setCurrentDate(new Date());
-                setSeason(data.season_name === "summer" ? "Літо" : "Зима");
+                setSeason(data.season_name === "summer" ? str("Літо") : str("Зима")); // Assuming "Літо" and "Зима" are already in translation map or can be added
                 setSeasonDetails(JSON.stringify(data));
             })
             .catch(console.error);
@@ -47,7 +82,7 @@ const CurrentDateDisplay = React.memo(() => {
     return (
         <div>
             <DatePicker value={currentDate} disabled />
-            <p>Розрахунковий сезон: {season}</p>
+            <p><Trans>Calculated season</Trans>: {season}</p>
             <p><small>{JSON.stringify(seasonDetails)}</small></p>
         </div>
     );
@@ -56,6 +91,7 @@ const CurrentDateDisplay = React.memo(() => {
 // Memoized ColorPicker to prevent unnecessary re-renders
 const ColorPicker = React.memo(({ setColor, selectedColor }) => {
     const [baseColors, setBaseColors] = useState({});
+    const { str } = useLocale();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -93,7 +129,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
     const [makes, setMakes] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
-
+    const { str } = useLocale();
     const navigate = useNavigate();
 
     const handleError = useCallback((reason) => {
@@ -160,23 +196,23 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
     return (
         <div>
             <Tabs defaultActiveKey="1" appearance="pills">
-                <Tabs.Tab eventKey="1" title="Models" style={{width: "100%"}}>
-                    <SelectionInput name="Марка" values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder="Select Make" />
-                    {selectedMake !== null && <SelectionInput name="Модель" selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder="Select Model" />}
-                    {selectedModel !== null && <SelectionInput name="Тип кузова" selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder="Select Body Type" />}
+                <Tabs.Tab eventKey="1" title={str("Models")} style={{width: "100%"}}>
+                    <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
+                    {selectedMake !== null && <SelectionInput name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
+                    {selectedModel !== null && <SelectionInput name={str("Body Type")} selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder={str("Select Body Type")} />}
                 </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Type/Class">
+                <Tabs.Tab eventKey="2" title={str("Type/Class")}>
                     <SelectPicker
                         data={CAR_CLASS_OPTIONS}
                         onSelect={setCarClass}
                         value={carclass}
-                        placeholder="КЛАС"
+                        placeholder={str("CLASS")}
                     />
                     <SelectPicker
                         data={CAR_BODY_TYPES_OPTIONS}
                         onSelect={setBodyType}
                         value={selectedBodyType}
-                        placeholder="ТИП КУЗОВА"
+                        placeholder={str("BODY TYPE")}
                     />
                 </Tabs.Tab>
             </Tabs>
@@ -184,7 +220,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                 disabled={!(selectedModel !== null || (carclass !== null && selectedBodyType !== null))}
                 data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
                 onSelect={setYear}
-                placeholder="Рік випуску"
+                placeholder={str("Year of manufacture")}
             />
         </div>
     );
@@ -204,6 +240,7 @@ const CarPaintEstimator = () => {
     const [paintType, setPaintType] = useState(null);
     const [storeFileName, setStoreFileName] = useState(null);
     const toaster = useToaster();
+    const { str } = useLocale();
 
     const activeKey = () => {
         if (make !== null && year !== null && model !== null) {
@@ -218,10 +255,10 @@ const CarPaintEstimator = () => {
     }, []);
 
     const paintTypesAndTranslations = {
-        "simple": "Без вкраплень",
-        "metallic": "Металлік",
-        "pearl": "Перламутр",
-        "special": "Спец еффект"
+        "simple": str("No inclusions"),
+        "metallic": str("Metallic"),
+        "pearl": str("Pearl"),
+        "special": str("Special effect")
     };
 
     const handleSetMake = useCallback((val) => setMake(val), []);
@@ -263,19 +300,19 @@ const CarPaintEstimator = () => {
                 body: JSON.stringify(dataToSave),
             });
             if (response.ok) {
-                showMessage('success', 'Calculation saved successfully!');
+                showMessage('success', str('Calculation saved successfully!'));
                 const data = await response.json();
                 console.log("Got data: " + JSON.stringify(data));
                 setStoreFileName(data.saved_file_path || null);
             } else {
                 const errorData = await response.json();
-                showMessage('error', `Failed to save calculation: ${errorData.message || response.statusText}`);
+                showMessage('error', `${str('Failed to save calculation:')} ${errorData.message || response.statusText}`);
             }
         } catch (error) {
             console.error("Error saving calculation:", error);
-            showMessage('error', `Error saving calculation: ${error.message}`);
+            showMessage('error', `${str('Error saving calculation:')} ${error.message}`);
         }
-    }, [make, model, year, bodyType, carClass, color, paintType, selectedParts, showMessage, storeFileName]);
+    }, [make, model, year, bodyType, carClass, color, paintType, selectedParts, showMessage, storeFileName, str]);
 
     const handleLoad = useCallback(async () => {
         try {
@@ -291,39 +328,39 @@ const CarPaintEstimator = () => {
                     setColor(data.color || null);
                     setPaintType(data.paint_type || null);
                     setSelectedParts(data.body_parts?.map(part => part.model) || []);
-                    showMessage('success', 'Calculation loaded successfully!');
+                    showMessage('success', str('Calculation loaded successfully!'));
                     setStoreFileName(data.saved_file_name || null);
                 } else {
-                    showMessage('info', 'No saved calculation found.');
+                    showMessage('info', str('No saved calculation found.'));
                 }
             } else {
                 const errorData = await response.json();
-                showMessage('error', `Failed to load calculation: ${errorData.message || response.statusText}`);
+                showMessage('error', `${str('Failed to load calculation:')} ${errorData.message || response.statusText}`);
             }
         } catch (error) {
             console.error("Error loading calculation:", error);
-            showMessage('error', `Error loading calculation: ${error.message}`);
+            showMessage('error', `${str('Error loading calculation:')} ${error.message}`);
         }
-    }, [showMessage, storeFileName]);
+    }, [showMessage, storeFileName, str]);
 
     return (
         <div>
             <Stack wrap justifyContent='space-between'>
-                <h3>Розрахунок вартості ремонту</h3>
+                <h3><Trans>Cost of repair calculation</Trans></h3>
                 <Stack spacing={10}>
                     <Button appearance="primary" onClick={handleSave}>
-                        Save
+                        <Trans>Save</Trans>
                     </Button>
                     <Button appearance="ghost" disabled={storeFileName == null} onClick={handleLoad}>
-                        Load from server
+                        <Trans>Load from server</Trans>
                     </Button>
                     <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm}>
-                        Повідомити про проблему
+                        <Trans>Report a problem</Trans>
                     </Button>
                 </Stack>
             </Stack>
             <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(key) => setActivePanel(parseInt(key))}>
-                <Panel header={year === null ? "Автомобіль" : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
+                <Panel header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
                     <VehicleSelect
                         selectedBodyType={bodyType}
                         carclass={carClass}
@@ -336,23 +373,23 @@ const CarPaintEstimator = () => {
                         setYear={handleSetYear}
                     />
                 </Panel>
-                <Panel header="Колір та тип фарби" eventKey={2}>
+                <Panel header={str("Color and paint type")} eventKey={2}>
                     <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>
                         <ColorPicker setColor={handleSetColor} selectedColor={color} />
                     </React.Suspense>
                     <VStack justifyContent='center' alignItems='center' style={{ margin: "40px" }}>
-                        <SelectionInput name="Тип фарби" values={Object.keys(paintTypesAndTranslations)} labels={paintTypesAndTranslations} selectedValue={paintType} onChange={handleSetPaintType} placeholder="Select paint type" />
+                        <SelectionInput name={str("Paint type")} values={Object.keys(paintTypesAndTranslations)} labels={paintTypesAndTranslations} selectedValue={paintType} onChange={handleSetPaintType} placeholder={str("Select paint type")} />
                     </VStack>
-                    <Button onClick={() => setActivePanel(3)} disabled={paintType === null || color === null} color='green' appearance='primary'>Прийняти</Button>
+                    <Button onClick={() => setActivePanel(3)} disabled={paintType === null || color === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
                 </Panel>
-                <Panel header="Роботи" eventKey={3}>
+                <Panel header={str("Works")} eventKey={3}>
                     {bodyType !== null && (
                         <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>
                             <CarBodyPartsSelector selectedParts={selectedParts} onChange={handleSetSelectedParts} carClass={carClass} body={bodyType} />
                         </React.Suspense>
                     )}
                 </Panel>
-                <Panel header="Додатково" eventKey={4}>
+                <Panel header={str("Additional")} eventKey={4}>
                     <CurrentDateDisplay />
                 </Panel>
             </PanelGroup>
