@@ -89,6 +89,8 @@ pub async fn get_company_info(
             license: None, // Or some default license info if applicable
             company_name: "Default Company Name".to_string(), // Or derive from email
             current_time: Utc::now(),
+            lang_output: "ua".into(),
+            lang_ui: "ua".into()
         };
 
         let dummy_json = serde_json::to_string_pretty(&dummy_info)
