@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel } from 'rsuite';
+import { SelectPicker, Button, DatePicker, Grid, Col, Row, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
 import { Toggle } from 'rsuite';
@@ -201,15 +201,7 @@ const CarPaintEstimator = () => {
     const [selectedParts, setSelectedParts] = useState([]);
     const [activePanel, setActivePanel] = useState(1);
     const [paintType, setPaintType] = useState(null);
-
-    // No need for `typeclass` if it's not used
-
-    // No need for this useEffect, activeKey handles panel activation
-    // useEffect(() => {
-    //     if (bodyType == null) {
-    //         return;
-    //     }
-    // }, [bodyType])
+    const toaster = useToaster();
 
     const activeKey = () => {
         if (make !== null && year !== null && model !== null) {
@@ -238,17 +230,93 @@ const CarPaintEstimator = () => {
     const handleSetPaintType = useCallback((val) => setPaintType(val), []);
     const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
 
+    const showMessage = useCallback((type, message) => {
+        toaster.push(
+            <Message type={type} closable duration={5000}>
+                {message}
+            </Message>,
+            { placement: 'topEnd' }
+        );
+    }, [toaster]);
+
+    const handleSave = useCallback(async () => {
+        const dataToSave = {
+            model: (make && model) ? { brand: make, model: model } : null,
+            year: year ? String(year) : "",
+            body_type: bodyType || "",
+            car_class: carClass || "",
+            color: color || "",
+            paint_type: paintType || "",
+            body_parts: selectedParts.length > 0 ? selectedParts.map(part => ({ brand: make || "", model: part })) : null,
+            // timestamp will be added on the backend
+        };
+
+        try {
+            const response = await authFetch('/api/v1/user/current_calculation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSave),
+            });
+            if (response.ok) {
+                showMessage('success', 'Calculation saved successfully!');
+            } else {
+                const errorData = await response.json();
+                showMessage('error', `Failed to save calculation: ${errorData.message || response.statusText}`);
+            }
+        } catch (error) {
+            console.error("Error saving calculation:", error);
+            showMessage('error', `Error saving calculation: ${error.message}`);
+        }
+    }, [make, model, year, bodyType, carClass, color, paintType, selectedParts, showMessage]);
+
+    const handleLoad = useCallback(async () => {
+        try {
+            const response = await authFetch('/api/v1/user/current_calculation');
+            if (response.ok) {
+                const data = await response.json();
+                if (data) {
+                    setMake(data.model?.brand || null);
+                    setModel(data.model?.model || null);
+                    setYear(data.year ? parseInt(data.year, 10) : null);
+                    setBodyType(data.body_type || null);
+                    setCarClass(data.car_class || null);
+                    setColor(data.color || null);
+                    setPaintType(data.paint_type || null);
+                    setSelectedParts(data.body_parts?.map(part => part.model) || []);
+                    showMessage('success', 'Calculation loaded successfully!');
+                } else {
+                    showMessage('info', 'No saved calculation found.');
+                }
+            } else {
+                const errorData = await response.json();
+                showMessage('error', `Failed to load calculation: ${errorData.message || response.statusText}`);
+            }
+        } catch (error) {
+            console.error("Error loading calculation:", error);
+            showMessage('error', `Error loading calculation: ${error.message}`);
+        }
+    }, [showMessage]);
 
     return (
         <div>
             <Stack wrap justifyContent='space-between'>
                 <h3>Розрахунок вартості ремонту</h3>
-                <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm}>
-                    Повідомити про проблему
-                </Button>
+                <Stack spacing={10}>
+                    <Button appearance="primary" onClick={handleSave}>
+                        Save
+                    </Button>
+                    <Button appearance="ghost" onClick={handleLoad}>
+                        Load from server
+                    </Button>
+                    <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm}>
+                        Повідомити про проблему
+                    </Button>
+                </Stack>
             </Stack>
             <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(key) => setActivePanel(parseInt(key))}>
-                <Panel header={year === null ? "Автомобіль" : `${make} ${model} ${year} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
+                <Panel header={year === null ? "Автомобіль" : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
                     <VehicleSelect
                         selectedBodyType={bodyType}
                         carclass={carClass}

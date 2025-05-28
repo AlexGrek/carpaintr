@@ -1,3 +1,5 @@
+pub mod calculations;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -29,8 +31,8 @@ pub struct LoginResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // Subject (user email)
-    pub exp: usize, // Expiration time
+    pub sub: String,
+    pub exp: usize,
 }
 
 fn default_lang() -> String {
