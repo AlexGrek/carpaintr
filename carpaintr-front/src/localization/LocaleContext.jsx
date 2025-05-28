@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { getCompanyInfo } from '../utils/authFetch';
 
 const SUPPORTED_LANGUAGES = ['en', 'ua'];
 
@@ -51,7 +52,11 @@ export const registerTranslations = (lang, newTranslations) => {
 const STORAGE_KEY = 'preferred_language';
 
 const detectBrowserLanguage = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
+  let stored = localStorage.getItem(STORAGE_KEY);
+  const companyInfo = getCompanyInfo();
+  if (companyInfo && companyInfo.lang_ui) {
+    stored = companyInfo.lang_ui;
+  }
   if (stored && SUPPORTED_LANGUAGES.includes(stored)) {
     return stored;
   }

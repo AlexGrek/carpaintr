@@ -33,6 +33,9 @@ pub struct Claims {
     pub exp: usize, // Expiration time
 }
 
+fn default_lang() -> String {
+    "ua".to_string()
+}
 
 // Struct to represent the company information stored in company.json
 #[derive(Debug, Serialize, Deserialize)]
@@ -41,6 +44,12 @@ pub struct CompanyInfo {
     pub license: Option<String>, // Assuming license can be null
     pub company_name: String,
     pub current_time: DateTime<Utc>, // Use DateTime<Utc> for timestamp
+
+    #[serde(default = "default_lang")]
+    pub lang_ui: String,
+
+    #[serde(default = "default_lang")]
+    pub lang_output: String,
 }
 
 #[derive(Debug, Serialize)]
