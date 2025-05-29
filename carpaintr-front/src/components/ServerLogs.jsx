@@ -12,10 +12,9 @@ registerTranslations('ua', {
 const ServerLogs = () => {
     const [lines, setLines] = useState(100)
     const [log, setLog] = useState([])
+    const { str } = useLocale(); // Initialize useLocale hook
 
     const fetchData = async () => {
-        const { str } = useLocale(); // Initialize useLocale hook
-
         try {
             const response = await authFetch('/api/v1/admin/logs?lines=' + lines);
             if (!response.ok) {
@@ -32,16 +31,16 @@ const ServerLogs = () => {
 
     useEffect(() => {
         fetchData();
-    }, [str]); // Add str to dependency array
+    }, [str, lines]); // Add str to dependency array
 
-    return <div>
+    return <Panel shaded>
         <p>Showing last <b>{lines}</b> log lines</p>
         <code>
             {log.map((item, i) => {
                 return <p key={i}>{item}</p>
             })}
         </code>
-    </div>
+    </Panel>
 }
 
 export default ServerLogs;
