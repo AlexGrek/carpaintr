@@ -1,12 +1,8 @@
 use crate::{
-    errors::AppError,
-    middleware::AuthenticatedUser,
-    state::AppState,
-    transactionalfs::{GitTransactionalFs, TransactionalFs},
-    utils::{
+    errors::AppError, exlogging, middleware::AuthenticatedUser, state::AppState, transactionalfs::{GitTransactionalFs, TransactionalFs}, utils::{
         get_file_by_path, user_directory_from_email,
         COMMON,
-    }, // Import the new CompanyInfo struct
+    } // Import the new CompanyInfo struct
 };
 use axum::{
     extract::{Multipart, State},
@@ -54,6 +50,7 @@ pub async fn delete_user_file(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
+    exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file request: {:?}", &path.to_string()), Some(user_email.as_str()));
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
     fs_manager
@@ -86,6 +83,7 @@ pub async fn upload_user_file(
     mut multipart: Multipart,
 ) -> Result<impl IntoResponse, AppError> {
     // Expecting a single file field
+    exlogging::log_event(exlogging::LogLevel::Info, format!("Change file request: {:?}", &path.to_string()), Some(user_email.as_str()));
     let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
     let field = multipart

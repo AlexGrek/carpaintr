@@ -4,6 +4,7 @@ use axum::Json;
 use serde::Serialize;
 use thiserror::Error;
 
+use crate::exlogging;
 use crate::transactionalfs::TransactionalFsError;
 use crate::utils::SafeFsError;
 
@@ -106,6 +107,7 @@ impl IntoResponse for AppError {
         });
 
         log::warn!("Error response sent: {}", self.to_string());
+        exlogging::log_event(exlogging::LogLevel::Error, format!("Error: {:?}", self.to_string()), None::<&str>);
 
         (status_code, body).into_response()
     }
