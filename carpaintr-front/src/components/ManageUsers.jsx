@@ -16,7 +16,7 @@ registerTranslations('ua', {
   "Email:": "Електронна пошта:",
   "Password:": "Пароль:",
   "Error: ": "Помилка: ",
-  "Failed to send management request": "Не вдалося відправити запит на керування",
+  "Failed to send management request": "Не вдалося відправити запит",
   "Confirm": "Підтвердити",
   "Cancel": "Скасувати",
   "Users in system": "Користувачі в системі",

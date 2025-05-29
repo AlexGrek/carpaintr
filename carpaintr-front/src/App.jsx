@@ -11,7 +11,6 @@ import RegistrationPage from './components/pages/RegistrationPage.jsx';
 import FileEditorPage from './components/pages/FileEditorPage.jsx';
 import UsersDashboard from './components/pages/UsersDashboard.jsx';
 import { LocaleProvider } from './localization/LocaleContext.jsx';
-import { HelmetProvider } from 'react-helmet-async';
 
 const HistoryPage = () => <h2>History Page</h2>;
 const AboutUsPage = () => <h2>About Us Page</h2>;
@@ -19,7 +18,6 @@ const AboutUsPage = () => <h2>About Us Page</h2>;
 function App() {
   return (
     <LocaleProvider>
-      <HelmetProvider>
         <GlobalCallbacksProvider>
           <Router>
             <Routes>
@@ -37,7 +35,6 @@ function App() {
             </Routes>
           </Router>
         </GlobalCallbacksProvider>
-      </HelmetProvider>
     </LocaleProvider>
   )
 }

@@ -5,7 +5,6 @@ import { authFetch } from '../../utils/authFetch';
 import AdminTools from '../AdminTools';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
-import { Helmet } from 'react-helmet-async';
 
 registerTranslations('ua', {
   "Admin Page": "Панель адміністратора",
@@ -57,9 +56,6 @@ const AdminPage = () => {
       ) : (
         <>
           <div className='police-line'></div>
-          <Helmet>
-            <title>Autolab - Admin Panel</title>
-          </Helmet>
           <h3><code><Trans>Admin Page</Trans></code></h3>
           <Breadcrumb>
             <Breadcrumb.Item href="/"><Trans>Home</Trans></Breadcrumb.Item>

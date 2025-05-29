@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { Content, Panel, Text, Message } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
-import { Helmet } from 'react-helmet-async';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 
@@ -32,7 +31,7 @@ const UsersDashboard = () => {
 const Dashboard = () => {
     const [company, setCompany] = useState(null);
     const [message, setMessage] = useState(null);
-    const {str, setLang} = useLocale();
+    const { str, setLang } = useLocale();
 
     useEffect(() => {
         if (getCompanyInfo() != null) {
@@ -42,7 +41,7 @@ const Dashboard = () => {
 
         const reportError = (err) => {
             console.error(err);
-            setMessage({"type": "error", "title": str("Failed to get company info"), "message": `${err}`});
+            setMessage({ "type": "error", "title": str("Failed to get company info"), "message": `${err}` });
             setTimeout(() => setMessage(null), 3000);
         }
 
@@ -60,9 +59,6 @@ const Dashboard = () => {
     }, [str])
 
     return <Content>
-        <Helmet>
-            <title>Autolab - Dashboard</title>
-        </Helmet>
         <Panel>
             {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />

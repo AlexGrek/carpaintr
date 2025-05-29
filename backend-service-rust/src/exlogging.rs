@@ -114,7 +114,7 @@ pub fn log_event(level: LogLevel, message: impl AsRef<str>, user: Option<impl As
             logger.write_log(level, &message, user_str.as_deref()).await;
         });
     } else {
-        eprintln!("Logger not initialized. Call configure_log_event() first.");
+        log::error!("Logger not initialized. Call configure_log_event() first.");
     }
 }
 
