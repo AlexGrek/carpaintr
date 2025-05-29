@@ -3,6 +3,9 @@ import { Container, Sidebar, Sidenav, Content, Button, Modal, Notification, toas
 import { Tree, Tabs } from 'rsuite';
 import yaml from 'js-yaml';
 import { authFetch } from '../../utils/authFetch';
+import CsvEditorDrawer from './CsvEditorDrawer';
+import TableEditorClaude from './TableEditorClaude';
+import TableEditorChatGPT from './TableEditorChatGPT';
 
 const treeFromDirectoryStructure = (path, data) => {
   if (data === null) {
@@ -61,6 +64,7 @@ const DirectoryTree = ({ onFileSelect, isCommon }) => {
 const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSuccess, onDeleteSuccess }) => {
   const [fileContent, setFileContent] = useState(initialContent);
   const [originalContent, setOriginalContent] = useState(initialContent);
+  const [tableEditorOpen, setTableEditorOpen] = useState(false);
 
   useEffect(() => {
     setFileContent(initialContent);
@@ -83,10 +87,6 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
       toaster.push(<Notification type="error" header="Validation Error">Invalid file format</Notification>, { placement: 'topEnd' });
       return;
     }
-    if (isCommonFile) {
-      toaster.push(<Notification type="warning" header="Permission Denied">Cannot save common files.</Notification>, { placement: 'topEnd' });
-      return;
-    }
 
     const formData = new FormData();
     formData.append('file', new Blob([fileContent]), filePath);
@@ -107,6 +107,10 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
       toaster.push(<Notification type="error" header="Network Error">Failed to save file: {error.message}</Notification>, { placement: 'topEnd' });
     }
   }, [fileContent, filePath, validateContent, isCommonFile, onSaveSuccess]);
+
+  const handleOpenTableEditor = useCallback(() => {
+    setTableEditorOpen(true);
+  })
 
   const handleDelete = useCallback(async () => {
     if (isCommonFile) {
@@ -146,7 +150,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
           <Button
             appearance="primary"
             onClick={handleSave}
-            disabled={!filePath || !hasUnsavedChanges || isCommonFile}
+            disabled={!(filePath && (hasUnsavedChanges || isCommonFile))}
             style={{ marginRight: 10 }}
           >
             Save
@@ -158,6 +162,29 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
           >
             Delete
           </Button>
+
+          {filePath && filePath.endsWith(".csv") && <Button appearance='subtle' onClick={handleOpenTableEditor}>💡 Open table editor</Button>}
+          {/* <CsvEditorDrawer
+                show={tableEditorOpen}
+                onClose={() => setTableEditorOpen(false)}
+                csvString={fileContent}
+                fileName={filePath}
+                onSave={setFileContent}
+            /> */}
+          {/* <TableEditorClaude
+            isOpen={tableEditorOpen}
+            onClose={() => setTableEditorOpen(false)}
+            csvData={fileContent}
+            fileName={filePath}
+            onSave={setFileContent}
+          /> */}
+          <TableEditorChatGPT
+            open={tableEditorOpen}
+            onClose={() => setTableEditorOpen(false)}
+            onSave={() => {setFileContent}}
+            fileName={filePath}
+            csvData={fileContent}
+          />
         </Col>
       </Row>
     </>

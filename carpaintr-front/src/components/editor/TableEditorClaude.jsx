@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Drawer, Button, Input, Table, Dropdown, IconButton, FlexboxGrid, Panel } from 'rsuite';
 import { Filter, X } from 'lucide-react';
 import Papa from 'papaparse';
@@ -8,7 +8,7 @@ const { Column, HeaderCell, Cell } = Table;
 
 const TableEditorClaude = ({ 
   isOpen, 
-  onClose,
+  onClose, 
   csvData, 
   fileName, 
   onSave 
@@ -207,49 +207,49 @@ const TableEditorClaude = ({
     onClose();
   }, [onClose]);
 
-  // Memoized cell renderer for performance
-  const CellRenderer = useMemo(() => {
-    return ({ rowData, dataKey, rowIndex }) => {
-      const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.column === dataKey;
-      const cellValue = String(rowData[dataKey] || '');
-      
-      if (isEditing) {
-        return (
-          <Input
-            ref={inputRef}
-            value={editValue}
-            onChange={setEditValue}
-            onKeyDown={handleKeyDown}
-            onBlur={handleCellSave}
-            size="sm"
-            style={{ width: '100%', border: '2px solid #3498ff' }}
-          />
-        );
-      }
-      
+  // Create a separate component for each cell to avoid re-rendering issues
+  const EditableCell = ({ rowData, dataKey, rowIndex }) => {
+    const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.column === dataKey;
+    const cellValue = String((rowData && rowData[dataKey]) || '');
+    
+    if (isEditing) {
       return (
-        <div
-          onClick={() => handleCellClick(rowIndex, dataKey)}
-          style={{
-            cursor: 'pointer',
-            padding: '8px',
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: '3px'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f8f9fa';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = 'transparent';
-          }}
-        >
-          {cellValue}
-        </div>
+        <Input
+          ref={inputRef}
+          value={editValue}
+          onChange={setEditValue}
+          onKeyDown={handleKeyDown}
+          onBlur={handleCellSave}
+          size="sm"
+          style={{ width: '100%', border: '2px solid #3498ff', margin: 0 }}
+        />
       );
-    };
-  }, [editingCell, editValue, handleKeyDown, handleCellSave, handleCellClick]);
+    }
+    
+    return (
+      <div
+        onClick={() => handleCellClick(rowIndex, dataKey)}
+        style={{
+          cursor: 'pointer',
+          padding: '8px',
+          minHeight: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          borderRadius: '3px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.backgroundColor = '#f8f9fa';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = 'transparent';
+        }}
+      >
+        {cellValue}
+      </div>
+    );
+  };
 
   // Memoized header renderer
   const HeaderRenderer = useMemo(() => {
@@ -396,8 +396,14 @@ const TableEditorClaude = ({
                   <HeaderCell>
                     <HeaderRenderer>{header}</HeaderRenderer>
                   </HeaderCell>
-                  <Cell dataKey={header}>
-                    <CellRenderer />
+                  <Cell dataKey={header} style={{ padding: 0 }}>
+                    {(rowData, rowIndex) => (
+                      <EditableCell 
+                        rowData={rowData} 
+                        dataKey={header} 
+                        rowIndex={rowIndex} 
+                      />
+                    )}
                   </Cell>
                 </Column>
               ))}

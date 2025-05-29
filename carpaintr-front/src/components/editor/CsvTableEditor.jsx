@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import ReactDataGrid from 'react-data-grid';
+import {DataGrid} from 'react-data-grid';
 import { Input, Popover, Whisper, Checkbox, CheckboxGroup } from 'rsuite';
 import { FaFilter } from 'react-icons/fa';
 import { debounce } from 'lodash';
@@ -203,7 +203,7 @@ const CsvTableEditor = ({ data, headers, onDataChange }) => {
     // Memoize the grid component to prevent unnecessary re-renders
     const MemoizedDataGrid = useMemo(() => {
         return (
-            <ReactDataGrid
+            <DataGrid
                 columns={columns}
                 rows={filteredRows}
                 onRowsChange={handleRowsChange}

@@ -1,130 +1,150 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Drawer, Button, Message, toaster } from 'rsuite';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Papa from 'papaparse';
-import { debounce } from 'lodash';
-import CsvTableEditor from './CsvTableEditor';
+import { Drawer, Button, Input, InputGroup, IconButton, Table } from 'rsuite';
+import { Search } from '@rsuite/icons';
 
-// Helper to convert data array to CSV string
-const convertToCsv = (data, headerRow) => {
-    // Ensure headerRow is part of the data for PapaParse to correctly unparse
-    const dataToUnparse = headerRow ? [headerRow, ...data] : data;
-    return Papa.unparse(dataToUnparse);
-};
+const { Column, HeaderCell, Cell } = Table;
 
-const TableEditorChatGPT = ({
-    show,
-    onClose,
-    csvString: initialCsvString,
-    fileName = 'untitled.csv',
-    onSave, // Function to call with updated CSV string
-}) => {
-    const [originalData, setOriginalData] = useState([]);
-    const [headers, setHeaders] = useState([]);
-    const [editedData, setEditedData] = useState([]);
-    const [isDirty, setIsDirty] = useState(false);
+const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
+  const [data, setData] = useState([]);
+  const [headers, setHeaders] = useState([]);
+  const [editCell, setEditCell] = useState(null); // { row, column }
+  const [filters, setFilters] = useState({});
+  const [filteredData, setFilteredData] = useState([]);
 
-    useEffect(() => {
-        if (show && initialCsvString) {
-            Papa.parse(initialCsvString, {
-                header: false, // We'll handle headers manually to keep them as a separate row
-                skipEmptyLines: true,
-                complete: (results) => {
-                    if (results.data.length > 0) {
-                        setHeaders(results.data[0]); // First row is headers
-                        setOriginalData(results.data.slice(1)); // Rest is data
-                        setEditedData(results.data.slice(1)); // Initialize edited data
-                    } else {
-                        setHeaders([]);
-                        setOriginalData([]);
-                        setEditedData([]);
-                    }
-                    setIsDirty(false);
-                },
-                error: (error) => {
-                    toaster.push(
-                        <Message type="error" closable duration={5000}>
-                            Error parsing CSV: {error.message}
-                        </Message>,
-                        { placement: 'topEnd' }
-                    );
-                    setHeaders([]);
-                    setOriginalData([]);
-                    setEditedData([]);
-                    setIsDirty(false);
-                },
-            });
-        }
-    }, [show, initialCsvString]);
+  const tableRef = useRef(null);
 
-    // Debounce the setting of isDirty
-    const debouncedSetIsDirty = useCallback(
-        debounce((dirty) => {
-            setIsDirty(dirty);
-        }, 300), // Adjust debounce time as needed
-        []
+  // Parse CSV on load
+  useEffect(() => {
+    if (!csvData) return;
+    const { data: parsed } = Papa.parse(csvData, { header: true });
+    setHeaders(Object.keys(parsed[0] || {}));
+    setData(parsed);
+    setFilters({});
+  }, [csvData]);
+
+  // Apply filters
+  useEffect(() => {
+    const filtered = data.filter(row =>
+      Object.entries(filters).every(
+        ([key, value]) => row[key]?.toLowerCase().includes(value.toLowerCase())
+      )
     );
+    setFilteredData(filtered);
+  }, [data, filters]);
 
-    const handleDataChange = useCallback(
-        (updatedRows) => {
-            setEditedData(updatedRows);
-            debouncedSetIsDirty(true);
-        },
-        [debouncedSetIsDirty]
-    );
+  const handleCellClick = (rowIndex, colKey) => {
+    setEditCell({ row: rowIndex, column: colKey });
+  };
 
-    const handleSave = () => {
-        const finalCsvString = convertToCsv(editedData, headers);
-        onSave(finalCsvString);
-        setIsDirty(false); // Mark as clean after saving
-        onClose(); // Close the drawer after saving
-        toaster.push(
-            <Message type="success" closable duration={3000}>
-                CSV saved successfully!
-            </Message>,
-            { placement: 'topEnd' }
-        );
-    };
+  const handleCellChange = (rowIndex, colKey, value) => {
+    const newData = [...data];
+    newData[rowIndex][colKey] = value;
+    setData(newData);
+  };
 
-    const handleCancel = () => {
-        if (isDirty) {
-            // Optional: Ask for confirmation if changes are unsaved
-            if (window.confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
-                onClose();
-            }
-        } else {
-            onClose();
-        }
-    };
+  const handleKeyDown = (e) => {
+    if (!editCell) return;
+    const { row, column } = editCell;
+    const colIndex = headers.indexOf(column);
+    let newRow = row;
+    let newColIndex = colIndex;
 
+    if (e.key === 'Enter') {
+      newRow = Math.min(row + 1, filteredData.length - 1);
+    } else if (e.key === 'ArrowDown') {
+      newRow = Math.min(row + 1, filteredData.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      newRow = Math.max(row - 1, 0);
+    } else if (e.key === 'ArrowLeft') {
+      newColIndex = Math.max(colIndex - 1, 0);
+    } else if (e.key === 'ArrowRight') {
+      newColIndex = Math.min(colIndex + 1, headers.length - 1);
+    } else {
+      return;
+    }
+
+    e.preventDefault();
+    const nextRowIndex = data.findIndex((r) => r === filteredData[newRow]);
+    setEditCell({ row: nextRowIndex, column: headers[newColIndex] });
+  };
+
+  const handleFilterChange = (header, value) => {
+    setFilters(prev => ({ ...prev, [header]: value }));
+  };
+
+  const handleSave = () => {
+    const csv = Papa.unparse(data);
+    onSave(csv);
+    onClose();
+  };
+
+  const renderCell = (rowData, rowIndex, colKey) => {
+    if (editCell?.row === rowIndex && editCell?.column === colKey) {
+      return (
+        <Input
+          autoFocus
+          defaultValue={rowData[colKey]}
+          onBlur={(e) => handleCellChange(rowIndex, colKey, e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      );
+    }
     return (
-        <Drawer size="full" placement="right" open={show} onClose={handleCancel}>
-            <Drawer.Header>
-                <Drawer.Title>Edit CSV: {fileName}</Drawer.Title>
-            </Drawer.Header>
-            <Drawer.Body style={{ padding: 0 }}>
-                {headers.length > 0 && (
-                    <CsvTableEditor
-                        data={editedData}
-                        headers={headers}
-                        onDataChange={handleDataChange}
-                    />
-                )}
-                {headers.length === 0 && originalData.length === 0 && initialCsvString && (
-                    <Message type="info" style={{ margin: 20 }}>
-                        No data found in the CSV string.
-                    </Message>
-                )}
-            </Drawer.Body>
-            <Drawer.Footer>
-                <Button onClick={handleSave} appearance="primary" disabled={!isDirty}>
-                    Save
-                </Button>
-                <Button onClick={handleCancel} appearance="subtle">
-                    Cancel
-                </Button>
-            </Drawer.Footer>
-        </Drawer>
+      <div
+        tabIndex={0}
+        style={{ cursor: 'pointer' }}
+        onClick={() => handleCellClick(rowIndex, colKey)}
+      >
+        {rowData[colKey]}
+      </div>
     );
+  };
+
+  return (
+    <Drawer open={open} onClose={onClose} size="full">
+      <Drawer.Header>
+        <Drawer.Title>Edit CSV: {fileName}</Drawer.Title>
+        <Drawer.Actions>
+          <Button onClick={onClose} appearance="subtle">Cancel</Button>
+          <Button onClick={handleSave} appearance="primary">Save</Button>
+        </Drawer.Actions>
+      </Drawer.Header>
+      <Drawer.Body>
+        <Table
+          ref={tableRef}
+          height={600}
+          data={filteredData}
+          virtualized
+          rowHeight={40}
+          headerHeight={70}
+        >
+          {headers.map(header => (
+            <Column key={header} width={150} resizable>
+              <HeaderCell>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <strong>{header}</strong>
+                  <InputGroup size="xs">
+                    <Input
+                      placeholder="Filter"
+                      value={filters[header] || ''}
+                      onChange={(val) => handleFilterChange(header, val)}
+                    />
+                    <InputGroup.Addon>
+                      <Search />
+                    </InputGroup.Addon>
+                  </InputGroup>
+                </div>
+              </HeaderCell>
+              <Cell>
+                {(rowData, rowIndex) => renderCell(rowData, data.indexOf(rowData), header)}
+              </Cell>
+            </Column>
+          ))}
+        </Table>
+      </Drawer.Body>
+    </Drawer>
+  );
 };
 
 export default TableEditorChatGPT;
