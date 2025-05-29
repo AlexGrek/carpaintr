@@ -21,7 +21,7 @@ const ServerLogs = () => {
                 throw new Error(`${str('Error: ')}${response.statusText}`);
             }
             const data = await response.json();
-            setLogs(data);
+            setLog(data);
         } catch (err) {
             setError(err.message);
         } finally {
