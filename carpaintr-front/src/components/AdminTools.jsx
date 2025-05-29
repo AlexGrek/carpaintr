@@ -8,7 +8,7 @@ const AdminTools = () => {
 
   return (
     <div style={{ marginTop: '20px', width: "100%"}}>
-      <Tabs className='fade-in' activeKey={activeKey} onSelect={setActiveKey} appearance='pills'>
+      <Tabs className='fade-in-simple' activeKey={activeKey} onSelect={setActiveKey} appearance='pills'>
         <Tabs.Tab eventKey="1" title="Додати користувача" style={{"margin": "auto"}}>
             {activeKey === '1' && <CreateUser />}
         </Tabs.Tab>

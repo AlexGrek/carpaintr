@@ -25,9 +25,9 @@
   min-height: 100vh;
 }
 
-.fade-in {
+.fade-in-simple {
   opacity: 0;
-  animation: fadeIn 200ms ease-in-out forwards;
+  animation: fadeIn 250ms ease-out forwards;
 }
 
 @keyframes fadeIn {

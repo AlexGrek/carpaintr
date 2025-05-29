@@ -375,7 +375,7 @@ const CarPaintEstimator = () => {
                 </Stack>
             </Stack>
             <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(key) => setActivePanel(parseInt(key))}>
-                <Panel className='fade-in' header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
+                <Panel className='fade-in-simple' header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
                     <VehicleSelect
                         selectedBodyType={bodyType}
                         carclass={carClass}

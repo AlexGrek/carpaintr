@@ -36,7 +36,7 @@ const DisplayUserData = ({ data }) => {
   };
 
   return (
-    <div className="p-4 fade-in">
+    <div className="p-4 fade-in-simple">
       <table className="w-full">
         <tbody>
           <tr>
