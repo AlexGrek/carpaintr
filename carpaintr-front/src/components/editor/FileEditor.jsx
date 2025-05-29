@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Container, Sidebar, Sidenav, Content, Button, Modal, Notification, toaster, Input, Row, Col } from 'rsuite';
 import { Tree, Tabs } from 'rsuite';
 import yaml from 'js-yaml';
 import { authFetch } from '../../utils/authFetch';
-import CsvEditorDrawer from './CsvEditorDrawer';
-import TableEditorClaude from './TableEditorClaude';
 import TableEditorChatGPT from './TableEditorChatGPT';
 
 const treeFromDirectoryStructure = (path, data) => {
