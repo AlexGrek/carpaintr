@@ -1,20 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Papa from 'papaparse';
-import { Drawer, Button, Input, InputGroup, IconButton, Table } from 'rsuite';
-import { Search } from '@rsuite/icons';
+import './TableEditorChatGPT.css';
+import { Drawer, Button, InputGroup, Dropdown, Table, Whisper, Popover, IconButton } from 'rsuite';
+import { Search, More } from '@rsuite/icons';
 
 const { Column, HeaderCell, Cell } = Table;
 
 const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
   const [data, setData] = useState([]);
   const [headers, setHeaders] = useState([]);
-  const [editCell, setEditCell] = useState(null); // { row, column }
+  const [editCell, setEditCell] = useState(null);
+  const [editValue, setEditValue] = useState('');
   const [filters, setFilters] = useState({});
   const [filteredData, setFilteredData] = useState([]);
 
-  const tableRef = useRef(null);
-
-  // Parse CSV on load
   useEffect(() => {
     if (!csvData) return;
     const { data: parsed } = Papa.parse(csvData, { header: true });
@@ -23,7 +22,6 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
     setFilters({});
   }, [csvData]);
 
-  // Apply filters
   useEffect(() => {
     const filtered = data.filter(row =>
       Object.entries(filters).every(
@@ -34,7 +32,11 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
   }, [data, filters]);
 
   const handleCellClick = (rowIndex, colKey) => {
+    if (editCell) {
+      handleCellChange(editCell.row, editCell.column, editValue);
+    }
     setEditCell({ row: rowIndex, column: colKey });
+    setEditValue(data[rowIndex][colKey] || '');
   };
 
   const handleCellChange = (rowIndex, colKey, value) => {
@@ -50,9 +52,7 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
     let newRow = row;
     let newColIndex = colIndex;
 
-    if (e.key === 'Enter') {
-      newRow = Math.min(row + 1, filteredData.length - 1);
-    } else if (e.key === 'ArrowDown') {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
       newRow = Math.min(row + 1, filteredData.length - 1);
     } else if (e.key === 'ArrowUp') {
       newRow = Math.max(row - 1, 0);
@@ -65,8 +65,10 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
     }
 
     e.preventDefault();
+    handleCellChange(editCell.row, editCell.column, editValue);
     const nextRowIndex = data.findIndex((r) => r === filteredData[newRow]);
     setEditCell({ row: nextRowIndex, column: headers[newColIndex] });
+    setEditValue(data[nextRowIndex][headers[newColIndex]] || '');
   };
 
   const handleFilterChange = (header, value) => {
@@ -74,29 +76,72 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
   };
 
   const handleSave = () => {
+    if (editCell) {
+      handleCellChange(editCell.row, editCell.column, editValue);
+    }
     const csv = Papa.unparse(data);
     onSave(csv);
     onClose();
   };
 
+  const addRow = (index, duplicate = false) => {
+    const newData = [...data];
+    const newRow = duplicate ? { ...data[index] } : Object.fromEntries(headers.map(h => [h, '']));
+    newData.splice(index, 0, newRow);
+    setData(newData);
+  };
+
+  const addColumn = () => {
+    const newCol = prompt('Enter new column name');
+    if (!newCol || headers.includes(newCol)) return;
+    const newHeaders = [...headers, newCol];
+    const newData = data.map(row => ({ ...row, [newCol]: '' }));
+    setHeaders(newHeaders);
+    setData(newData);
+  };
+
+  const renderEditPopover = (rowIndex) => (
+    <Popover full>
+      <Dropdown.Menu>
+        <Dropdown.Item onClick={() => addRow(rowIndex)}>Add Row Above</Dropdown.Item>
+        <Dropdown.Item onClick={() => addRow(rowIndex + 1)}>Add Row Below</Dropdown.Item>
+        <Dropdown.Item onClick={() => addRow(rowIndex + 1, true)}>Duplicate Row</Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
+  );
+
   const renderCell = (rowData, rowIndex, colKey) => {
-    if (editCell?.row === rowIndex && editCell?.column === colKey) {
+    const absoluteRowIndex = data.indexOf(rowData);
+    const cellContent = rowData[colKey];
+    const isEditing = editCell?.row === absoluteRowIndex && editCell?.column === colKey;
+
+    if (isEditing) {
       return (
-        <Input
-          autoFocus
-          defaultValue={rowData[colKey]}
-          onBlur={(e) => handleCellChange(rowIndex, colKey, e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+        <div className="cell-edit-wrapper">
+          <input
+            className="cell-input"
+            value={editValue}
+            autoFocus
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => {
+              handleCellChange(absoluteRowIndex, colKey, editValue);
+              setEditCell(null);
+            }}
+            onKeyDown={handleKeyDown}
+          />
+          <Whisper placement="bottomEnd" trigger="click" speaker={renderEditPopover(absoluteRowIndex)}>
+            <IconButton icon={<More />} size="xs" appearance="subtle" />
+          </Whisper>
+        </div>
       );
     }
+
     return (
       <div
-        tabIndex={0}
-        style={{ cursor: 'pointer' }}
-        onClick={() => handleCellClick(rowIndex, colKey)}
+        className={`cell-display ${!cellContent ? 'cell-empty' : ''}`}
+        onClick={() => handleCellClick(absoluteRowIndex, colKey)}
       >
-        {rowData[colKey]}
+        {cellContent || <span className="cell-placeholder">+ Click to Edit</span>}
       </div>
     );
   };
@@ -111,8 +156,8 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
         </Drawer.Actions>
       </Drawer.Header>
       <Drawer.Body>
+        <Button appearance="ghost" onClick={addColumn} style={{ marginBottom: 10 }}>+ Add New Column</Button>
         <Table
-          ref={tableRef}
           height={600}
           data={filteredData}
           virtualized
@@ -125,10 +170,11 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <strong>{header}</strong>
                   <InputGroup size="xs">
-                    <Input
+                    <input
+                      className="filter-input"
                       placeholder="Filter"
                       value={filters[header] || ''}
-                      onChange={(val) => handleFilterChange(header, val)}
+                      onChange={(e) => handleFilterChange(header, e.target.value)}
                     />
                     <InputGroup.Addon>
                       <Search />
@@ -137,7 +183,7 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
                 </div>
               </HeaderCell>
               <Cell>
-                {(rowData, rowIndex) => renderCell(rowData, data.indexOf(rowData), header)}
+                {(rowData, rowIndex) => renderCell(rowData, rowIndex, header)}
               </Cell>
             </Column>
           ))}

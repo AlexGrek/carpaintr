@@ -8,3 +8,6 @@
 [2025-05-29 22:42:08.373 UTC] [INFO] [User: admin@example.com] Change file request: "tables/t1.csv"
 [2025-05-29 22:45:14.165 UTC] [INFO] [User: admin@example.com] Change file request: "tables/t1.csv"
 [2025-05-29 22:45:14.272 UTC] [ERROR] Error: "Internal server error: Git command failed: Failed to execute git command: [\"commit\", \"-m\", \"File \\\"tables/t1.csv\\\" updated at 2025-05-30T01:45:14.165174800+03:00\"] in \"data\\\\admin%40example%2Ecom\". Stderr: "
+[2025-05-29 22:53:28.131 UTC] [INFO] Application started
+[2025-05-29 23:16:51.421 UTC] [INFO] [User: admin@example.com] Change file request: "tables/t1.csv"
+[2025-05-29 23:36:51.375 UTC] [INFO] [User: admin@example.com] Change file request: "tables/t1.csv"

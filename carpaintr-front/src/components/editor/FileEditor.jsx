@@ -181,7 +181,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
           <TableEditorChatGPT
             open={tableEditorOpen}
             onClose={() => setTableEditorOpen(false)}
-            onSave={() => {setFileContent}}
+            onSave={setFileContent}
             fileName={filePath}
             csvData={fileContent}
           />
