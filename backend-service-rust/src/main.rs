@@ -1,4 +1,7 @@
-use api::v1::admin::{delete_user_license_handler, generate_license_handler, get_user_license_handler, list_user_licenses_handler};
+use api::v1::admin::{
+    delete_user_license_handler, generate_license_handler, get_user_license_handler,
+    list_user_licenses_handler,
+};
 use axum::{
     http::StatusCode,
     middleware::from_fn_with_state,
@@ -7,35 +10,33 @@ use axum::{
     Router,
 };
 use env_logger::Builder;
+use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 use log::LevelFilter;
 
 use crate::{
     auth::Auth,
     cache::license_cache::LicenseCache,
     db::users::UserDb,
-    middleware::{
-        admin_check_middleware, jwt_auth_middleware, license_expiry_middleware,
-    },
+    middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
     state::AppState,
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
-use tower_http::{services::ServeDir, 
-    trace::TraceLayer}
-;
+use tower_http::{services::ServeDir, trace::TraceLayer};
 
 mod api;
 mod auth;
 mod cache;
+mod calc;
 mod db;
 mod errors;
+mod exlogging;
+mod license_manager;
 mod middleware;
 mod models;
 mod state;
-mod license_manager;
-mod utils;
-mod calc;
 mod transactionalfs;
+mod utils;
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
@@ -45,7 +46,8 @@ async fn main() -> tokio::io::Result<()> {
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "data/sled_db".to_string());
     let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "supersecretjwtkey".to_string());
-    let jwt_license_secret = env::var("LICENSE_JWT_SECRET").unwrap_or_else(|_| "licensejwtsecretkey".to_string());
+    let jwt_license_secret =
+        env::var("LICENSE_JWT_SECRET").unwrap_or_else(|_| "licensejwtsecretkey".to_string());
     let admin_file_path = env::var("ADMIN_FILE_PATH").unwrap_or_else(|_| "admins.txt".to_string());
     let data_dir_path = env::var("DATA_DIR_PATH").unwrap_or_else(|_| "data".to_string());
     let license_cache_size: u64 = env::var("LICENSE_CACHE_SIZE")
@@ -53,6 +55,10 @@ async fn main() -> tokio::io::Result<()> {
         .parse()
         .expect("LICENSE_CACHE_SIZE must be a number");
 
+    let config = LoggerConfig {
+        log_file_path: "application.log".to_string(),
+    };
+    configure_log_event(config).await.unwrap();
 
     std::fs::create_dir_all(&data_dir_path)?;
 
@@ -60,7 +66,11 @@ async fn main() -> tokio::io::Result<()> {
 
     let db = UserDb::new(&database_url).expect("Failed to initialize database");
     let auth = Auth::new(jwt_secret.as_bytes());
-    let license_cache = LicenseCache::new(PathBuf::from(data_dir_path.clone()), license_cache_size, jwt_license_secret.clone());
+    let license_cache = LicenseCache::new(
+        PathBuf::from(data_dir_path.clone()),
+        license_cache_size,
+        jwt_license_secret.clone(),
+    );
 
     let shared_state = Arc::new(AppState {
         db,
@@ -88,21 +98,26 @@ async fn main() -> tokio::io::Result<()> {
                     "/check_admin_status",
                     get(api::v1::admin::check_admin_status),
                 )
-                .route(
-                    "/listusers",
-                    get(api::v1::admin::list_users),
-                )
-                 .route(
-                    "/manageuser",
-                    post(api::v1::admin::manage_user),
-                )
+                .route("/listusers", get(api::v1::admin::list_users))
+                .route("/logs", get(api::v1::admin::get_n_logs))
+                .route("/manageuser", post(api::v1::admin::manage_user))
                 .route(
                     "/license/invalidate/{email}",
                     post(api::v1::license::invalidate_license_cache_admin),
-                ).route("/license/generate", post(generate_license_handler))
-                .route("/license/list/{user_email}", get(list_user_licenses_handler))
-                .route("/license/{user_email}/{license_filename}", delete(delete_user_license_handler))
-                .route("/license/{user_email}/{license_filename}", get(get_user_license_handler))
+                )
+                .route("/license/generate", post(generate_license_handler))
+                .route(
+                    "/license/list/{user_email}",
+                    get(list_user_licenses_handler),
+                )
+                .route(
+                    "/license/{user_email}/{license_filename}",
+                    delete(delete_user_license_handler),
+                )
+                .route(
+                    "/license/{user_email}/{license_filename}",
+                    get(get_user_license_handler),
+                )
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     admin_check_middleware,
@@ -114,14 +129,32 @@ async fn main() -> tokio::io::Result<()> {
         .nest(
             "/user",
             Router::new()
-                .route("/calculationstore", get(api::v1::calc::persistence_endpoints::get_calculation_file))
-                .route("/calculationstore", post(api::v1::calc::persistence_endpoints::save_calculation))
+                .route(
+                    "/calculationstore",
+                    get(api::v1::calc::persistence_endpoints::get_calculation_file),
+                )
+                .route(
+                    "/calculationstore",
+                    post(api::v1::calc::persistence_endpoints::save_calculation),
+                )
                 .route("/get_calc_details", get(api::v1::user::get_calc_details))
-                .route("/carmakes", get(api::v1::calc::data_endpoints::list_car_makes))
+                .route(
+                    "/carmakes",
+                    get(api::v1::calc::data_endpoints::list_car_makes),
+                )
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))
-                .route("/global/{path}", get(api::v1::calc::data_endpoints::get_global_file))
-                .route("/carmodels/{maker}", get(api::v1::calc::data_endpoints::get_cars_by))
-                .route("/carparts/{class}/{body_type}", get(api::v1::calc::data_endpoints::get_car_parts_by_type_class))
+                .route(
+                    "/global/{path}",
+                    get(api::v1::calc::data_endpoints::get_global_file),
+                )
+                .route(
+                    "/carmodels/{maker}",
+                    get(api::v1::calc::data_endpoints::get_cars_by),
+                )
+                .route(
+                    "/carparts/{class}/{body_type}",
+                    get(api::v1::calc::data_endpoints::get_car_parts_by_type_class),
+                )
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     license_expiry_middleware,
@@ -130,12 +163,30 @@ async fn main() -> tokio::io::Result<()> {
         .nest(
             "/editor",
             Router::new()
-                .route("/list_user_files", get(api::editor_endpoints::get_user_file_list))
-                .route("/list_common_files", get(api::editor_endpoints::get_common_file_list))
-                .route("/read_user_file/{path}", get(api::editor_endpoints::read_user_file))
-                .route("/delete_user_file/{path}", delete(api::editor_endpoints::delete_user_file))
-                .route("/upload_user_file/{path}", post(api::editor_endpoints::upload_user_file))
-                .route("/read_common_file/{path}", get(api::editor_endpoints::read_common_file))
+                .route(
+                    "/list_user_files",
+                    get(api::editor_endpoints::get_user_file_list),
+                )
+                .route(
+                    "/list_common_files",
+                    get(api::editor_endpoints::get_common_file_list),
+                )
+                .route(
+                    "/read_user_file/{path}",
+                    get(api::editor_endpoints::read_user_file),
+                )
+                .route(
+                    "/delete_user_file/{path}",
+                    delete(api::editor_endpoints::delete_user_file),
+                )
+                .route(
+                    "/upload_user_file/{path}",
+                    post(api::editor_endpoints::upload_user_file),
+                )
+                .route(
+                    "/read_common_file/{path}",
+                    get(api::editor_endpoints::read_common_file),
+                ),
         )
         .layer(from_fn_with_state(
             shared_state.clone(),
@@ -143,7 +194,6 @@ async fn main() -> tokio::io::Result<()> {
         ))
         // Add the API fallback here
         .fallback(api_fallback);
-
 
     // We need a special fallback handler for React Router
     // This fallback handler will serve index.html for any non-API, non-file routes
@@ -154,22 +204,29 @@ async fn main() -> tokio::io::Result<()> {
             Err(_) => return (StatusCode::NOT_FOUND, "Not Found").into_response(),
         };
 
-        (StatusCode::OK, [(axum::http::header::CONTENT_TYPE, "text/html")], index_content).into_response()
+        (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "text/html")],
+            index_content,
+        )
+            .into_response()
     }
 
     // Define our combined app properly for SPA + API:
-let spa_fallback_service = Router::new().fallback(spa_fallback);
+    let spa_fallback_service = Router::new().fallback(spa_fallback);
 
-let app = Router::new()
-    .nest("/api/v1", api_router) // API routes with proper 404 handling
-    // Add the static files service as a fallback before the SPA fallback
-    .fallback_service(ServeDir::new("static").fallback(spa_fallback_service))
-    .with_state(shared_state)
-    .layer(TraceLayer::new_for_http());
+    let app = Router::new()
+        .nest("/api/v1", api_router) // API routes with proper 404 handling
+        // Add the static files service as a fallback before the SPA fallback
+        .fallback_service(ServeDir::new("static").fallback(spa_fallback_service))
+        .with_state(shared_state)
+        .layer(TraceLayer::new_for_http());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     log::info!("Starting server at http://0.0.0.0:8080");
+    log_event(LogLevel::Info, "Application started", None::<&str>);
     axum::serve(listener, app).await?;
+    
 
     Ok(())
 }
@@ -180,6 +237,9 @@ fn check_admin_file(path: &str) {
     if admin_file_path.exists() {
         log::info!("Admin file found at: {}", admin_file_path.display());
     } else {
-        log::error!("Admin file NOT found at: {}. Admin functionality might be limited.", admin_file_path.display());
+        log::error!(
+            "Admin file NOT found at: {}. Admin functionality might be limited.",
+            admin_file_path.display()
+        );
     }
 }

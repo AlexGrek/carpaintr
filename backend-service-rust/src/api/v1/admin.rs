@@ -1,19 +1,16 @@
 use axum::{
-    extract::{Json as AxumJson, Path, State},
+    extract::{Json as AxumJson, Path, Query, State},
     http::{header, Response, StatusCode},
     response::IntoResponse,
     Json,
 };
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{Utc, Duration};
 use crate::{
-    errors::AppError,
-    license_manager::{
+    errors::AppError, exlogging::get_latest_logs, license_manager::{
         delete_license_file, generate_license_token, list_license_files, read_license_file_by_name, save_license_file // Import new functions
-    },
-    middleware::AuthenticatedUser,
-    models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest},
-    state::AppState,
+    }, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState
 };
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
@@ -133,4 +130,19 @@ pub async fn manage_user(
             Ok(StatusCode::OK) // Return 200 OK on successful password change
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LogLinesQuery {
+    pub lines: usize
+}
+
+// Existing handler to list all users by email (admin only)
+pub async fn get_n_logs(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(_app_state): State<Arc<AppState>>,
+    Query(log_query): Query<LogLinesQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let logs = get_latest_logs(log_query.lines).await.map_err(|err| AppError::BadRequest(err.to_string()))?;
+    Ok(Json(logs)) // Return the list of log lines
 }

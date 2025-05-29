@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tabs } from 'rsuite';
 import CreateUser from './CreateUser';
 import ManageUsers from './ManageUsers';
+import ServerLogs from './ServerLogs';
 
 const AdminTools = () => {
     const [activeKey, setActiveKey] = useState('1'); // Default active tab is Create User
@@ -16,7 +17,7 @@ const AdminTools = () => {
           <ManageUsers />
         </Tabs.Tab>
         <Tabs.Tab eventKey="3" title="Логи">
-          <ManageUsers />
+          <ServerLogs />
         </Tabs.Tab>
         <Tabs.Tab eventKey="4" title="Дані">
           <ManageUsers />
