@@ -3,41 +3,65 @@ import { Button, ButtonGroup, Drawer, Panel } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import ReloadIcon from '@rsuite/icons/Reload';
 import LicenseManager from './LicenseManager';
+import Trans from '../localization/Trans'; // Import Trans component
+import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
+
+registerTranslations('ua', {
+  "Not set": "Не встановлено",
+  "Never": "Ніколи",
+  "ID:": "ID:",
+  "Created At:": "Створено:",
+  "Updated At:": "Оновлено:",
+  "Deleted At:": "Видалено:",
+  "Email:": "Електронна пошта:",
+  "Password:": "Пароль:",
+  "Error: ": "Помилка: ",
+  "Failed to send management request": "Не вдалося відправити запит на керування",
+  "Confirm": "Підтвердити",
+  "Cancel": "Скасувати",
+  "Users in system": "Користувачі в системі",
+  "Refresh": "Оновити",
+  "Delete user": "Видалити користувача",
+  "Delete": "Видалити",
+  "Change password": "Змінити пароль",
+  "Manage licenses": "Керування ліцензіями"
+});
 
 const DisplayUserData = ({ data }) => {
+  const { str } = useLocale();
   const formatDate = (dateString) => {
-    if (!dateString) return 'Not set';
+    if (!dateString) return str('Not set');
     const date = new Date(dateString);
     return date.toLocaleString();
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 fade-in">
       <table className="w-full">
         <tbody>
           <tr>
-            <td className="font-bold pr-4 py-2">ID:</td>
+            <td className="font-bold pr-4 py-2"><Trans>ID:</Trans></td>
             <td>{data.ID}</td>
           </tr>
           <tr>
-            <td className="font-bold pr-4 py-2">Created At:</td>
+            <td className="font-bold pr-4 py-2"><Trans>Created At:</Trans></td>
             <td>{formatDate(data.CreatedAt)}</td>
           </tr>
           <tr>
-            <td className="font-bold pr-4 py-2">Updated At:</td>
+            <td className="font-bold pr-4 py-2"><Trans>Updated At:</Trans></td>
             <td>{formatDate(data.UpdatedAt)}</td>
           </tr>
           <tr>
-            <td className="font-bold pr-4 py-2">Deleted At:</td>
-            <td>{data.DeletedAt ? formatDate(data.DeletedAt) : 'Never'}</td>
+            <td className="font-bold pr-4 py-2"><Trans>Deleted At:</Trans></td>
+            <td>{data.DeletedAt ? formatDate(data.DeletedAt) : str('Never')}</td>
           </tr>
           <tr>
-            <td className="font-bold pr-4 py-2">Email:</td>
+            <td className="font-bold pr-4 py-2"><Trans>Email:</Trans></td>
             <td>{data.Email}</td>
           </tr>
           <tr>
-            <td className="font-bold pr-4 py-2">Password:</td>
-            <td>{data.Password ? '********' : 'Not set'}</td>
+            <td className="font-bold pr-4 py-2"><Trans>Password:</Trans></td>
+            <td>{data.Password ? '********' : str('Not set')}</td>
           </tr>
         </tbody>
       </table>
@@ -54,6 +78,7 @@ const ManageUsers = () => {
   const [confirmationFunc, setConfirmationFunc] = useState(null);
   const [confirmationText, setConfirmationText] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
+  const { str } = useLocale(); // Initialize useLocale hook
 
   const withConfirmation = (user, text, func) => {
     setEditingUser(user)
@@ -69,7 +94,7 @@ const ManageUsers = () => {
     try {
       const response = await authFetch('/api/v1/admin/listusers');
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        throw new Error(`${str('Error: ')}${response.statusText}`);
       }
       const data = await response.json();
       setUsers(data);
@@ -82,7 +107,7 @@ const ManageUsers = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [str]); // Add str to dependency array
 
   const sendManagementRequest = async (body) => {
     console.log("Management request: ", JSON.stringify(body))
@@ -97,7 +122,7 @@ const ManageUsers = () => {
     if (!resp.ok) {
       const errorData = await resp.json();
       setError(errorData);
-      throw new Error(errorData.message || 'Failed to send management request');
+      throw new Error(errorData.message || str('Failed to send management request'));
     }
   }
 
@@ -153,34 +178,33 @@ const ManageUsers = () => {
         </Drawer.Header>
         <Drawer.Body>
           {editingUser && <div>
-            <p>License management stuff</p>
             <LicenseManager userEmail={editingUser}/>
           </div>}
         </Drawer.Body>
       </Drawer>
       <Drawer placement="top" open={confirmationOpen} onClose={() => setConfirmationOpen(false)}>
         <Drawer.Header>
-          Підтвердити
+          <Trans>Confirm</Trans>
         </Drawer.Header>
         <Drawer.Body>
           {editingUser && <div style={{ width: "100%", "display": "flex", flexDirection: "column", alignItems: "center", height: "100%", "justifyContent": "space-evenly" }}>
-            <p>{confirmationText}: <mark>{editingUser.Email}</mark></p>
+            <p>{str(confirmationText)}: <mark>{editingUser.Email}</mark></p>
             <ButtonGroup>
-              <Button onClick={handleOnConfirmationClick} appearance='primary'>Підтвердити</Button>
-              <Button onClick={handleOnConfirmationCancel}>Скасувати</Button>
+              <Button onClick={handleOnConfirmationClick} appearance='primary'><Trans>Confirm</Trans></Button>
+              <Button onClick={handleOnConfirmationCancel}><Trans>Cancel</Trans></Button>
             </ButtonGroup>
           </div>}
         </Drawer.Body>
       </Drawer>
-      <p>Користувачі в системі <Button startIcon={<ReloadIcon />} onClick={fetchData}> Оновити </Button></p>
+      <p><Trans>Users in system</Trans> <Button startIcon={<ReloadIcon />} onClick={fetchData}> <Trans>Refresh</Trans> </Button></p>
       {users.map(user => {
         const email = user
         return <Panel bordered collapsible key={email} header={email}>
           {/* <DisplayUserData data={user} /> */}
           <ButtonGroup>
-            <Button onClick={() => withConfirmation(user, "Видалити користувача", async () => handleDeleteUser(email))}>Видалити</Button>
-            <Button onClick={() => handleChPassUser(email, "temporary_password_42")}>Змінити пароль</Button>
-            <Button onClick={() => handleLicenseManagementClick(user)}>Керування ліцензіями</Button>
+            <Button onClick={() => withConfirmation(user, str("Delete user"), async () => handleDeleteUser(email))}><Trans>Delete</Trans></Button>
+            <Button onClick={() => handleChPassUser(email, "temporary_password_42")}><Trans>Change password</Trans></Button>
+            <Button onClick={() => handleLicenseManagementClick(user)}><Trans>Manage licenses</Trans></Button>
           </ButtonGroup>
           {/* <code>{JSON.stringify(user)}</code> */}
         </Panel>

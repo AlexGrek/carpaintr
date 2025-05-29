@@ -4,7 +4,7 @@ import TopBarUser from '../layout/TopBarUser';
 import FileEditor from '../editor/FileEditor';
 
 const FileEditorPage = () => {
-    return <div><TopBarUser/><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
+    return <div className='fade-in'><TopBarUser/><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
         <FileEditor /></div>
     </div>
 }

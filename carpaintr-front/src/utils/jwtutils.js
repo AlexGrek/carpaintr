@@ -13,31 +13,31 @@ function decodeJwtExpiration(token) {
   try {
     // Split the token into parts
     const parts = token.split('.');
-    
+
     // A valid JWT has 3 parts: header, payload, and signature
     if (parts.length !== 3) {
       throw new Error('Invalid token format: JWT must have three parts');
     }
-    
+
     // Decode the payload (second part)
     const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    
+
     // Check if the token has an expiration claim (exp)
     if (!payload.exp) {
       throw new Error('Token does not contain expiration information');
     }
-    
+
     // Convert exp (seconds since epoch) to milliseconds for Date object
     const expirationDate = new Date(payload.exp * 1000);
     const currentDate = new Date();
-    
+
     // Calculate days till expiration
     const millisecondsPerDay = 24 * 60 * 60 * 1000;
     const daysTillExpiration = (expirationDate - currentDate) / millisecondsPerDay;
-    
+
     // Check if expired
     const isExpired = currentDate > expirationDate;
-    
+
     return {
       expirationDate,
       daysTillExpiration: parseFloat(daysTillExpiration.toFixed(2)),

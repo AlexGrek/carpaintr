@@ -43,6 +43,7 @@ export const authFetch = async (url, options = {}) => {
 
 export const logout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('company');
 };
 
 export const fetchCompanyInfo = async (onError = console.error) => {

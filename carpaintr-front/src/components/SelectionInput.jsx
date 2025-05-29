@@ -39,7 +39,7 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
                         <Button
                             key={value}
                             appearance="primary"
-                            className="fade-in"
+                            className="fade-in-selection"
                             style={{ animationDelay: `${index * 0.02}s` }} // Staggered animation
                             onClick={() => handleSelect(value)}
                         >
@@ -50,7 +50,7 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
             ) : (
                 <div className="selected-value-container">
                     <span>{getLabel(selectedValue)}</span>
-                    <IconButton className="fade-in" icon={<GridIcon />} appearance="subtle" onClick={handleEdit} />
+                    <IconButton className="fade-in-selection" icon={<GridIcon />} appearance="subtle" onClick={handleEdit} />
                 </div>
             )}
         </HStack>

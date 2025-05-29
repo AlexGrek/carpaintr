@@ -1,3 +1,4 @@
+use lexiclean::Lexiclean;
 use thiserror::Error;
 use std::{path::PathBuf};
 use std::collections::HashSet;
@@ -18,52 +19,21 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
-    let base = base.as_ref().canonicalize()?; // base must exist
-
-        // Create the target path and attempt to canonicalize it
-    let full_target = base.join(target.as_ref());
-
-        // For existing files, canonicalize to resolve symlinks
-    if full_target.exists() {
-        let canonical_target = full_target.canonicalize()?;
-        if !canonical_target.starts_with(&base) {
-            return Err(SafeFsError::PathTraversalDetected);
-        }
-    }
-
-    let target_path = normalize_path(&base.join(target.as_ref()));
-
-    if target_path.starts_with(&base) {
-        Ok(())
+pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeFsError> {
+    // Clean the base path lexically
+    let base_clean = base.as_ref().lexiclean();
+    
+    // Create the full target path and clean it
+    let full_target = base_clean.join(target.as_ref());
+    let target_clean = full_target.lexiclean();
+    
+    // Check if the cleaned target is within the base directory
+    if target_clean.starts_with(&base_clean) {
+        Ok(target_clean)
     } else {
         Err(SafeFsError::PathTraversalDetected)
     }
 }
-
-fn normalize_path(path: &Path) -> PathBuf {
-    let path = path.to_string_lossy();
-    // Handle different separators on Windows
-    let path = path.replace('\\', "/");
-    // Remove duplicate separators
-    let path = path.split('/').filter(|s| !s.is_empty()).collect::<Vec<_>>();
-    
-    let mut stack = Vec::new();
-    for component in path {
-        match component {
-            "." => continue,
-            ".." => {
-                if !stack.is_empty() {
-                    stack.pop();
-                }
-            }
-            _ => stack.push(component),
-        }
-    }
-    
-    PathBuf::from(format!("/{}", stack.join("/")))
-}
-
 
 /// Safely write content to a file, ensuring it's within user base path
 pub async fn safe_write<P: AsRef<Path>>(base: P, target: P, content: impl AsRef<[u8]>) -> Result<(), SafeFsError> {

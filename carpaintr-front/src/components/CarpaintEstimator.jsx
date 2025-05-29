@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster } from 'rsuite';
+import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
 import { useNavigate } from "react-router-dom";
@@ -234,6 +234,9 @@ const CarPaintEstimator = () => {
     const [year, setYear] = useState(null);
     const [carClass, setCarClass] = useState(null);
     const [bodyType, setBodyType] = useState(null);
+    const [licensePlate, setLicensePlate] = useState("");
+    const [VIN, setVIN] = useState("");
+    const [notes, setNotes] = useState("");
     const [color, setColor] = useState(null);
     const [selectedParts, setSelectedParts] = useState([]);
     const [activePanel, setActivePanel] = useState(1);
@@ -265,6 +268,9 @@ const CarPaintEstimator = () => {
     const handleSetModel = useCallback((val) => setModel(val), []);
     const handleSetCarClass = useCallback((val) => setCarClass(val), []);
     const handleSetBodyType = useCallback((val) => setBodyType(val), []);
+    const handleSetVIN = useCallback((val) => setVIN(val), []);
+    const handleSetLicensePlate = useCallback((val) => setLicensePlate(val), []);
+    const handleSetNotes = useCallback((val) => setNotes(val), []);
     const handleSetColor = useCallback((val) => setColor(val), []);
     const handleSetPaintType = useCallback((val) => setPaintType(val), []);
     const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
@@ -288,6 +294,9 @@ const CarPaintEstimator = () => {
             paint_type: paintType || "",
             saved_file_name: storeFileName || null,
             body_parts: selectedParts.length > 0 ? selectedParts.map(part => ({ brand: make || "", model: part })) : null,
+            vin: VIN,
+            notes: notes,
+            license_plate: licensePlate === '' ? null : licensePlate
             // timestamp will be added on the backend
         };
 
@@ -330,6 +339,9 @@ const CarPaintEstimator = () => {
                     setSelectedParts(data.body_parts?.map(part => part.model) || []);
                     showMessage('success', str('Calculation loaded successfully!'));
                     setStoreFileName(data.saved_file_name || null);
+                    setNotes(data.notes || "");
+                    setLicensePlate(data.license_plate || "");
+                    setVIN(data.VIN || "")
                 } else {
                     showMessage('info', str('No saved calculation found.'));
                 }
@@ -363,7 +375,7 @@ const CarPaintEstimator = () => {
                 </Stack>
             </Stack>
             <PanelGroup accordion defaultActiveKey={activeKey()} activeKey={activePanel} bordered onSelect={(key) => setActivePanel(parseInt(key))}>
-                <Panel header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
+                <Panel className='fade-in' header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
                     <VehicleSelect
                         selectedBodyType={bodyType}
                         carclass={carClass}
@@ -375,6 +387,10 @@ const CarPaintEstimator = () => {
                         setModel={handleSetModel}
                         setYear={handleSetYear}
                     />
+                    <Divider><Trans>Additional info</Trans></Divider>
+                    <Input value={licensePlate} onChange={handleSetLicensePlate} placeholder={str('License plate (optional)')}></Input>
+                    <Input value={VIN} onChange={handleSetVIN} placeholder={str('VIN (optional)')}></Input>
+                    <Input as='textarea' value={notes} onChange={handleSetNotes} placeholder={str('Notes')}></Input>
                 </Panel>
                 <Panel header={str("Color and paint type")} eventKey={2}>
                     <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>

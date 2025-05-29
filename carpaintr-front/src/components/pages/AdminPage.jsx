@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Input, Message, Loader } from 'rsuite';
+import { Breadcrumb, Message, Loader } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/authFetch';
 import AdminTools from '../AdminTools';
 import Trans from '../../localization/Trans';
-import { useLocale } from '../../localization/LocaleContext';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import { Helmet } from 'react-helmet-async';
+
+registerTranslations('ua', {
+  "Admin Page": "Панель адміністратора",
+  "Home": "Головна сторінка",
+  "Dashboard": "Додатки"
+});
 
 const AdminPage = () => {
   const [adminStatus, setAdminStatus] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const {str} = useLocale();
+  const { str } = useLocale();
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
       try {
         const response = await authFetch('/api/v1/admin/check_admin_status');
-        
+
         if (!response.ok) {
           throw new Error(str("You don't have access"));
         }
@@ -49,14 +56,16 @@ const AdminPage = () => {
         </Message>
       ) : (
         <>
-        <div className='police-line'></div>
-          <h3>Панель адміністратора</h3>
-          {/* <Input
-            componentClass="textarea"
-            value={adminStatus}
-            readOnly
-            style={{ width: '100%', height: '400px' }}
-          /> */}
+          <div className='police-line'></div>
+          <Helmet>
+            <title>Autolab - Admin Panel</title>
+          </Helmet>
+          <h3><code><Trans>Admin Page</Trans></code></h3>
+          <Breadcrumb>
+            <Breadcrumb.Item href="/"><Trans>Home</Trans></Breadcrumb.Item>
+            <Breadcrumb.Item href="/dashboard"><Trans>Dashboard</Trans></Breadcrumb.Item>
+            <Breadcrumb.Item active><Trans>Admin Page</Trans></Breadcrumb.Item>
+          </Breadcrumb>
           <AdminTools />
         </>
       )}

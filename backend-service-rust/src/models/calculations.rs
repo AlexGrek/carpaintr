@@ -30,5 +30,7 @@ pub struct CalculationData {
     pub body_parts: Option<Vec<CarBodyPart>>,
     pub timestamp: Option<DateTime<Utc>>,
     pub notes: Option<String>,
-    pub saved_file_name: Option<String>
+    pub saved_file_name: Option<String>,
+    pub vin: Option<String>,
+    pub license_plate: Option<String>
 }

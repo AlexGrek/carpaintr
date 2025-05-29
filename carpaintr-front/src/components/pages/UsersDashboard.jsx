@@ -67,7 +67,7 @@ const Dashboard = () => {
             {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />
             <br />
-            <Panel header={str("Your company")} shaded>
+            <Panel className='fade-in' header={str("Your company")} shaded>
                 <h2>{company && company.company_name}</h2>
                 <Text muted>{company && company.email}</Text>
             </Panel>
@@ -115,7 +115,7 @@ const DashboardNavigationButtons = () => {
         <section className="apps-list">
             <div className="container">
                 <div className="section-header">
-                    <h2><Trans>Available apps</Trans></h2>
+                    <h2 className='fade-in'><Trans>Available apps</Trans></h2>
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (
@@ -136,7 +136,7 @@ const DashboardNavigationButtons = () => {
 const FeatureCard = ({ icon, title, description, link }) => {
     const nav = useNavigate();
     return (
-        <div className="feature-card app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
+        <div className="feature-card app-card fade-in" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="feature-icon">{icon}</div>
             <h3>{title}</h3>
             <p>{description}</p>
