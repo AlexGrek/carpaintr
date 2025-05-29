@@ -12,7 +12,7 @@ RUN npm install
 RUN npm run build
 
 # ---------- Backend Build Stage ----------
-FROM rust:1.86 AS backend
+FROM rust:1.87 AS backend
 
 WORKDIR /app
 
@@ -24,6 +24,8 @@ COPY backend-service-rust/ ./backend-service-rust
 COPY --from=frontend /app/carpaintr-front/dist ./backend-service-rust/static
 
 WORKDIR /app/backend-service-rust
+
+ENV RUSTFLAGS="-C target-cpu=native" 
 
 # Build backend in release mode
 RUN cargo build --release
