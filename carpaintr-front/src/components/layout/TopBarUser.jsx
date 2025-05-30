@@ -35,8 +35,6 @@ const TopBarUser = () => {
       <Navbar.Brand
         style={{ margin: '0', padding: 0, paddingLeft: '8pt' }}
         onClick={() => navigate('/dashboard')} // Directly use onClick for navigation
-        as="a" // Treat Navbar.Brand as an anchor for better semantic HTML
-        href="/dashboard" // Provide href for accessibility and default link behavior
       >
         <span className='topbar-header-brand'>autolab</span>
       </Navbar.Brand>

@@ -4,6 +4,7 @@ import { Tree, Tabs } from 'rsuite';
 import yaml from 'js-yaml';
 import { authFetch } from '../../utils/authFetch';
 import TableEditorChatGPT from './TableEditorChatGPT';
+import { useMediaQuery } from 'react-responsive';
 
 const treeFromDirectoryStructure = (path, data) => {
   if (data === null) {
@@ -189,7 +190,6 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
   );
 };
 
-
 const FileEditor = () => {
   const [filePath, setFilePath] = useState(null);
   const [fileContent, setFileContent] = useState('');
@@ -198,6 +198,11 @@ const FileEditor = () => {
   const [pendingPath, setPendingPath] = useState(null);
   const [pendingCommon, setPendingCommon] = useState(false);
   const [isCommonFileSelected, setIsCommonFileSelected] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
+  const toggleSidebar = () => setSidebarVisible(!sidebarVisible);
 
   const loadFile = useCallback(async (path, isCommon) => {
     const apiEndpoint = isCommon ? "editor/read_common_file" : "editor/read_user_file";
@@ -208,10 +213,11 @@ const FileEditor = () => {
       setFileContent(data);
       setOriginalContent(data);
       setIsCommonFileSelected(isCommon);
+      if (isMobile) setSidebarVisible(false);
     } catch (error) {
       toaster.push(<Notification type="error" header="Load Error">Failed to load file: {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, []);
+  }, [isMobile]);
 
   const handleFileChange = useCallback((path, isCommon) => {
     if (fileContent !== originalContent) {
@@ -233,7 +239,6 @@ const FileEditor = () => {
   }, [pendingPath, pendingCommon, loadFile]);
 
   const handleSaveSuccess = useCallback(() => {
-    // Refresh the original content after a successful save
     setOriginalContent(fileContent);
   }, [fileContent]);
 
@@ -242,30 +247,74 @@ const FileEditor = () => {
     setFileContent('');
     setOriginalContent('');
     setIsCommonFileSelected(false);
-    // Optionally, refresh the directory tree to reflect the deletion
   }, []);
 
   return (
-    <Container>
-      <Sidebar
-        style={{ display: 'flex', flexDirection: 'column', width: 250 }}
-        collapsible
-      >
-        <Sidenav defaultOpenKeys={[]}>
-          <Sidenav.Body>
-            <Tabs defaultActiveKey="1" appearance="subtle">
-              <Tabs.Tab eventKey="1" title="User files">
-                <DirectoryTree onFileSelect={handleFileChange} isCommon={false} />
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="2" title="Common files">
-                <DirectoryTree onFileSelect={handleFileChange} isCommon={true} />
-              </Tabs.Tab>
-            </Tabs>
-          </Sidenav.Body>
-        </Sidenav>
-      </Sidebar>
-      <Container>
-        <Content style={{ padding: 10, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', flexDirection: 'column' }}>
+      {isMobile && (
+        <div style={{ position: 'absolute', top: 60, left: 10, zIndex: 1000 }}>
+          <Button
+            onClick={toggleSidebar}
+            appearance="ghost"
+            size="lg"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              borderRadius: 6,
+              boxShadow: '0 1px 6px rgba(0,0,0,0.2)',
+              padding: '6px 12px'
+            }}
+          >
+            ☰
+          </Button>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+        {/* Sidebar */}
+        <div
+          style={{
+            width: 250,
+            maxWidth: '80%',
+            position: isMobile ? 'fixed' : 'relative',
+            zIndex: isMobile ? 999 : 'auto',
+            height: '100%',
+            background: '#fff',
+            boxShadow: isMobile ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
+            transform: sidebarVisible || !isMobile ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.3s ease-in-out',
+          }}
+        >
+          <Sidenav defaultOpenKeys={[]}>
+            <Sidenav.Body>
+              <Tabs defaultActiveKey="1" appearance="subtle">
+                <Tabs.Tab eventKey="1" title="User files">
+                  <DirectoryTree onFileSelect={handleFileChange} isCommon={false} />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="2" title="Common files">
+                  <DirectoryTree onFileSelect={handleFileChange} isCommon={true} />
+                </Tabs.Tab>
+              </Tabs>
+            </Sidenav.Body>
+          </Sidenav>
+        </div>
+
+        {/* Overlay */}
+        {isMobile && sidebarVisible && (
+          <div
+            onClick={toggleSidebar}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              zIndex: 998,
+            }}
+          />
+        )}
+
+        {/* Editor Content */}
+        <div style={{ flexGrow: 1, padding: isMobile ? 20 : 10, overflowY: 'auto' }}>
           {filePath ? (
             <FileContentEditor
               filePath={filePath}
@@ -279,8 +328,9 @@ const FileEditor = () => {
               Select a file to edit
             </div>
           )}
-        </Content>
-      </Container>
+        </div>
+      </div>
+
       <Modal open={showConfirm} onClose={() => setShowConfirm(false)}>
         <Modal.Header><Modal.Title>Unsaved Changes</Modal.Title></Modal.Header>
         <Modal.Body>You have unsaved changes. Do you want to discard them and switch files?</Modal.Body>
@@ -289,7 +339,7 @@ const FileEditor = () => {
           <Button onClick={() => setShowConfirm(false)} appearance="subtle">Cancel</Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </div>
   );
 };
 

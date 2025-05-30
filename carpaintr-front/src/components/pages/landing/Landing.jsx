@@ -58,7 +58,7 @@ registerTranslations('ua', {
 
 const Header = () => {
     return (
-        <header>
+        <header className='landing'>
             <nav className="container landing">
                 <div className="logo">autolab</div>
                 <ul className="nav-links">

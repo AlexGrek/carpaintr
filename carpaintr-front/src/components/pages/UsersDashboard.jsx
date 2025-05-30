@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import CarPaintEstimator from '../CarpaintEstimator';
+import { useEffect, useState } from 'react';
 import TopBarUser from '../layout/TopBarUser';
 import { useNavigate } from 'react-router-dom';
 import { Content, Panel, Text, Message } from 'rsuite';
@@ -7,6 +6,7 @@ import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
+import './UsersDashboard.css'
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -56,14 +56,14 @@ const Dashboard = () => {
         }
 
         fetchAsync();
-    }, [str])
+    }, [str, setLang])
 
     return <Content>
         <Panel>
             {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />
             <br />
-            <Panel className='fade-in-simple' header={str("Your company")} shaded>
+            <Panel header={str("Your company")} shaded className='fade-in-simple'>
                 <h2>{company && company.company_name}</h2>
                 <Text muted>{company && company.email}</Text>
             </Panel>
@@ -76,7 +76,7 @@ const DashboardNavigationButtons = () => {
     const { str } = useLocale();
     const features = [
         {
-            icon: "🖩",
+            icon: "🧮",
             title: str("Calculation"),
             description: str("Price estimation calculator."),
             link: "/calc"
@@ -115,7 +115,7 @@ const DashboardNavigationButtons = () => {
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (
-                        <FeatureCard
+                        <AppCard
                             key={index}
                             icon={feature.icon}
                             title={feature.title}
@@ -129,13 +129,13 @@ const DashboardNavigationButtons = () => {
     );
 };
 
-const FeatureCard = ({ icon, title, description, link }) => {
+const AppCard = ({ icon, title, description, link }) => {
     const nav = useNavigate();
     return (
-        <div className="feature-card app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
+        <div className="app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="feature-icon">{icon}</div>
             <h3>{title}</h3>
-            <p>{description}</p>
+            <p className='fade-in-simple'>{description}</p>
         </div>
     );
 };

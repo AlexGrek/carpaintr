@@ -5,13 +5,6 @@
     box-sizing: border-box;
 }
 
-/* body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    line-height: 1.6;
-    color: #1f2937;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-} */
-
 .container {
     max-width: 1200px;
     text-align: center;
@@ -20,7 +13,7 @@
 }
 
 /* Header */
-header {
+header.landing {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     position: fixed;
@@ -233,10 +226,6 @@ nav.landing {
     text-align: center;
     transition: all 0.3s ease;
     border: 1px solid #e5e7eb;
-}
-
-.app-card.feature-card {
-    padding: 1rem;
 }
 
 .feature-card:hover {

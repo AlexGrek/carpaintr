@@ -3,10 +3,11 @@ import CarPaintEstimator from '../CarpaintEstimator';
 import TopBarUser from '../layout/TopBarUser';
 import FileEditor from '../editor/FileEditor';
 
-const FileEditorPage = () => {
+const WipPage = () => {
     return <div><TopBarUser/><div className='fade-in-simple' style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
-        <FileEditor /></div>
+        <p>Додаток в розробці</p>
+        </div>
     </div>
 }
 
-export default FileEditorPage
+export default WipPage
