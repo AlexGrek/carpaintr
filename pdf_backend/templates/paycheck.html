@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paycheck</title>
+    <style>
+        /* Basic inline styles for demonstration.
+           Ideally, move more complex styles to static/style.css */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+            font-size: 14px;
+        }
+        .container {
+            width: 800px;
+            margin: 0 auto;
+            border: 1px solid #eee;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .client-info, .pay-details {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .client-info div, .pay-details div {
+            width: 48%; /* Adjust as needed */
+        }
+        .client-info p, .pay-details p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #555;
+        }
+        .group-header {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        .total-sum {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Paycheck</h1>
+            <p><strong>Identifier:</strong> {{ identifier }}</p>
+        </div>
+
+        <div class="client-info">
+            <div>
+                <p><strong>Client Name:</strong> {{ client_info.name }}</p>
+                <p><strong>Client Address:</strong> {{ client_info.address }}</p>
+                <p><strong>Client Phone:</strong> {{ client_info.phone }}</p>
+            </div>
+            <div>
+                <p><strong>Date:</strong> {{ date }}</p>
+                <p><strong>Time:</strong> {{ time }}</p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in items %}
+                    <tr>
+                        <td colspan="2" class="group-header">{{ group.group_name }}</td>
+                    </tr>
+                    {% for item in group.items() %}
+                        <tr>
+                            <td>{{ item.description }}</td>
+                            <td>{{ item.amount }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td style="text-align: right;"><strong>Group Total:</strong></td>
+                        <td><strong>{{ group.group_sum }}</strong></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-sum">
+            <p><strong>Total Amount Due: {{ total_sum }}</strong></p>
+        </div>
+    </div>
+</body>
+</html>

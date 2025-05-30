@@ -8,4 +8,5 @@ pub struct AppState {
     pub admin_file_path: PathBuf,
     pub data_dir_path: PathBuf,
     pub jwt_license_secret: String,
+    pub pdf_gen_api_url_post: String
 }

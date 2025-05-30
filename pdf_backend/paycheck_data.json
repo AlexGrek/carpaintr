@@ -1,0 +1,38 @@
+{
+    "client_info": {
+        "name": "Acme Corporation",
+        "address": "123 Main St, Anytown, CA 90210",
+        "phone": "555-123-4567"
+    },
+    "date": "2025-05-28",
+    "time": "10:30 AM",
+    "identifier": "PAYCHECK-20250528-001",
+    "items": [
+        {
+            "group_name": "Hours Worked",
+            "items": [
+                {"description": "Regular Hours (40 hrs @ $25/hr)", "amount": "$1000.00"},
+                {"description": "Overtime Hours (5 hrs @ $37.50/hr)", "amount": "$187.50"}
+            ],
+            "group_sum": "$1187.50"
+        },
+        {
+            "group_name": "Bonuses and Allowances",
+            "items": [
+                {"description": "Performance Bonus", "amount": "$200.00"},
+                {"description": "Travel Allowance", "amount": "$50.00"}
+            ],
+            "group_sum": "$250.00"
+        },
+        {
+            "group_name": "Deductions",
+            "items": [
+                {"description": "Federal Tax", "amount": "-$150.00"},
+                {"description": "State Tax", "amount": "-$50.00"},
+                {"description": "Health Insurance", "amount": "-$75.00"}
+            ],
+            "group_sum": "-$275.00"
+        }
+    ],
+    "total_sum": "$1162.50"
+}

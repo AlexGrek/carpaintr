@@ -80,3 +80,8 @@ pub mod license_requests {
         ByDate(GenerateLicenseByDateRequest),
     }
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GeneratePdfRequest {
+    pub calculation: Option<String>,
+}
