@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use crate::{errors::AppError, models::User};
+use crate::{errors::AppError, exlogging::{log_event, LogLevel}, models::User};
 use serde_json;
 use sled::{Db, Tree};
 
@@ -22,6 +22,8 @@ impl UserDb {
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {
         let key = user.email.as_bytes();
         let value = serde_json::to_vec(user)?;
+
+        log_event(LogLevel::Info, format!("Create user {:?}", user), Some(user.email.as_str()));
 
         if self.users_tree.contains_key(key)? {
             return Err(AppError::UserExists);
@@ -45,6 +47,7 @@ impl UserDb {
 
     pub fn delete_user_by_email(&self, email: &str) -> Result<(), AppError> {
         let key = email.as_bytes();
+        log_event(LogLevel::Info, format!("Delete user {:?}", email), Some(email));
         self.users_tree.remove(key)?;
         self.users_tree.flush()?;
         Ok(())
@@ -71,6 +74,8 @@ impl UserDb {
         new_password_hash: String,
     ) -> Result<(), AppError> {
         let key = email.as_bytes();
+
+        log_event(LogLevel::Info, format!("Change password"), Some(email));
         // Retrieve the user to update
         let mut user = self
             .find_user_by_email(email)?

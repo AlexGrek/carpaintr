@@ -21,6 +21,8 @@ pub async fn register(
 
     app_state.db.insert_user(&user)?;
 
+    log::info!("Auth event -> {}", format!("User with ID {:?} created: {}", &user.id, &user.email));
+
     Ok(StatusCode::OK)
 }
 
@@ -36,6 +38,8 @@ pub async fn login(
     }
 
     let token = app_state.auth.create_token(&user.email)?;
+
+    log::info!("Auth event -> {}", format!("User logged in: {}", &user.email));
 
     Ok(Json(LoginResponse { token }))
 }

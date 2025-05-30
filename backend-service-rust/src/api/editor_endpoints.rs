@@ -1,7 +1,6 @@
 use crate::{
     errors::AppError, exlogging, middleware::AuthenticatedUser, state::AppState, transactionalfs::{GitTransactionalFs, TransactionalFs}, utils::{
-        get_file_by_path, user_directory_from_email,
-        COMMON,
+        get_file_as_string_by_path, user_catalog_directory_from_email, COMMON
     } // Import the new CompanyInfo struct
 };
 use axum::{
@@ -26,7 +25,7 @@ pub async fn get_user_file_list(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file list
-    let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
     let data = fs_manager.list_files().await?;
     Ok(Json(data))
@@ -38,8 +37,8 @@ pub async fn read_user_file(
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
-    let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let data = get_file_by_path(&user_path.join(&path))
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
         .await
         .map_err(|e| AppError::IoError(e))?;
     Ok(data)
@@ -51,7 +50,7 @@ pub async fn delete_user_file(
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file request: {:?}", &path.to_string()), Some(user_email.as_str()));
-    let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
     fs_manager
         .delete_file(
@@ -69,7 +68,7 @@ pub async fn read_common_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
-    let data = get_file_by_path(&user_path.join(&path))
+    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
         .await
         .map_err(|e| AppError::IoError(e))?;
     Ok(data)
@@ -83,8 +82,7 @@ pub async fn upload_user_file(
     mut multipart: Multipart,
 ) -> Result<impl IntoResponse, AppError> {
     // Expecting a single file field
-    exlogging::log_event(exlogging::LogLevel::Info, format!("Change file request: {:?}", &path.to_string()), Some(user_email.as_str()));
-    let user_path = user_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
     let field = multipart
         .next_field()

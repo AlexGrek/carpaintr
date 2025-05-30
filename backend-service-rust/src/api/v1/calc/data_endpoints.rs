@@ -4,7 +4,7 @@ use crate::{
     middleware::AuthenticatedUser,
     state::AppState,
     utils::{
-        list_files_user_common, sanitize_alphanumeric_and_dashes,
+        list_catalog_files_user_common, sanitize_alphanumeric_and_dashes,
         sanitize_alphanumeric_and_dashes_and_dots,
     }, // Import the new CompanyInfo struct
 };
@@ -22,7 +22,7 @@ pub async fn list_car_makes(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let data = list_files_user_common(&app_state.data_dir_path, &user_email, &CARS)
+    let data = list_catalog_files_user_common(&app_state.data_dir_path, &user_email, &CARS)
         .await
         .map_err(|e| AppError::IoError(e))?;
     let car_makes: Vec<String> = data.iter().map(|s| s.replace(".yaml", "")).collect();

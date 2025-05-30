@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use async_trait::async_trait;
 use thiserror::Error;
 
-use crate::utils::{safe_write, safety_check, SafeFsError};
+use crate::{exlogging::{self, log_event, LogLevel}, utils::{safe_write, safety_check, SafeFsError}};
 
 #[derive(Error, Debug)]
 pub enum TransactionalFsError {
@@ -111,6 +111,7 @@ impl TransactionalFs for GitTransactionalFs {
         new_file_path_relative_to_root: &Path,
         git_message: &str,
     ) -> Result<(), TransactionalFsError> {
+        log_event(LogLevel::Info, format!("Update file {:?}", new_file_path_relative_to_root), Some(self.author_email.as_str()));
         let full_path = self.root_path.join(new_file_path_relative_to_root);
 
         // Ensure parent directories exist
@@ -131,6 +132,7 @@ impl TransactionalFs for GitTransactionalFs {
         file_path_relative_to_root: &Path,
         git_message: &str,
     ) -> Result<(), TransactionalFsError> {
+        log_event(LogLevel::Info, format!("Delete file {:?}", file_path_relative_to_root), Some(self.author_email.as_str()));
         let full_path = self.root_path.join(file_path_relative_to_root);
 
         if !full_path.exists() {
@@ -147,6 +149,7 @@ impl TransactionalFs for GitTransactionalFs {
     }
 
     async fn revert_last_commit(&self) -> Result<(), TransactionalFsError> {
+        log_event(LogLevel::Info, format!("Revert last request at {:?}", &self.root_path), Some(self.author_email.as_str()));
         // Check if .git directory exists
         if !self.root_path.join(".git").exists() {
             return Ok(()); // No Git repo, nothing to revert
@@ -159,6 +162,7 @@ impl TransactionalFs for GitTransactionalFs {
     }
 
     async fn revert_commit(&self, commit_hash: &str) -> Result<(), TransactionalFsError> {
+        log_event(LogLevel::Info, format!("Revert {} request at {:?}", commit_hash, &self.root_path), Some(self.author_email.as_str()));
         // Check if .git directory exists
         if !self.root_path.join(".git").exists() {
             return Ok(()); // No Git repo, nothing to revert

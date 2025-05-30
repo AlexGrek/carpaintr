@@ -7,6 +7,7 @@ use tokio::io;
 use std::path::Path;
 
 pub const COMMON: &'static str = "common";
+pub const CATALOG: &'static str = "catalog";
 
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
@@ -64,7 +65,13 @@ pub fn sanitize_email_for_path(email: &str) -> String {
         // A more robust approach might involve base64 encoding or UUIDs
 }
 
-pub fn user_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
+pub fn user_catalog_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
+    let full_path = user_personal_directory_from_email(data_dir, email)?.join(CATALOG);
+    std::fs::create_dir_all(&full_path)?;
+    Ok(full_path)
+}
+
+pub fn user_personal_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
     let full_path = data_dir.join(sanitize_email_for_path(email));
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
@@ -107,8 +114,8 @@ pub async fn list_unique_file_names_two<P: AsRef<Path>>(dir1: &P, dir2: &P) -> i
     list_unique_file_names(&dirs).await
 }
 
-pub async fn list_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath: &P) -> io::Result<Vec<String>> {
-    let user_dir = user_directory_from_email(data_dir, email)?.join(subpath);
+pub async fn list_catalog_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath: &P) -> io::Result<Vec<String>> {
+    let user_dir = user_catalog_directory_from_email(data_dir, email)?.join(subpath);
     let common_dir = common_directory(data_dir)?.join(subpath);
     return list_unique_file_names_two(&user_dir, &common_dir).await;
 }
@@ -129,21 +136,20 @@ pub async fn list_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &
 //     }
 // }
 
-pub async fn get_file_by_path<P: AsRef<Path>>(path: &P) -> io::Result<String> {
+pub async fn get_file_as_string_by_path<P: AsRef<Path>>(path: &P, root: &P) -> io::Result<String> {
+    safety_check(root, path);
     let path2 = path.as_ref().to_owned();
     log::info!("Reading file: {:?}", path2);
     if fs::metadata(&path).await.is_ok() {
-        // File exists in user directory, read from there
         fs::read_to_string(path).await
     } else {
-        // File not found in either location
-        Err(io::Error::new(io::ErrorKind::NotFound, "File not found in user or common directory"))
+        Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path"))
     }
 }
 
 pub async fn get_file_path_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath_to_file: &P) -> io::Result<PathBuf> {
     // Construct the potential path in the user's directory
-    let user_file_path = user_directory_from_email(data_dir, email)?.join(subpath_to_file);
+    let user_file_path = user_catalog_directory_from_email(data_dir, email)?.join(subpath_to_file);
 
     // Check if the file exists in the user's directory
     if fs::metadata(&user_file_path).await.is_ok() {

@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use std::time::SystemTime;
 use tokio::fs;
 use crate::errors::AppError;
-use crate::utils::user_directory_from_email; // Required for read_to_string
+use crate::exlogging::{log_event, LogLevel};
+use crate::utils::{user_personal_directory_from_email}; // Required for read_to_string
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LicenseData {
@@ -155,6 +156,8 @@ pub fn generate_license_token(email: &str, expiry_date: DateTime<Utc>, jwt_secre
     let header = Header::default();
     let encoding_key = EncodingKey::from_secret(jwt_secret);
 
+    log_event(LogLevel::Info, format!("License generated: {:?}; expiry date: {:?}", claims, expiry_date), None::<&str>);
+
     encode(&header, &claims, &encoding_key).map_err(AppError::JwtError)
 }
 
@@ -284,7 +287,7 @@ pub async fn read_license_file_by_timestamp(user_email: &str, timestamp: u64, da
 }
 
 pub fn ensure_license_path(user_email: &str, data_dir: &PathBuf) -> Result<PathBuf, AppError> {
-    let user_data_dir = user_directory_from_email(data_dir, user_email)?;
+    let user_data_dir = user_personal_directory_from_email(data_dir, user_email)?;
     let licenses_dir = user_data_dir.join("licenses");
     std::fs::create_dir_all(&licenses_dir)?;
     return Ok(licenses_dir);

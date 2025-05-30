@@ -76,7 +76,7 @@ pub async fn get_company_info(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     // Get the user's data directory path
-    let user_dir = utils::user_directory_from_email(&app_state.data_dir_path, &user_email)
+    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)
         .map_err(|e| AppError::InternalServerError(format!("Failed to get user directory: {}", e)))?;
 
     let company_info_path = user_dir.join("company.json");
