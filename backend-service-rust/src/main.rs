@@ -50,7 +50,7 @@ async fn main() -> tokio::io::Result<()> {
         env::var("LICENSE_JWT_SECRET").unwrap_or_else(|_| "licensejwtsecretkey".to_string());
     let admin_file_path = env::var("ADMIN_FILE_PATH").unwrap_or_else(|_| "admins.txt".to_string());
     let data_dir_path = env::var("DATA_DIR_PATH").unwrap_or_else(|_| "data".to_string());
-    let pdf_gen_api_url_post = env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "localhost:4242/generate".to_string());
+    let pdf_gen_api_url_post = env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "localhost:5000/generate".to_string());
     let license_cache_size: u64 = env::var("LICENSE_CACHE_SIZE")
         .unwrap_or_else(|_| "100".to_string())
         .parse()
@@ -142,12 +142,11 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/get_calc_details", get(api::v1::user::get_calc_details))
                 .route(
                     "/generate_pdf",
-                    post(api::v1::calc::output_endpoints::gen_pdf)),
+                    post(api::v1::calc::output_endpoints::gen_pdf),
                 )
                 .route(
                     "/carmakes",
-                    get(api::v1::calc::data_endpoints::list_car_makes),
-                )
+                    get(api::v1::calc::data_endpoints::list_car_makes))
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))
                 .route(
                     "/global/{path}",
