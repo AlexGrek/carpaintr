@@ -10,7 +10,7 @@ use chrono::{Utc, Duration};
 use crate::{
     errors::AppError, exlogging::get_latest_logs, license_manager::{
         delete_license_file, generate_license_token, list_license_files, read_license_file_by_name, save_license_file // Import new functions
-    }, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState
+    }, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState, utils::delete_user_data_gracefully
 };
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
@@ -119,6 +119,7 @@ pub async fn manage_user(
         ManageUserRequest::Delete { email } => {
             // Handle delete action
             app_state.db.delete_user_by_email(&email)?;
+            delete_user_data_gracefully(&app_state.data_dir_path, &email).await?;
             Ok(StatusCode::OK) // Return 200 OK on successful deletion
         }
         ManageUserRequest::ChangePassword { email, data } => {

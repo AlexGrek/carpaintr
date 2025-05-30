@@ -1,12 +1,14 @@
 use lexiclean::Lexiclean;
-use thiserror::Error;
-use std::{path::PathBuf};
 use std::collections::HashSet;
+use std::path::Path;
+use std::path::PathBuf;
+use thiserror::Error;
 use tokio::fs;
 use tokio::io;
-use std::path::Path;
 
 pub const COMMON: &'static str = "common";
+pub const USERS: &'static str = "users";
+pub const USERS_DELETED: &'static str = "deleted_users";
 pub const CATALOG: &'static str = "catalog";
 
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
@@ -15,7 +17,7 @@ use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 pub enum SafeFsError {
     #[error("Path traversal attempt detected: target is outside base directory")]
     PathTraversalDetected,
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 }
@@ -23,11 +25,11 @@ pub enum SafeFsError {
 pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeFsError> {
     // Clean the base path lexically
     let base_clean = base.as_ref().lexiclean();
-    
+
     // Create the full target path and clean it
     let full_target = base_clean.join(target.as_ref());
     let target_clean = full_target.lexiclean();
-    
+
     // Check if the cleaned target is within the base directory
     if target_clean.starts_with(&base_clean) {
         Ok(target_clean)
@@ -37,7 +39,11 @@ pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeF
 }
 
 /// Safely write content to a file, ensuring it's within user base path
-pub async fn safe_write<P: AsRef<Path>>(base: P, target: P, content: impl AsRef<[u8]>) -> Result<(), SafeFsError> {
+pub async fn safe_write<P: AsRef<Path>>(
+    base: P,
+    target: P,
+    content: impl AsRef<[u8]>,
+) -> Result<(), SafeFsError> {
     safety_check(&base, &target)?;
     log::debug!("Safely writing file {:?}", target.as_ref());
     fs::create_dir_all(target.as_ref().parent().unwrap()).await?;
@@ -61,18 +67,75 @@ pub async fn safe_read<P: AsRef<Path>>(base: P, target: P) -> Result<Vec<u8>, Sa
 }
 
 pub fn sanitize_email_for_path(email: &str) -> String {
-        percent_encode(email.as_bytes(), NON_ALPHANUMERIC).to_string()
-        // A more robust approach might involve base64 encoding or UUIDs
+    percent_encode(email.as_bytes(), NON_ALPHANUMERIC).to_string()
+    // A more robust approach might involve base64 encoding or UUIDs
 }
 
-pub fn user_catalog_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
+pub fn user_catalog_directory_from_email(
+    data_dir: &PathBuf,
+    email: &str,
+) -> Result<PathBuf, std::io::Error> {
     let full_path = user_personal_directory_from_email(data_dir, email)?.join(CATALOG);
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
 }
 
-pub fn user_personal_directory_from_email(data_dir: &PathBuf, email: &str) -> Result<PathBuf, std::io::Error> {
-    let full_path = data_dir.join(sanitize_email_for_path(email));
+pub async fn delete_user_data_gracefully(
+    data_dir: &PathBuf,
+    email: &str,
+) -> Result<(), std::io::Error> {
+    let user_catalog = user_personal_directory_from_email(data_dir, email)?;
+    let deleted_user_catalog = user_deleted_directory_from_email(data_dir, email)?;
+
+    // Create the deleted user directory if it doesn't exist
+    if let Some(parent) = deleted_user_catalog.parent() {
+        fs::create_dir_all(parent).await?;
+    }
+    fs::create_dir_all(&deleted_user_catalog).await?;
+
+    let mut entries = fs::read_dir(&user_catalog).await?;
+
+    while let Some(entry) = entries.next_entry().await? {
+        let entry_path = entry.path();
+        let file_name = entry.file_name();
+        let dest_path = deleted_user_catalog.join(file_name);
+
+        // Remove destination if it exists (overwrite behavior)
+        if dest_path.exists() {
+            if dest_path.is_dir() {
+                fs::remove_dir_all(&dest_path).await?;
+            } else {
+                fs::remove_file(&dest_path).await?;
+            }
+        }
+
+        // Move the file/directory
+        fs::rename(&entry_path, &dest_path).await?;
+
+        // do nothing if user_catalog does not exist
+        // move all data from user_catalog dir into deleted_user_catalog dir (create if not exist), delete user_catalog
+        // if deleted_user_catalog was previously existing and non-empty - do not care, ovwerwrite whatever we need to overwrite
+
+    }
+    return Ok(());
+}
+
+pub fn user_deleted_directory_from_email(
+    data_dir: &PathBuf,
+    email: &str,
+) -> Result<PathBuf, std::io::Error> {
+    let full_path = data_dir
+        .join(&USERS_DELETED)
+        .join(sanitize_email_for_path(email));
+    std::fs::create_dir_all(&full_path)?;
+    Ok(full_path)
+}
+
+pub fn user_personal_directory_from_email(
+    data_dir: &PathBuf,
+    email: &str,
+) -> Result<PathBuf, std::io::Error> {
+    let full_path = data_dir.join(&USERS).join(sanitize_email_for_path(email));
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
 }
@@ -109,12 +172,19 @@ pub async fn list_unique_file_names<P: AsRef<Path>>(dirs: &[P]) -> io::Result<Ve
     Ok(names_set.into_iter().collect())
 }
 
-pub async fn list_unique_file_names_two<P: AsRef<Path>>(dir1: &P, dir2: &P) -> io::Result<Vec<String>> {
+pub async fn list_unique_file_names_two<P: AsRef<Path>>(
+    dir1: &P,
+    dir2: &P,
+) -> io::Result<Vec<String>> {
     let dirs = vec![dir1, dir2];
     list_unique_file_names(&dirs).await
 }
 
-pub async fn list_catalog_files_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath: &P) -> io::Result<Vec<String>> {
+pub async fn list_catalog_files_user_common<P: AsRef<Path>>(
+    data_dir: &PathBuf,
+    email: &str,
+    subpath: &P,
+) -> io::Result<Vec<String>> {
     let user_dir = user_catalog_directory_from_email(data_dir, email)?.join(subpath);
     let common_dir = common_directory(data_dir)?.join(subpath);
     return list_unique_file_names_two(&user_dir, &common_dir).await;
@@ -143,11 +213,18 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(path: &P, root: &P) -> i
     if fs::metadata(&path).await.is_ok() {
         fs::read_to_string(path).await
     } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path"))
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "File not found by path",
+        ))
     }
 }
 
-pub async fn get_file_path_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath_to_file: &P) -> io::Result<PathBuf> {
+pub async fn get_file_path_user_common<P: AsRef<Path>>(
+    data_dir: &PathBuf,
+    email: &str,
+    subpath_to_file: &P,
+) -> io::Result<PathBuf> {
     // Construct the potential path in the user's directory
     let user_file_path = user_catalog_directory_from_email(data_dir, email)?.join(subpath_to_file);
 
@@ -165,20 +242,27 @@ pub async fn get_file_path_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email
             Ok(common_file_path)
         } else {
             // File not found in either location
-            Err(io::Error::new(io::ErrorKind::NotFound, format!("File not found in user or common directory: {:?}", subpath_to_file.as_ref())))
+            Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!(
+                    "File not found in user or common directory: {:?}",
+                    subpath_to_file.as_ref()
+                ),
+            ))
         }
     }
 }
 
 pub fn sanitize_alphanumeric_and_dashes(input: &str) -> String {
-    input.chars()
+    input
+        .chars()
         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
         .collect()
 }
 
 pub fn sanitize_alphanumeric_and_dashes_and_dots(input: &str) -> String {
-    input.chars()
+    input
+        .chars()
         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
         .collect()
 }
-
