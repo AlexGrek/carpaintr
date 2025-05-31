@@ -1,4 +1,4 @@
-.PHONY: docker-build docker-push all deploy-service redeploy dev frontend backend docker-build-pdfgen docker-build-backend
+.PHONY: docker-build docker-push all deploy-service redeploy dev frontend backend docker-build-pdfgen docker-build-backend deploy-pdfgen
 
 NAME?=autolab-api
 PDFGEN_NAME?=autolab-pdfgen
@@ -22,6 +22,7 @@ all: docker-build docker-push
 
 redeploy: all
 	kubectl delete pod -n $(NAMESPACE) -l app=autolab-api
+	kubectl delete pod -n $(NAMESPACE) -l app=autolab-pdfgen
 
 # secret.yaml:
 # apiVersion: v1
@@ -34,9 +35,11 @@ redeploy: all
 #   SECRET_KEY_LICENSE: c29tZXRoaW5nIHN0dXBpZA==  # base64 encoded string of 'something stupid'
 #   admins.txt: base64-encoded file
 
-deploy-service:
-	 kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/secret.yaml
-# kubectl apply -f pvc-pv.yaml
+deploy-pdfgen:
+	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/pdfgen-k3s-deployment.yaml
+
+deploy-service: deploy-pdfgen
+	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/secret.yaml
 	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/k3s-deployment.yaml
 	kubectl --namespace $(NAMESPACE) apply -f k8s-deploy/traefik-ingressroute.yaml
 
