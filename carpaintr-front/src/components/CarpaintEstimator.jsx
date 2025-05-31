@@ -281,10 +281,10 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
                 <IconButton icon={<SaveIcon />} onClick={onSave} className="rounded-md">
                     {!isMobile && <Trans>Save</Trans>}
                 </IconButton>
-                <IconButton icon={<FileDownloadIcon />} appearance="ghost" onClick={onLoad} className="rounded-md">
-                    {!isMobile && <Trans>Load</Trans>}
+                <IconButton icon={<FileDownloadIcon />} onClick={onLoad} className="rounded-md">
+                    {!isMobile && <Trans>Recents</Trans>}
                 </IconButton>
-                <IconButton icon={<TableIcon />} appearance="ghost" onClick={onPrint} className="rounded-md">
+                <IconButton icon={<TableIcon />} onClick={onPrint} className="rounded-md">
                     {!isMobile && <Trans>Print</Trans>}
                 </IconButton>
                 {!isMobile && ( // Show report button only on desktop for now to save space
@@ -359,8 +359,16 @@ registerTranslations('ua', {
     "Make": "Марка",
     "Model": "Модель",
     "Body Type": "Тип кузова",
+    "Recents": "Збережені",
 
     "sedan": "Седан",
+    "hatchback 3 doors": "Хетчбек 3-дверний",
+    "hatchback 5 doors": "Хетчбек 5-дверний",
+    "suv 3 doors": "Позашляховик 3-дверний",
+    "suv 5 doors": "Позашляховик 5-дверний",
+    "pickup": "Пікап",
+    "coupe": "Купе",
+    "wagon": "Універсал",
 });
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
