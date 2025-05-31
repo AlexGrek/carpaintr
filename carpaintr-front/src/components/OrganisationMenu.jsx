@@ -18,18 +18,18 @@ const OrganisationMenu = () => {
 
     const save = useCallback(async (value) => {
         const pushAsync = async () => {
-            const data = await authFetch("/api/v1/user/updatecompanyinfo", {
+            const data = await authFetch("/api/v1/updatecompanyinfo", {
                 method: 'POST',
                 body: JSON.stringify(value),
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
-            if (data) {
-                setCompany(data);
-                if (data.lang_ui) {
-                    setLang(data.lang_ui)
-                }
+
+            const newData = await fetchCompanyInfo();
+            setCompany(newData);
+            if (data.lang_ui) {
+                setLang(data.lang_ui)
             }
         }
 
@@ -60,7 +60,7 @@ const OrganisationMenu = () => {
 
     return <div>
         <Text><Trans>Company name</Trans></Text>
-        {company && 
+        {company &&
             <Input value={company.company_name} onChange={(value) => setCompany({ ...company, company_name: value })}></Input>
         }
         <Divider></Divider>
