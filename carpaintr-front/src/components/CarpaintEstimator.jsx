@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input, Modal, Drawer, Text, HStack } from 'rsuite';
+import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input, Modal, Drawer, Text, HStack, IconButton } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
 import { useNavigate, useSearchParams } from "react-router-dom"; // Import useSearchParams
@@ -10,6 +10,10 @@ import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this co
 import { useMediaQuery } from 'react-responsive';
 import './CarPaintEstimator.css';
 import { capitalizeFirstLetter } from '../utils/utils';
+import PlusRoundIcon from '@rsuite/icons/PlusRound';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import TableIcon from '@rsuite/icons/Table';
+import SaveIcon from '@rsuite/icons/Save';
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
@@ -271,16 +275,16 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
         >
             {!isMobile && <h3 className="text-2xl font-semibold"><Trans>Cost of repair calculation</Trans></h3>}
             <Stack spacing={isMobile ? 5 : 10} justifyContent="center" alignItems="center"> {/* Center buttons horizontally */}
-                <IconButton icon={<SearchIcon />} appearance="primary" onClick={onNew} className="rounded-md">
+                <IconButton icon={<PlusRoundIcon />} appearance="primary" onClick={onNew} className="rounded-md">
                     {!isMobile && <Trans>New</Trans>}
                 </IconButton>
-                <IconButton appearance="primary" onClick={onSave} className="rounded-md">
+                <IconButton icon={<SaveIcon />} onClick={onSave} className="rounded-md">
                     {!isMobile && <Trans>Save</Trans>}
                 </IconButton>
-                <IconButton appearance="ghost" onClick={onLoad} className="rounded-md">
+                <IconButton icon={<FileDownloadIcon />} appearance="ghost" onClick={onLoad} className="rounded-md">
                     {!isMobile && <Trans>Load</Trans>}
                 </IconButton>
-                <IconButton appearance="ghost" onClick={onPrint} className="rounded-md">
+                <IconButton icon={<TableIcon />} appearance="ghost" onClick={onPrint} className="rounded-md">
                     {!isMobile && <Trans>Print</Trans>}
                 </IconButton>
                 {!isMobile && ( // Show report button only on desktop for now to save space
