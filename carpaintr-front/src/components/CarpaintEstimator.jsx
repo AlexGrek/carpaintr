@@ -1,14 +1,16 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input, Modal, Drawer } from 'rsuite';
+import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input, Modal, Drawer, Text, HStack } from 'rsuite';
 import { authFetch, authFetchYaml } from '../utils/authFetch';
 import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Import useSearchParams
 import Trans from '../localization/Trans';
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations
 import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
 import { useMediaQuery } from 'react-responsive';
 import { FaSave, FaFolderOpen, FaPlus, FaPrint, FaTimes } from 'react-icons/fa'; // Importing icons
+import './CarPaintEstimator.css';
+import { capitalizeFirstLetter } from '../utils/utils';
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
@@ -39,13 +41,37 @@ const ConfirmationDialog = React.memo(({ show, onClose, onConfirm, message }) =>
     );
 });
 
+// Helper function to format time ago
+const formatTimeAgo = (dateString, str) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.round(diffMs / (1000 * 60));
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 60) {
+        return `${diffMinutes}m ago`;
+    } else if (diffHours < 24) {
+        return `${diffHours}h ago`;
+    } else if (diffDays < 7) {
+        return `${diffDays}d ago`;
+    } else {
+        // Fallback to full date for older than a week
+        return date.toLocaleDateString(str('locale_code') || 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+};
+
 // Load Calculation Drawer Component
-const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) => {
+const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
-    const [files, setFiles] = useState([]);
+    const [files24h, setFiles24h] = useState([]);
+    const [files1w, setFiles1w] = useState([]);
+    const [filesOlder, setFilesOlder] = useState([]);
     const [loading, setLoading] = useState(false);
     const toaster = useToaster();
+    const navigate = useNavigate();
 
     const fetchFiles = useCallback(async () => {
         setLoading(true);
@@ -53,7 +79,9 @@ const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) 
             const response = await authFetch('/api/v1/user/calculationstore/list');
             if (response.ok) {
                 const data = await response.json();
-                setFiles(data.files || []); // Assuming data.files is an array of filenames
+                setFiles24h(data.modified_last_24h || []);
+                setFiles1w(data.modified_1w_excl_24h || []);
+                setFilesOlder(data.older_than_1w || []);
             } else {
                 const errorData = await response.json();
                 toaster.push(
@@ -62,7 +90,9 @@ const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) 
                     </Message>,
                     { placement: 'topEnd' }
                 );
-                setFiles([]);
+                setFiles24h([]);
+                setFiles1w([]);
+                setFilesOlder([]);
             }
         } catch (error) {
             console.error("Error fetching file list:", error);
@@ -72,7 +102,9 @@ const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) 
                 </Message>,
                 { placement: 'topEnd' }
             );
-            setFiles([]);
+            setFiles24h([]);
+            setFiles1w([]);
+            setFilesOlder([]);
         } finally {
             setLoading(false);
         }
@@ -85,9 +117,35 @@ const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) 
     }, [show, fetchFiles]);
 
     const handleFileSelect = useCallback((filename) => {
-        onLoadCalculation(filename);
+        navigate(`/calc?id=${filename}`); // Navigate to /calc?id={filename}
         onClose();
-    }, [onLoadCalculation, onClose]);
+    }, [navigate, onClose]);
+
+    const renderFileList = useCallback((files, groupTitle) => (
+        <VStack spacing={10} alignItems="flex-start" className="w-full">
+            <h5 className="font-semibold text-lg mb-2">{groupTitle}</h5>
+            {files.length > 0 ? (
+                <VStack spacing={5} alignItems="flex-start" className="calc-file-load-stack">
+                    {files.map((file, index) => (
+                        <div key={index}
+                            className='calc-file-load-entry'
+                            onClick={() => handleFileSelect(file.name)}
+                            style={{ justifyContent: 'space-between', padding: '8px 12px' }}
+                        >
+                            <HStack width="100%" justifyContent='space-between'>
+                                <p className="calc-file-load-entry-name">{capitalizeFirstLetter(file.name.split('_').slice(0, -1).join(' '))}</p>
+                                <p className="calc-file-load-entry-date"><Text as="sub">{formatTimeAgo(file.modified, str)}</Text></p>
+                            </HStack>
+                        </div>
+                    ))}
+                </VStack>
+            ) : (
+                <Message type="info" showIcon className="w-full">
+                    <Trans>No files in this category.</Trans>
+                </Message>
+            )}
+        </VStack>
+    ), [handleFileSelect, str]);
 
     return (
         <Drawer
@@ -106,24 +164,18 @@ const LoadCalculationDrawer = React.memo(({ show, onClose, onLoadCalculation }) 
             <Drawer.Body>
                 {loading ? (
                     <Placeholder.Paragraph rows={5} />
-                ) : files.length > 0 ? (
-                    <VStack spacing={10} alignItems="flex-start">
-                        {files.map((file, index) => (
-                            <Button
-                                key={index}
-                                appearance="ghost"
-                                onClick={() => handleFileSelect(file)}
-                                block
-                                style={{ justifyContent: 'flex-start' }}
-                            >
-                                {file}
-                            </Button>
-                        ))}
-                    </VStack>
                 ) : (
-                    <Message type="info" showIcon>
-                        <Trans>No saved calculations found.</Trans>
-                    </Message>
+                    <Stack
+                        wrap={isMobile} // Wrap on mobile to stack columns
+                        justifyContent={isMobile ? 'flex-start' : 'space-around'}
+                        alignItems={isMobile ? 'flex-start' : 'flex-start'}
+                        spacing={isMobile ? 20 : 30}
+                        className="w-full"
+                    >
+                        {renderFileList(files24h, str('Modified last 24h'))}
+                        {renderFileList(files1w, str('Modified 1 week excl 24h'))}
+                        {renderFileList(filesOlder, str('Older than 1 week'))}
+                    </Stack>
                 )}
             </Drawer.Body>
         </Drawer>
@@ -295,7 +347,21 @@ registerTranslations('ua', {
     "Calculation Summary": "Підсумок розрахунку",
     "N/A": "Н/Д",
     "No data to preview.": "Немає даних для попереднього перегляду.",
-    "No body parts selected.": "Не вибрано жодних частин кузова."
+    "No body parts selected.": "Не вибрано жодних частин кузова.",
+    "Modified last 24h": "Змінено за останні 24 години",
+    "Modified 1 week excl 24h": "Змінено за останній тиждень (крім 24 год)",
+    "Older than 1 week": "Старіші за 1 тиждень",
+    "No files in this category.": "Немає файлів у цій категорії.",
+    "locale_code": "uk-UA",
+    "License plate (optional)": "Держ. номер (необов'язково)",
+    "VIN (optional)": "VIN (необов'язково)",
+    "Notes": "Примітки",
+    "Additional info": "Додатково",
+    "Make": "Марка",
+    "Model": "Модель",
+    "Body Type": "Тип кузова",
+
+    "sedan": "Седан",
 });
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
@@ -380,7 +446,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
     const [makes, setMakes] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
-    const { str } = useLocale();
+    const { str, labels } = useLocale();
     const navigate = useNavigate();
 
     const handleError = useCallback((reason) => {
@@ -438,10 +504,6 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
         }
     }, [setModel, models, setBodyTypes, setCarClass, setBodyType]);
 
-    const capitalizeFirstLetter = useCallback((val) => {
-        return String(val).charAt(0).toUpperCase() + String(val).slice(1);
-    }, []);
-
     const modelOptions = Object.keys(models);
 
     return (
@@ -450,7 +512,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                 <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
                     <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
                     {selectedMake !== null && <SelectionInput name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
-                    {selectedModel !== null && <SelectionInput name={str("Body Type")} selectedValue={selectedBodyType} values={bodyTypes} onChange={setBodyType} placeholder={str("Select Body Type")} />}
+                    {selectedModel !== null && <SelectionInput name={str("Body Type")} labelFunction={str} selectedValue={selectedBodyType} values={labels(bodyTypes)} onChange={setBodyType} placeholder={str("Select Body Type")} />}
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="2" title={str("Type/Class")}>
                     <SelectPicker
@@ -460,7 +522,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                         placeholder={str("CLASS")}
                     />
                     <SelectPicker
-                        data={CAR_BODY_TYPES_OPTIONS}
+                        data={labels(CAR_BODY_TYPES_OPTIONS)}
                         onSelect={setBodyType}
                         value={selectedBodyType}
                         placeholder={str("BODY TYPE")}
@@ -496,6 +558,7 @@ const CarPaintEstimator = () => {
     const [storeFileName, setStoreFileName] = useState(null);
     const toaster = useToaster();
     const { str } = useLocale();
+    const [searchParams] = useSearchParams(); // Get search params from URL
 
     // State for drawers and dialogs
     const [showNewConfirmation, setShowNewConfirmation] = useState(false);
@@ -609,7 +672,8 @@ const CarPaintEstimator = () => {
 
     const handleLoad = useCallback(async (filename) => {
         try {
-            const response = await authFetch(`/api/v1/user/calculationstore?filename=${filename}`);
+            // Add .json extension as specified
+            const response = await authFetch(`/api/v1/user/calculationstore?filename=${filename}.json`);
             if (response.ok) {
                 const data = await response.json();
                 if (data) {
@@ -638,6 +702,14 @@ const CarPaintEstimator = () => {
             showMessage('error', `${str('Error loading calculation:')} ${error.message}`);
         }
     }, [showMessage, str]);
+
+    // Effect to load calculation from URL parameter on initial render
+    useEffect(() => {
+        const idFromUrl = searchParams.get('id');
+        if (idFromUrl) {
+            handleLoad(idFromUrl);
+        }
+    }, [searchParams, handleLoad]); // Depend on searchParams and handleLoad
 
     const handlePrint = useCallback(() => {
         setShowPrintDrawer(true);
@@ -712,7 +784,6 @@ const CarPaintEstimator = () => {
             <LoadCalculationDrawer
                 show={showLoadDrawer}
                 onClose={() => setShowLoadDrawer(false)}
-                onLoadCalculation={handleLoad}
             />
 
             {/* Print Preview Drawer */}

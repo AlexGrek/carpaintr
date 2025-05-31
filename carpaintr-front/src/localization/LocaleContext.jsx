@@ -37,6 +37,7 @@ const TRANSLATIONS_BASIC = {
     "Test": "Тест",
     "Variants (each line is a variant)": "Варіанти (кожен рядок - окремий варіант)",
     "Save": "Зберегти",
+    "Load": "Завантажити",
     "Articles": "Тексти"
   },
   en: {}
@@ -77,6 +78,7 @@ const defaultLocaleContext = {
   currentLang: 'en',
   setLang: (_a) => {},
   str: (_s) => '',
+  labels: (_l) => [],
   addTranslation: (_tr) => {}
 };
 
@@ -131,8 +133,17 @@ export const LocaleProvider = ({ children }) => {
     return s;
   };
 
+  const labels = (data) => {
+    return data.map(item => {
+      if (item.label) {
+        return {...item, label: str(item.label)}
+      }
+      return item
+    })
+  };
+
   return (
-    <LocaleContext.Provider value={{ currentLang, setLang, str, addTranslation }}>
+    <LocaleContext.Provider value={{ currentLang, setLang, str, addTranslation, labels }}>
       {children}
     </LocaleContext.Provider>
   );
