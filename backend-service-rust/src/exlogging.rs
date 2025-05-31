@@ -29,10 +29,12 @@ impl LogLevel {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct LoggerConfig {
     pub log_file_path: String,
 }
 
+#[derive(Debug)]
 struct AsyncLogger {
     file_writer: Arc<Mutex<tokio::fs::File>>,
     file_path: String,
@@ -86,9 +88,11 @@ impl AsyncLogger {
 
 /// Initialize the global logger with configuration
 pub async fn configure_log_event(config: LoggerConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let event_text = format!("Logger initialized with config: {:?}", &config);
     let logger = AsyncLogger::new(config).await?;
     GLOBAL_LOGGER.set(Arc::new(logger))
         .map_err(|_| "Logger already initialized")?;
+    log_event(LogLevel::Info, &event_text, Some("root"));
     Ok(())
 }
 
