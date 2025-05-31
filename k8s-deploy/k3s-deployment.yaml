@@ -46,6 +46,10 @@ spec:
           value: "/var/secrets/admins.txt"
         - name: DATA_DIR_PATH
           value: "/app/data"
+        - name: PDF_GEN_URL_POST
+          value: "http://pdfgen.cluster.local/api"
+        - name: LOG_FILE_PATH
+          value: "/app/data/application.log"
         - name: LICENSE_CACHE_SIZE
           value: "100"
         volumeMounts:

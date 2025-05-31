@@ -1,10 +1,18 @@
-.PHONY: docker-build docker-push all deploy-service redeploy dev frontend backend
+.PHONY: docker-build docker-push all deploy-service redeploy dev frontend backend docker-build-pdfgen docker-build-backend
 
 NAME?=autolab-api
+PDFGEN_NAME?=autolab-pdfgen
 IMAGE_NAME?=localhost:5000/$(NAME)
+PDFGEN_IMAGE_NAME?=localhost:5000/$(PDFGEN_NAME)
 NAMESPACE?=autolab
 
-docker-build:
+docker-build: docker-build-backend docker-build-pdfgen
+
+docker-build-pdfgen:
+	cd pdf_backend
+	docker build . -t $(PDFGEN_IMAGE_NAME)
+
+docker-build-backend:
 	docker build . -t $(IMAGE_NAME)
 
 docker-push:
