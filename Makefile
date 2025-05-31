@@ -21,8 +21,8 @@ docker-push:
 all: docker-build docker-push
 
 redeploy: all
-	kubectl delete pod -n $(NAMESPACE) -l app=autolab-api
-	kubectl delete pod -n $(NAMESPACE) -l app=autolab-pdfgen
+	/usr/local/bin/kubectl delete pod -n $(NAMESPACE) -l app=autolab-api
+	/usr/local/bin/kubectl delete pod -n $(NAMESPACE) -l app=autolab-pdfgen
 
 # secret.yaml:
 # apiVersion: v1
