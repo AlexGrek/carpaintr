@@ -9,14 +9,14 @@ NAMESPACE?=autolab
 docker-build: docker-build-backend docker-build-pdfgen
 
 docker-build-pdfgen:
-	cd pdf_backend
-	docker build . -t $(PDFGEN_IMAGE_NAME)
+	cd pdf_backend && docker build . -t $(PDFGEN_IMAGE_NAME)
 
 docker-build-backend:
 	docker build . -t $(IMAGE_NAME)
 
 docker-push:
 	docker push $(IMAGE_NAME)
+	docker push $(PDFGEN_IMAGE_NAME)
 
 all: docker-build docker-push
 
