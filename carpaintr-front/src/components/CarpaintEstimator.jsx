@@ -8,7 +8,6 @@ import Trans from '../localization/Trans';
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations
 import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
 import { useMediaQuery } from 'react-responsive';
-import { FaSave, FaFolderOpen, FaPlus, FaPrint, FaTimes } from 'react-icons/fa'; // Importing icons
 import './CarPaintEstimator.css';
 import { capitalizeFirstLetter } from '../utils/utils';
 
@@ -272,22 +271,18 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
         >
             {!isMobile && <h3 className="text-2xl font-semibold"><Trans>Cost of repair calculation</Trans></h3>}
             <Stack spacing={isMobile ? 5 : 10} justifyContent="center" alignItems="center"> {/* Center buttons horizontally */}
-                <Button appearance="primary" onClick={onNew} className="rounded-md">
-                    <FaPlus className={isMobile ? "text-lg" : "mr-2"} />
+                <IconButton icon={<SearchIcon />} appearance="primary" onClick={onNew} className="rounded-md">
                     {!isMobile && <Trans>New</Trans>}
-                </Button>
-                <Button appearance="primary" onClick={onSave} className="rounded-md">
-                    <FaSave className={isMobile ? "text-lg" : "mr-2"} />
+                </IconButton>
+                <IconButton appearance="primary" onClick={onSave} className="rounded-md">
                     {!isMobile && <Trans>Save</Trans>}
-                </Button>
-                <Button appearance="ghost" onClick={onLoad} className="rounded-md">
-                    <FaFolderOpen className={isMobile ? "text-lg" : "mr-2"} />
+                </IconButton>
+                <IconButton appearance="ghost" onClick={onLoad} className="rounded-md">
                     {!isMobile && <Trans>Load</Trans>}
-                </Button>
-                <Button appearance="ghost" onClick={onPrint} className="rounded-md">
-                    <FaPrint className={isMobile ? "text-lg" : "mr-2"} />
+                </IconButton>
+                <IconButton appearance="ghost" onClick={onPrint} className="rounded-md">
                     {!isMobile && <Trans>Print</Trans>}
-                </Button>
+                </IconButton>
                 {!isMobile && ( // Show report button only on desktop for now to save space
                     <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm} className="rounded-md">
                         <Trans>Report a problem</Trans>
