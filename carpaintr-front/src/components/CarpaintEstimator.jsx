@@ -14,6 +14,8 @@ import PlusRoundIcon from '@rsuite/icons/PlusRound';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TableIcon from '@rsuite/icons/Table';
 import SaveIcon from '@rsuite/icons/Save';
+import DocPassIcon from '@rsuite/icons/DocPass';
+import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
@@ -136,7 +138,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
                             style={{ justifyContent: 'space-between', padding: '8px 12px' }}
                         >
                             <HStack width="100%" justifyContent='space-between'>
-                                <p className="calc-file-load-entry-name">{capitalizeFirstLetter(file.name.split('_').slice(0, -1).join(' '))}</p>
+                                <p className="calc-file-load-entry-name"><DocPassIcon style={{ marginRight: "6pt", fontSize: "larger" }} />{capitalizeFirstLetter(file.name.split('_').slice(0, -1).join(' '))}</p>
                                 <p className="calc-file-load-entry-date"><Text as="sub">{formatTimeAgo(file.modified, str)}</Text></p>
                             </HStack>
                         </div>
@@ -188,6 +190,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
 // Dummy Print Preview Component
 const PrintPreview = React.memo(({ calculationData }) => {
     const { str } = useLocale();
+    const isMobile = useMediaQuery({ maxWidth: 767 });
 
     if (!calculationData) {
         return <Message type="info" showIcon><Trans>No data to preview.</Trans></Message>;
@@ -195,34 +198,40 @@ const PrintPreview = React.memo(({ calculationData }) => {
 
     return (
         <div className="p-4">
-            <h4 className="text-xl font-bold mb-4"><Trans>Calculation Summary</Trans></h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <p><strong><Trans>Make</Trans>:</strong> {calculationData.make || str('N/A')}</p>
-                    <p><strong><Trans>Model</Trans>:</strong> {calculationData.model || str('N/A')}</p>
-                    <p><strong><Trans>Year</Trans>:</strong> {calculationData.year || str('N/A')}</p>
-                    <p><strong><Trans>Car Class</Trans>:</strong> {calculationData.carClass || str('N/A')}</p>
-                    <p><strong><Trans>Body Type</Trans>:</strong> {calculationData.bodyType || str('N/A')}</p>
-                    <p><strong><Trans>Color</Trans>:</strong> {calculationData.color || str('N/A')}</p>
-                    <p><strong><Trans>Paint type</Trans>:</strong> {calculationData.paintType || str('N/A')}</p>
-                </div>
-                <div>
-                    <p><strong><Trans>License plate</Trans>:</strong> {calculationData.licensePlate || str('N/A')}</p>
-                    <p><strong><Trans>VIN</Trans>:</strong> {calculationData.VIN || str('N/A')}</p>
-                    <p><strong><Trans>Notes</Trans>:</strong> {calculationData.notes || str('N/A')}</p>
-                </div>
-            </div>
-            <h5 className="text-lg font-semibold mt-6 mb-2"><Trans>Selected Body Parts</Trans></h5>
-            {calculationData.selectedParts && calculationData.selectedParts.length > 0 ? (
-                <ul className="list-disc list-inside">
-                    {calculationData.selectedParts.map((part, index) => (
-                        <li key={index}>{part}</li>
-                    ))}
-                </ul>
-            ) : (
-                <p><Trans>No body parts selected.</Trans></p>
-            )}
-            {/* Add more details as needed */}
+            <Tabs defaultActiveKey="1" vertical={!isMobile} appearance="subtle">
+                <Tabs.Tab eventKey="1" title={str('Calculation Summary')}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p><strong><Trans>Make</Trans>:</strong> {calculationData.make || str('N/A')}</p>
+                            <p><strong><Trans>Model</Trans>:</strong> {calculationData.model || str('N/A')}</p>
+                            <p><strong><Trans>Year</Trans>:</strong> {calculationData.year || str('N/A')}</p>
+                            <p><strong><Trans>Car Class</Trans>:</strong> {calculationData.carClass || str('N/A')}</p>
+                            <p><strong><Trans>Body Type</Trans>:</strong> {calculationData.bodyType || str('N/A')}</p>
+                            <p><strong><Trans>Color</Trans>:</strong> {calculationData.color || str('N/A')}</p>
+                            <p><strong><Trans>Paint type</Trans>:</strong> {calculationData.paintType || str('N/A')}</p>
+                        </div>
+                        <div>
+                            <p><strong><Trans>License plate</Trans>:</strong> {calculationData.licensePlate || str('N/A')}</p>
+                            <p><strong><Trans>VIN</Trans>:</strong> {calculationData.VIN || str('N/A')}</p>
+                            <p><strong><Trans>Notes</Trans>:</strong> {calculationData.notes || str('N/A')}</p>
+                        </div>
+                    </div>
+                    <h5 className="text-lg font-semibold mt-6 mb-2"><Trans>Selected Body Parts</Trans></h5>
+                    {calculationData.selectedParts && calculationData.selectedParts.length > 0 ? (
+                        <ul className="list-disc list-inside">
+                            {calculationData.selectedParts.map((part, index) => (
+                                <li key={index}>{part}</li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p><Trans>No body parts selected.</Trans></p>
+                    )}
+                    {/* Add more details as needed */}
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="2" title={str('Print')}>
+
+                </Tabs.Tab>
+            </Tabs>
         </div>
     );
 });
@@ -251,10 +260,6 @@ const PrintPreviewDrawer = React.memo(({ show, onClose, calculationData }) => {
                     <PrintPreview calculationData={calculationData} />
                 </React.Suspense>
             </Drawer.Body>
-            <Drawer.Footer>
-                <Button appearance="primary" onClick={() => window.print()}><Trans>Print</Trans></Button>
-                <Button appearance="subtle" onClick={onClose}><Trans>Close</Trans></Button>
-            </Drawer.Footer>
         </Drawer>
     );
 });
@@ -269,8 +274,7 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
         <Stack
             wrap
             justifyContent={isMobile ? 'center' : 'space-between'} // Center on mobile, space-between on desktop
-            alignItems="center"
-            className="sticky top-0 bg-white p-4 z-10 shadow-md rounded-b-lg" // Sticky position, background, padding, shadow, rounded corners
+            className="calc-buttons-panel-stack sticky top-0 bg-white p-4 z-10 shadow-md rounded-b-lg" // Sticky position, background, padding, shadow, rounded corners
             spacing={isMobile ? 5 : 10} // Smaller spacing on mobile
         >
             {!isMobile && <h3 className="text-2xl font-semibold"><Trans>Cost of repair calculation</Trans></h3>}
@@ -288,9 +292,9 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
                     {!isMobile && <Trans>Print</Trans>}
                 </IconButton>
                 {!isMobile && ( // Show report button only on desktop for now to save space
-                    <Button appearance="link" color="red" size="xs" onClick={showReportIssueForm} className="rounded-md">
+                    <IconButton icon={<RemindOutlineIcon/>} appearance="link" color="red" size="xs" onClick={showReportIssueForm} className="rounded-md">
                         <Trans>Report a problem</Trans>
-                    </Button>
+                    </IconButton>
                 )}
             </Stack>
         </Stack>
@@ -515,7 +519,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
 
     return (
         <div>
-            <Tabs defaultActiveKey="1" appearance="pills">
+            <Tabs defaultActiveKey="1" appearance="pills" style={{ margin: "0 auto" }}>
                 <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
                     <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
                     {selectedMake !== null && <SelectionInput name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}

@@ -15,3 +15,12 @@
 .calc-file-load-stack {
     width: 100%;
 }
+
+.calc-buttons-panel-stack {
+    margin-bottom: 4pt;
+    position: sticky;
+}
+
+.calc-buttons-panel-stack button {
+    min-height: 25pt;
+}
