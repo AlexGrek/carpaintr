@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::utils::{safe_ensure_directory_exists, safe_read, safe_write, sanitize_alphanumeric_and_dashes, user_personal_directory_from_email};
+use crate::utils::{get_file_summary, safe_ensure_directory_exists, safe_read, safe_write, sanitize_alphanumeric_and_dashes, user_personal_directory_from_email};
 use crate::{
     state::AppState,
     errors::AppError,
@@ -86,4 +86,16 @@ pub async fn get_calculation_file(
         [(CONTENT_TYPE, "application/json")],
         content,
     ))
+}
+
+pub async fn get_calculations_list(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let user_path = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let file_path = user_path.join(&CALCULATIONS);
+
+    let calcs = get_file_summary(file_path).await?;
+
+    Ok(Json(calcs))
 }

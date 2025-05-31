@@ -21,7 +21,8 @@ pub async fn gen_pdf(
     let client = Client::new();
 
     let res = client
-        .post("http://external-service/api/pdf")
+        .post(format!("{}/pdf", app_state.pdf_gen_api_url_post))
+        .json(&request)
         .send()
         .await
         .map_err(|err| AppError::InternalServerError(err.to_string()))?;
@@ -40,3 +41,33 @@ pub async fn gen_pdf(
 
     Ok((headers, body))
 }
+
+pub async fn gen_html(
+    AuthenticatedUser(_user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    Json(request): Json<GeneratePdfRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let client = Client::new();
+
+    let res = client
+        .post(format!("{}/html", app_state.pdf_gen_api_url_post))
+        .json(&request)
+        .send()
+        .await
+        .map_err(|err| AppError::InternalServerError(err.to_string()))?;
+
+    // Stream body directly
+    let stream = res.bytes_stream();
+
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", HeaderValue::from_static("text/plain"));
+    headers.insert(
+        "Content-Disposition",
+        HeaderValue::from_static("attachment; filename=\"streamed.html\""),
+    );
+
+    let body = axum::body::Body::from_stream(stream);
+
+    Ok((headers, body))
+}
+

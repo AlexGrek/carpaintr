@@ -1,9 +1,12 @@
+use chrono::{DateTime, Duration, Utc};
 use lexiclean::Lexiclean;
+use serde::Serialize;
 use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 use tokio::fs;
+use tokio::fs::read_dir;
 use tokio::io;
 
 pub const COMMON: &'static str = "common";
@@ -115,7 +118,6 @@ pub async fn delete_user_data_gracefully(
         // do nothing if user_catalog does not exist
         // move all data from user_catalog dir into deleted_user_catalog dir (create if not exist), delete user_catalog
         // if deleted_user_catalog was previously existing and non-empty - do not care, ovwerwrite whatever we need to overwrite
-
     }
     return Ok(());
 }
@@ -265,4 +267,77 @@ pub fn sanitize_alphanumeric_and_dashes_and_dots(input: &str) -> String {
         .chars()
         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == '.')
         .collect()
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct FileEntry {
+    pub name: String,
+    pub modified: DateTime<Utc>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct FileSummary {
+    pub all_files: Vec<FileEntry>,
+    pub modified_last_24h: Vec<FileEntry>,
+    pub modified_1w_excl_24h: Vec<FileEntry>,
+    pub older_than_1w: Vec<FileEntry>,
+}
+
+pub async fn get_file_summary<P: AsRef<Path>>(dir: P) -> io::Result<FileSummary> {
+    let mut all_files = Vec::new();
+    let mut modified_last_24h = Vec::new();
+    let mut modified_1w_excl_24h = Vec::new();
+    let mut older_than_1w = Vec::new();
+
+    let now = Utc::now();
+    let one_day_ago = now - Duration::days(1);
+    let seven_days_ago = now - Duration::days(7);
+
+    let mut entries = read_dir(dir).await?;
+
+    while let Some(entry) = entries.next_entry().await? {
+        let metadata = entry.metadata().await?;
+        if !metadata.is_file() {
+            continue;
+        }
+
+        let path = entry.path();
+        let filename = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default()
+            .to_string();
+
+        let modified: DateTime<Utc> = metadata.modified().map(DateTime::<Utc>::from)?;
+
+        let file_entry = FileEntry {
+            name: filename,
+            modified,
+        };
+
+        if modified > one_day_ago {
+            modified_last_24h.push(file_entry.clone());
+        } else if modified > seven_days_ago {
+            modified_1w_excl_24h.push(file_entry.clone());
+        } else {
+            older_than_1w.push(file_entry.clone());
+        }
+
+        all_files.push(file_entry);
+    }
+
+    // Sort each group by modified date (newest first)
+    let sort_desc = |a: &FileEntry, b: &FileEntry| b.modified.cmp(&a.modified);
+
+    all_files.sort_by(sort_desc);
+    modified_last_24h.sort_by(sort_desc);
+    modified_1w_excl_24h.sort_by(sort_desc);
+    older_than_1w.sort_by(sort_desc);
+
+    Ok(FileSummary {
+        all_files,
+        modified_last_24h,
+        modified_1w_excl_24h,
+        older_than_1w,
+    })
 }

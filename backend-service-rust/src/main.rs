@@ -139,10 +139,18 @@ async fn main() -> tokio::io::Result<()> {
                     "/calculationstore",
                     post(api::v1::calc::persistence_endpoints::save_calculation),
                 )
+                .route(
+                    "/calculationstore/list",
+                    get(api::v1::calc::persistence_endpoints::get_calculations_list),
+                )
                 .route("/get_calc_details", get(api::v1::user::get_calc_details))
                 .route(
-                    "/generate_pdf",
+                    "/generate_pdf_table",
                     post(api::v1::calc::output_endpoints::gen_pdf),
+                )
+                .route(
+                    "/generate_html_table",
+                    post(api::v1::calc::output_endpoints::gen_html),
                 )
                 .route(
                     "/carmakes",
