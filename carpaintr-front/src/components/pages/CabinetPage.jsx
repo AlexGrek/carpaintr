@@ -8,10 +8,12 @@ import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import LanguageMenu from '../layout/LanguageMenu';
+import OrganisationMenu from '../OrganisationMenu';
 
 registerTranslations("ua", {
     "Change password": "Змінити пароль",
-    "Licenses": "Ліцензії"
+    "Licenses": "Ліцензії",
+    "Organization menu": "Налаштування організації" 
 })
 
 const CabinetPage = () => {
@@ -21,13 +23,16 @@ const CabinetPage = () => {
             <ActiveLicenseMarker/>
         </Panel>
         <PanelGroup>
+        <Panel header={str("Organization menu")} collapsible bordered>
+                <OrganisationMenu></OrganisationMenu>
+            </Panel>
             <Panel header={str("Change password")} collapsible bordered>
                 <ChangePasswordMenu></ChangePasswordMenu>
             </Panel>
             <Panel header={str("Licenses")} collapsible bordered>
                 <ClientLicenseListing></ClientLicenseListing>
             </Panel>
-            <Panel header="Language | Мова | Язык" collapsible bordered>
+            <Panel header="Language | Мова" collapsible bordered>
                 <LanguageMenu/>
             </Panel>
         </PanelGroup>

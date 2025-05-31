@@ -40,7 +40,7 @@ pub async fn read_user_file(
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
         .await
-        .map_err(|e| AppError::IoError(e))?;
+        .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(data)
 }
 
@@ -69,8 +69,7 @@ pub async fn read_common_file(
     // Read the file content
     let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
     let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
-        .await
-        .map_err(|e| AppError::IoError(e))?;
+        .await?;
     Ok(data)
 }
 

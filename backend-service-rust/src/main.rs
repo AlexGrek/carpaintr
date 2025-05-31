@@ -129,6 +129,7 @@ async fn main() -> tokio::io::Result<()> {
         .route("/license_upload", post(api::v1::user::upload_license))
         .route("/getactivelicense", get(api::v1::user::get_active_license))
         .route("/getcompanyinfo", get(api::v1::user::get_company_info))
+        .route("/updatecompanyinfo", post(api::v1::user::update_company_info))
         .nest(
             "/user",
             Router::new()

@@ -20,6 +20,8 @@ pub enum AppError {
     BcryptError(#[from] bcrypt::BcryptError),
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
+    // #[error("Safe FS error: {0}")]
+    // SafeFsError(#[from] SafeFsError),
     #[error("File not found")]
     FileNotFound,
     #[error("Unauthorized")]

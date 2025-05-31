@@ -112,6 +112,40 @@ pub async fn get_company_info(
     Ok(Json(company_info))
 }
 
+pub async fn update_company_info(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    Json(mut company_info_input): Json<CompanyInfo>
+) -> Result<impl IntoResponse, AppError> {
+    // Get the user's data directory path
+    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)
+        .map_err(|e| AppError::InternalServerError(format!("Failed to get user directory: {}", e)))?;
+
+    let company_info_path = user_dir.join("company.json");
+
+    company_info_input.current_time = Utc::now();
+
+    let json = serde_json::to_string_pretty(&company_info_input)
+            .map_err(|e| AppError::BadRequest(format!("Failed to serialize dummy company info: {}", e)))?;
+
+    fs::write(&company_info_path, json).await
+            .map_err(|e| AppError::InternalServerError(format!("Failed to write company.json: {}", e)))?;
+
+    // let json = serde_json::to_string_pretty(&dummy_info);
+    // fs::write(&company_info_path, json).await.map_err(|e| AppError::InternalServerError(format!("Failed to write company.json: {}", e)))?;
+
+    // Read the content of company.json
+    let company_info_content = fs::read_to_string(&company_info_path).await
+        .map_err(|e| AppError::InternalServerError(format!("Failed to read company.json: {}", e)))?;
+
+    // Deserialize the JSON content into CompanyInfo struct
+    let company_info: CompanyInfo = serde_json::from_str(&company_info_content)
+        .map_err(|e| AppError::InternalServerError(format!("Failed to parse company.json: {}", e)))?;
+
+    // Return the CompanyInfo as a JSON response
+    Ok(Json(company_info))
+}
+
 // New handler to check if the authenticated user has an active license
 pub async fn get_active_license(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user

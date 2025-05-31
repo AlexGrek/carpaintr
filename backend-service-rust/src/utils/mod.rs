@@ -208,17 +208,17 @@ pub async fn list_catalog_files_user_common<P: AsRef<Path>>(
 //     }
 // }
 
-pub async fn get_file_as_string_by_path<P: AsRef<Path>>(path: &P, root: &P) -> io::Result<String> {
-    safety_check(root, path);
+pub async fn get_file_as_string_by_path<P: AsRef<Path>>(path: &P, root: &P) -> Result<String, SafeFsError> {
+    safety_check(root, path)?;
     let path2 = path.as_ref().to_owned();
     log::info!("Reading file: {:?}", path2);
     if fs::metadata(&path).await.is_ok() {
-        fs::read_to_string(path).await
+        return Ok(fs::read_to_string(path).await?)
     } else {
         Err(io::Error::new(
             io::ErrorKind::NotFound,
             "File not found by path",
-        ))
+        ).into())
     }
 }
 
