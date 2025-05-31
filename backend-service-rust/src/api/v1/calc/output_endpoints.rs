@@ -1,24 +1,35 @@
+use crate::exlogging::{log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
-use crate::models::GeneratePdfRequest;
-use crate::utils::{
-    safe_ensure_directory_exists, safe_read, safe_write, sanitize_alphanumeric_and_dashes,
-    user_personal_directory_from_email,
-};
+use crate::models::calculations::CalculationData;
 use crate::{errors::AppError, state::AppState};
-use axum::extract::Query;
-use axum::http::header::CONTENT_TYPE;
-use axum::http::{HeaderMap, HeaderValue, Response};
+use axum::http::{HeaderMap, HeaderValue};
 use axum::{extract::State, response::IntoResponse, Json};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GeneratePdfRequest {
+    pub custom_template_content: Option<String>,
+    pub calculation: CalculationData,
+    metadata: Option<String>
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GeneratePdfInternalRequest {
+    pub custom_template_content: Option<String>,
+    pub calculation: CalculationData
+}
+
 pub async fn gen_pdf(
-    AuthenticatedUser(_user_email): AuthenticatedUser,
+    AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     Json(request): Json<GeneratePdfRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let client = Client::new();
+
+    log_event(LogLevel::Info, format!("PDF generation {:?}", &request.calculation.digest()), Some(user_email));
 
     let res = client
         .post(format!("{}/pdf", app_state.pdf_gen_api_url_post))
@@ -43,11 +54,13 @@ pub async fn gen_pdf(
 }
 
 pub async fn gen_html(
-    AuthenticatedUser(_user_email): AuthenticatedUser,
+    AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     Json(request): Json<GeneratePdfRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let client = Client::new();
+
+    log_event(LogLevel::Info, format!("HTML table generation {:?}", &request.calculation.digest()), Some(user_email));
 
     let res = client
         .post(format!("{}/html", app_state.pdf_gen_api_url_post))

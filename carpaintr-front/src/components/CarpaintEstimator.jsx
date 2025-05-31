@@ -161,7 +161,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
             <Drawer.Header>
                 <Drawer.Title><Trans>Load Calculation</Trans></Drawer.Title>
                 <Drawer.Actions>
-                    <Button onClick={onClose} appearance="subtle"><FaTimes /></Button>
+                    <Button onClick={onClose} appearance="subtle"></Button>
                 </Drawer.Actions>
             </Drawer.Header>
             <Drawer.Body>
@@ -243,7 +243,7 @@ const PrintPreviewDrawer = React.memo(({ show, onClose, calculationData }) => {
             <Drawer.Header>
                 <Drawer.Title><Trans>Print Preview</Trans></Drawer.Title>
                 <Drawer.Actions>
-                    <Button onClick={onClose} appearance="subtle"><FaTimes /></Button>
+                    <Button onClick={onClose} appearance="subtle"></Button>
                 </Drawer.Actions>
             </Drawer.Header>
             <Drawer.Body>

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use crate::exlogging::{log_event, LogLevel};
 use crate::utils::{get_file_summary, safe_ensure_directory_exists, safe_read, safe_write, sanitize_alphanumeric_and_dashes, user_personal_directory_from_email};
 use crate::{
     state::AppState,
@@ -66,6 +67,7 @@ pub async fn save_calculation(
     let json = serde_json::to_string_pretty(&req)?; // or `to_vec` for bytes
 
     // Save to file
+    log_event(LogLevel::Info, format!("Save calculation {:?}", &file_name), Some(user_email));
     let _ = safe_write(user_path, file_path, json).await?;
 
     Ok(Json(SaveSuccessResponse {saved_file_path: file_name}))
