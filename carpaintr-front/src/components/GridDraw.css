@@ -22,6 +22,7 @@
     margin: auto;
     position: relative; /* Needed for ::before positioning */
     overflow: hidden; /* Hide overflow from mirrored image if it extends */
+    width: 100%; /* Make the grid take the whole available width */
 }
 
 /* Pseudo-element for the background image */
@@ -49,4 +50,6 @@
     /* Ensure cells are clickable by being above the ::before element */
     position: relative;
     z-index: 0;
+    /* Make cells strictly square */
+    aspect-ratio: 1 / 1;
 }

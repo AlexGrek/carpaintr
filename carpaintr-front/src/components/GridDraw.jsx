@@ -10,7 +10,7 @@ const GridDraw = ({
   gridData,
   onGridChange,
   visual,
-  cellSize = 0, // Size of each cell in pixels
+  // cellSize is no longer directly used for pixel dimensions, but can be kept for other purposes if needed
 }) => {
   const [currentMode, setCurrentMode] = useState(0); // Mode: 0=Clear, 1=Light, 2=Medium, 3=Severe
   const [isDrawing, setIsDrawing] = useState(false);
@@ -67,14 +67,12 @@ const GridDraw = ({
   // Determine the class for mirroring the background
   const gridClasses = `grid ${visual.mirrored ? 'mirrored' : ''}`;
 
-  // Set CSS variables for background image and dimensions
+  // Set CSS variables for background image and grid dimensions
   const gridStyle = {
     '--grid-background-image': `url(${visual.image})`,
-    '--grid-cols': gridData[0].length,
-    '--grid-rows': gridData.length,
-    '--cell-size': `${cellSize}px`,
-    gridTemplateColumns: `repeat(${gridData[0].length}, ${cellSize}px)`,
-    gridTemplateRows: `repeat(${gridData.length}, ${cellSize}px)`,
+    // Use 1fr for flexible sizing, CSS will handle the aspect ratio
+    gridTemplateColumns: `repeat(${gridData[0].length}, 1fr)`,
+    gridTemplateRows: `repeat(${gridData.length}, 1fr)`,
   };
 
   return (
@@ -121,8 +119,7 @@ const GridDraw = ({
               className="grid-cell"
               style={{
                 backgroundColor: getCellColor(cell),
-                width: `${cellSize}px`,
-                height: `${cellSize}px`,
+                // Removed fixed width and height, now handled by CSS aspect-ratio
               }}
               onMouseDown={() => handleMouseDown(x, y)}
               onMouseUp={handleMouseUp}
