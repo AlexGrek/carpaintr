@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton } from 'rsuite';
+import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton, Panel } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { useLocale } from '../localization/LocaleContext';
 import { authFetch } from '../utils/authFetch';
@@ -166,16 +166,6 @@ const PrintDocumentGenerator = React.memo(({ calculationData }) => {
         <Stack direction="column" alignItems="flex-start" spacing={20} className="p-4 w-full">
             <Form fluid className="w-full">
                 <Form.Group>
-                    <Form.ControlLabel><Trans>Custom Template Content (Jinja2)</Trans></Form.ControlLabel>
-                    <Input
-                        as="textarea"
-                        rows={8}
-                        value={customTemplateContent}
-                        onChange={setCustomTemplateContent}
-                        placeholder={str('Enter custom template content here (e.g., HTML with placeholders)')}
-                    />
-                </Form.Group>
-                <Form.Group>
                     <Form.ControlLabel><Trans>Order Number</Trans></Form.ControlLabel>
                     <Input
                         value={orderNumber}
@@ -192,6 +182,17 @@ const PrintDocumentGenerator = React.memo(({ calculationData }) => {
                         onChange={setOrderNotes}
                         placeholder={str('Enter order notes')}
                     />
+                </Form.Group>
+                <Form.Group>
+                    <Panel header={str("Custom Template Content (Jinja2)")} collapsible bordered>
+                        <Input
+                            as="textarea"
+                            rows={8}
+                            value={customTemplateContent}
+                            onChange={setCustomTemplateContent}
+                            placeholder={str('Enter custom template content here (e.g., HTML with placeholders)')}
+                        />
+                    </Panel>
                 </Form.Group>
                 <Stack spacing={10} justifyContent="flex-end" className="w-full">
                     <Button

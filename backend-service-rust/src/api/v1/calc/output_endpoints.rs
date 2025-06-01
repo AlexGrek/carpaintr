@@ -56,7 +56,10 @@ pub async fn gen_pdf(
         .json(&internal_request)
         .send()
         .await
-        .map_err(|err| AppError::InternalServerError(err.to_string()))?;
+        .map_err(|err| {
+            log_event(LogLevel::Error, format!("Document generation request failure: {:?}", err), Some(user_email));
+            AppError::InternalServerError(err.to_string())}
+        )?;
 
     // Stream body directly
     let stream = res.bytes_stream();
