@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import { authFetch } from '../../utils/authFetch';
 import TableEditorChatGPT from './TableEditorChatGPT';
 import { useMediaQuery } from 'react-responsive';
+import DrawerYamlEditor from './DrawerYamlEditor';
 
 const treeFromDirectoryStructure = (path, data) => {
   if (data === null) {
@@ -64,6 +65,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
   const [fileContent, setFileContent] = useState(initialContent);
   const [originalContent, setOriginalContent] = useState(initialContent);
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
+  const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
   useEffect(() => {
     setFileContent(initialContent);
@@ -110,6 +112,11 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
   const handleOpenTableEditor = useCallback(() => {
     setTableEditorOpen(true);
   })
+
+  const handleOpenYamlEditor = useCallback(() => {
+    setYamlEditorOpen(true);
+  })
+
 
   const handleDelete = useCallback(async () => {
     if (isCommonFile) {
@@ -163,6 +170,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
           </Button>
 
           {filePath && filePath.endsWith(".csv") && <Button appearance='subtle' onClick={handleOpenTableEditor}>💡 Open table editor</Button>}
+          {filePath && filePath.endsWith(".yaml") && <Button appearance='subtle' onClick={handleOpenYamlEditor}>💡 Open yaml editor (broken now)</Button>}
           {/* <CsvEditorDrawer
                 show={tableEditorOpen}
                 onClose={() => setTableEditorOpen(false)}
@@ -184,6 +192,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
             fileName={filePath}
             csvData={fileContent}
           />
+          <DrawerYamlEditor yamlString={fileContent} onClose={(value) => {setYamlEditorOpen(false); setFileContent(value)}} open={yamlEditorOpen}/>
         </Col>
       </Row>
     </>
