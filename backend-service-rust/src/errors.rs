@@ -109,7 +109,7 @@ impl IntoResponse for AppError {
         });
 
         log::warn!("Error response sent: {}", self.to_string());
-        exlogging::log_event(exlogging::LogLevel::Error, format!("Error: {:?}", self.to_string()), None::<&str>);
+        exlogging::log_event(exlogging::LogLevel::Warn, format!("Error response: {:?}", self.to_string()), None::<&str>);
 
         (status_code, body).into_response()
     }
