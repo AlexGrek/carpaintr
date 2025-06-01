@@ -13,6 +13,7 @@ import UsersDashboard from './components/pages/UsersDashboard.jsx';
 import { LocaleProvider } from './localization/LocaleContext.jsx';
 import WipPage from './components/pages/WipPage.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import ContactSupport from './components/pages/ContactSupport.jsx';
 
 const HistoryPage = () => <h2>History Page</h2>;
 const AboutUsPage = () => <h2>About Us Page</h2>;
@@ -36,6 +37,7 @@ function App() {
             <Route path="/fileeditor" element={<FileEditorPage />} />
             <Route path="/dashboard" element={<UsersDashboard />} />
             <Route path="/wip" element={<WipPage />} />
+            <Route path="/report" element={<ContactSupport />} />
           </Routes>
         </Router>
       </GlobalCallbacksProvider>

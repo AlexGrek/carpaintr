@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import OffRoundIcon from '@rsuite/icons/OffRound';
 import { logout } from '../../utils/authFetch';
 import './TopBarUser.css';
+import { handleOpenNewTab } from '../../utils/utils';
 
 const TopBarUser = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const TopBarUser = () => {
       case 'report':
         // No need for console.log in production code unless debugging
         // Implement feedback submission logic here (e.g., open a modal, navigate to a feedback page)
-        console.log('Navigating to report (feedback submission not implemented yet)');
+        handleOpenNewTab("/report");
         break;
       default:
         break;

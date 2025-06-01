@@ -1,45 +1,71 @@
 import React, { useState } from 'react';
-import { Tabs, PanelGroup, Panel } from 'rsuite'; // Import PanelGroup and Panel
-import { useMediaQuery } from 'react-responsive'; // Import useMediaQuery
+import { Tabs, PanelGroup, Panel } from 'rsuite';
+import { useMediaQuery } from 'react-responsive';
 import CreateUser from './CreateUser';
 import ManageUsers from './ManageUsers';
 import ServerLogs from './ServerLogs';
+import AdminPanelRequests from './admreq/AdminPanelRequests';
 
 const AdminTools = () => {
-    const [activeKey, setActiveKey] = useState('1'); // Default active tab is Create User
-    const isMobile = useMediaQuery({ maxWidth: 767 }); // Define mobile breakpoint, e.g., 767px
+    const [activeKey, setActiveKey] = useState('1');
+    const isMobile = useMediaQuery({ maxWidth: 767 });
+
+    // Define a mapping of eventKeys to their corresponding components and titles
+    const sections = [
+        {
+            eventKey: '1',
+            title: 'Додати користувача',
+            component: <CreateUser />
+        },
+        {
+            eventKey: '2',
+            title: 'Керування користувачами',
+            component: <ManageUsers />
+        },
+        {
+            eventKey: '3',
+            title: 'Логи',
+            component: <ServerLogs />
+        },
+        {
+            eventKey: '4',
+            title: 'Дані',
+            component: <ManageUsers /> // Assuming "Дані" also uses ManageUsers
+        },
+        {
+            eventKey: '5',
+            title: 'Запити',
+            component: <AdminPanelRequests /> // Assuming "Дані" also uses ManageUsers
+        }
+    ];
 
   return (
     <div style={{ marginTop: '20px', width: "100%"}}>
       {isMobile ? (
-        <PanelGroup accordion bordered>
-          <Panel header="Додати користувача" eventKey="1" collapsible>
-            <CreateUser />
-          </Panel>
-          <Panel header="Керування користувачами" eventKey="2" collapsible>
-            <ManageUsers />
-          </Panel>
-          <Panel header="Логи" eventKey="3" collapsible>
-            <ServerLogs />
-          </Panel>
-          <Panel header="Дані" eventKey="4" collapsible>
-            <ManageUsers /> {/* Assuming "Дані" also uses ManageUsers */}
-          </Panel>
+        <PanelGroup accordion bordered activeKey={activeKey} onSelect={setActiveKey}>
+          {sections.map(section => (
+            <Panel
+              header={section.title}
+              eventKey={section.eventKey}
+              collapsible
+              key={section.eventKey}
+            >
+              {activeKey === section.eventKey && section.component}
+            </Panel>
+          ))}
         </PanelGroup>
       ) : (
         <Tabs className='fade-in-simple' activeKey={activeKey} onSelect={setActiveKey} appearance='pills'>
-          <Tabs.Tab eventKey="1" title="Додати користувача" style={{"margin": "auto"}}>
-              {activeKey === '1' && <CreateUser />}
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="2" title="Керування користувачами">
-            <ManageUsers />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="3" title="Логи">
-            <ServerLogs />
-          </Tabs.Tab>
-          <Tabs.Tab eventKey="4" title="Дані">
-            <ManageUsers />
-          </Tabs.Tab>
+          {sections.map(section => (
+            <Tabs.Tab
+              eventKey={section.eventKey}
+              title={section.title}
+              key={section.eventKey}
+              style={section.eventKey === '1' ? {"margin": "auto"} : {}} // Apply specific style for the first tab
+            >
+              {activeKey === section.eventKey && section.component}
+            </Tabs.Tab>
+          ))}
         </Tabs>
       )}
     </div>

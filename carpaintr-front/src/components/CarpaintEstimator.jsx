@@ -9,7 +9,7 @@ import { useLocale, registerTranslations } from '../localization/LocaleContext';
 import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
 import { useMediaQuery } from 'react-responsive';
 import './CarPaintEstimator.css';
-import { capitalizeFirstLetter } from '../utils/utils';
+import { capitalizeFirstLetter, handleOpenNewTab } from '../utils/utils';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TableIcon from '@rsuite/icons/Table';
@@ -699,7 +699,7 @@ const CarPaintEstimator = () => {
                 onSave={handleSave}
                 onLoad={() => setShowLoadDrawer(true)} // Open load drawer
                 onPrint={handlePrint}
-                showReportIssueForm={showReportIssueForm}
+                showReportIssueForm={() => handleOpenNewTab("/report")}
             />
 
             <div className="flex-grow overflow-y-auto p-4"> {/* Main content area, scrollable */}
