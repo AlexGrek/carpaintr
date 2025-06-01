@@ -1,0 +1,6 @@
+front_wing_left:
+    image: front_wing.png
+    mirrored: false
+    x: 8
+    y: 4
+    unused: []

@@ -6,11 +6,55 @@ import ConversionIcon from '@rsuite/icons/Conversion';
 import OneColumnIcon from '@rsuite/icons/OneColumn';
 import ColumnsIcon from '@rsuite/icons/Columns';
 import SelectionInput from './SelectionInput'
+import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
 import { authFetch } from '../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
 
-const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
+// Translations for car parts
+const carPartsTranslations = {
+    "Hood": "Капот",
+    "Front Bumper": "Передній бампер",
+    "Rear Bumper": "Задній бампер",
+    "Left Front Door": "Ліві передні двері",
+    "Right Front Door": "Праві передні двері",
+    "Left Rear Door": "Ліві задні двері",
+    "Right Rear Door": "Праві задні двері",
+    "Trunk": "Багажник",
+    "Left Front Fender": "Ліве переднє крило",
+    "Right Front Fender": "Праве переднє крило"
+};
+
+// Actions and their translations/icons
+const actions = {
+    "polish": "Полірування",
+    "replace_and_paint_used": "Заміна з фарбуванням (Б/У деталь)",
+    "replace_and_paint_3rdparty": "Заміна з фарбуванням (неоригінальна деталь)",
+    "replace_and_paint_original": "Заміна з фарбуванням (оригінальна деталь)",
+    "paint_one_side": "Ремонт з фарбуванням зовнішньої сторони",
+    "paint_two_sides": "Ремонт з фарбуванням обох сторін"
+};
+
+const carPartsNameToPartsVisualMapping = {
+    "Крыло переднее правое": "front_wing_right",
+    "Крыло переднее левое": "front_wing_left",
+}
+
+const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVisual }) => {
+    const isMobile = useMediaQuery({ maxWidth: 767 });
+
+    const mapVisual = useCallback((partName) => {
+        // console.log(partName);
+        // console.log(partsVisual);
+        let entry = carPartsNameToPartsVisualMapping[partName];
+        // console.log(entry);
+        if (entry && partsVisual[entry]) {
+            return partsVisual[entry];
+        } else {
+            return partsVisual.default;
+        }
+    }, [partsVisual]);
+
     // State for available parts fetched from the API
     const [availableParts, setAvailableParts] = useState([]);
     // State for parts not yet selected by the user, derived from availableParts
@@ -21,29 +65,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerTab, setDrawerTab] = useState(0);
 
-    // Translations for car parts
-    const carPartsTranslations = {
-        "Hood": "Капот",
-        "Front Bumper": "Передній бампер",
-        "Rear Bumper": "Задній бампер",
-        "Left Front Door": "Ліві передні двері",
-        "Right Front Door": "Праві передні двері",
-        "Left Rear Door": "Ліві задні двері",
-        "Right Rear Door": "Праві задні двері",
-        "Trunk": "Багажник",
-        "Left Front Fender": "Ліве переднє крило",
-        "Right Front Fender": "Праве переднє крило"
-    };
 
-    // Actions and their translations/icons
-    const actions = {
-        "polish": "Полірування",
-        "replace_and_paint_used": "Заміна з фарбуванням (Б/У деталь)",
-        "replace_and_paint_3rdparty": "Заміна з фарбуванням (неоригінальна деталь)",
-        "replace_and_paint_original": "Заміна з фарбуванням (оригінальна деталь)",
-        "paint_one_side": "Ремонт з фарбуванням зовнішньої сторони",
-        "paint_two_sides": "Ремонт з фарбуванням обох сторін"
-    };
 
     const actionsIcons = {
         "polish": <PinIcon />,
@@ -103,15 +125,18 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
     }, [body, carClass]); // Dependencies for API fetch
 
     // Helper to generate initial grid data
-    const generateInitialGrid = useCallback((rows, cols) => {
+    const generateInitialGrid = useCallback((visual) => {
+        const rows = visual.y;
+        const cols = visual.x;
         const grid = [];
         for (let y = 0; y < rows; y++) {
             const row = [];
             for (let x = 0; x < cols; x++) {
-                row.push(Math.random() < 0.1 ? -1 : 0); // 10% chance to be disabled (-1), otherwise 0
+                row.push(Math.random() < 0.1 ? -1 : 0); // TODO: use unused field
             }
             grid.push(row);
         }
+        console.log("Grid generated for ", JSON.stringify(visual));
         return grid;
     }, []);
 
@@ -128,14 +153,14 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
                 original: true,
                 damageLevel: 0,
                 name: partName,
-                grid: generateInitialGrid(10, 15),
+                grid: generateInitialGrid(mapVisual(partName ? partName : "")),
                 outsideRepairZone: null
             };
 
         setDrawerCurrentPart(newPart);
         setIsDrawerOpen(true);
         setDrawerTab(0); // Always start from the first tab
-    }, [selectedParts, generateInitialGrid]);
+    }, [selectedParts, generateInitialGrid, drawerCurrentPart, mapVisual]);
 
     // Handler for updating the local drawerCurrentPart state
     const updateDrawerCurrentPart = useCallback((updates) => {
@@ -244,10 +269,10 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
                     open={isDrawerOpen}
                     onClose={handleDrawerClose}
                     className="carBodyParts-drawer"
-                    size={'calc(min(100vw, 600px))'}
+                    size={isMobile ? "full" : "md"}
                 >
                     <Drawer.Header>
-                        <Drawer.Title>{carPartsTranslations[drawerCurrentPart.name]}</Drawer.Title>
+                        <Drawer.Title>{drawerCurrentPart.name}</Drawer.Title>
                     </Drawer.Header>
                     <Drawer.Body>
                         <div>
@@ -293,6 +318,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
                                             <div>
                                                 <GridDraw
                                                     gridData={drawerCurrentPart.grid}
+                                                    visual={mapVisual(drawerCurrentPart.name)}
                                                     onGridChange={(value) => updateDrawerCurrentPart({ grid: value })}
                                                 />
                                                 <SelectionInput

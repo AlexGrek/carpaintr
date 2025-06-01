@@ -9,8 +9,8 @@ const ColorBlock = ({color}) => {
 const GridDraw = ({
   gridData,
   onGridChange,
-  backgroundImage,
-  cellSize = 20, // Size of each cell in pixels
+  visual,
+  cellSize = 0, // Size of each cell in pixels
 }) => {
   const [currentMode, setCurrentMode] = useState(0); // Mode: 0=Clear, 1=Light, 2=Medium, 3=Severe
   const [isDrawing, setIsDrawing] = useState(false);
@@ -64,10 +64,22 @@ const GridDraw = ({
     onGridChange(newGridData);
   };
 
+  // Determine the class for mirroring the background
+  const gridClasses = `grid ${visual.mirrored ? 'mirrored' : ''}`;
+
+  // Set CSS variables for background image and dimensions
+  const gridStyle = {
+    '--grid-background-image': `url(${visual.image})`,
+    '--grid-cols': gridData[0].length,
+    '--grid-rows': gridData.length,
+    '--cell-size': `${cellSize}px`,
+    gridTemplateColumns: `repeat(${gridData[0].length}, ${cellSize}px)`,
+    gridTemplateRows: `repeat(${gridData.length}, ${cellSize}px)`,
+  };
+
   return (
     <div
       className="grid-container"
-      style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <Divider />
       <p>Оберіть тип пошкодження та вкажіть зону пошкодження на схемі.
@@ -98,11 +110,8 @@ const GridDraw = ({
       </div>
 
       <div
-        className="grid"
-        style={{
-          gridTemplateColumns: `repeat(${gridData[0].length}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${gridData.length}, ${cellSize}px)`,
-        }}
+        className={gridClasses} // Apply dynamic classes
+        style={gridStyle} // Apply CSS variables and grid template
         onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves the grid
       >
         {gridData.map((row, y) =>

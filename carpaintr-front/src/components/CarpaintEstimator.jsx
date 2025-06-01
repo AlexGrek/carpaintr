@@ -352,7 +352,7 @@ const CurrentDateDisplay = React.memo(() => {
                 setSeasonDetails(JSON.stringify(data));
             })
             .catch(console.error);
-    }, []); // Empty dependency array means this runs once on mount
+    }, []);
 
     return (
         <div>
@@ -517,6 +517,7 @@ const CarPaintEstimator = () => {
     const toaster = useToaster();
     const { str } = useLocale();
     const [searchParams] = useSearchParams(); // Get search params from URL
+    const [partsVisual, setPartsVisual] = useState({});
 
     // State for drawers and dialogs
     const [showNewConfirmation, setShowNewConfirmation] = useState(false);
@@ -669,6 +670,18 @@ const CarPaintEstimator = () => {
         }
     }, [searchParams, handleLoad]); // Depend on searchParams and handleLoad
 
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                let data = await authFetchYaml('/api/v1/user/global/parts_visual.yaml');
+                setPartsVisual(data);
+            } catch (error) {
+                console.error("Failed to fetch parts_visual:", error);
+            }
+        };
+        fetchData();
+    }, [])
+
     const handlePrint = useCallback(() => {
         setShowPrintDrawer(true);
     }, []);
@@ -720,7 +733,7 @@ const CarPaintEstimator = () => {
                     <Panel header={str("Works")} eventKey={3}>
                         {bodyType !== null && (
                             <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>
-                                <CarBodyPartsSelector selectedParts={selectedParts} onChange={handleSetSelectedParts} carClass={carClass} body={bodyType} />
+                                <CarBodyPartsSelector partsVisual={partsVisual} selectedParts={selectedParts} onChange={handleSetSelectedParts} carClass={carClass} body={bodyType} />
                             </React.Suspense>
                         )}
                     </Panel>
