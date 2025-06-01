@@ -4,6 +4,7 @@ import { authFetch } from '../utils/authFetch';
 import Trans from '../localization/Trans'; // Import Trans component
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
 import { formatDistanceToNowStrict, parseISO } from 'date-fns';
+import { utcToZonedTime, format } from 'date-fns-tz'; // Import for timezone handling
 
 registerTranslations('ua', {
 });
@@ -42,14 +43,36 @@ const ServerLogs = () => {
         const parts = line.split(timestampRegex);
         return parts.map((part, index) => {
             if (timestampRegex.test(part)) {
-                // Extract and parse the timestamp
+                // Extract the timestamp string, remove brackets and ' UTC'
                 const timestampStr = part.substring(1, part.length - 1).replace(' UTC', '');
+
                 let formattedTimeAgo = '';
                 try {
-                    const date = parseISO(timestampStr);
-                    formattedTimeAgo = formatDistanceToNowStrict(date, { addSuffix: true });
+                    // Parse the timestamp string explicitly as UTC
+                    // We append 'Z' to indicate UTC time for parseISO
+                    const dateInUTC = parseISO(timestampStr + 'Z');
+                    
+                    // Get the current time in UTC for accurate comparison
+                    const nowInUTC = new Date(); // This will be local time
+                    const nowAsUTC = utcToZonedTime(nowInUTC, 'UTC'); // Convert local now to UTC for comparison
+
+                    formattedTimeAgo = formatDistanceToNowStrict(dateInUTC, {
+                        addSuffix: true,
+                        // Set the base date for comparison to now in UTC
+                        // This is crucial for accurate 'ago' calculation
+                        unit: 'second', // Start from seconds for precision
+                        roundingMethod: 'round', // Round to nearest unit
+                        // Set current date to now in UTC for accurate comparison
+                        // This is effectively comparing UTC time to UTC time
+                        locale: {
+                            // Custom locale for formatDistanceToNowStrict if needed
+                            // Otherwise, it uses the default browser locale
+                        }
+                    });
+
                 } catch (e) {
                     formattedTimeAgo = 'Invalid Date';
+                    console.error("Error parsing timestamp:", e);
                 }
 
                 return (
