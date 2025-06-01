@@ -270,7 +270,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass }) => {
                                                     key={key}
                                                     value={key}
                                                 >
-                                                    Тут може бути опис операції "{actions[key]}", але наразі його немає.
+                                                    Тут може бути опис операції &quot{actions[key]}&quot, але наразі його немає.
                                                 </RadioTile>
                                             ))}
                                         </RadioTileGroup>

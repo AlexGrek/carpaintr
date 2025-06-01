@@ -67,7 +67,7 @@ pub async fn save_calculation(
     let json = serde_json::to_string_pretty(&req)?; // or `to_vec` for bytes
 
     // Save to file
-    log_event(LogLevel::Info, format!("Save calculation {:?}", &file_name), Some(user_email));
+    log_event(LogLevel::Info, format!("Save calculation {} as {:?}", req.digest(), &file_name), Some(user_email));
     safe_write(user_path, file_path, json).await?;
 
     Ok(Json(SaveSuccessResponse {saved_file_path: file_name}))
