@@ -70,13 +70,9 @@ pub async fn upload_license(
     Ok(Json("License uploaded and validated successfully"))
 }
 
-// Handler to get company information from company.json
-pub async fn get_company_info(
-    AuthenticatedUser(user_email): AuthenticatedUser,
-    State(app_state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, AppError> {
+pub async fn find_or_create_company_info(app_state: &Arc<AppState>, user: &str) -> Result<CompanyInfo, AppError> {
     // Get the user's data directory path
-    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)
+    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user)
         .map_err(|e| AppError::InternalServerError(format!("Failed to get user directory: {}", e)))?;
 
     let company_info_path = user_dir.join("company.json");
@@ -85,9 +81,10 @@ pub async fn get_company_info(
     if !company_info_path.exists() {
         // If not, create it with dummy data
         let dummy_info = CompanyInfo {
-            email: user_email.clone(),
+            email: user.to_string(),
             license: None, // Or some default license info if applicable
-            company_name: "Default Company Name".to_string(), // Or derive from email
+            company_name: "Company Name".to_string(), // Or derive from email
+            company_addr: "".to_string(),
             current_time: Utc::now(),
             lang_output: "ua".into(),
             lang_ui: "ua".into()
@@ -108,8 +105,16 @@ pub async fn get_company_info(
     let company_info: CompanyInfo = serde_json::from_str(&company_info_content)
         .map_err(|e| AppError::InternalServerError(format!("Failed to parse company.json: {}", e)))?;
 
+    return Ok(company_info);
+}
+
+// Handler to get company information from company.json
+pub async fn get_company_info(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
     // Return the CompanyInfo as a JSON response
-    Ok(Json(company_info))
+    Ok(Json(find_or_create_company_info(&app_state, &user_email).await?))
 }
 
 pub async fn update_company_info(

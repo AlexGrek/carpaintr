@@ -25,7 +25,7 @@ if not app.debug:
 # Configure Jinja2 to load templates from the 'templates' directory
 template_env = Environment(loader=FileSystemLoader('templates'))
 
-@app.route('/api/pdf', methods=['POST'])
+@app.route('/generate/pdf', methods=['POST'])
 def generate_paycheck_pdf():
     """
     Accepts JSON paycheck data, renders it to HTML using either a provided
@@ -72,7 +72,7 @@ def generate_paycheck_pdf():
         app.logger.error(f"Error generating paycheck: {e}")
         return {"error": f"An internal error occurred: {e}"}, 500
 
-@app.route('/api/html', methods=['POST'])
+@app.route('/generate/html', methods=['POST'])
 def generate_paycheck_html():
     """
     Accepts JSON paycheck data, renders it to HTML using either a provided

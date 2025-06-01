@@ -1,6 +1,8 @@
+use crate::api::v1::user::find_or_create_company_info;
 use crate::exlogging::{log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
 use crate::models::calculations::CalculationData;
+use crate::models::CompanyInfo;
 use crate::{errors::AppError, state::AppState};
 use axum::http::{HeaderMap, HeaderValue};
 use axum::{extract::State, response::IntoResponse, Json};
@@ -8,18 +10,25 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Metadata {
+    order_number: Option<String>,
+    order_notes: Option<String>
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GeneratePdfRequest {
     pub custom_template_content: Option<String>,
     pub calculation: CalculationData,
-    metadata: Option<String>
+    pub metadata: Metadata,
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GeneratePdfInternalRequest {
     pub custom_template_content: Option<String>,
-    pub calculation: CalculationData
+    pub company_info: CompanyInfo,
+    pub calculation: CalculationData,
+    pub metadata: Metadata,
 }
 
 pub async fn gen_pdf(
@@ -29,11 +38,22 @@ pub async fn gen_pdf(
 ) -> Result<impl IntoResponse, AppError> {
     let client = Client::new();
 
-    log_event(LogLevel::Info, format!("PDF generation {:?}", &request.calculation.digest()), Some(user_email));
+    log_event(
+        LogLevel::Info,
+        format!("PDF generation {:?}", &request.calculation.digest()),
+        Some(&user_email),
+    );
+
+    let internal_request = GeneratePdfInternalRequest {
+        calculation: request.calculation,
+        company_info: find_or_create_company_info(&app_state, &user_email).await?,
+        custom_template_content: request.custom_template_content,
+        metadata: request.metadata.clone(),
+    };
 
     let res = client
         .post(format!("{}/pdf", app_state.pdf_gen_api_url_post))
-        .json(&request)
+        .json(&internal_request)
         .send()
         .await
         .map_err(|err| AppError::InternalServerError(err.to_string()))?;
@@ -60,11 +80,22 @@ pub async fn gen_html(
 ) -> Result<impl IntoResponse, AppError> {
     let client = Client::new();
 
-    log_event(LogLevel::Info, format!("HTML table generation {:?}", &request.calculation.digest()), Some(user_email));
+    log_event(
+        LogLevel::Info,
+        format!("HTML table generation {:?}", &request.calculation.digest()),
+        Some(&user_email),
+    );
+
+    let internal_request = GeneratePdfInternalRequest {
+        calculation: request.calculation,
+        company_info: find_or_create_company_info(&app_state, &user_email).await?,
+        custom_template_content: request.custom_template_content,
+        metadata: request.metadata.clone(),
+    };
 
     let res = client
         .post(format!("{}/html", app_state.pdf_gen_api_url_post))
-        .json(&request)
+        .json(&internal_request)
         .send()
         .await
         .map_err(|err| AppError::InternalServerError(err.to_string()))?;
@@ -83,4 +114,3 @@ pub async fn gen_html(
 
     Ok((headers, body))
 }
-

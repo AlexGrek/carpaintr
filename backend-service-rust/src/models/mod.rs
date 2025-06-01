@@ -1,9 +1,9 @@
 pub mod calculations;
 
-use serde::{Deserialize, Serialize};
+use crate::license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest};
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
-use crate::license_manager::{GenerateLicenseByDaysRequest, GenerateLicenseByDateRequest}; // Import new structs
+use serde::{Deserialize, Serialize};
+use uuid::Uuid; // Import new structs
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -39,12 +39,19 @@ fn default_lang() -> String {
     "ua".to_string()
 }
 
+fn default_empty_string() -> String {
+    "".to_string()
+}
+
 // Struct to represent the company information stored in company.json
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompanyInfo {
     pub email: String,
     pub license: Option<String>, // Assuming license can be null
     pub company_name: String,
+
+    #[serde(default = "default_empty_string")]
+    pub company_addr: String,
     pub current_time: DateTime<Utc>, // Use DateTime<Utc> for timestamp
 
     #[serde(default = "default_lang")]
@@ -67,7 +74,6 @@ pub enum ManageUserRequest {
     #[serde(rename = "change_pass")]
     ChangePassword { email: String, data: String },
 }
-
 
 // Add the new license generation request structs here
 pub mod license_requests {

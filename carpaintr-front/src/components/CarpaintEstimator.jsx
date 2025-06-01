@@ -21,7 +21,10 @@ import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
 const ColorGrid = React.lazy(() => import('./ColorGrid')); // Used by ColorPicker
 
-// --- New Components ---
+// NEW: Import the refactored PrintCalculationDrawer
+import PrintCalculationDrawer from './PrintCalculationDrawer';
+
+// --- New Components (moved/refactored) ---
 
 // Confirmation Dialog Component
 const ConfirmationDialog = React.memo(({ show, onClose, onConfirm, message }) => {
@@ -187,83 +190,6 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
     );
 });
 
-// Dummy Print Preview Component
-const PrintPreview = React.memo(({ calculationData }) => {
-    const { str } = useLocale();
-    const isMobile = useMediaQuery({ maxWidth: 767 });
-
-    if (!calculationData) {
-        return <Message type="info" showIcon><Trans>No data to preview.</Trans></Message>;
-    }
-
-    return (
-        <div className="p-4">
-            <Tabs defaultActiveKey="1" vertical={!isMobile} appearance="subtle">
-                <Tabs.Tab eventKey="1" title={str('Calculation Summary')}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <p><strong><Trans>Make</Trans>:</strong> {calculationData.make || str('N/A')}</p>
-                            <p><strong><Trans>Model</Trans>:</strong> {calculationData.model || str('N/A')}</p>
-                            <p><strong><Trans>Year</Trans>:</strong> {calculationData.year || str('N/A')}</p>
-                            <p><strong><Trans>Car Class</Trans>:</strong> {calculationData.carClass || str('N/A')}</p>
-                            <p><strong><Trans>Body Type</Trans>:</strong> {calculationData.bodyType || str('N/A')}</p>
-                            <p><strong><Trans>Color</Trans>:</strong> {calculationData.color || str('N/A')}</p>
-                            <p><strong><Trans>Paint type</Trans>:</strong> {calculationData.paintType || str('N/A')}</p>
-                        </div>
-                        <div>
-                            <p><strong><Trans>License plate</Trans>:</strong> {calculationData.licensePlate || str('N/A')}</p>
-                            <p><strong><Trans>VIN</Trans>:</strong> {calculationData.VIN || str('N/A')}</p>
-                            <p><strong><Trans>Notes</Trans>:</strong> {calculationData.notes || str('N/A')}</p>
-                        </div>
-                    </div>
-                    <h5 className="text-lg font-semibold mt-6 mb-2"><Trans>Selected Body Parts</Trans></h5>
-                    {calculationData.selectedParts && calculationData.selectedParts.length > 0 ? (
-                        <ul className="list-disc list-inside">
-                            {calculationData.selectedParts.map((part, index) => (
-                                <li key={index}>{part}</li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p><Trans>No body parts selected.</Trans></p>
-                    )}
-                    {/* Add more details as needed */}
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title={str('Print')}>
-
-                </Tabs.Tab>
-            </Tabs>
-        </div>
-    );
-});
-
-// Print Preview Drawer Component
-const PrintPreviewDrawer = React.memo(({ show, onClose, calculationData }) => {
-    const { str } = useLocale();
-    const isMobile = useMediaQuery({ maxWidth: 767 });
-
-    return (
-        <Drawer
-            size={isMobile ? 'full' : 'lg'}
-            placement="top"
-            open={show}
-            onClose={onClose}
-            style={{ overflowY: 'auto' }} // Make drawer content scrollable
-        >
-            <Drawer.Header>
-                <Drawer.Title><Trans>Print Preview</Trans></Drawer.Title>
-                <Drawer.Actions>
-                    <Button onClick={onClose} appearance="subtle"></Button>
-                </Drawer.Actions>
-            </Drawer.Header>
-            <Drawer.Body>
-                <React.Suspense fallback={<Placeholder.Paragraph rows={10} />}>
-                    <PrintPreview calculationData={calculationData} />
-                </React.Suspense>
-            </Drawer.Body>
-        </Drawer>
-    );
-});
-
 
 // Top Panel Subcomponent
 const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueForm }) => {
@@ -345,7 +271,7 @@ registerTranslations('ua', {
     "Load Calculation": "Завантажити розрахунок",
     "Failed to load file list:": "Не вдалося завантажити список файлів:",
     "Error fetching file list:": "Помилка при отриманні списку файлів:",
-    "Print Preview": "Попередній перегляд друку",
+    "Print Preview": "Попередній перегляд друку", // This translation is still here for historical reasons or if it's used elsewhere for generic "preview"
     "Close": "Закрити",
     "Calculation Summary": "Підсумок розрахунку",
     "N/A": "Н/Д",
@@ -373,6 +299,27 @@ registerTranslations('ua', {
     "pickup": "Пікап",
     "coupe": "Купе",
     "wagon": "Універсал",
+    "liftback": "Ліфтбек",
+    "cabriolet": "Кабріолет",
+
+    // NEW TRANSLATIONS for Print and Document Generation
+    "Print and Document Generation": "Друк та генерація документів",
+    "Document Generation": "Генерація документів",
+    "Custom Template Content (HTML/Liquid)": "Власний вміст шаблону (HTML/Liquid)",
+    "Enter custom template content here (e.g., HTML with placeholders)": "Введіть власний вміст шаблону тут (наприклад, HTML з плейсхолдерами)",
+    "Order Number": "Номер замовлення",
+    "Enter order number": "Введіть номер замовлення",
+    "Order Notes": "Примітки до замовлення",
+    "Enter order notes": "Введіть примітки до замовлення",
+    "Generate Preview (HTML)": "Сформувати попередній перегляд (HTML)",
+    "Download PDF": "Завантажити PDF",
+    "HTML preview generated successfully!": "HTML попередній перегляд успішно згенеровано!",
+    "PDF downloaded successfully!": "PDF успішно завантажено!",
+    "Generate a preview to see it here.": "Сформуйте попередній перегляд, щоб побачити його тут.",
+    "Failed to generate preview:": "Не вдалося згенерувати попередній перегляд:",
+    "Error generating preview:": "Помилка при генерації попереднього перегляду:",
+    "Failed to download PDF:": "Не вдалося завантажити PDF:",
+    "Error downloading PDF:": "Помилка при завантаженні PDF:",
 });
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
@@ -533,7 +480,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                         placeholder={str("CLASS")}
                     />
                     <SelectPicker
-                        data={labels(CAR_BODY_TYPES_OPTIONS)}
+                        data={CAR_BODY_TYPES_OPTIONS.map(opt => ({ label: str(opt.label), value: opt.value }))} // Apply translation here
                         onSelect={setBodyType}
                         value={selectedBodyType}
                         placeholder={str("BODY TYPE")}
@@ -797,8 +744,8 @@ const CarPaintEstimator = () => {
                 onClose={() => setShowLoadDrawer(false)}
             />
 
-            {/* Print Preview Drawer */}
-            <PrintPreviewDrawer
+            {/* Print Calculation Drawer (newly integrated) */}
+            <PrintCalculationDrawer
                 show={showPrintDrawer}
                 onClose={() => setShowPrintDrawer(false)}
                 calculationData={currentCalculationData}

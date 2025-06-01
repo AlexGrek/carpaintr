@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paycheck - Auto Body Workshop</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background-color: #f4f4f4;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .paycheck-container {
+            width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #0056b3;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .details-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .details-section div {
+            flex: 1;
+            min-width: 250px;
+            margin-right: 20px;
+            margin-bottom: 15px;
+        }
+
+        .details-section div:last-child {
+            margin-right: 0;
+        }
+
+        .details-section p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .details-section strong {
+            color: #0056b3;
+            display: inline-block;
+            width: 120px; /* Align labels */
+        }
+
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .item-table th, .item-table td {
+            border: 1px solid #eee;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .item-table th {
+            background-color: #0056b3;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .item-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .item-table td:last-child,
+        .item-table th:last-child {
+            text-align: right;
+        }
+
+        .total-section {
+            text-align: right;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .total-section p {
+            margin: 5px 0;
+        }
+
+        .total-section strong {
+            color: #0056b3;
+            font-size: 22px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            color: #777;
+            font-size: 12px;
+        }
+
+        /* Print specific styles */
+        @media print {
+            body {
+                background-color: #fff;
+                -webkit-print-color-adjust: exact;
+            }
+            .paycheck-container {
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                padding: 0;
+            }
+            .header, .details-section, .item-table, .total-section, .footer {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="paycheck-container">
+        <div class="header">
+            <h1>Apex Auto Body & Paint</h1>
+            <p>123 Workshop Lane, Anytown, AB 12345</p>
+            <p>Phone: (555) 123-4567 | Email: info@apexautobody.com</p>
+        </div>
+
+        <div class="details-section">
+            <div>
+                <p><strong>Date:</strong> June 1, 2025</p>
+                <p><strong>Invoice No:</strong> INV-2025-06-001</p>
+            </div>
+            <div>
+                <p><strong>License Plate:</strong> AB123CD</p>
+                <p><strong>VIN Code:</strong> 1HGGM1234567890XY</p>
+            </div>
+            <div>
+                <p><strong>Car Model:</strong> 2020 Honda Civic</p>
+                <p><strong>Car Year:</strong> 2020</p>
+            </div>
+        </div>
+
+        <table class="item-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Front Bumper Painting</td>
+                    <td>1</td>
+                    <td>$350.00</td>
+                    <td>$350.00</td>
+                </tr>
+                <tr>
+                    <td>Right Fender Armature Repair</td>
+                    <td>1</td>
+                    <td>$200.00</td>
+                    <td>$200.00</td>
+                </tr>
+                <tr>
+                    <td>Headlight Alignment</td>
+                    <td>1</td>
+                    <td>$75.00</td>
+                    <td>$75.00</td>
+                </tr>
+                <tr>
+                    <td>Material Surcharge (Paint, Primer, etc.)</td>
+                    <td>1</td>
+                    <td>$120.00</td>
+                    <td>$120.00</td>
+                </tr>
+                <tr>
+                    <td>Diagnostic Fee</td>
+                    <td>1</td>
+                    <td>$50.00</td>
+                    <td>$50.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <p>Subtotal: $795.00</p>
+            <p>Tax (5%): $39.75</p>
+            <p><strong>Total Due: $834.75</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>Payment is due upon receipt. Please contact us if you have any questions.</p>
+        </div>
+    </div>
+</body>
+</html>
