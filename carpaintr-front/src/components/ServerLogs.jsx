@@ -4,7 +4,9 @@ import { authFetch } from '../utils/authFetch';
 import Trans from '../localization/Trans'; // Import Trans component
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
 import { formatDistanceToNowStrict, parseISO } from 'date-fns';
-import { utcToZonedTime, format } from 'date-fns-tz'; // Import for timezone handling
+
+// Remove the problematic import:
+// import { utcToZonedTime, format } from 'date-fns-tz';
 
 registerTranslations('ua', {
 });
@@ -48,26 +50,15 @@ const ServerLogs = () => {
 
                 let formattedTimeAgo = '';
                 try {
-                    // Parse the timestamp string explicitly as UTC
-                    // We append 'Z' to indicate UTC time for parseISO
+                    // Parse the timestamp string explicitly as UTC by adding 'Z'
                     const dateInUTC = parseISO(timestampStr + 'Z');
-                    
-                    // Get the current time in UTC for accurate comparison
-                    const nowInUTC = new Date(); // This will be local time
-                    const nowAsUTC = utcToZonedTime(nowInUTC, 'UTC'); // Convert local now to UTC for comparison
 
+                    // formatDistanceToNowStrict by default compares to new Date()
+                    // If dateInUTC is truly parsed as UTC, this comparison should be correct.
                     formattedTimeAgo = formatDistanceToNowStrict(dateInUTC, {
                         addSuffix: true,
-                        // Set the base date for comparison to now in UTC
-                        // This is crucial for accurate 'ago' calculation
                         unit: 'second', // Start from seconds for precision
                         roundingMethod: 'round', // Round to nearest unit
-                        // Set current date to now in UTC for accurate comparison
-                        // This is effectively comparing UTC time to UTC time
-                        locale: {
-                            // Custom locale for formatDistanceToNowStrict if needed
-                            // Otherwise, it uses the default browser locale
-                        }
                     });
 
                 } catch (e) {
