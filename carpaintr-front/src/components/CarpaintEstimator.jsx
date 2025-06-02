@@ -93,7 +93,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
             } else {
                 const errorData = await response.json();
                 toaster.push(
-                    <Message type="error" closable duration={5000}>
+                    <Message type="error" closable>
                         {`${str('Failed to load file list:')} ${errorData.message || response.statusText}`}
                     </Message>,
                     { placement: 'topEnd' }
@@ -105,7 +105,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
         } catch (error) {
             console.error("Error fetching file list:", error);
             toaster.push(
-                <Message type="error" closable duration={5000}>
+                <Message type="error" closable>
                     {`${str('Error fetching file list:')} ${error.message}`}
                 </Message>,
                 { placement: 'topEnd' }

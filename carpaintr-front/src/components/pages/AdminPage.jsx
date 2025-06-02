@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Breadcrumb, Message, Loader } from 'rsuite';
+import { Breadcrumb, Message, Loader, Text } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/authFetch';
 import AdminTools from '../AdminTools';
@@ -57,12 +57,13 @@ const AdminPage = () => {
         <>
           <div className='police-line'></div>
           <h3><code><Trans>Admin Page</Trans></code></h3>
+          <Text as="sub">{adminStatus}</Text>
           <Breadcrumb>
             <Breadcrumb.Item href="/"><Trans>Home</Trans></Breadcrumb.Item>
             <Breadcrumb.Item href="/dashboard"><Trans>Dashboard</Trans></Breadcrumb.Item>
             <Breadcrumb.Item active><Trans>Admin Page</Trans></Breadcrumb.Item>
           </Breadcrumb>
-          <AdminTools />
+          <AdminTools className='fade-in-simple'/>
         </>
       )}
     </div>
