@@ -11,6 +11,7 @@ const TopBarUser = () => {
 
   // Use useCallback to memoize handleSelect, preventing unnecessary re-renders of Dropdown.Item components.
   const handleSelect = useCallback((eventKey) => {
+    console.log(eventKey);
     switch (eventKey) {
       case 'logout':
         // No need for console.log in production code unless debugging
@@ -40,10 +41,11 @@ const TopBarUser = () => {
         <span className='topbar-header-brand'>autolab</span>
       </Navbar.Brand>
       <Nav pullRight>
-        <Dropdown title="Меню" icon={<OffRoundIcon />} placement="bottomEnd" onSelect={handleSelect}>
-          <Dropdown.Item eventKey="logout">Вийти</Dropdown.Item>
-          <Dropdown.Item eventKey="manage">Налаштування</Dropdown.Item>
-          <Dropdown.Item eventKey="report">Надіслати відгук</Dropdown.Item>
+        <Dropdown title="Меню" icon={<OffRoundIcon />} placement="bottomEnd" trigger={['click', 'hover']}>
+          <Dropdown.Item eventKey="logout" onSelect={handleSelect}>Вийти</Dropdown.Item>
+          <Dropdown.Item eventKey="manage" onSelect={handleSelect}>Налаштування</Dropdown.Item>
+          <Dropdown.Separator/>
+          <Dropdown.Item eventKey="report" onSelect={handleSelect}>Надіслати відгук</Dropdown.Item>
         </Dropdown>
       </Nav>
     </Navbar>

@@ -50,14 +50,14 @@ const AdminTools = () => {
               collapsible
               key={section.eventKey}
             >
-              <Container>
-                {activeKey === section.eventKey && section.component}
+                            <Container>
+                {section.component}
               </Container>
             </Panel>
           ))}
         </PanelGroup>
       ) : (
-        <Tabs className='fade-in-simple' activeKey={activeKey} onSelect={setActiveKey} appearance='pills'>
+        <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance='pills'>
           {sections.map(section => (
             <Tabs.Tab
               eventKey={section.eventKey}
