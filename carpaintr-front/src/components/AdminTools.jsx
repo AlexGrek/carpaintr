@@ -50,7 +50,7 @@ const AdminTools = () => {
               collapsible
               key={section.eventKey}
             >
-                            <Container>
+              <Container>
                 {section.component}
               </Container>
             </Panel>
