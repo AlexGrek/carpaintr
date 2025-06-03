@@ -42,7 +42,7 @@ const AdminTools = () => {
   return (
     <div style={{ marginTop: '20px', width: "100%" }}>
       {isMobile ? (
-        <PanelGroup accordion bordered activeKey={activeKey} onSelect={setActiveKey}>
+        <PanelGroup bordered activeKey={activeKey} onSelect={setActiveKey}>
           {sections.map(section => (
             <Panel
               header={section.title}
