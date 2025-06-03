@@ -3,10 +3,7 @@ import { Loader, Message, Panel, useToaster, Button, Whisper, Tooltip } from 'rs
 import { authFetch } from '../utils/authFetch';
 import Trans from '../localization/Trans'; // Import Trans component
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
-import { formatDistanceToNowStrict, parseISO } from 'date-fns';
-
-// Remove the problematic import:
-// import { utcToZonedTime, format } from 'date-fns-tz';
+import { formatDistanceToNowStrict, parseISO, format, intervalToDuration } from 'date-fns'; // Import intervalToDuration
 
 registerTranslations('ua', {
 });
@@ -36,7 +33,7 @@ const ServerLogs = () => {
         };
 
         fetchData();
-    }, [str, lines, toaster]); // Add str to dependency array
+    }, [str, lines, toaster]);
 
     const parseAndStyleLogLine = (line) => {
         const timestampRegex = /(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC\])/;
@@ -45,21 +42,27 @@ const ServerLogs = () => {
         const parts = line.split(timestampRegex);
         return parts.map((part, index) => {
             if (timestampRegex.test(part)) {
-                // Extract the timestamp string, remove brackets and ' UTC'
                 const timestampStr = part.substring(1, part.length - 1).replace(' UTC', '');
 
                 let formattedTimeAgo = '';
                 try {
-                    // Parse the timestamp string explicitly as UTC by adding 'Z'
                     const dateInUTC = parseISO(timestampStr + 'Z');
+                    const now = new Date();
+                    const duration = intervalToDuration({ start: dateInUTC, end: now });
 
-                    // formatDistanceToNowStrict by default compares to new Date()
-                    // If dateInUTC is truly parsed as UTC, this comparison should be correct.
-                    formattedTimeAgo = formatDistanceToNowStrict(dateInUTC, {
-                        addSuffix: true,
-                        unit: 'second', // Start from seconds for precision
-                        roundingMethod: 'round', // Round to nearest unit
-                    });
+                    if (duration.years > 0) {
+                        formattedTimeAgo = `${duration.years}y ago`;
+                    } else if (duration.months > 0) {
+                        formattedTimeAgo = `${duration.months}m ago`;
+                    } else if (duration.days > 0) {
+                        formattedTimeAgo = `${duration.days}d ${duration.hours}h ago`;
+                    } else if (duration.hours > 0) {
+                        formattedTimeAgo = `${duration.hours}h ago`;
+                    } else if (duration.minutes > 0) {
+                        formattedTimeAgo = `${duration.minutes}m ago`;
+                    } else {
+                        formattedTimeAgo = `${duration.seconds}s ago`;
+                    }
 
                 } catch (e) {
                     formattedTimeAgo = 'Invalid Date';
