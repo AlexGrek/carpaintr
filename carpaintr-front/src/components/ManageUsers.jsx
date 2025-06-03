@@ -172,7 +172,7 @@ const ManageUsers = () => {
 
   return (
     <div>
-      <Drawer open={licenseEditorOpen} onClose={handleLicenseEditorClose}>
+      <Drawer open={licenseEditorOpen} onClose={handleLicenseEditorClose} size={"full"}>
         <Drawer.Header>
           {editingUser}
         </Drawer.Header>
