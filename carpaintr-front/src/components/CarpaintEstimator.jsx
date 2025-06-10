@@ -538,9 +538,10 @@ const CarPaintEstimator = () => {
     };
 
     const handleSetYear = useCallback((yearVal) => {
-        setYear(parseInt(yearVal));
-        setActivePanel(2);
-    }, []);
+        setYear(yearVal);
+        if (bodyType != null)
+            setActivePanel(2);
+    }, [bodyType]);
 
     const paintTypesAndTranslations = {
         "simple": str("No inclusions"),
@@ -599,7 +600,7 @@ const CarPaintEstimator = () => {
     const handleSave = useCallback(async () => {
         const dataToSave = {
             model: (make && model) ? { brand: make, model: model } : null,
-            year: year ? String(year) : "",
+            year: year,
             body_type: bodyType || "",
             car_class: carClass || "",
             color: color || "",
@@ -644,7 +645,7 @@ const CarPaintEstimator = () => {
                 if (data) {
                     setMake(data.model?.brand || null);
                     setModel(data.model?.model || null);
-                    setYear(data.year ? parseInt(data.year, 10) : null);
+                    setYear(data.year || null);
                     setBodyType(data.body_type || null);
                     setCarClass(data.car_class || null);
                     setColor(data.color || null);
