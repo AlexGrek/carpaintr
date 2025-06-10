@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { RadioGroup, Radio, Button, ButtonGroup, Divider, Whisper, Tooltip } from 'rsuite';
 import "./GridDraw.css";
 
@@ -7,14 +7,21 @@ const ColorBlock = ({color}) => {
 }
 
 const GridDraw = ({
-  gridData,
+  gridData: initialGridData, // Rename to initialGridData
   onGridChange,
   visual,
-  // cellSize is no longer directly used for pixel dimensions, but can be kept for other purposes if needed
 }) => {
   const [currentMode, setCurrentMode] = useState(0); // Mode: 0=Clear, 1=Light, 2=Medium, 3=Severe
   const [isDrawing, setIsDrawing] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 400);
+  const [internalGridData, setInternalGridData] = useState(initialGridData); // Internal state for grid data
+  const [isDebouncing, setIsDebouncing] = useState(false); // State to indicate debouncing
+  const debounceTimeoutRef = useRef(null);
+
+  // Update internal grid data when initialGridData prop changes (e.g., parent resets the grid)
+  useEffect(() => {
+    setInternalGridData(initialGridData);
+  }, [initialGridData]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -27,42 +34,69 @@ const GridDraw = ({
     };
   }, []);
 
-  const handleMouseDown = (x, y) => {
+  // Debounced update to the outer state
+  const debouncedOnGridChange = useCallback((newGrid) => {
+    setIsDebouncing(true);
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      let marked = [];
+      newGrid.forEach((slice, y) => 
+        slice.forEach((value, x) => 
+          value > 1 && marked.push(`"${x},${y}"`)));
+      let data = marked.join(",");
+      console.log(`Updating outer state with new grid data: ${data}`);
+      onGridChange(newGrid);
+      setIsDebouncing(false);
+    }, 1000); // 1 second debounce
+  }, [onGridChange]);
+
+  const updateCellState = useCallback((x, y) => {
+    setInternalGridData(prevGridData => {
+      const newGridData = [...prevGridData];
+      if (newGridData[y][x] >= 0) {
+        newGridData[y][x] = currentMode;
+        debouncedOnGridChange(newGridData); // Trigger debounced update
+      }
+      return newGridData;
+    });
+  }, [currentMode, debouncedOnGridChange]);
+
+  const handleMouseDown = useCallback((x, y) => {
     setIsDrawing(true);
-    if (gridData[y][x] >= 0) {
-      updateCellState(x, y);
-    }
-  };
+    updateCellState(x, y);
+  }, [updateCellState]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDrawing(false);
-  };
+  }, []);
 
-  const handleMouseMove = (x, y) => {
-    if (isDrawing && gridData[y][x] >= 0) {
+  const handleMouseMove = useCallback((x, y) => {
+    if (isDrawing) {
       updateCellState(x, y);
     }
-  };
+  }, [isDrawing, updateCellState]);
 
-  const updateCellState = (x, y) => {
-    const newGridData = [...gridData];
-    newGridData[y][x] = currentMode;
-    onGridChange(newGridData);
-  };
+  const fillAll = useCallback(() => {
+    setInternalGridData(prevGridData => {
+      const newGridData = prevGridData.map((row) =>
+        row.map((cell) => (cell >= 0 ? currentMode : cell))
+      );
+      debouncedOnGridChange(newGridData);
+      return newGridData;
+    });
+  }, [currentMode, debouncedOnGridChange]);
 
-  const fillAll = () => {
-    const newGridData = gridData.map((row) =>
-      row.map((cell) => (cell >= 0 ? currentMode : cell))
-    );
-    onGridChange(newGridData);
-  };
-
-  const clearAll = () => {
-    const newGridData = gridData.map((row) =>
-      row.map((cell) => (cell >= 0 ? 0 : cell))
-    );
-    onGridChange(newGridData);
-  };
+  const clearAll = useCallback(() => {
+    setInternalGridData(prevGridData => {
+      const newGridData = prevGridData.map((row) =>
+        row.map((cell) => (cell >= 0 ? 0 : cell))
+      );
+      debouncedOnGridChange(newGridData);
+      return newGridData;
+    });
+  }, [debouncedOnGridChange]);
 
   // Determine the class for mirroring the background
   const gridClasses = `grid ${visual.mirrored ? 'mirrored' : ''}`;
@@ -71,8 +105,10 @@ const GridDraw = ({
   const gridStyle = {
     '--grid-background-image': `url(${visual.image})`,
     // Use 1fr for flexible sizing, CSS will handle the aspect ratio
-    gridTemplateColumns: `repeat(${gridData[0].length}, 1fr)`,
-    gridTemplateRows: `repeat(${gridData.length}, 1fr)`,
+    gridTemplateColumns: `repeat(${internalGridData[0].length}, 1fr)`,
+    gridTemplateRows: `repeat(${internalGridData.length}, 1fr)`,
+    outline: isDebouncing ? "3px solid orange" : "3px solid transparent",
+    transition: "outline 0.3s ease-in-out",
   };
 
   return (
@@ -112,7 +148,7 @@ const GridDraw = ({
         style={gridStyle} // Apply CSS variables and grid template
         onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves the grid
       >
-        {gridData.map((row, y) =>
+        {internalGridData.map((row, y) =>
           row.map((cell, x) => (
             <div
               key={`${x}-${y}`}

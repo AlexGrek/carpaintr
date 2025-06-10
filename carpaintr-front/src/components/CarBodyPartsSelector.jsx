@@ -38,14 +38,20 @@ const actions = {
 const carPartsNameToPartsVisualMapping = {
     "Крыло переднее правое": "front_wing_right",
     "Крыло переднее левое": "front_wing_left",
-}
+    "Дверь левая": "door_left",
+    "Дверь правая": "door_right",
+    "Дверь  пердняя левая": "front_door_left",
+    "Дверь  пердняя правая": "front_door_right",
+    "Бампер задний": "rear_bumper",
+    "Бампер передний": "front_bumper"
+};
 
 const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVisual }) => {
     const isMobile = useMediaQuery({ maxWidth: 767 });
 
     const mapVisual = useCallback((partName) => {
-        // console.log(partName);
-        // console.log(partsVisual);
+        console.log(partName);
+        console.log(partsVisual);
         let entry = carPartsNameToPartsVisualMapping[partName];
         // console.log(entry);
         if (entry && partsVisual[entry]) {
@@ -132,7 +138,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         for (let y = 0; y < rows; y++) {
             const row = [];
             for (let x = 0; x < cols; x++) {
-                row.push(Math.random() < 0.1 ? -1 : 0); // TODO: use unused field
+                row.push(visual.unused.includes(`${x},${y}`) ? -1 : 0);
             }
             grid.push(row);
         }
