@@ -246,6 +246,7 @@ registerTranslations('ua', {
     "Report a problem": "Повідомити про проблему",
     "Car": "Автомобіль",
     "Color and paint type": "Колір та тип фарби",
+    "Select paint type": "Оберіть тип фарби",
     "Accept": "Прийняти",
     "Works": "Роботи",
     "Additional": "Додатково",
@@ -400,7 +401,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
 });
 
 // Memoized VehicleSelect to prevent unnecessary re-renders
-const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear, carclass, setCarClass }) => {
+const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear, carclass, setCarClass, isFromLoading }) => {
     const [makes, setMakes] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
@@ -432,13 +433,16 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
 
     useEffect(() => {
         setBodyTypes([]);
-        setModel(null);
+        if (!isFromLoading) {
+            setModel(null);
+            setBodyType(null);
+        }
+        
         setModels({});
-        setBodyType(null);
+        
         if (selectedMake === null) {
             return;
         }
-        setModel(null); // Reset model selection on make change
         authFetch(`/api/v1/user/carmodels/${selectedMake}`)
             .then(response => response.json())
             .then(setModels)
@@ -715,6 +719,7 @@ const CarPaintEstimator = () => {
                             setBodyType={handleSetBodyType}
                             setModel={handleSetModel}
                             setYear={handleSetYear}
+                            isFromLoading={storeFileName != null}
                         />
                         <Divider><Trans>Additional info</Trans></Divider>
                         <Input value={licensePlate} onChange={handleSetLicensePlate} placeholder={str('License plate (optional)')}></Input>
