@@ -103,7 +103,7 @@ const GridDraw = ({
 
   // Set CSS variables for background image and grid dimensions
   const gridStyle = {
-    '--grid-background-image': `url(${visual.image})`,
+    '--grid-background-image': `url(/${visual.image})`,
     // Use 1fr for flexible sizing, CSS will handle the aspect ratio
     gridTemplateColumns: `repeat(${internalGridData[0].length}, 1fr)`,
     gridTemplateRows: `repeat(${internalGridData.length}, 1fr)`,
