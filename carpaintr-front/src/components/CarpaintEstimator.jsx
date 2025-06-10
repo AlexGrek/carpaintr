@@ -493,7 +493,10 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
             </Tabs>
             <SelectPicker
                 disabled={!(selectedModel !== null || (carclass !== null && selectedBodyType !== null))}
-                data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
+                data={[...Array(30)].map((_, i) => {
+                    let y = `${2024 - i}`;
+                    return { label: y, value: y };
+                })}
                 onSelect={setYear}
                 value={year}
                 placeholder={str("Year of manufacture")}
