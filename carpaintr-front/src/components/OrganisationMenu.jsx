@@ -63,6 +63,10 @@ const OrganisationMenu = () => {
         {company &&
             <Input value={company.company_name} onChange={(value) => setCompany({ ...company, company_name: value })}></Input>
         }
+        <Text><Trans>Company address</Trans></Text>
+        {company &&
+            <Input value={company.company_addr} onChange={(value) => setCompany({ ...company, company_addr: value })}></Input>
+        }
         <Divider></Divider>
         <Button appearance='primary' onClick={handleSave} disabled={company == null}><Trans>Save changes</Trans></Button>
     </div>
