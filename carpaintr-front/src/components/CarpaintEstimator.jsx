@@ -192,7 +192,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
 
 
 // Top Panel Subcomponent
-const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueForm }) => {
+const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueForm, saveEnabled }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 }); // Define breakpoint for mobile
 
@@ -208,7 +208,7 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
                 <IconButton icon={<PlusRoundIcon />} appearance="primary" onClick={onNew} className="rounded-md">
                     {!isMobile && <Trans>New</Trans>}
                 </IconButton>
-                <IconButton icon={<SaveIcon />} onClick={onSave} className="rounded-md">
+                <IconButton icon={<SaveIcon />} onClick={onSave} className="rounded-md" disabled={!saveEnabled}>
                     {!isMobile && <Trans>Save</Trans>}
                 </IconButton>
                 <IconButton icon={<FileDownloadIcon />} onClick={onLoad} className="rounded-md">
@@ -706,6 +706,7 @@ const CarPaintEstimator = () => {
         <div className="flex flex-col h-full"> {/* Use flexbox for layout */}
             <TopPanel
                 onNew={handleNew}
+                saveEnabled={bodyType != null && year != null && carClass != null}
                 onSave={handleSave}
                 onLoad={() => setShowLoadDrawer(true)} // Open load drawer
                 onPrint={handlePrint}
