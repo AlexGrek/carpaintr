@@ -401,7 +401,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
 });
 
 // Memoized VehicleSelect to prevent unnecessary re-renders
-const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, setMake, setModel, setYear, carclass, setCarClass, isFromLoading }) => {
+const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, year, setMake, setModel, setYear, carclass, setCarClass, isFromLoading }) => {
     const [makes, setMakes] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
@@ -495,7 +495,9 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                 disabled={!(selectedModel !== null || (carclass !== null && selectedBodyType !== null))}
                 data={[...Array(30)].map((_, i) => ({ label: `${2024 - i}`, value: 2024 - i }))}
                 onSelect={setYear}
+                value={year}
                 placeholder={str("Year of manufacture")}
+                searchable={false}
             />
         </div>
     );
@@ -536,7 +538,7 @@ const CarPaintEstimator = () => {
     };
 
     const handleSetYear = useCallback((yearVal) => {
-        setYear(yearVal);
+        setYear(parseInt(yearVal));
         setActivePanel(2);
     }, []);
 
@@ -719,6 +721,7 @@ const CarPaintEstimator = () => {
                             setBodyType={handleSetBodyType}
                             setModel={handleSetModel}
                             setYear={handleSetYear}
+                            year={year}
                             isFromLoading={storeFileName != null}
                         />
                         <Divider><Trans>Additional info</Trans></Divider>
