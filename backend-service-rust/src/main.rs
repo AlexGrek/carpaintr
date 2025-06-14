@@ -51,15 +51,14 @@ async fn main() -> tokio::io::Result<()> {
     let admin_file_path = env::var("ADMIN_FILE_PATH").unwrap_or_else(|_| "admins.txt".to_string());
     let log_file_path = env::var("LOG_FILE_PATH").unwrap_or_else(|_| "application.log".to_string());
     let data_dir_path = env::var("DATA_DIR_PATH").unwrap_or_else(|_| "data".to_string());
-    let pdf_gen_api_url_post = env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "localhost:5000/generate".to_string());
+    let pdf_gen_api_url_post =
+        env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "localhost:5000/generate".to_string());
     let license_cache_size: u64 = env::var("LICENSE_CACHE_SIZE")
         .unwrap_or_else(|_| "100".to_string())
         .parse()
         .expect("LICENSE_CACHE_SIZE must be a number");
 
-    let config = LoggerConfig {
-        log_file_path,
-    };
+    let config = LoggerConfig { log_file_path };
     configure_log_event(config).await.unwrap();
 
     std::fs::create_dir_all(&data_dir_path)?;
@@ -121,6 +120,22 @@ async fn main() -> tokio::io::Result<()> {
                     "/license/{user_email}/{license_filename}",
                     get(get_user_license_handler),
                 )
+                .nest(
+                    "/editor",
+                    Router::new().route(
+                        "/list_files",
+                        get(api::v1::admin_editor_endpoints::get_file_list),
+                    ).route(
+                        "/upload_file/{path}",
+                        post(api::v1::admin_editor_endpoints::upload_file)
+                    ).route(
+                        "/read_file/{path}",
+                        get(api::v1::admin_editor_endpoints::read_file)
+                    ).route(
+                        "/delete_file/{path}",
+                        delete(api::v1::admin_editor_endpoints::delete_file)
+                    ),
+                )
                 .layer(from_fn_with_state(
                     shared_state.clone(),
                     admin_check_middleware,
@@ -129,7 +144,10 @@ async fn main() -> tokio::io::Result<()> {
         .route("/license_upload", post(api::v1::user::upload_license))
         .route("/getactivelicense", get(api::v1::user::get_active_license))
         .route("/getcompanyinfo", get(api::v1::user::get_company_info))
-        .route("/updatecompanyinfo", post(api::v1::user::update_company_info))
+        .route(
+            "/updatecompanyinfo",
+            post(api::v1::user::update_company_info),
+        )
         .nest(
             "/user",
             Router::new()
@@ -156,7 +174,8 @@ async fn main() -> tokio::io::Result<()> {
                 )
                 .route(
                     "/carmakes",
-                    get(api::v1::calc::data_endpoints::list_car_makes))
+                    get(api::v1::calc::data_endpoints::list_car_makes),
+                )
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))
                 .route(
                     "/global/{path}",
@@ -241,7 +260,6 @@ async fn main() -> tokio::io::Result<()> {
     log::info!("Starting server at http://0.0.0.0:8080");
     log_event(LogLevel::Info, "Application started", None::<&str>);
     axum::serve(listener, app).await?;
-    
 
     Ok(())
 }

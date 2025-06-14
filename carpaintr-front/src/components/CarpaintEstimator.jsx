@@ -218,7 +218,7 @@ const TopPanel = React.memo(({ onNew, onSave, onLoad, onPrint, showReportIssueFo
                     {!isMobile && <Trans>Print</Trans>}
                 </IconButton>
                 {!isMobile && ( // Show report button only on desktop for now to save space
-                    <IconButton icon={<RemindOutlineIcon/>} appearance="link" color="red" size="xs" onClick={showReportIssueForm} className="rounded-md">
+                    <IconButton icon={<RemindOutlineIcon />} appearance="link" color="red" size="xs" onClick={showReportIssueForm} className="rounded-md">
                         <Trans>Report a problem</Trans>
                     </IconButton>
                 )}
@@ -437,9 +437,9 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
             setModel(null);
             setBodyType(null);
         }
-        
+
         setModels({});
-        
+
         if (selectedMake === null) {
             return;
         }

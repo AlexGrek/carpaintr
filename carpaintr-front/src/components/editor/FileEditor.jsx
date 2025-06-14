@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Container, Sidebar, Sidenav, Content, Button, Modal, Notification, toaster, Input, Row, Col } from 'rsuite';
+import { Container, Sidebar, Sidenav, Panel, Button, Modal, Notification, toaster, Input, Row, Col, TreePicker } from 'rsuite';
 import { Tree, Tabs } from 'rsuite';
 import yaml from 'js-yaml';
 import { authFetch } from '../../utils/authFetch';
 import TableEditorChatGPT from './TableEditorChatGPT';
 import { useMediaQuery } from 'react-responsive';
 import DrawerYamlEditor from './DrawerYamlEditor';
+import DirectoryViewTable from './DirectoryViewTable';
 
 const treeFromDirectoryStructure = (path, data) => {
   if (data === null) {
@@ -32,13 +33,13 @@ const treeFromDirectoryStructure = (path, data) => {
   });
 };
 
-const DirectoryTree = ({ onFileSelect, isCommon }) => {
+const DirectoryTree = ({ onFileSelect, onDirectorySelect, isCommon, listCommonEndpoint, listUserEndpoint }) => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const endpoint = isCommon ? '/api/v1/editor/list_common_files' : '/api/v1/editor/list_user_files';
+        const endpoint = isCommon ? `/api/v1/${listCommonEndpoint}` : `/api/v1/${listUserEndpoint}`;
         const res = await authFetch(endpoint);
         const raw = await res.json();
         setData(treeFromDirectoryStructure('', raw.Directory.children));
@@ -48,20 +49,24 @@ const DirectoryTree = ({ onFileSelect, isCommon }) => {
     };
 
     fetchFiles();
-  }, [isCommon]);
+  }, [isCommon, listUserEndpoint, listCommonEndpoint]);
 
   return (
-    <Tree
+    <TreePicker
       data={data}
       searchable
       onSelect={(node) => {
-        if (node.isFile) onFileSelect(node.value, isCommon);
+        if (node.isFile)
+          onFileSelect(node.value, isCommon);
+        else {
+          onDirectorySelect(node.value, node.children, isCommon);
+        }
       }}
     />
   );
 };
 
-const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSuccess, onDeleteSuccess }) => {
+const FileContentEditor = ({ uploadEndpoint, filePath, initialContent, isCommonFile, onSaveSuccess, onDeleteSuccess, deleteEndpoint }) => {
   const [fileContent, setFileContent] = useState(initialContent);
   const [originalContent, setOriginalContent] = useState(initialContent);
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
@@ -92,7 +97,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
     const formData = new FormData();
     formData.append('file', new Blob([fileContent]), filePath);
     try {
-      const response = await authFetch(`/api/v1/editor/upload_user_file/${encodeURIComponent(filePath)}`, {
+      const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
         method: 'POST',
         body: formData
       });
@@ -124,7 +129,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
       return;
     }
     try {
-      const response = await authFetch(`/api/v1/editor/delete_user_file/${encodeURIComponent(filePath)}`, {
+      const response = await authFetch(`/api/v1/${deleteEndpoint}/${encodeURIComponent(filePath)}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
@@ -147,7 +152,7 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
         value={fileContent}
         as="textarea"
         rows={20}
-        style={{ fontFamily: "Consolas, monospace", flexGrow: 1 }} // Allow textarea to grow
+        style={{ fontFamily: "Consolas, monospace", fontSize: "smaller", flexGrow: 1 }} // Allow textarea to grow
         onChange={setFileContent}
         disabled={!filePath} // Disable if no file is selected
       />
@@ -192,15 +197,16 @@ const FileContentEditor = ({ filePath, initialContent, isCommonFile, onSaveSucce
             fileName={filePath}
             csvData={fileContent}
           />
-          <DrawerYamlEditor yamlString={fileContent} onClose={(value) => {setYamlEditorOpen(false); setFileContent(value)}} open={yamlEditorOpen}/>
+          <DrawerYamlEditor yamlString={fileContent} onClose={(value) => { setYamlEditorOpen(false); setFileContent(value) }} open={yamlEditorOpen} />
         </Col>
       </Row>
     </>
   );
 };
 
-const FileEditor = () => {
+const FileEditor = ({ readCommonEndpoint, readUserEndpoint, uploadEndpoint, userCommonSwitch, listUserEndpoint, listCommonEndpoint, deleteEndpoint }) => {
   const [filePath, setFilePath] = useState(null);
+  const [showDirectory, setShowDirectory] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -214,7 +220,8 @@ const FileEditor = () => {
   const toggleSidebar = () => setSidebarVisible(!sidebarVisible);
 
   const loadFile = useCallback(async (path, isCommon) => {
-    const apiEndpoint = isCommon ? "editor/read_common_file" : "editor/read_user_file";
+    setShowDirectory(null);
+    const apiEndpoint = isCommon ? readCommonEndpoint : readUserEndpoint;
     try {
       const res = await authFetch(`/api/v1/${apiEndpoint}/${encodeURIComponent(path)}`);
       const data = await res.text();
@@ -226,7 +233,7 @@ const FileEditor = () => {
     } catch (error) {
       toaster.push(<Notification type="error" header="Load Error">Failed to load file: {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [isMobile]);
+  }, [isMobile, setShowDirectory, readCommonEndpoint, readUserEndpoint]);
 
   const handleFileChange = useCallback((path, isCommon) => {
     if (fileContent !== originalContent) {
@@ -237,6 +244,18 @@ const FileEditor = () => {
       loadFile(path, isCommon);
     }
   }, [fileContent, originalContent, loadFile]);
+
+  const handleDirectoryView = useCallback((path, children, isCommon) => {
+    console.log(children);
+    if (fileContent !== originalContent) {
+      setPendingPath(path);
+      setPendingCommon(isCommon);
+      setShowConfirm(true);
+      setShowDirectory(children);
+    } else {
+      setShowDirectory(children);
+    }
+  }, [fileContent, originalContent, setShowDirectory]);
 
   const confirmSwitch = useCallback(() => {
     setShowConfirm(false);
@@ -277,33 +296,17 @@ const FileEditor = () => {
           </Button>
         </div>
       )}
-      <div style={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+      <div style={{  }}>
         {/* Sidebar */}
-        <div
-          style={{
-            width: 250,
-            maxWidth: '80%',
-            position: isMobile ? 'fixed' : 'relative',
-            zIndex: isMobile ? 999 : 'auto',
-            height: '100%',
-            background: '#fff',
-            boxShadow: isMobile ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
-            transform: sidebarVisible || !isMobile ? 'translateX(0)' : 'translateX(-100%)',
-            transition: 'transform 0.3s ease-in-out',
-          }}
-        >
-          <Sidenav defaultOpenKeys={[]}>
-            <Sidenav.Body>
-              <Tabs defaultActiveKey="1" appearance="subtle">
+        <div>
+              <Tabs defaultActiveKey="1" appearance="pills">
                 <Tabs.Tab eventKey="1" title="User files">
-                  <DirectoryTree onFileSelect={handleFileChange} isCommon={false} />
+                  <DirectoryTree onFileSelect={handleFileChange} onDirectorySelect={handleDirectoryView} isCommon={false} listUserEndpoint={listUserEndpoint} />
                 </Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Common files">
-                  <DirectoryTree onFileSelect={handleFileChange} isCommon={true} />
-                </Tabs.Tab>
+                {userCommonSwitch && <Tabs.Tab eventKey="2" title="Common files">
+                  <DirectoryTree onFileSelect={handleFileChange} onDirectorySelect={handleDirectoryView} isCommon={true} listCommonEndpoint={listCommonEndpoint} />
+                </Tabs.Tab>}
               </Tabs>
-            </Sidenav.Body>
-          </Sidenav>
         </div>
 
         {/* Overlay */}
@@ -323,19 +326,19 @@ const FileEditor = () => {
         )}
 
         {/* Editor Content */}
+        {showDirectory && <DirectoryViewTable onDirectoryClick={(value) => handleDirectoryView(value.value, value.children, isCommonFileSelected)} onFileClick={(value) => handleFileChange(value, isCommonFileSelected)} value={showDirectory} />}
         <div style={{ flexGrow: 1, padding: isMobile ? 20 : 10, overflowY: 'auto' }}>
-          {filePath ? (
+          {!showDirectory && filePath ? (
             <FileContentEditor
+              uploadEndpoint={uploadEndpoint}
               filePath={filePath}
               initialContent={fileContent}
               isCommonFile={isCommonFileSelected}
               onSaveSuccess={handleSaveSuccess}
               onDeleteSuccess={handleDeleteSuccess}
+              deleteEndpoint={deleteEndpoint}
             />
-          ) : (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              Select a file to edit
-            </div>
+          ) : (null
           )}
         </div>
       </div>
