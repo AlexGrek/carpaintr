@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useLocale, registerTranslations } from '../localization/LocaleContext';
-import { getCompanyInfo, fetchCompanyInfo, authFetch } from '../utils/authFetch';
-import { Button, Divider, Input, Text } from 'rsuite';
+import { fetchCompanyInfo, authFetch } from '../utils/authFetch';
+import { Button, Divider, Input, Text, Message } from 'rsuite';
 import Trans from '../localization/Trans';
 
 registerTranslations("ua",
     {
         "Company name": "Назва компанії",
+        "Company address": "Адреса компанії",
         "Save changes": "Зберегти зміни"
     }
 );
@@ -59,6 +60,7 @@ const OrganisationMenu = () => {
     }, [str, setLang])
 
     return <div>
+        {message && <Message type={message.type} header={message.title}>{message.message}</Message>}
         <Text><Trans>Company name</Trans></Text>
         {company &&
             <Input value={company.company_name} onChange={(value) => setCompany({ ...company, company_name: value })}></Input>

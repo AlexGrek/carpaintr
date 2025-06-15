@@ -10,14 +10,14 @@ import './UsersDashboard.css'
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
-    "Price estimation calculator.": "Калькулятор оцінки вартості.",
+    "Price estimation calculator": "Калькулятор оцінки вартості",
     "Task Tracking": "Відстеження завдань",
     "Under construction": "У розробці",
     "AI Analytics": "Аналітика ШІ",
-    "Customization": "Налаштування",
-    "Your business, your rules.": "Ваш бізнес, ваші правила.",
+    "Customization": "Персоналізація",
+    "Customize everything": "Глибокі налаштування",
     "Your organization": "Ваша організація",
-    "Manage access and licensing.": "Керування доступом та ліцензуванням.",
+    "Manage access and licensing": "Керування доступом та ліцензуванням",
     "Available apps": "Доступні програми",
     "Your company": "Ваша компанiя"
 });
@@ -78,7 +78,7 @@ const DashboardNavigationButtons = () => {
         {
             icon: "🧮",
             title: str("Calculation"),
-            description: str("Price estimation calculator."),
+            description: str("Price estimation calculator"),
             link: "/calc"
         },
         {
@@ -96,13 +96,13 @@ const DashboardNavigationButtons = () => {
         {
             icon: "🛅",
             title: str("Customization"),
-            description: str("Your business, your rules."),
+            description: str("Customize everything"),
             link: "/fileeditor"
         },
         {
             icon: "🪙",
             title: str("Your organization"),
-            description: str("Manage access and licensing."),
+            description: str("Manage access and licensing"),
             link: "/cabinet"
         },
     ];
