@@ -1,6 +1,6 @@
 // FilesystemBrowser.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Button, Input, IconButton, InputGroup } from 'rsuite';
+import { useState, useEffect, useCallback } from 'react';
+import { SelectPicker, Input, IconButton, InputGroup } from 'rsuite';
 import {
     RefreshCw,
     Plus,
@@ -10,7 +10,7 @@ import {
 import styled, { keyframes, css } from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import DirectoryViewTable from './DirectoryViewTable';
-import FileEditor from './FileEditor'; // Ensure this import is correct
+import FileEditor from './FileEditor';
 
 const slideInRight = keyframes`
   from {

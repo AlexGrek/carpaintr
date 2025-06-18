@@ -14,7 +14,7 @@ import CreateUser from './CreateUser';
 import ManageUsers from './ManageUsers';
 import ServerLogs from './ServerLogs';
 import AdminPanelRequests from './admreq/AdminPanelRequests';
-import FileEditor from './editor/FileEditor';
+import FilesystemBrowser from './editor/FilesystemBrowser';
 
 // Custom Nav.Item component to handle active state with React Router
 const NavLink = ({ children, to, ...props }) => {
@@ -39,6 +39,16 @@ const DropdownNavLink = ({ children, to, ...props }) => {
     </Dropdown.Item>
   );
 };
+
+const adminFilesystemConfig = [
+    {
+      name: "root", // A name for your single filesystem
+      listEndpoint: "admin/editor/list_files",
+      readEndpoint: "admin/editor/read_file",
+      uploadEndpoint: "admin/editor/upload_file",
+      deleteEndpoint: "admin/editor/delete_file"
+    }
+  ];
 
 
 const AdminTools = () => {
@@ -73,7 +83,7 @@ const AdminTools = () => {
     {
       path: 'files',
       title: 'Файли',
-      component: <FileEditor userCommonSwitch={false} readUserEndpoint="admin/editor/read_file" uploadEndpoint="admin/editor/upload_file" deleteEndpoint="admin/editor/delete_file" listUserEndpoint="admin/editor/list_files"/>
+      component: <FilesystemBrowser filesystems={adminFilesystemConfig}/>
     }
   ];
 

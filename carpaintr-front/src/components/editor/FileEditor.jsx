@@ -1,7 +1,7 @@
 // FileEditor.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button, Input, IconButton, Notification, toaster, ButtonToolbar } from 'rsuite';
-import { Edit, Save, X, Trash2, Code, ScrollText } from 'lucide-react'; // Added icons
+import { Edit, Save, X, Trash2, Code, ScrollText, Pencil } from 'lucide-react'; // Added Pencil for 'edit as text'
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 // import * as yaml from 'js-yaml'; // Uncomment if js-yaml is installed
@@ -46,19 +46,50 @@ const Title = styled.h3`
 `;
 
 const ContentArea = styled.div`
-  flex-grow: 1;
+  flex-grow: 1; /* Allows content area to take available space */
   margin-bottom: 15px;
   position: relative; /* For overlay */
+  display: flex; /* Ensures content inside is also flexible */
+  flex-direction: column; /* Stacks children vertically if needed */
+  min-height: 0; /* Important for flex-grow to work correctly with overflow */
+  text-align: left;
+`;
+
+const PreviewContainer = styled.div`
+  position: relative;
+  max-height: 100%; /* Ensure it fits within ContentArea's height */
+  overflow: hidden; /* Truncate content */
+  padding: 10px;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  font-family: "Consolas", monospace;
+  font-size: smaller;
+  white-space: pre-wrap; /* Preserve whitespace and wrap text */
+  word-wrap: break-word; /* Break long words */
+  flex-grow: 1; /* Allow preview to grow */
+`;
+
+const FadeOverlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px; /* Height of the fade effect */
+  background: linear-gradient(to top, #f9f9f9 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none; /* Allows clicks to pass through to content below if needed */
 `;
 
 const StyledInput = styled(Input)`
   font-family: "Consolas", monospace;
   font-size: smaller;
-  height: 100% !important; /* Ensure it fills ContentArea */
+  height: 100% !important; /* Make textarea fill its container */
   resize: none; /* Disable manual resize */
   border: ${props => props.disabled ? '1px dashed #e5e5ea' : '1px solid #e5e5ea'};
   background-color: ${props => props.disabled ? '#f9f9f9' : '#fff'};
   padding: 10px;
+  overflow-y: auto !important; /* Enable vertical scrolling for the textarea */
+  flex-grow: 1; /* Allow textarea to grow */
   &:focus {
     border-color: #337ab7;
   }
@@ -87,36 +118,34 @@ const Footer = styled.div`
   align-items: center;
   padding-top: 10px;
   border-top: 1px solid #f0f0f0;
+  flex-shrink: 0; /* Prevent footer from shrinking */
 `;
 
 const FileEditor = ({
   fileName,
-  filePath, // Full path including selected FS root and directories
+  filePath,
   isCommonFile,
   onClose,
   onSaveSuccess,
   onDeleteSuccess,
-  deleteEndpoint,
-  readCommonEndpoint,
-  readUserEndpoint,
-  uploadEndpoint
+  readEndpoint,
+  uploadEndpoint,
+  deleteEndpoint
 }) => {
   const [fileContent, setFileContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [loadingContent, setLoadingContent] = useState(true);
+  const [isViewingPreview, setIsViewingPreview] = useState(true); // New state for preview mode
 
-  // External editor states
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
   const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
-  // Fetch file content when fileName or filePath changes
   useEffect(() => {
     const fetchFileContent = async () => {
       setLoadingContent(true);
       try {
-        const endpoint = isCommonFile ? readCommonEndpoint : readUserEndpoint;
-        const response = await authFetch(`/api/v1/${endpoint}/${encodeURIComponent(filePath)}`);
+        const response = await authFetch(`/api/v1/${readEndpoint}/${encodeURIComponent(filePath)}`);
         if (!response.ok) {
           throw new Error(`Failed to read file: ${response.statusText}`);
         }
@@ -129,14 +158,15 @@ const FileEditor = ({
         setOriginalContent('');
       } finally {
         setLoadingContent(false);
-        setIsEditing(false); // Reset editing mode on new file load
+        setIsEditing(false); // Not editing initially
+        setIsViewingPreview(true); // Start in preview mode
       }
     };
 
-    if (filePath) {
+    if (filePath && readEndpoint) {
       fetchFileContent();
     }
-  }, [filePath, isCommonFile, readCommonEndpoint, readUserEndpoint]);
+  }, [filePath, readEndpoint]);
 
 
   const validateContent = useCallback(() => {
@@ -157,7 +187,7 @@ const FileEditor = ({
     }
 
     const formData = new FormData();
-    formData.append('file', new Blob([fileContent]), fileName); // Use fileName for Blob, filePath for endpoint
+    formData.append('file', new Blob([fileContent]), fileName);
     try {
       const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
         method: 'POST',
@@ -208,6 +238,11 @@ const FileEditor = ({
     setIsEditing(false); // Exit edit mode
   }, [originalContent]);
 
+  const handleEditAsText = useCallback(() => {
+    setIsViewingPreview(false); // Switch from preview to full editor view
+    setIsEditing(true);         // Enable editing
+  }, []);
+
   const hasUnsavedChanges = fileContent !== originalContent;
 
   const handleOpenTableEditor = useCallback(() => {
@@ -221,7 +256,7 @@ const FileEditor = ({
   return (
     <FileEditorContainer>
       <Header>
-        <Title>File: {fileName}</Title>
+        <h3>{fileName}</h3>
         <IconButton icon={<X />} onClick={onClose} appearance="subtle" />
       </Header>
 
@@ -229,54 +264,73 @@ const FileEditor = ({
         {loadingContent ? (
           <Overlay>Loading file content...</Overlay>
         ) : (
-          <>
-            {!isEditing && <Overlay>Click "Edit" to modify</Overlay>}
-            <StyledInput
-              value={fileContent}
-              as="textarea"
-              rows={20}
-              onChange={setFileContent}
-              disabled={!isEditing || !filePath}
-            />
-          </>
+          isViewingPreview ? (
+            <PreviewContainer>
+              {fileContent}
+              <FadeOverlay />
+            </PreviewContainer>
+          ) : (
+            <>
+              {!isEditing && <Overlay>Click Edit to modify</Overlay>}
+              <StyledInput
+                value={fileContent}
+                as="textarea"
+                rows={20} // This might be overridden by flex-grow: 1 and explicit height/max-height on ContentArea or StyledInput
+                onChange={setFileContent}
+                disabled={!isEditing || !filePath}
+              />
+            </>
+          )
         )}
       </ContentArea>
 
       <Footer>
         <ButtonToolbar>
-          {!isEditing ? (
-            <Button appearance="primary" onClick={() => setIsEditing(true)} disabled={loadingContent}>
-              <Edit style={{ marginRight: 5 }} /> Edit
+          {isViewingPreview ? (
+            <Button appearance="primary" onClick={handleEditAsText} disabled={loadingContent}>
+              <Pencil style={{ marginRight: 5 }} /> Edit as text
             </Button>
           ) : (
             <>
-              <Button appearance="primary" onClick={handleSave} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
-                <Save style={{ marginRight: 5 }} /> Save
-              </Button>
-              <Button appearance="subtle" onClick={handleCancelEdit} disabled={loadingContent}>
-                <X style={{ marginRight: 5 }} /> Cancel
+              {isEditing ? (
+                <>
+                  <Button appearance="primary" onClick={handleSave} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
+                    <Save style={{ marginRight: 5 }} /> Save
+                  </Button>
+                  <Button appearance="subtle" onClick={handleCancelEdit} disabled={loadingContent}>
+                    <X style={{ marginRight: 5 }} /> Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button appearance="primary" onClick={() => setIsEditing(true)} disabled={loadingContent}>
+                  <Edit style={{ marginRight: 5 }} /> Edit
+                </Button>
+              )}
+              <Button
+                appearance="subtle"
+                onClick={handleDelete}
+                disabled={!filePath || isCommonFile || loadingContent || isEditing}
+              >
+                <Trash2 style={{ marginRight: 5 }} /> Delete
               </Button>
             </>
           )}
-          <Button
-            appearance="subtle"
-            onClick={handleDelete}
-            disabled={!filePath || isCommonFile || loadingContent || isEditing}
-          >
-            <Trash2 style={{ marginRight: 5 }} /> Delete
-          </Button>
         </ButtonToolbar>
 
         <ButtonToolbar>
-          {filePath && filePath.endsWith(".csv") && (
-            <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
-              <ScrollText style={{ marginRight: 5 }} /> Open table editor
-            </Button>
-          )}
-          {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
-            <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
-              <Code style={{ marginRight: 5 }} /> Open YAML editor (broken now)
-            </Button>
+          {!isViewingPreview && ( // Only show these in editor mode, not preview
+            <>
+              {filePath && filePath.endsWith(".csv") && (
+                <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
+                  <ScrollText style={{ marginRight: 5 }} /> Open table editor
+                </Button>
+              )}
+              {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
+                <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
+                  <Code style={{ marginRight: 5 }} /> Open YAML editor (broken now)
+                </Button>
+              )}
+            </>
           )}
         </ButtonToolbar>
       </Footer>
