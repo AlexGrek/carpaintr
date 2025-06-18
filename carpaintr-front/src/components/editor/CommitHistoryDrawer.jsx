@@ -1,7 +1,31 @@
+// CommitHistoryDrawer.jsx
 import React, { useState, useEffect } from 'react';
 import { Drawer, Button, List, Placeholder, Modal, Message } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { authFetch } from '../../utils/authFetch';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import for translations
+import Trans from '../../localization/Trans'; // Import for translations
+
+// Register translations for CommitHistoryDrawer
+registerTranslations("ua", {
+  "Commit History": "Історія коммітів",
+  "Cancel": "Скасувати",
+  "Failed to load commit history.": "Не вдалося завантажити історію коммітів.",
+  "No commits found.": "Коммітів не знайдено.",
+  "Hash:": "Хеш:",
+  "Author:": "Автор:",
+  "Message:": "Повідомлення:",
+  "Files:": "Файли:",
+  "Revert": "Відновити",
+  "Confirm Revert": "Підтвердити відновлення",
+  "Are you sure you want to revert commit": "Ви впевнені, що хочете відновити комміт",
+  "This action cannot be undone.": "Цю дію неможливо скасувати.",
+  "Confirm": "Підтвердити",
+  "Error": "Помилка",
+  "Success": "Успіх",
+  "reverted successfully!": "успішно відновлено!",
+  "Error reverting commit": "Помилка відновлення комміту"
+});
 
 const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
     const [commits, setCommits] = useState([]);
@@ -11,6 +35,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
     const [msg, setMsg] = useState(null);
 
     const isMobile = useMediaQuery({ maxWidth: 767 });
+    const { str } = useLocale(); // Destructure str from useLocale
 
     useEffect(() => {
         if (show) {
@@ -29,7 +54,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
             console.error('Error fetching commits:', error);
             setMsg(
                 <Message type="error" closable>
-                    Failed to load commit history.
+                    {str("Failed to load commit history.")}
                 </Message>,
                 { placement: 'topEnd' }
             );
@@ -57,22 +82,21 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
             if (response.ok) {
                 setMsg(
                     <Message type="success" closable>
-                        Commit {selectedCommitHash.substring(0, 7)} reverted successfully!
+                        <Trans>Commit</Trans> {selectedCommitHash.substring(0, 7)} <Trans>reverted successfully!</Trans>
                     </Message>,
                     { placement: 'topEnd' }
                 );
-                // Optionally re-fetch commits to show the updated state
                 fetchCommits();
                 onRevert && onRevert();
             } else {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to revert commit.');
+                throw new Error(errorData.message || str('Failed to revert commit.'));
             }
         } catch (error) {
             console.error('Error reverting commit:', error);
             setMsg(
                 <Message type="error" closable>
-                    Error reverting commit {selectedCommitHash.substring(0, 7)}: {error.message}
+                    {str("Error reverting commit")} {selectedCommitHash.substring(0, 7)}: {error.message}
                 </Message>,
                 { placement: 'topEnd' }
             );
@@ -85,9 +109,9 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
         <div>
             <Drawer placement={'right'} size={isMobile ? 'full' : 'sm'} open={show} onClose={() => onClose()}>
                 <Drawer.Header>
-                    <Drawer.Title>Commit History</Drawer.Title>
+                    <Drawer.Title><Trans>Commit History</Trans></Drawer.Title>
                     <Drawer.Actions>
-                        <Button onClick={onClose}>Cancel</Button>
+                        <Button onClick={onClose}><Trans>Cancel</Trans></Button>
                     </Drawer.Actions>
                 </Drawer.Header>
                 <Drawer.Body>
@@ -97,22 +121,22 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
                     ) : (
                         <List hover>
                             {commits.length === 0 && !loading ? (
-                                <List.Item>No commits found.</List.Item>
+                                <List.Item><Trans>No commits found.</Trans></List.Item>
                             ) : (
                                 commits.map((commit) => (
                                     <List.Item key={commit.hash} style={{paddingLeft: "3em"}}>
                                         <p>
-                                            <strong>Hash:</strong> {commit.hash.substring(0, 7)}
+                                            <strong><Trans>Hash:</Trans></strong> {commit.hash.substring(0, 7)}
                                         </p>
                                         <p>
-                                            <strong>Author:</strong> {commit.author}
+                                            <strong><Trans>Author:</Trans></strong> {commit.author}
                                         </p>
                                         <p>
-                                            <strong>Message:</strong> {commit.message}
+                                            <strong><Trans>Message:</Trans></strong> {commit.message}
                                         </p>
                                         {commit.files && commit.files.length > 0 && (
                                             <p>
-                                                <strong>Files:</strong> {commit.files.join(', ')}
+                                                <strong><Trans>Files:</Trans></strong> {commit.files.join(', ')}
                                             </p>
                                         )}
                                         <Button
@@ -121,7 +145,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
                                             onClick={() => handleRevertClick(commit.hash)}
                                             style={{ marginTop: 10 }}
                                         >
-                                            Revert
+                                            <Trans>Revert</Trans>
                                         </Button>
                                     </List.Item>
                                 ))
@@ -134,7 +158,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
                 onClose={onClose}
             >
                 <Drawer.Header>
-                    <Drawer.Title>Commit History</Drawer.Title>
+                    <Drawer.Title><Trans>Commit History</Trans></Drawer.Title>
                 </Drawer.Header>
                 <Drawer.Body>
                     {msg}
@@ -143,22 +167,22 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
                     ) : (
                         <List hover>
                             {commits.length === 0 && !loading ? (
-                                <List.Item>No commits found.</List.Item>
+                                <List.Item><Trans>No commits found.</Trans></List.Item>
                             ) : (
                                 commits.map((commit) => (
                                     <List.Item key={commit.hash}>
                                         <p>
-                                            <strong>Hash:</strong> {commit.hash.substring(0, 7)}
+                                            <strong><Trans>Hash:</Trans></strong> {commit.hash.substring(0, 7)}
                                         </p>
                                         <p>
-                                            <strong>Author:</strong> {commit.author}
+                                            <strong><Trans>Author:</Trans></strong> {commit.author}
                                         </p>
                                         <p>
-                                            <strong>Message:</strong> {commit.message}
+                                            <strong><Trans>Message:</Trans></strong> {commit.message}
                                         </p>
                                         {commit.files && commit.files.length > 0 && (
                                             <p>
-                                                <strong>Files:</strong> {commit.files.join(', ')}
+                                                <strong><Trans>Files:</Trans></strong> {commit.files.join(', ')}
                                             </p>
                                         )}
                                         <Button
@@ -167,7 +191,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
                                             onClick={() => handleRevertClick(commit.hash)}
                                             style={{ marginTop: 10 }}
                                         >
-                                            Revert
+                                            <Trans>Revert</Trans>
                                         </Button>
                                     </List.Item>
                                 ))
@@ -179,18 +203,18 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
 
             <Modal open={showRevertConfirm} onClose={() => setShowRevertConfirm(false)} size="xs">
                 <Modal.Header>
-                    <Modal.Title>Confirm Revert</Modal.Title>
+                    <Modal.Title><Trans>Confirm Revert</Trans></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to revert commit{' '}
-                    <strong>{selectedCommitHash.substring(0, 7)}</strong>? This action cannot be undone.
+                    <Trans>Are you sure you want to revert commit</Trans>{' '}
+                    <strong>{selectedCommitHash.substring(0, 7)}</strong>? <Trans>This action cannot be undone.</Trans>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button onClick={handleRevertConfirm} appearance="primary" color="red">
-                        Confirm
+                        <Trans>Confirm</Trans>
                     </Button>
                     <Button onClick={() => setShowRevertConfirm(false)} appearance="subtle">
-                        Cancel
+                        <Trans>Cancel</Trans>
                     </Button>
                 </Modal.Footer>
             </Modal>

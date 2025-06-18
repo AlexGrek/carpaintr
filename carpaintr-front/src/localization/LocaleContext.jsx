@@ -38,7 +38,8 @@ const TRANSLATIONS_BASIC = {
     "Variants (each line is a variant)": "Варіанти (кожен рядок - окремий варіант)",
     "Save": "Зберегти",
     "Load": "Завантажити",
-    "Articles": "Тексти"
+    "Articles": "Тексти",
+    "Type": "Тип"
   },
   en: {}
 };

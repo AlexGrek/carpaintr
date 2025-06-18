@@ -1,12 +1,45 @@
 // FileEditor.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer } from 'rsuite'; // Added Drawer, Placeholder
-import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle } from 'lucide-react'; // Added Download, AlertTriangle
+import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer } from 'rsuite';
+import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
-import * as yaml from 'js-yaml'; // Uncomment if js-yaml is installed
-// import TableEditorChatGPT from './TableEditorChatGPT'; // Uncomment if these components exist
-// import DrawerYamlEditor from './DrawerYamlEditor'; // Uncomment if these components exist
+import * as yaml from 'js-yaml';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import for translations
+import Trans from '../../localization/Trans'; // Import for translations
+
+// Register translations for FileEditor
+registerTranslations("ua", {
+  "Download File": "Завантажити файл",
+  "Delete File": "Видалити файл",
+  "Close": "Закрити",
+  "Loading file content...": "Завантаження вмісту файлу...",
+  "Click Edit to modify": "Натисніть Редагувати, щоб змінити",
+  "Edit as text": "Редагувати як текст",
+  "Save": "Зберегти",
+  "Cancel": "Скасувати",
+  "Edit": "Редагувати",
+  "Open table editor": "Відкрити редактор таблиць",
+  "Open YAML editor (broken now)": "Відкрити YAML редактор (зараз не працює)",
+  "Confirm Deletion": "Підтвердити видалення",
+  "Are you sure you want to delete the file": "Ви впевнені, що хочете видалити файл",
+  "This action cannot be undone.": "Цю дію неможливо скасувати.",
+  "Delete Permanently": "Видалити назавжди",
+  "Permission Denied": "Дозвіл відхилено",
+  "Cannot delete common files.": "Неможливо видалити загальні файли.",
+  "File not deleted:": "Файл не видалено:",
+  "Failed to delete file:": "Не вдалося видалити файл:",
+  "File deleted": "Файл видалено",
+  "Failed to load file content:": "Не вдалося завантажити вміст файлу:",
+  "Validation Error": "Помилка валідації",
+  "Invalid file format:": "Недійсний формат файлу:",
+  "Save Error": "Помилка збереження",
+  "File not saved:": "Файл не збережено:",
+  "Failed to save file:": "Не вдалося зберегти файл:",
+  "File saved": "Файл збережено",
+  "Network Error": "Помилка мережі",
+  "No file path": "Немає шляху до файлу"
+});
 
 
 const FileEditorContainer = styled.div`
@@ -116,13 +149,14 @@ const FileEditor = ({
   const [originalContent, setOriginalContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [loadingContent, setLoadingContent] = useState(true);
-  const [isViewingPreview, setIsViewingPreview] = useState(true); // New state for preview mode
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false); // State for delete confirmation drawer
+  const [isViewingPreview, setIsViewingPreview] = useState(true);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
   const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
   const [msg, setMsg] = useState(null);
+  const { str } = useLocale(); // Destructure str from useLocale
 
   useEffect(() => {
     const fetchFileContent = async () => {
@@ -131,46 +165,45 @@ const FileEditor = ({
       try {
         const response = await authFetch(`/api/v1/${readEndpoint}/${encodeURIComponent(filePath)}`);
         if (!response.ok) {
-          throw new Error(`Failed to read file: ${response.statusText}`);
+          throw new Error(str(`Failed to read file: ${response.statusText}`));
         }
         const content = await response.text();
         setFileContent(content);
         setOriginalContent(content);
       } catch (err) {
-        setMsg(<Notification type="error" header="Error">Failed to load file content: {err.message}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header={str("Error")}>{str("Failed to load file content:")} {err.message}</Notification>, { placement: 'topEnd' });
         setFileContent('');
         setOriginalContent('');
       } finally {
         setLoadingContent(false);
-        setIsEditing(false); // Not editing initially
-        setIsViewingPreview(true); // Start in preview mode
+        setIsEditing(false);
+        setIsViewingPreview(true);
       }
     };
 
     if (filePath && readEndpoint) {
       fetchFileContent();
     }
-  }, [filePath, readEndpoint]);
-
+  }, [filePath, readEndpoint, str]); // Add str to dependency array
 
   const validateContent = useCallback(() => {
-    if (!filePath) return "No file path";
+    if (!filePath) return str("No file path");
     if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      try { yaml.load(fileContent); return null; } catch (e) { 
-        return e.message; 
+      try { yaml.load(fileContent); return null; } catch (e) {
+        return e.message;
       }
     }
     if (filePath.endsWith('.json')) {
       try { JSON.parse(fileContent); return null; } catch (e) { return e.message; }
     }
     return null;
-  }, [filePath, fileContent]);
+  }, [filePath, fileContent, str]); // Add str to dependency array
 
   const handleSave = useCallback(async () => {
     setMsg(null);
     let validationError = validateContent();
     if (validationError) {
-      setMsg(<Notification type="error" header="Validation Error">Invalid file format: {validationError}</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="error" header={str("Validation Error")}>{str("Invalid file format:")} {validationError}</Notification>, { placement: 'topEnd' });
       return;
     }
 
@@ -184,24 +217,24 @@ const FileEditor = ({
       });
       if (!response.ok) {
         const errorData = await response.json();
-        setMsg(<Notification type="error" header="Save Error">File not saved: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header={str("Save Error")}>{str("File not saved:")} {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
       } else {
         setOriginalContent(fileContent);
-        setMsg(<Notification type="success" header="Success">File saved</Notification>, { placement: 'topEnd' });
-        setIsEditing(false); // Exit edit mode after saving
+        setMsg(<Notification type="success" header={str("Success")}>{str("File saved")}</Notification>, { placement: 'topEnd' });
+        setIsEditing(false);
         if (onSaveSuccess) onSaveSuccess();
       }
     } catch (error) {
-      setMsg(<Notification type="error" header="Network Error">Failed to save file: {error.message}</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="error" header={str("Network Error")}>{str("Failed to save file:")} {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess]);
+  }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess, str]); // Add str to dependency array
 
 
   const handleDelete = useCallback(async () => {
-    setShowDeleteConfirmation(false); // Close the drawer
+    setShowDeleteConfirmation(false);
     setMsg(null);
     if (isCommonFile) {
-      setMsg(<Notification type="warning" header="Permission Denied">Cannot delete common files.</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="warning" header={str("Permission Denied")}>{str("Cannot delete common files.")}</Notification>, { placement: 'topEnd' });
       return;
     }
     try {
@@ -210,27 +243,27 @@ const FileEditor = ({
       });
       if (!response.ok) {
         const errorData = await response.json();
-        setMsg(<Notification type="error" header="Delete Error">File not deleted: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header={str("Delete Error")}>{str("File not deleted:")} {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
       } else {
-        setMsg(<Notification type="success" header="Success">File deleted</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="success" header={str("Success")}>{str("File deleted")}</Notification>, { placement: 'topEnd' });
         if (onDeleteSuccess) onDeleteSuccess();
-        onClose(); // Close the editor after deletion
+        onClose();
       }
     } catch (error) {
-      setMsg(<Notification type="error" header="Network Error">Failed to delete file: {error.message}</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="error" header={str("Network Error")}>{str("Failed to delete file:")} {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [filePath, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose]);
+  }, [filePath, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose, str]); // Add str to dependency array
 
   const handleCancelEdit = useCallback(() => {
     setMsg(null);
-    setFileContent(originalContent); // Revert to original content
-    setIsEditing(false); // Exit edit mode
+    setFileContent(originalContent);
+    setIsEditing(false);
   }, [originalContent]);
 
   const handleEditAsText = useCallback(() => {
     setMsg(null);
-    setIsViewingPreview(false); // Switch from preview to full editor view
-    setIsEditing(true);         // Enable editing
+    setIsViewingPreview(false);
+    setIsEditing(true);
   }, []);
 
   const handleDownload = useCallback(() => {
@@ -246,7 +279,6 @@ const FileEditor = ({
     URL.revokeObjectURL(url);
   }, [fileContent, fileName]);
 
-  // This is the crucial fix for "object Object"
   const handleContentChange = useCallback((value) => {
     setFileContent(value);
   }, []);
@@ -266,23 +298,23 @@ const FileEditor = ({
       <Header>
         <Title>{fileName}</Title>
         <HeaderActions>
-          <IconButton icon={<Download />} onClick={handleDownload} appearance="subtle" title="Download File" />
+          <IconButton icon={<Download />} onClick={handleDownload} appearance="subtle" title={str("Download File")} />
           <IconButton
             icon={<Trash2 />}
-            onClick={() => setShowDeleteConfirmation(true)} // Open confirmation drawer
+            onClick={() => setShowDeleteConfirmation(true)}
             appearance="subtle"
-            color="red" // Make the trashcan icon red
-            title="Delete File"
+            color="red"
+            title={str("Delete File")}
             disabled={!filePath || isCommonFile || loadingContent || isEditing}
           />
-          <IconButton icon={<X />} onClick={onClose} appearance="subtle" title="Close" />
+          <IconButton icon={<X />} onClick={onClose} appearance="subtle" title={str("Close")} />
         </HeaderActions>
       </Header>
 
       <ContentArea>
         {msg}
         {loadingContent ? (
-          <Overlay>Loading file content...</Overlay>
+          <Overlay><Trans>Loading file content...</Trans></Overlay>
         ) : (
           isViewingPreview ? (
             <PreviewContainer>
@@ -291,9 +323,10 @@ const FileEditor = ({
             </PreviewContainer>
           ) : (
             <>
-              {!isEditing && <Overlay>Click Edit to modify</Overlay>}
+              {!isEditing && <Overlay><Trans>Click Edit to modify</Trans></Overlay>}
               <Input
-                style={{fontFamily: 'Consolas, monospace',
+                style={{
+                  fontFamily: 'Consolas, monospace',
                   fontSize: 'smaller',
                   resize: 'auto',
                   height: '100%'
@@ -301,7 +334,7 @@ const FileEditor = ({
                 value={fileContent}
                 as="textarea"
                 rows={20}
-                onChange={handleContentChange} // Use the new handler here
+                onChange={handleContentChange}
                 disabled={!isEditing || !filePath}
               />
             </>
@@ -313,22 +346,22 @@ const FileEditor = ({
         <ButtonToolbar>
           {isViewingPreview ? (
             <Button appearance="primary" onClick={handleEditAsText} disabled={loadingContent}>
-              <Pencil style={{ marginRight: 5 }} /> Edit as text
+              <Pencil style={{ marginRight: 5 }} /> <Trans>Edit as text</Trans>
             </Button>
           ) : (
             <>
               {isEditing ? (
                 <>
                   <Button appearance="primary" onClick={handleSave} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
-                    <Save style={{ marginRight: 5 }} /> Save
+                    <Save style={{ marginRight: 5 }} /> <Trans>Save</Trans>
                   </Button>
                   <Button appearance="subtle" onClick={handleCancelEdit} disabled={loadingContent}>
-                    <X style={{ marginRight: 5 }} /> Cancel
+                    <X style={{ marginRight: 5 }} /> <Trans>Cancel</Trans>
                   </Button>
                 </>
               ) : (
                 <Button appearance="primary" onClick={() => setIsEditing(true)} disabled={loadingContent}>
-                  <Edit style={{ marginRight: 5 }} /> Edit
+                  <Edit style={{ marginRight: 5 }} /> <Trans>Edit</Trans>
                 </Button>
               )}
             </>
@@ -336,16 +369,16 @@ const FileEditor = ({
         </ButtonToolbar>
 
         <ButtonToolbar>
-          {!isViewingPreview && ( // Only show these in editor mode, not preview
+          {!isViewingPreview && (
             <>
               {filePath && filePath.endsWith(".csv") && (
                 <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
-                  <ScrollText style={{ marginRight: 5 }} /> Open table editor
+                  <ScrollText style={{ marginRight: 5 }} /> <Trans>Open table editor</Trans>
                 </Button>
               )}
               {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
                 <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
-                  <Code style={{ marginRight: 5 }} /> Open YAML editor (broken now)
+                  <Code style={{ marginRight: 5 }} /> <Trans>Open YAML editor (broken now)</Trans>
                 </Button>
               )}
             </>
@@ -353,44 +386,27 @@ const FileEditor = ({
         </ButtonToolbar>
       </Footer>
 
-      {/* Delete Confirmation Drawer */}
       <Drawer
         backdrop={true}
         placement="bottom"
         open={showDeleteConfirmation}
         onClose={() => setShowDeleteConfirmation(false)}
-        size="xs" // Smaller drawer
+        size="xs"
       >
         <Drawer.Header>
-          <Drawer.Title><AlertTriangle color="orange" style={{ marginRight: 10 }} /> Confirm Deletion</Drawer.Title>
+          <Drawer.Title><AlertTriangle color="orange" style={{ marginRight: 10 }} /> <Trans>Confirm Deletion</Trans></Drawer.Title>
         </Drawer.Header>
         <Drawer.Body>
-          <p>Are you sure you want to delete the file <strong>&quot;{fileName}&quot;</strong>?</p>
-          <p>This action cannot be undone.</p>
+          <p><Trans>Are you sure you want to delete the file</Trans> <strong>&quot;{fileName}&quot;</strong>?</p>
+          <p><Trans>This action cannot be undone.</Trans></p>
           <Button onClick={handleDelete} appearance="primary" color="red">
-            <Trash2 style={{ marginRight: 5 }} /> Delete Permanently
+            <Trash2 style={{ marginRight: 5 }} /> <Trans>Delete Permanently</Trans>
           </Button>
           <Button onClick={() => setShowDeleteConfirmation(false)} appearance="subtle">
-            Cancel
+            <Trans>Cancel</Trans>
           </Button>
         </Drawer.Body>
       </Drawer>
-
-      {/* Commented out external editors - uncomment and import if available */}
-      {/*
-      <TableEditorChatGPT
-        open={tableEditorOpen}
-        onClose={() => setTableEditorOpen(false)}
-        onSave={setFileContent}
-        fileName={fileName}
-        csvData={fileContent}
-      />
-      <DrawerYamlEditor
-        yamlString={fileContent}
-        onClose={(value) => { setYamlEditorOpen(false); if (value) setFileContent(value); }}
-        open={yamlEditorOpen}
-      />
-      */}
     </FileEditorContainer>
   );
 };

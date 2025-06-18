@@ -8,8 +8,24 @@ import {
   FileSpreadsheet,
   ScrollText
 } from 'lucide-react';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import Trans from '../../localization/Trans';
 
 const { Column, HeaderCell, Cell } = Table;
+
+
+registerTranslations("ua",
+    {
+        "Data Source": "Джерело даних",
+        "Table": "Таблиця",
+        "Text File": "Текстовий файл",
+        "License": "Ліцензія",
+        "Log File": "Файл журналу",
+        "File": "Файл",
+        "Directory": "Папка",
+    }
+);
+
 
 function getFileType(filename) {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
@@ -71,6 +87,7 @@ function renderNameWithExtension(label) {
 
 export default function DirectoryViewTable({ value, onFileClick, onDirectoryClick }) {
   const data = value;
+  const { str } = useLocale();
 
   return (
     <Table
@@ -91,7 +108,7 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
       }}
     >
       <Column flexGrow={2} align="left" fixed>
-        <HeaderCell>Name</HeaderCell>
+        <HeaderCell><Trans>Name</Trans></HeaderCell>
         <Cell style={{'cursor': 'pointer', }}>
           {(rowData) => (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -103,10 +120,10 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
       </Column>
 
       <Column flexGrow={1} align="left">
-        <HeaderCell>Type</HeaderCell>
+        <HeaderCell><Trans>Type</Trans></HeaderCell>
         <Cell>
           {(rowData) =>
-            rowData.isFile ? getFileType(rowData.label) : 'Directory'
+            str(rowData.isFile ? getFileType(rowData.label) : 'Directory')
           }
         </Cell>
       </Column>

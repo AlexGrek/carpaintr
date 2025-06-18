@@ -13,6 +13,13 @@ import { authFetch } from '../../utils/authFetch';
 import DirectoryViewTable from './DirectoryViewTable';
 import FileEditor from './FileEditor';
 import CommitHistoryDrawer from './CommitHistoryDrawer';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+
+registerTranslations("ua",
+    {
+        "Create functionality coming soon!": "На стадії розробки",
+    }
+);
 
 const slideInRight = keyframes`
   from {
@@ -77,6 +84,7 @@ const AnimationContainer = styled.div`
 `;
 
 const FilesystemBrowser = ({ filesystems }) => {
+    const { str } = useLocale();
     const [selectedFsName, setSelectedFsName] = useState(filesystems[0]?.name || '');
     const [currentPath, setCurrentPath] = useState([]);
     const [directoryData, setDirectoryData] = useState(null);
@@ -276,7 +284,7 @@ const FilesystemBrowser = ({ filesystems }) => {
                         />
                     </InputGroup>
                     <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
-                    <IconButton icon={<Plus />} onClick={() => alert('Create functionality coming soon!')} appearance="primary" style={{ flexShrink: 0 }} />
+                    <IconButton icon={<Plus />} onClick={() => alert(str('Create functionality coming soon!'))} appearance="primary" style={{ flexShrink: 0 }} />
                     {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={handleShowCommitsClick} appearance="subtle" style={{ flexShrink: 0 }} />}
                 </div>
 
