@@ -1,6 +1,6 @@
 // FilesystemBrowser.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Input, IconButton, InputGroup } from 'rsuite';
+import { SelectPicker, Input, IconButton, InputGroup, Loader } from 'rsuite';
 import {
     RefreshCw,
     Plus,
@@ -288,7 +288,7 @@ const FilesystemBrowser = ({ filesystems }) => {
                     {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={handleShowCommitsClick} appearance="subtle" style={{ flexShrink: 0 }} />}
                 </div>
 
-                {loading && <p>Loading...</p>}
+                {loading && <Loader/>}
                 {error && <p style={{ color: 'red' }}>Error: {error}</p>}
 
                 <div style={{ position: 'relative', flexGrow: 1, overflow: 'hidden' }}>

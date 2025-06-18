@@ -1,12 +1,14 @@
 // FileEditor.jsx
-import { useState, useEffect, useCallback } from 'react';
-import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer } from 'rsuite';
-import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table } from 'rsuite';
+import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle, ChevronDown } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import * as yaml from 'js-yaml';
+import Papa from 'papaparse';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import for translations
 import Trans from '../../localization/Trans'; // Import for translations
+import TableEditorChatGPT from './TableEditorChatGPT';
 
 // Register translations for FileEditor
 registerTranslations("ua", {
@@ -38,7 +40,8 @@ registerTranslations("ua", {
   "Failed to save file:": "Не вдалося зберегти файл:",
   "File saved": "Файл збережено",
   "Network Error": "Помилка мережі",
-  "No file path": "Немає шляху до файлу"
+  "No file path": "Немає шляху до файлу",
+  "More rows...": "Більше рядків..."
 });
 
 
@@ -92,6 +95,34 @@ const PreviewContainer = styled.div`
   flex-grow: 1; /* Allow preview to grow */
 `;
 
+const TablePreviewContainer = styled.div`
+  position: relative;
+  max-height: 100%;
+  overflow: auto;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  background-color: #fff;
+  flex-grow: 1;
+  
+  .rs-table {
+    font-size: 13px;
+  }
+  
+  .rs-table-cell-content {
+    padding: 8px 12px;
+  }
+  
+  .more-rows-indicator {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+`;
+
 const FadeOverlay = styled.div`
   position: absolute;
   bottom: 0;
@@ -134,6 +165,8 @@ const HeaderActions = styled.div`
   align-items: center;
 `;
 
+const { Column, HeaderCell, Cell } = Table;
+
 const FileEditor = ({
   fileName,
   filePath,
@@ -157,6 +190,56 @@ const FileEditor = ({
 
   const [msg, setMsg] = useState(null);
   const { str } = useLocale(); // Destructure str from useLocale
+
+  // Parse CSV data for table preview
+  const csvData = useMemo(() => {
+    if (!filePath || !filePath.endsWith('.csv') || !fileContent) {
+      return null;
+    }
+
+    try {
+      const parsed = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false, // Keep all values as strings for display
+        delimitersToGuess: [',', '\t', '|', ';']
+      });
+
+      if (parsed.errors && parsed.errors.length > 0) {
+        console.warn('CSV parsing warnings:', parsed.errors);
+      }
+
+      return parsed.data;
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      return null;
+    }
+  }, [filePath, fileContent]);
+
+  // Prepare table data with truncation
+  const tableData = useMemo(() => {
+    if (!csvData || csvData.length === 0) return null;
+
+    const maxRows = 10;
+    let displayData = csvData.slice(0, maxRows);
+
+    // Add indicator row if there are more rows
+    if (csvData.length > maxRows) {
+      const headers = Object.keys(csvData[0] || {});
+      const indicatorRow = {};
+      headers.forEach(header => {
+        indicatorRow[header] = '⋯';
+      });
+      displayData.push(indicatorRow);
+    }
+
+    return {
+      data: displayData,
+      headers: Object.keys(csvData[0] || {}),
+      hasMore: csvData.length > maxRows,
+      totalRows: csvData.length
+    };
+  }, [csvData]);
 
   useEffect(() => {
     const fetchFileContent = async () => {
@@ -186,29 +269,35 @@ const FileEditor = ({
     }
   }, [filePath, readEndpoint, str]); // Add str to dependency array
 
-  const validateContent = useCallback(() => {
+  const validateContent = useCallback((saveValue) => {
+    if (!saveValue) {
+      saveValue = fileContent
+    }
     if (!filePath) return str("No file path");
     if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      try { yaml.load(fileContent); return null; } catch (e) {
+      try { yaml.load(saveValue); return null; } catch (e) {
         return e.message;
       }
     }
     if (filePath.endsWith('.json')) {
-      try { JSON.parse(fileContent); return null; } catch (e) { return e.message; }
+      try { JSON.parse(saveValue); return null; } catch (e) { return e.message; }
     }
     return null;
   }, [filePath, fileContent, str]); // Add str to dependency array
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (saveValue) => {
     setMsg(null);
-    let validationError = validateContent();
+    if (!saveValue) {
+      saveValue = fileContent;
+    }
+    let validationError = validateContent(saveValue);
     if (validationError) {
       setMsg(<Notification type="error" header={str("Validation Error")}>{str("Invalid file format:")} {validationError}</Notification>, { placement: 'topEnd' });
       return;
     }
 
     const formData = new FormData();
-    formData.append('file', new Blob([fileContent]), fileName);
+    formData.append('file', new Blob([saveValue]), fileName);
     try {
       setMsg(null);
       const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
@@ -293,6 +382,8 @@ const FileEditor = ({
     setYamlEditorOpen(true);
   }, []);
 
+  const isCSVFile = filePath && filePath.endsWith('.csv');
+
   return (
     <FileEditorContainer>
       <Header>
@@ -317,10 +408,62 @@ const FileEditor = ({
           <Overlay><Trans>Loading file content...</Trans></Overlay>
         ) : (
           isViewingPreview ? (
-            <PreviewContainer>
-              {fileContent}
-              <FadeOverlay />
-            </PreviewContainer>
+            // Show CSV table preview for CSV files, regular text preview for others
+            isCSVFile && tableData && tableData.headers.length > 0 ? (
+              <TablePreviewContainer>
+                <Table
+                  data={tableData.data}
+                  height={400}
+                  bordered
+                  cellBordered
+                  headerHeight={40}
+                  rowHeight={35}
+                >
+                  {tableData.headers.map((header, index) => (
+                    <Column key={index} flexGrow={1} minWidth={120}>
+                      <HeaderCell>{header}</HeaderCell>
+                      <Cell>
+                        {(rowData, rowIndex) => {
+                          const value = rowData[header];
+                          const isIndicatorRow = tableData.hasMore && rowIndex === tableData.data.length - 1;
+
+                          if (isIndicatorRow) {
+                            return (
+                              <div className="more-rows-indicator">
+                                <ChevronDown size={14} />
+                                <Trans>More rows...</Trans>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <span title={value}>
+                              {value}
+                            </span>
+                          );
+                        }}
+                      </Cell>
+                    </Column>
+                  ))}
+                </Table>
+                {tableData.hasMore && (
+                  <div style={{
+                    padding: '10px',
+                    textAlign: 'center',
+                    color: '#666',
+                    fontSize: '13px',
+                    borderTop: '1px solid #e5e5ea'
+                  }}>
+                    Showing {Math.min(10, tableData.totalRows)} of {tableData.totalRows} rows
+                  </div>
+                )}
+              </TablePreviewContainer>
+            ) : (
+              <PreviewContainer>
+                {fileContent}
+                <FadeOverlay />
+              </PreviewContainer>
+            )
           ) : (
             <>
               {!isEditing && <Overlay><Trans>Click Edit to modify</Trans></Overlay>}
@@ -369,12 +512,18 @@ const FileEditor = ({
         </ButtonToolbar>
 
         <ButtonToolbar>
-          {!isViewingPreview && (
+          {isViewingPreview && (
             <>
               {filePath && filePath.endsWith(".csv") && (
-                <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
-                  <ScrollText style={{ marginRight: 5 }} /> <Trans>Open table editor</Trans>
-                </Button>
+                <>
+                  <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
+                    <ScrollText style={{ marginRight: 5 }} /> <Trans>Open table editor</Trans>
+                  </Button>
+                  <TableEditorChatGPT open={tableEditorOpen} onClose={() => setTableEditorOpen(false)} onSave={async (value) => {
+                    setFileContent(value);
+                    await handleSave(value);
+                  }} fileName={fileName} csvData={fileContent} />
+                </>
               )}
               {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
                 <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>

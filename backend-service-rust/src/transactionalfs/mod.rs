@@ -7,6 +7,7 @@ use tokio::process::Command;
 
 use crate::{
     exlogging::{self, log_event, LogLevel},
+    models::User,
     utils::{safe_write, safety_check, SafeFsError},
 };
 
@@ -306,12 +307,24 @@ impl GitTransactionalFs {
             .output()
             .await?;
 
+        log_event(
+            LogLevel::Debug,
+            format!(
+                "Git command with args {:?} returned stdout: {}, stderr: {}",
+                args,
+                String::from_utf8_lossy(&output.stderr),
+                String::from_utf8_lossy(&output.stdout)
+            ),
+            None::<&str>,
+        );
+
         if !output.status.success() {
             return Err(TransactionalFsError::GitCommand(format!(
-                "Failed to execute git command: {:?} in {:?}. Stderr: {}",
+                "Failed to execute git command: {:?} in {:?}. Stderr: {}, Stdout: {}",
                 args,
                 cwd,
-                String::from_utf8_lossy(&output.stderr)
+                String::from_utf8_lossy(&output.stderr),
+                String::from_utf8_lossy(&output.stdout)
             )));
         }
         Ok(())
