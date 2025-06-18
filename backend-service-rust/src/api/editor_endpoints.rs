@@ -8,6 +8,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc};
 
 pub async fn get_common_file_list(
@@ -42,6 +43,34 @@ pub async fn read_user_file(
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(data)
+}
+
+pub async fn list_commits(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    // Read the file content
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    let data = fs_manager.list_commits().await?;
+    Ok(Json(data))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RevertCommit {
+    pub commit_hash: String
+}
+
+pub async fn revert_commit(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    Json(revert): Json<RevertCommit>
+) -> Result<impl IntoResponse, AppError> {
+    // Read the file content
+    let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    fs_manager.revert_commit(&revert.commit_hash).await?;
+    Ok(Json(revert))
 }
 
 pub async fn delete_user_file(

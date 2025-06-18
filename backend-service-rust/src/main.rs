@@ -218,6 +218,14 @@ async fn main() -> tokio::io::Result<()> {
                     post(api::editor_endpoints::upload_user_file),
                 )
                 .route(
+                    "/list_commits",
+                    get(api::editor_endpoints::list_commits),
+                )
+                .route(
+                    "/revert_commit",
+                    post(api::editor_endpoints::revert_commit),
+                )
+                .route(
                     "/read_common_file/{path}",
                     get(api::editor_endpoints::read_common_file),
                 ),

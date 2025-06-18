@@ -5,12 +5,14 @@ import {
     RefreshCw,
     Plus,
     ChevronLeft,
-    X
+    X,
+    History
 } from 'lucide-react';
 import styled, { keyframes, css } from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import DirectoryViewTable from './DirectoryViewTable';
 import FileEditor from './FileEditor';
+import CommitHistoryDrawer from './CommitHistoryDrawer';
 
 const slideInRight = keyframes`
   from {
@@ -86,6 +88,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     const [animationDirection, setAnimationDirection] = useState('none');
     const [prevDisplayedData, setPrevDisplayedData] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [showCommitsDrawer, setShowCommitsDrawer] = useState(false);
 
     // Find the configuration for the currently selected filesystem
     const currentFsConfig = filesystems.find(fs => fs.name === selectedFsName);
@@ -97,7 +100,7 @@ const FilesystemBrowser = ({ filesystems }) => {
             setDirectoryData(null);
             return;
         }
-
+        setViewingFile(null);
         setLoading(true);
         setError(null);
         try {
@@ -231,88 +234,97 @@ const FilesystemBrowser = ({ filesystems }) => {
     // Prepare options for the SelectPicker
     const filesystemOptions = filesystems.map(fs => ({ label: fs.name, value: fs.name }));
 
+    const handleShowCommitsClick = useCallback(() => {
+        console.log("click");
+        setShowCommitsDrawer(true);
+    }, [])
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontSize: 'smaller', padding: 10 }}>
-            {/* Hide SelectPicker if only one filesystem is supplied */}
-            {filesystems.length > 1 && (
-                <SelectPicker
-                    data={filesystemOptions}
-                    value={selectedFsName}
-                    onChange={(value) => {
-                        setSelectedFsName(value);
-                        setCurrentPath([]); // Reset path on FS change
-                        setViewingFile(null); // Close any open file editor on FS change
-                    }}
-                    style={{ width: 120, minWidth: 100, flexShrink: 0 }}
-                    cleanable={false}
-                />
-            )}
-            {/* Top Bar - Single flexible row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'nowrap' }}>
-
-
-
-                <InputGroup inside style={{ flexGrow: 1, minWidth: 150, flexShrink: 1 }}>
-                    <InputGroup.Button
-                        onClick={handleBackOrCloseClick}
-                        // Disable if a file is not being viewed AND at the root of the current path
-                        disabled={!viewingFile && currentPath.length === 0}
-                    >
-                        {viewingFile ? <X /> : <ChevronLeft />}
-                    </InputGroup.Button>
-                    <Input
-                        value={formattedDisplayPath}
-                        readOnly
+        <div>
+            {currentFsConfig.historyEnabled && <CommitHistoryDrawer show={showCommitsDrawer} onRevert={fetchData} onClose={() => setShowCommitsDrawer(false)} />}
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontSize: 'smaller', padding: 10 }}>
+                {/* Hide SelectPicker if only one filesystem is supplied */}
+                {filesystems.length > 1 && (
+                    <SelectPicker
+                        data={filesystemOptions}
+                        value={selectedFsName}
+                        onChange={(value) => {
+                            setSelectedFsName(value);
+                            setCurrentPath([]); // Reset path on FS change
+                            setViewingFile(null); // Close any open file editor on FS change
+                        }}
+                        style={{ width: 120, minWidth: 100, flexShrink: 0 }}
+                        cleanable={false}
                     />
-                </InputGroup>
-                <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
-                <IconButton icon={<Plus />} onClick={() => alert('Create functionality coming soon!')} appearance="primary" style={{ flexShrink: 0 }} />
-            </div>
-
-            {loading && <p>Loading...</p>}
-            {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-
-            <div style={{ position: 'relative', flexGrow: 1, overflow: 'hidden' }}>
-                {/* Previous content animating out */}
-                {prevDisplayedData && isAnimating && !viewingFile && (
-                    <AnimationContainer $animateIn={false} $direction={animationDirection === 'right' ? 'left' : 'right'} $isNew={false}>
-                        <DirectoryViewTable
-                            value={prevDisplayedData}
-                            onFileClick={() => { }} // No interaction during animation
-                            onDirectoryClick={() => { }}
-                        />
-                    </AnimationContainer>
                 )}
+                {/* Top Bar - Single flexible row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'nowrap' }}>
 
-                {/* Current content animating in */}
-                {!viewingFile && directoryData && (
-                    <AnimationContainer $animateIn={isAnimating} $direction={animationDirection} $isNew={true}>
-                        <DirectoryViewTable
-                            value={displayedData}
-                            onFileClick={handleFileClick}
-                            onDirectoryClick={handleDirectoryClick}
+
+
+                    <InputGroup inside style={{ flexGrow: 1, minWidth: 150, flexShrink: 1 }}>
+                        <InputGroup.Button
+                            onClick={handleBackOrCloseClick}
+                            // Disable if a file is not being viewed AND at the root of the current path
+                            disabled={!viewingFile && currentPath.length === 0}
+                        >
+                            {viewingFile ? <X /> : <ChevronLeft />}
+                        </InputGroup.Button>
+                        <Input
+                            value={formattedDisplayPath}
+                            readOnly
                         />
-                    </AnimationContainer>
-                )}
+                    </InputGroup>
+                    <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
+                    <IconButton icon={<Plus />} onClick={() => alert('Create functionality coming soon!')} appearance="primary" style={{ flexShrink: 0 }} />
+                    {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={handleShowCommitsClick} appearance="subtle" style={{ flexShrink: 0 }} />}
+                </div>
 
-                {/* File Editor animating in/out */}
-                {viewingFile !== null && currentFsConfig && ( // Ensure currentFsConfig is available for FileEditor props
-                    <AnimationContainer $animateIn={viewingFile !== null && isAnimating} $direction={animationDirection} $isNew={true}>
-                        {viewingFile && ( // Only render FileEditor if viewingFile is not null
-                            <FileEditor
-                                fileName={viewingFile}
-                                filePath={fullFilePath} // Pass the full path relative to FS root
-                                isCommonFile={isCommonFile}
-                                onClose={handleFileEditorClose}
-                                onSaveSuccess={fetchData} // Refresh directory data on save
-                                onDeleteSuccess={fetchData} // Refresh directory data on delete
-                                readEndpoint={currentFsConfig.readEndpoint}
-                                uploadEndpoint={currentFsConfig.uploadEndpoint}
-                                deleteEndpoint={currentFsConfig.deleteEndpoint}
+                {loading && <p>Loading...</p>}
+                {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+
+                <div style={{ position: 'relative', flexGrow: 1, overflow: 'hidden' }}>
+                    {/* Previous content animating out */}
+                    {prevDisplayedData && isAnimating && !viewingFile && (
+                        <AnimationContainer $animateIn={false} $direction={animationDirection === 'right' ? 'left' : 'right'} $isNew={false}>
+                            <DirectoryViewTable
+                                value={prevDisplayedData}
+                                onFileClick={() => { }} // No interaction during animation
+                                onDirectoryClick={() => { }}
                             />
-                        )}
-                    </AnimationContainer>
-                )}
+                        </AnimationContainer>
+                    )}
+
+                    {/* Current content animating in */}
+                    {!viewingFile && directoryData && (
+                        <AnimationContainer $animateIn={isAnimating} $direction={animationDirection} $isNew={true}>
+                            <DirectoryViewTable
+                                value={displayedData}
+                                onFileClick={handleFileClick}
+                                onDirectoryClick={handleDirectoryClick}
+                            />
+                        </AnimationContainer>
+                    )}
+
+                    {/* File Editor animating in/out */}
+                    {viewingFile !== null && currentFsConfig && ( // Ensure currentFsConfig is available for FileEditor props
+                        <AnimationContainer $animateIn={viewingFile !== null && isAnimating} $direction={animationDirection} $isNew={true}>
+                            {viewingFile && ( // Only render FileEditor if viewingFile is not null
+                                <FileEditor
+                                    fileName={viewingFile}
+                                    filePath={fullFilePath} // Pass the full path relative to FS root
+                                    isCommonFile={isCommonFile}
+                                    onClose={handleFileEditorClose}
+                                    onSaveSuccess={fetchData} // Refresh directory data on save
+                                    onDeleteSuccess={fetchData} // Refresh directory data on delete
+                                    readEndpoint={currentFsConfig.readEndpoint}
+                                    uploadEndpoint={currentFsConfig.uploadEndpoint}
+                                    deleteEndpoint={currentFsConfig.deleteEndpoint}
+                                />
+                            )}
+                        </AnimationContainer>
+                    )}
+                </div>
             </div>
         </div>
     );

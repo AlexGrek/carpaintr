@@ -1,23 +1,12 @@
 // FileEditor.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Input, IconButton, Notification, toaster, ButtonToolbar } from 'rsuite';
-import { Edit, Save, X, Trash2, Code, ScrollText, Pencil } from 'lucide-react'; // Added Pencil for 'edit as text'
+import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer } from 'rsuite'; // Added Drawer, Placeholder
+import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle } from 'lucide-react'; // Added Download, AlertTriangle
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
-// import * as yaml from 'js-yaml'; // Uncomment if js-yaml is installed
+import * as yaml from 'js-yaml'; // Uncomment if js-yaml is installed
 // import TableEditorChatGPT from './TableEditorChatGPT'; // Uncomment if these components exist
 // import DrawerYamlEditor from './DrawerYamlEditor'; // Uncomment if these components exist
-
-// Mock yaml for demonstration if not installed
-const yaml = {
-  load: (content) => {
-    try {
-      return JSON.parse(content); // Simple JSON parse for mock
-    } catch (e) {
-      throw new Error("Invalid YAML/JSON format (mock validation)");
-    }
-  }
-};
 
 
 const FileEditorContainer = styled.div`
@@ -80,21 +69,6 @@ const FadeOverlay = styled.div`
   pointer-events: none; /* Allows clicks to pass through to content below if needed */
 `;
 
-const StyledInput = styled(Input)`
-  font-family: "Consolas", monospace;
-  font-size: smaller;
-  height: 100% !important; /* Make textarea fill its container */
-  resize: none; /* Disable manual resize */
-  border: ${props => props.disabled ? '1px dashed #e5e5ea' : '1px solid #e5e5ea'};
-  background-color: ${props => props.disabled ? '#f9f9f9' : '#fff'};
-  padding: 10px;
-  overflow-y: auto !important; /* Enable vertical scrolling for the textarea */
-  flex-grow: 1; /* Allow textarea to grow */
-  &:focus {
-    border-color: #337ab7;
-  }
-`;
-
 const Overlay = styled.div`
   position: absolute;
   top: 0;
@@ -121,6 +95,12 @@ const Footer = styled.div`
   flex-shrink: 0; /* Prevent footer from shrinking */
 `;
 
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 10px; /* Space between buttons */
+  align-items: center;
+`;
+
 const FileEditor = ({
   fileName,
   filePath,
@@ -137,12 +117,16 @@ const FileEditor = ({
   const [isEditing, setIsEditing] = useState(false);
   const [loadingContent, setLoadingContent] = useState(true);
   const [isViewingPreview, setIsViewingPreview] = useState(true); // New state for preview mode
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false); // State for delete confirmation drawer
 
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
   const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
+  const [msg, setMsg] = useState(null);
+
   useEffect(() => {
     const fetchFileContent = async () => {
+      setMsg(null);
       setLoadingContent(true);
       try {
         const response = await authFetch(`/api/v1/${readEndpoint}/${encodeURIComponent(filePath)}`);
@@ -153,7 +137,7 @@ const FileEditor = ({
         setFileContent(content);
         setOriginalContent(content);
       } catch (err) {
-        toaster.push(<Notification type="error" header="Error">Failed to load file content: {err.message}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header="Error">Failed to load file content: {err.message}</Notification>, { placement: 'topEnd' });
         setFileContent('');
         setOriginalContent('');
       } finally {
@@ -170,50 +154,54 @@ const FileEditor = ({
 
 
   const validateContent = useCallback(() => {
-    if (!filePath) return true;
+    if (!filePath) return "No file path";
     if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      try { yaml.load(fileContent); return true; } catch (e) { return false; }
+      try { yaml.load(fileContent); return null; } catch (e) { 
+        return e.message; 
+      }
     }
     if (filePath.endsWith('.json')) {
-      try { JSON.parse(fileContent); return true; } catch (e) { return false; }
+      try { JSON.parse(fileContent); return null; } catch (e) { return e.message; }
     }
-    return true;
+    return null;
   }, [filePath, fileContent]);
 
   const handleSave = useCallback(async () => {
-    if (!validateContent()) {
-      toaster.push(<Notification type="error" header="Validation Error">Invalid file format</Notification>, { placement: 'topEnd' });
+    setMsg(null);
+    let validationError = validateContent();
+    if (validationError) {
+      setMsg(<Notification type="error" header="Validation Error">Invalid file format: {validationError}</Notification>, { placement: 'topEnd' });
       return;
     }
 
     const formData = new FormData();
     formData.append('file', new Blob([fileContent]), fileName);
     try {
+      setMsg(null);
       const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
         method: 'POST',
         body: formData
       });
       if (!response.ok) {
         const errorData = await response.json();
-        toaster.push(<Notification type="error" header="Save Error">File not saved: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header="Save Error">File not saved: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
       } else {
         setOriginalContent(fileContent);
-        toaster.push(<Notification type="success" header="Success">File saved</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="success" header="Success">File saved</Notification>, { placement: 'topEnd' });
         setIsEditing(false); // Exit edit mode after saving
         if (onSaveSuccess) onSaveSuccess();
       }
     } catch (error) {
-      toaster.push(<Notification type="error" header="Network Error">Failed to save file: {error.message}</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="error" header="Network Error">Failed to save file: {error.message}</Notification>, { placement: 'topEnd' });
     }
   }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess]);
 
 
   const handleDelete = useCallback(async () => {
+    setShowDeleteConfirmation(false); // Close the drawer
+    setMsg(null);
     if (isCommonFile) {
-      toaster.push(<Notification type="warning" header="Permission Denied">Cannot delete common files.</Notification>, { placement: 'topEnd' });
-      return;
-    }
-    if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
+      setMsg(<Notification type="warning" header="Permission Denied">Cannot delete common files.</Notification>, { placement: 'topEnd' });
       return;
     }
     try {
@@ -222,25 +210,45 @@ const FileEditor = ({
       });
       if (!response.ok) {
         const errorData = await response.json();
-        toaster.push(<Notification type="error" header="Delete Error">File not deleted: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="error" header="Delete Error">File not deleted: {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
       } else {
-        toaster.push(<Notification type="success" header="Success">File deleted</Notification>, { placement: 'topEnd' });
+        setMsg(<Notification type="success" header="Success">File deleted</Notification>, { placement: 'topEnd' });
         if (onDeleteSuccess) onDeleteSuccess();
         onClose(); // Close the editor after deletion
       }
     } catch (error) {
-      toaster.push(<Notification type="error" header="Network Error">Failed to delete file: {error.message}</Notification>, { placement: 'topEnd' });
+      setMsg(<Notification type="error" header="Network Error">Failed to delete file: {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [filePath, fileName, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose]);
+  }, [filePath, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose]);
 
   const handleCancelEdit = useCallback(() => {
+    setMsg(null);
     setFileContent(originalContent); // Revert to original content
     setIsEditing(false); // Exit edit mode
   }, [originalContent]);
 
   const handleEditAsText = useCallback(() => {
+    setMsg(null);
     setIsViewingPreview(false); // Switch from preview to full editor view
     setIsEditing(true);         // Enable editing
+  }, []);
+
+  const handleDownload = useCallback(() => {
+    setMsg(null);
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [fileContent, fileName]);
+
+  // This is the crucial fix for "object Object"
+  const handleContentChange = useCallback((value) => {
+    setFileContent(value);
   }, []);
 
   const hasUnsavedChanges = fileContent !== originalContent;
@@ -256,11 +264,23 @@ const FileEditor = ({
   return (
     <FileEditorContainer>
       <Header>
-        <h3>{fileName}</h3>
-        <IconButton icon={<X />} onClick={onClose} appearance="subtle" />
+        <Title>{fileName}</Title>
+        <HeaderActions>
+          <IconButton icon={<Download />} onClick={handleDownload} appearance="subtle" title="Download File" />
+          <IconButton
+            icon={<Trash2 />}
+            onClick={() => setShowDeleteConfirmation(true)} // Open confirmation drawer
+            appearance="subtle"
+            color="red" // Make the trashcan icon red
+            title="Delete File"
+            disabled={!filePath || isCommonFile || loadingContent || isEditing}
+          />
+          <IconButton icon={<X />} onClick={onClose} appearance="subtle" title="Close" />
+        </HeaderActions>
       </Header>
 
       <ContentArea>
+        {msg}
         {loadingContent ? (
           <Overlay>Loading file content...</Overlay>
         ) : (
@@ -272,11 +292,16 @@ const FileEditor = ({
           ) : (
             <>
               {!isEditing && <Overlay>Click Edit to modify</Overlay>}
-              <StyledInput
+              <Input
+                style={{fontFamily: 'Consolas, monospace',
+                  fontSize: 'smaller',
+                  resize: 'auto',
+                  height: '100%'
+                }}
                 value={fileContent}
                 as="textarea"
-                rows={20} // This might be overridden by flex-grow: 1 and explicit height/max-height on ContentArea or StyledInput
-                onChange={setFileContent}
+                rows={20}
+                onChange={handleContentChange} // Use the new handler here
                 disabled={!isEditing || !filePath}
               />
             </>
@@ -306,13 +331,6 @@ const FileEditor = ({
                   <Edit style={{ marginRight: 5 }} /> Edit
                 </Button>
               )}
-              <Button
-                appearance="subtle"
-                onClick={handleDelete}
-                disabled={!filePath || isCommonFile || loadingContent || isEditing}
-              >
-                <Trash2 style={{ marginRight: 5 }} /> Delete
-              </Button>
             </>
           )}
         </ButtonToolbar>
@@ -334,6 +352,29 @@ const FileEditor = ({
           )}
         </ButtonToolbar>
       </Footer>
+
+      {/* Delete Confirmation Drawer */}
+      <Drawer
+        backdrop={true}
+        placement="bottom"
+        open={showDeleteConfirmation}
+        onClose={() => setShowDeleteConfirmation(false)}
+        size="xs" // Smaller drawer
+      >
+        <Drawer.Header>
+          <Drawer.Title><AlertTriangle color="orange" style={{ marginRight: 10 }} /> Confirm Deletion</Drawer.Title>
+        </Drawer.Header>
+        <Drawer.Body>
+          <p>Are you sure you want to delete the file <strong>&quot;{fileName}&quot;</strong>?</p>
+          <p>This action cannot be undone.</p>
+          <Button onClick={handleDelete} appearance="primary" color="red">
+            <Trash2 style={{ marginRight: 5 }} /> Delete Permanently
+          </Button>
+          <Button onClick={() => setShowDeleteConfirmation(false)} appearance="subtle">
+            Cancel
+          </Button>
+        </Drawer.Body>
+      </Drawer>
 
       {/* Commented out external editors - uncomment and import if available */}
       {/*

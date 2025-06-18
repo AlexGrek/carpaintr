@@ -14,7 +14,8 @@ const filesystemConfigs = [
         listEndpoint: "editor/list_user_files",
         readEndpoint: "editor/read_user_file",
         uploadEndpoint: "editor/upload_user_file",
-        deleteEndpoint: "editor/delete_user_file"
+        deleteEndpoint: "editor/delete_user_file",
+        historyEnabled: true
     }
 ];
 

@@ -39,6 +39,7 @@ pub enum FsEntry {
     },
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
 pub struct CommitInfo {
     pub hash: String,
     pub author: String,
