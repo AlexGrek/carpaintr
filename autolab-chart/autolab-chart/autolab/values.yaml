@@ -1,0 +1,78 @@
+# Default values for autolab-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+autolabApi:
+  replicaCount: 1
+  image:
+    repository: localhost:5000/autolab-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  terminationGracePeriodSeconds: 2
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  secretName: autolab-api-secret
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  env:
+    environment: "production"
+    databaseUrl: "/app/data/sled_db"
+    adminFilePath: "/var/secrets/admins.txt"
+    dataDirPath: "/app/data"
+    logFilePath: "/app/data/application.log"
+    licenseCacheSize: "100"
+  persistence:
+    hostPath: "/etc/autolab-data"
+
+autolabPdfgen:
+  replicaCount: 1
+  image:
+    repository: localhost:5000/autolab-pdfgen
+    tag: latest
+    pullPolicy: IfNotPresent
+  terminationGracePeriodSeconds: 2
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 5000
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+  env:
+    environment: "production"
+
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: le
+  hosts:
+    - host: autolab.dcommunity.space
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: autolab-dcommunity-space-tls
+      hosts:
+        - autolab.dcommunity.space
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Common labels
+labels: {}
