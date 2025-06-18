@@ -5,6 +5,7 @@ import { Suspense, lazy } from 'react';
 import { GlobalCallbacksProvider } from './components/GlobalCallbacksContext.jsx';
 import { LocaleProvider } from './localization/LocaleContext.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import ComponentLoadingPage from './components/layout/ComponentLoadingPage.jsx';
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
@@ -29,7 +30,7 @@ function App() {
       <GlobalCallbacksProvider>
         <Router>
           <ScrollToTop />
-          <Suspense fallback={<div className="loader">Loading...</div>}>
+          <Suspense fallback={<ComponentLoadingPage/>}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
