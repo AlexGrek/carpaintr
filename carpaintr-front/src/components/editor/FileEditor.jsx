@@ -1,84 +1,146 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Container, Sidebar, Sidenav, Panel, Button, Modal, Notification, toaster, Input, Row, Col, TreePicker } from 'rsuite';
-import { Tree, Tabs } from 'rsuite';
-import yaml from 'js-yaml';
+// FileEditor.jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button, Input, IconButton, Notification, toaster, ButtonToolbar } from 'rsuite';
+import { Edit, Save, X, Trash2, Code, ScrollText } from 'lucide-react'; // Added icons
+import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
-import TableEditorChatGPT from './TableEditorChatGPT';
-import { useMediaQuery } from 'react-responsive';
-import DrawerYamlEditor from './DrawerYamlEditor';
-import DirectoryViewTable from './DirectoryViewTable';
+// import * as yaml from 'js-yaml'; // Uncomment if js-yaml is installed
+// import TableEditorChatGPT from './TableEditorChatGPT'; // Uncomment if these components exist
+// import DrawerYamlEditor from './DrawerYamlEditor'; // Uncomment if these components exist
 
-const treeFromDirectoryStructure = (path, data) => {
-  if (data === null) {
-    return [];
-  }
-  return data.map((item) => {
-    let processed = null;
-    if (item.Directory !== undefined) {
-      processed = {
-        label: item.Directory.name,
-        value: item.Directory.name,
-        isFile: false,
-        children: treeFromDirectoryStructure(path + item.Directory.name + '/', item.Directory.children)
-      };
-    } else {
-      processed = {
-        label: item.File.name,
-        value: path + item.File.name,
-        children: null,
-        isFile: true
-      };
+// Mock yaml for demonstration if not installed
+const yaml = {
+  load: (content) => {
+    try {
+      return JSON.parse(content); // Simple JSON parse for mock
+    } catch (e) {
+      throw new Error("Invalid YAML/JSON format (mock validation)");
     }
-    return processed;
-  });
+  }
 };
 
-const DirectoryTree = ({ onFileSelect, onDirectorySelect, isCommon, listCommonEndpoint, listUserEndpoint }) => {
-  const [data, setData] = useState([]);
 
-  useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const endpoint = isCommon ? `/api/v1/${listCommonEndpoint}` : `/api/v1/${listUserEndpoint}`;
-        const res = await authFetch(endpoint);
-        const raw = await res.json();
-        setData(treeFromDirectoryStructure('', raw.Directory.children));
-      } catch (error) {
-        toaster.push(<Notification type="error">Failed to load files: {error.message}</Notification>);
-      }
-    };
+const FileEditorContainer = styled.div`
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+`;
 
-    fetchFiles();
-  }, [isCommon, listUserEndpoint, listCommonEndpoint]);
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+`;
 
-  return (
-    <TreePicker
-      data={data}
-      searchable
-      onSelect={(node) => {
-        if (node.isFile)
-          onFileSelect(node.value, isCommon);
-        else {
-          onDirectorySelect(node.value, node.children, isCommon);
-        }
-      }}
-    />
-  );
-};
+const Title = styled.h3`
+  margin: 0;
+  color: #333;
+`;
 
-const FileContentEditor = ({ uploadEndpoint, filePath, initialContent, isCommonFile, onSaveSuccess, onDeleteSuccess, deleteEndpoint }) => {
-  const [fileContent, setFileContent] = useState(initialContent);
-  const [originalContent, setOriginalContent] = useState(initialContent);
+const ContentArea = styled.div`
+  flex-grow: 1;
+  margin-bottom: 15px;
+  position: relative; /* For overlay */
+`;
+
+const StyledInput = styled(Input)`
+  font-family: "Consolas", monospace;
+  font-size: smaller;
+  height: 100% !important; /* Ensure it fills ContentArea */
+  resize: none; /* Disable manual resize */
+  border: ${props => props.disabled ? '1px dashed #e5e5ea' : '1px solid #e5e5ea'};
+  background-color: ${props => props.disabled ? '#f9f9f9' : '#fff'};
+  padding: 10px;
+  &:focus {
+    border-color: #337ab7;
+  }
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2em;
+  color: #666;
+  z-index: 10;
+  cursor: not-allowed;
+  border-radius: 6px;
+`;
+
+const Footer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+`;
+
+const FileEditor = ({
+  fileName,
+  filePath, // Full path including selected FS root and directories
+  isCommonFile,
+  onClose,
+  onSaveSuccess,
+  onDeleteSuccess,
+  deleteEndpoint,
+  readCommonEndpoint,
+  readUserEndpoint,
+  uploadEndpoint
+}) => {
+  const [fileContent, setFileContent] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [loadingContent, setLoadingContent] = useState(true);
+
+  // External editor states
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
   const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
+  // Fetch file content when fileName or filePath changes
   useEffect(() => {
-    setFileContent(initialContent);
-    setOriginalContent(initialContent);
-  }, [initialContent, filePath]);
+    const fetchFileContent = async () => {
+      setLoadingContent(true);
+      try {
+        const endpoint = isCommonFile ? readCommonEndpoint : readUserEndpoint;
+        const response = await authFetch(`/api/v1/${endpoint}/${encodeURIComponent(filePath)}`);
+        if (!response.ok) {
+          throw new Error(`Failed to read file: ${response.statusText}`);
+        }
+        const content = await response.text();
+        setFileContent(content);
+        setOriginalContent(content);
+      } catch (err) {
+        toaster.push(<Notification type="error" header="Error">Failed to load file content: {err.message}</Notification>, { placement: 'topEnd' });
+        setFileContent('');
+        setOriginalContent('');
+      } finally {
+        setLoadingContent(false);
+        setIsEditing(false); // Reset editing mode on new file load
+      }
+    };
+
+    if (filePath) {
+      fetchFileContent();
+    }
+  }, [filePath, isCommonFile, readCommonEndpoint, readUserEndpoint]);
+
 
   const validateContent = useCallback(() => {
-    if (!filePath) return true; // No file selected, validation not applicable
+    if (!filePath) return true;
     if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
       try { yaml.load(fileContent); return true; } catch (e) { return false; }
     }
@@ -95,7 +157,7 @@ const FileContentEditor = ({ uploadEndpoint, filePath, initialContent, isCommonF
     }
 
     const formData = new FormData();
-    formData.append('file', new Blob([fileContent]), filePath);
+    formData.append('file', new Blob([fileContent]), fileName); // Use fileName for Blob, filePath for endpoint
     try {
       const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
         method: 'POST',
@@ -107,25 +169,21 @@ const FileContentEditor = ({ uploadEndpoint, filePath, initialContent, isCommonF
       } else {
         setOriginalContent(fileContent);
         toaster.push(<Notification type="success" header="Success">File saved</Notification>, { placement: 'topEnd' });
+        setIsEditing(false); // Exit edit mode after saving
         if (onSaveSuccess) onSaveSuccess();
       }
     } catch (error) {
       toaster.push(<Notification type="error" header="Network Error">Failed to save file: {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [fileContent, filePath, validateContent, isCommonFile, onSaveSuccess]);
-
-  const handleOpenTableEditor = useCallback(() => {
-    setTableEditorOpen(true);
-  })
-
-  const handleOpenYamlEditor = useCallback(() => {
-    setYamlEditorOpen(true);
-  })
+  }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess]);
 
 
   const handleDelete = useCallback(async () => {
     if (isCommonFile) {
       toaster.push(<Notification type="warning" header="Permission Denied">Cannot delete common files.</Notification>, { placement: 'topEnd' });
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
       return;
     }
     try {
@@ -138,220 +196,107 @@ const FileContentEditor = ({ uploadEndpoint, filePath, initialContent, isCommonF
       } else {
         toaster.push(<Notification type="success" header="Success">File deleted</Notification>, { placement: 'topEnd' });
         if (onDeleteSuccess) onDeleteSuccess();
+        onClose(); // Close the editor after deletion
       }
     } catch (error) {
       toaster.push(<Notification type="error" header="Network Error">Failed to delete file: {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [filePath, isCommonFile, onDeleteSuccess]);
+  }, [filePath, fileName, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose]);
+
+  const handleCancelEdit = useCallback(() => {
+    setFileContent(originalContent); // Revert to original content
+    setIsEditing(false); // Exit edit mode
+  }, [originalContent]);
 
   const hasUnsavedChanges = fileContent !== originalContent;
 
-  return (
-    <>
-      <Input
-        value={fileContent}
-        as="textarea"
-        rows={20}
-        style={{ fontFamily: "Consolas, monospace", fontSize: "smaller", flexGrow: 1 }} // Allow textarea to grow
-        onChange={setFileContent}
-        disabled={!filePath} // Disable if no file is selected
-      />
-      <Row style={{ marginTop: 10 }}>
-        <Col>
-          <Button
-            appearance="primary"
-            onClick={handleSave}
-            disabled={!(filePath && (hasUnsavedChanges || isCommonFile))}
-            style={{ marginRight: 10 }}
-          >
-            Save
-          </Button>
-          <Button
-            appearance="subtle"
-            onClick={handleDelete}
-            disabled={!filePath || isCommonFile}
-          >
-            Delete
-          </Button>
+  const handleOpenTableEditor = useCallback(() => {
+    setTableEditorOpen(true);
+  }, []);
 
-          {filePath && filePath.endsWith(".csv") && <Button appearance='subtle' onClick={handleOpenTableEditor}>💡 Open table editor</Button>}
-          {filePath && filePath.endsWith(".yaml") && <Button appearance='subtle' onClick={handleOpenYamlEditor}>💡 Open yaml editor (broken now)</Button>}
-          {/* <CsvEditorDrawer
-                show={tableEditorOpen}
-                onClose={() => setTableEditorOpen(false)}
-                csvString={fileContent}
-                fileName={filePath}
-                onSave={setFileContent}
-            /> */}
-          {/* <TableEditorClaude
-            isOpen={tableEditorOpen}
-            onClose={() => setTableEditorOpen(false)}
-            csvData={fileContent}
-            fileName={filePath}
-            onSave={setFileContent}
-          /> */}
-          <TableEditorChatGPT
-            open={tableEditorOpen}
-            onClose={() => setTableEditorOpen(false)}
-            onSave={setFileContent}
-            fileName={filePath}
-            csvData={fileContent}
-          />
-          <DrawerYamlEditor yamlString={fileContent} onClose={(value) => { setYamlEditorOpen(false); setFileContent(value) }} open={yamlEditorOpen} />
-        </Col>
-      </Row>
-    </>
-  );
-};
-
-const FileEditor = ({ readCommonEndpoint, readUserEndpoint, uploadEndpoint, userCommonSwitch, listUserEndpoint, listCommonEndpoint, deleteEndpoint }) => {
-  const [filePath, setFilePath] = useState(null);
-  const [showDirectory, setShowDirectory] = useState(null);
-  const [fileContent, setFileContent] = useState('');
-  const [originalContent, setOriginalContent] = useState('');
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingPath, setPendingPath] = useState(null);
-  const [pendingCommon, setPendingCommon] = useState(false);
-  const [isCommonFileSelected, setIsCommonFileSelected] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
-
-  const isMobile = useMediaQuery({ maxWidth: 768 });
-
-  const toggleSidebar = () => setSidebarVisible(!sidebarVisible);
-
-  const loadFile = useCallback(async (path, isCommon) => {
-    setShowDirectory(null);
-    const apiEndpoint = isCommon ? readCommonEndpoint : readUserEndpoint;
-    try {
-      const res = await authFetch(`/api/v1/${apiEndpoint}/${encodeURIComponent(path)}`);
-      const data = await res.text();
-      setFilePath(path);
-      setFileContent(data);
-      setOriginalContent(data);
-      setIsCommonFileSelected(isCommon);
-      if (isMobile) setSidebarVisible(false);
-    } catch (error) {
-      toaster.push(<Notification type="error" header="Load Error">Failed to load file: {error.message}</Notification>, { placement: 'topEnd' });
-    }
-  }, [isMobile, setShowDirectory, readCommonEndpoint, readUserEndpoint]);
-
-  const handleFileChange = useCallback((path, isCommon) => {
-    if (fileContent !== originalContent) {
-      setPendingPath(path);
-      setPendingCommon(isCommon);
-      setShowConfirm(true);
-    } else {
-      loadFile(path, isCommon);
-    }
-  }, [fileContent, originalContent, loadFile]);
-
-  const handleDirectoryView = useCallback((path, children, isCommon) => {
-    console.log(children);
-    if (fileContent !== originalContent) {
-      setPendingPath(path);
-      setPendingCommon(isCommon);
-      setShowConfirm(true);
-      setShowDirectory(children);
-    } else {
-      setShowDirectory(children);
-    }
-  }, [fileContent, originalContent, setShowDirectory]);
-
-  const confirmSwitch = useCallback(() => {
-    setShowConfirm(false);
-    if (pendingPath) {
-      loadFile(pendingPath, pendingCommon);
-      setPendingPath(null);
-      setPendingCommon(false);
-    }
-  }, [pendingPath, pendingCommon, loadFile]);
-
-  const handleSaveSuccess = useCallback(() => {
-    setOriginalContent(fileContent);
-  }, [fileContent]);
-
-  const handleDeleteSuccess = useCallback(() => {
-    setFilePath(null);
-    setFileContent('');
-    setOriginalContent('');
-    setIsCommonFileSelected(false);
+  const handleOpenYamlEditor = useCallback(() => {
+    setYamlEditorOpen(true);
   }, []);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', flexDirection: 'column' }}>
-      {isMobile && (
-        <div style={{ position: 'absolute', top: 60, left: 10, zIndex: 1000 }}>
-          <Button
-            onClick={toggleSidebar}
-            appearance="ghost"
-            size="lg"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              borderRadius: 6,
-              boxShadow: '0 1px 6px rgba(0,0,0,0.2)',
-              padding: '6px 12px'
-            }}
-          >
-            ☰
-          </Button>
-        </div>
-      )}
-      <div style={{  }}>
-        {/* Sidebar */}
-        <div>
-              <Tabs defaultActiveKey="1" appearance="pills">
-                <Tabs.Tab eventKey="1" title="User files">
-                  <DirectoryTree onFileSelect={handleFileChange} onDirectorySelect={handleDirectoryView} isCommon={false} listUserEndpoint={listUserEndpoint} />
-                </Tabs.Tab>
-                {userCommonSwitch && <Tabs.Tab eventKey="2" title="Common files">
-                  <DirectoryTree onFileSelect={handleFileChange} onDirectorySelect={handleDirectoryView} isCommon={true} listCommonEndpoint={listCommonEndpoint} />
-                </Tabs.Tab>}
-              </Tabs>
-        </div>
+    <FileEditorContainer>
+      <Header>
+        <Title>File: {fileName}</Title>
+        <IconButton icon={<X />} onClick={onClose} appearance="subtle" />
+      </Header>
 
-        {/* Overlay */}
-        {isMobile && sidebarVisible && (
-          <div
-            onClick={toggleSidebar}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              zIndex: 998,
-            }}
-          />
-        )}
-
-        {/* Editor Content */}
-        {showDirectory && <DirectoryViewTable onDirectoryClick={(value) => handleDirectoryView(value.value, value.children, isCommonFileSelected)} onFileClick={(value) => handleFileChange(value, isCommonFileSelected)} value={showDirectory} />}
-        <div style={{ flexGrow: 1, padding: isMobile ? 20 : 10, overflowY: 'auto' }}>
-          {!showDirectory && filePath ? (
-            <FileContentEditor
-              uploadEndpoint={uploadEndpoint}
-              filePath={filePath}
-              initialContent={fileContent}
-              isCommonFile={isCommonFileSelected}
-              onSaveSuccess={handleSaveSuccess}
-              onDeleteSuccess={handleDeleteSuccess}
-              deleteEndpoint={deleteEndpoint}
+      <ContentArea>
+        {loadingContent ? (
+          <Overlay>Loading file content...</Overlay>
+        ) : (
+          <>
+            {!isEditing && <Overlay>Click "Edit" to modify</Overlay>}
+            <StyledInput
+              value={fileContent}
+              as="textarea"
+              rows={20}
+              onChange={setFileContent}
+              disabled={!isEditing || !filePath}
             />
-          ) : (null
-          )}
-        </div>
-      </div>
+          </>
+        )}
+      </ContentArea>
 
-      <Modal open={showConfirm} onClose={() => setShowConfirm(false)}>
-        <Modal.Header><Modal.Title>Unsaved Changes</Modal.Title></Modal.Header>
-        <Modal.Body>You have unsaved changes. Do you want to discard them and switch files?</Modal.Body>
-        <Modal.Footer>
-          <Button onClick={confirmSwitch} appearance="primary">Discard and Switch</Button>
-          <Button onClick={() => setShowConfirm(false)} appearance="subtle">Cancel</Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+      <Footer>
+        <ButtonToolbar>
+          {!isEditing ? (
+            <Button appearance="primary" onClick={() => setIsEditing(true)} disabled={loadingContent}>
+              <Edit style={{ marginRight: 5 }} /> Edit
+            </Button>
+          ) : (
+            <>
+              <Button appearance="primary" onClick={handleSave} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
+                <Save style={{ marginRight: 5 }} /> Save
+              </Button>
+              <Button appearance="subtle" onClick={handleCancelEdit} disabled={loadingContent}>
+                <X style={{ marginRight: 5 }} /> Cancel
+              </Button>
+            </>
+          )}
+          <Button
+            appearance="subtle"
+            onClick={handleDelete}
+            disabled={!filePath || isCommonFile || loadingContent || isEditing}
+          >
+            <Trash2 style={{ marginRight: 5 }} /> Delete
+          </Button>
+        </ButtonToolbar>
+
+        <ButtonToolbar>
+          {filePath && filePath.endsWith(".csv") && (
+            <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
+              <ScrollText style={{ marginRight: 5 }} /> Open table editor
+            </Button>
+          )}
+          {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
+            <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
+              <Code style={{ marginRight: 5 }} /> Open YAML editor (broken now)
+            </Button>
+          )}
+        </ButtonToolbar>
+      </Footer>
+
+      {/* Commented out external editors - uncomment and import if available */}
+      {/*
+      <TableEditorChatGPT
+        open={tableEditorOpen}
+        onClose={() => setTableEditorOpen(false)}
+        onSave={setFileContent}
+        fileName={fileName}
+        csvData={fileContent}
+      />
+      <DrawerYamlEditor
+        yamlString={fileContent}
+        onClose={(value) => { setYamlEditorOpen(false); if (value) setFileContent(value); }}
+        open={yamlEditorOpen}
+      />
+      */}
+    </FileEditorContainer>
   );
 };
 

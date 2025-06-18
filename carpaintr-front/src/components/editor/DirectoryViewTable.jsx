@@ -69,23 +69,6 @@ function renderNameWithExtension(label) {
   );
 }
 
-function flattenNodes(node) {
-  const result = [];
-
-  function walk(n, parentPath = '') {
-    const full = { ...n, path: parentPath + n.label };
-    result.push(full);
-    if (!n.isFile && n.children) {
-      for (const c of n.children) {
-        walk(c, parentPath + n.label + '/');
-      }
-    }
-  }
-
-  walk(node);
-  return result;
-}
-
 export default function DirectoryViewTable({ value, onFileClick, onDirectoryClick }) {
   const data = value;
 
