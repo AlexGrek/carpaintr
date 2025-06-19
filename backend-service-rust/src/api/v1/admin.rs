@@ -41,7 +41,7 @@ pub async fn generate_license_handler(
     };
 
     // Generate the JWT token
-    let token = generate_license_token(&user_email, expiry_date, app_state.jwt_license_secret.as_bytes())?;
+    let token = generate_license_token(&user_email, expiry_date, Some("Basic".to_string()), app_state.jwt_license_secret.as_bytes())?;
 
     // Save the license file
     save_license_file(&user_email, &token, &app_state.data_dir_path).await?;

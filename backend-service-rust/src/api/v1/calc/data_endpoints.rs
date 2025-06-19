@@ -1,5 +1,5 @@
 use crate::{
-    calc::{cars::body_type_into_t1_entry, seasons::get_current_season_info},
+    calc::{car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry, seasons::get_current_season_info},
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
@@ -13,7 +13,7 @@ use std::{path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
 const GLOBAL: &'static str = "global";
-const T1: &'static str = "tables/t1.csv";
+pub const T1: &'static str = "tables/t1.csv";
 const SEASONS_YAML: &'static str = "seasons.yaml";
 // const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
 // const COLORS_YAML: &'static str = "colors.yaml";
@@ -27,6 +27,22 @@ pub async fn list_car_makes(
         .map_err(|e| AppError::IoError(e))?;
     let car_makes: Vec<String> = data.iter().map(|s| s.replace(".yaml", "")).collect();
     Ok(Json(car_makes))
+}
+
+pub async fn list_class_body_types(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    // Read the file content
+    let file_path = PathBuf::from(&GLOBAL).join(&CLASS_TYPE_MAPPING_FILE);
+    let path_in_userspace =
+        crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
+            .await
+            .map_err(|e| AppError::IoError(e))?;
+    let string = tokio::fs::read_to_string(path_in_userspace)
+        .await
+        .map_err(|_e| AppError::FileNotFound)?;
+    Ok(string)
 }
 
 pub async fn get_cars_by(

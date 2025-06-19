@@ -83,6 +83,27 @@ async fn main() -> tokio::io::Result<()> {
         admin_file_path: PathBuf::from(admin_file_path),
     });
 
+    let init_result = api::v1::admin_editor_endpoints::run_list_class_body_types_rebuild(
+        &shared_state.data_dir_path,
+        None::<String>,
+    )
+    .await;
+    match init_result {
+        Ok(_) => log_event(
+            LogLevel::Debug,
+            format!("Created body type class mapping at application startup."),
+            None::<String>,
+        ),
+        Err(e) => log_event(
+            LogLevel::Error,
+            format!(
+                "Failed to initialize body type class mapping at application startup: {}",
+                e.to_string()
+            ),
+            None::<String>,
+        ),
+    }
+
     // Define a fallback handler for API routes that don't match
     async fn api_fallback() -> impl IntoResponse {
         (StatusCode::NOT_FOUND, "API endpoint not found").into_response()
@@ -120,21 +141,29 @@ async fn main() -> tokio::io::Result<()> {
                     "/license/{user_email}/{license_filename}",
                     get(get_user_license_handler),
                 )
+                .route(
+                    "/trigger_list_class_body_types_rebuild_global",
+                    post(api::v1::admin_editor_endpoints::trigger_list_class_body_types_rebuild_global),
+                )
                 .nest(
                     "/editor",
-                    Router::new().route(
-                        "/list_files",
-                        get(api::v1::admin_editor_endpoints::get_file_list),
-                    ).route(
-                        "/upload_file/{path}",
-                        post(api::v1::admin_editor_endpoints::upload_file)
-                    ).route(
-                        "/read_file/{path}",
-                        get(api::v1::admin_editor_endpoints::read_file)
-                    ).route(
-                        "/delete_file/{path}",
-                        delete(api::v1::admin_editor_endpoints::delete_file)
-                    ),
+                    Router::new()
+                        .route(
+                            "/list_files",
+                            get(api::v1::admin_editor_endpoints::get_file_list),
+                        )
+                        .route(
+                            "/upload_file/{path}",
+                            post(api::v1::admin_editor_endpoints::upload_file),
+                        )
+                        .route(
+                            "/read_file/{path}",
+                            get(api::v1::admin_editor_endpoints::read_file),
+                        )
+                        .route(
+                            "/delete_file/{path}",
+                            delete(api::v1::admin_editor_endpoints::delete_file),
+                        ),
                 )
                 .layer(from_fn_with_state(
                     shared_state.clone(),
@@ -175,6 +204,10 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/carmakes",
                     get(api::v1::calc::data_endpoints::list_car_makes),
+                )
+                .route(
+                    "/list_class_body_types",
+                    get(api::v1::calc::data_endpoints::list_class_body_types),
                 )
                 .route("/season", get(api::v1::calc::data_endpoints::get_season))
                 .route(
@@ -217,14 +250,8 @@ async fn main() -> tokio::io::Result<()> {
                     "/upload_user_file/{path}",
                     post(api::editor_endpoints::upload_user_file),
                 )
-                .route(
-                    "/list_commits",
-                    get(api::editor_endpoints::list_commits),
-                )
-                .route(
-                    "/revert_commit",
-                    post(api::editor_endpoints::revert_commit),
-                )
+                .route("/list_commits", get(api::editor_endpoints::list_commits))
+                .route("/revert_commit", post(api::editor_endpoints::revert_commit))
                 .route(
                     "/read_common_file/{path}",
                     get(api::editor_endpoints::read_common_file),
