@@ -34,7 +34,7 @@ pub async fn list_class_body_types(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
-    let file_path = PathBuf::from(&GLOBAL).join(&CLASS_TYPE_MAPPING_FILE);
+    let file_path = PathBuf::from(&CLASS_TYPE_MAPPING_FILE);
     let path_in_userspace =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await

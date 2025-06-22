@@ -39,7 +39,9 @@ const TRANSLATIONS_BASIC = {
     "Save": "Зберегти",
     "Load": "Завантажити",
     "Articles": "Тексти",
-    "Type": "Тип"
+    "Type": "Тип",
+    "Error": "Помилка",
+    "Close": "Закрити"
   },
   en: {}
 };

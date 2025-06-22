@@ -5,6 +5,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use serde::Serialize;
 
+use crate::calc::cars::t1_entry_into_body_type;
 use crate::errors::AppError;
 use crate::exlogging::log_event;
 
@@ -12,17 +13,7 @@ pub const CLASS_TYPE_MAPPING_FILE: &'static str = "tables/class_body_mapping.yam
 
 
 /// Reads a CSV file and creates a mapping from carClass to a list of unique bodyTypes.
-///
-/// Assumes the first column is 'carClass' and the second column is 'bodyType'.
-///
-/// # Arguments
-/// * `file_path` - The path to the input CSV file.
-///
-/// # Returns
-/// A `Result` containing a `HashMap<String, Vec<String>>` where keys are car classes
-/// and values are unique lists of body types, or an `Box<dyn Error>` on failure.
 pub fn read_csv_and_map<P: AsRef<Path>>(file_path: &P, catalog_root: &P) -> Result<HashMap<String, Vec<String>>, Box<dyn Error>> {
-    // Create a CSV reader
     let _path = crate::utils::safety_check(catalog_root, file_path)?;
     if !fs::exists(file_path).unwrap_or(false) {
         return Err(Box::new(AppError::FileNotFound));
@@ -48,7 +39,7 @@ pub fn read_csv_and_map<P: AsRef<Path>>(file_path: &P, catalog_root: &P) -> Resu
 
         // Insert the bodyType into the HashSet associated with the carClass
         // If the carClass doesn't exist, a new HashSet is created
-        mapping.entry(car_class).or_default().insert(body_type);
+        mapping.entry(car_class).or_default().insert(t1_entry_into_body_type(&body_type));
     }
 
     // Convert the HashMap<String, HashSet<String>> to HashMap<String, Vec<String>>

@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
-import { Button, IconButton, HStack, Loader } from "rsuite";
+import { Button, IconButton, HStack, Loader, Message } from "rsuite";
 import GridIcon from '@rsuite/icons/Grid';
-import "./SelectionInput.css"; // Import the CSS file
+import "./SelectionInput.css";
+import isArray from 'lodash/isArray';
 
 const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfirm = true, labels = null, labelFunction = null }) => {
     const handleSelect = (value) => {
@@ -9,10 +10,13 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
     };
 
     useEffect(() => {
+        if (!isArray(values)) {
+            console.error(values);
+        }
         if (values.length === 1 && autoConfirm) {
             onChange(values[0])
         }
-    }, [values])
+    }, [autoConfirm, onChange, values])
 
     const handleEdit = () => {
         if (onChange) onChange(null);
@@ -35,17 +39,21 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
             {name && <span>{name}:</span>}
             {!selectedValue ? (
                 <div className="button-container">
-                    {values.length === 0 ? <Loader/> : values.map((value, index) => (
-                        <Button
-                            key={value}
-                            appearance="primary"
-                            className="fade-in-selection"
-                            style={{ animationDelay: `${index * 0.02}s` }} // Staggered animation
-                            onClick={() => handleSelect(value)}
-                        >
-                            {getLabel(value)}
-                        </Button>
-                    ))}
+                    {
+                        isArray(values) ? <>
+                            {values.length === 0 ? <Loader /> : values.map((value, index) => (
+                                <Button
+                                    key={value}
+                                    appearance="primary"
+                                    className="fade-in-selection"
+                                    style={{ animationDelay: `${index * 0.02}s` }} // Staggered animation
+                                    onClick={() => handleSelect(value)}
+                                >
+                                    {getLabel(value)}
+                                </Button>
+                            ))}
+                        </> : <Message type="error">Not a list of values: {JSON.stringify(values)}</Message>
+                    }
                 </div>
             ) : (
                 <div className="selected-value-container">

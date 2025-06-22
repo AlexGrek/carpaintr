@@ -20,24 +20,23 @@ pub struct CarData {
     euro_body_types: Vec<String>
 }
 
-// Function to parse the YAML file
+
 pub fn parse_car_yaml<P: AsRef<Path>>(path: P) -> Result<HashMap<String, CarData>, Box<dyn Error>> {
-    // Open the file
     let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    
-    // Parse the YAML into our HashMap
+    let reader = BufReader::new(file);    
     let car_data: HashMap<String, CarData> = serde_yaml::from_reader(reader)?;
     
     Ok(car_data)
 }
 
+
+// NAME MAPPING
 pub fn body_type_into_t1_entry(s: &str) -> String {
     match s {
-        "wagon" => "УНИВЕРСАЛ ".into(),
+        "wagon" => "УНИВЕРСАЛ".into(),
         "pickup" => "ПИКАП".into(),
         "sedan" => "СЕДАН".into(),
-        "liftback" => "ЛИФТБЭК 5дв".into(),
+        "liftback" => "ЛИФТБЭК 5 дверей".into(),
         "hatchback 5 doors" => "ХЕТЧБЕК 5 дверей".into(),
         "hatchback 3 doors" => "ХЕТЧБЕК 3 двери".into(),
         "suv 3 doors" => "ВНЕДОРОЖНИК 3 дверный".into(),
@@ -47,9 +46,21 @@ pub fn body_type_into_t1_entry(s: &str) -> String {
     }
 }
 
-// Function to parse the CSV file
+pub fn t1_entry_into_body_type(s: &str) -> String {
+    match s {
+        "УНИВЕРСАЛ" => "wagon".into(),
+        "ПИКАП" => "pickup".into(),
+        "СЕДАН" => "sedan".into(),
+        "ЛИФТБЭК 5 дверей" => "liftback".into(),
+        "ХЕТЧБЕК 5 дверей" => "hatchback 5 doors".into(),
+        "ХЕТЧБЕК 3 двери" => "hatchback 3 doors".into(),
+        "ВНЕДОРОЖНИК 3 дверный" => "suv 3 doors".into(),
+        "ВНЕДОРОЖНИК 5 дверный" => "suv 5 doors".into(),
+        "КУПЕ" => "coupe".into(),
+        x => x.into(),
+    }
+}
 
-// Define a struct that matches your CSV structure
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CarPart {
     #[serde(rename = "Список Класс")]
@@ -61,38 +72,41 @@ pub struct CarPart {
     #[serde(rename = "Список деталь рус")]
     pub detail_rus: String,
     
-    #[serde(rename = "Список деталь  укр")]
+    #[serde(rename = "Список деталь eng")]
+    pub detail_eng: String,
+
+    #[serde(rename = "Список деталь укр")]
     pub detail_ukr: String,
     
-    #[serde(rename = "порядок печати")]
-    pub print_order: String,
+    // #[serde(rename = "порядок печати")]
+    // pub print_order: String,
     
-    #[serde(rename = "съемная несъемная")]
-    pub removable: String,
+    // #[serde(rename = "съемная несъемная")]
+    // pub removable: String,
     
-    #[serde(rename = "красится наружно  или 2 стороны")]
-    pub paint_type: String,
+    // #[serde(rename = "красится наружно  или 2 стороны")]
+    // pub paint_type: String,
     
-    #[serde(rename = "с чего сделан")]
-    pub material: String,
+    // #[serde(rename = "с чего сделан")]
+    // pub material: String,
     
-    #[serde(rename = "Ремонт з зовнішнім фарбуванням")]
-    pub repair_external_paint: String,
+    // #[serde(rename = "Ремонт з зовнішнім фарбуванням")]
+    // pub repair_external_paint: String,
     
-    #[serde(rename = "Ремонт з фарбуваням 2 сторони")]
-    pub repair_two_side_paint: String,
+    // #[serde(rename = "Ремонт з фарбуваням 2 сторони")]
+    // pub repair_two_side_paint: String,
     
-    #[serde(rename = "Ремонт без фарбування")]
-    pub repair_no_paint: String,
+    // #[serde(rename = "Ремонт без фарбування")]
+    // pub repair_no_paint: String,
     
-    #[serde(rename = "Заміна  оригінал деталь з фарбуванням")]
-    pub replace_original_with_paint: String,
+    // #[serde(rename = "Заміна  оригінал деталь з фарбуванням")]
+    // pub replace_original_with_paint: String,
     
-    #[serde(rename = "Заміна Не оригінал деталь з фарбуванням")]
-    pub replace_non_original_with_paint: String,
+    // #[serde(rename = "Заміна Не оригінал деталь з фарбуванням")]
+    // pub replace_non_original_with_paint: String,
     
-    #[serde(rename = "Полірування")]
-    pub polishing: String,
+    // #[serde(rename = "Полірування")]
+    // pub polishing: String,
 }
 
 pub fn parse_csv_t1<P: AsRef<Path>>(path: P) -> Result<Vec<CarPart>, Box<dyn Error>> {

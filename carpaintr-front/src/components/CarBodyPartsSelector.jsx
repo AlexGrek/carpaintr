@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Drawer, Steps, Slider, Divider, Panel, PanelGroup, RadioTileGroup, RadioTile, Carousel } from "rsuite";
+import { Button, Drawer, Steps, Slider, Divider, Panel, PanelGroup, RadioTileGroup, RadioTile, Carousel, Message } from "rsuite";
 import { Icon } from '@rsuite/icons';
 import PinIcon from '@rsuite/icons/Pin';
 import ConversionIcon from '@rsuite/icons/Conversion';
@@ -10,6 +10,10 @@ import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
 import { authFetch } from '../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
+import { useLocale } from "../localization/LocaleContext";
+import { useNavigate } from "react-router-dom";
+import Trans from "../localization/Trans";
+import ErrorMessage from "./layout/ErrorMessage";
 
 // Translations for car parts
 const carPartsTranslations = {
@@ -49,11 +53,22 @@ const carPartsNameToPartsVisualMapping = {
 const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVisual }) => {
     const isMobile = useMediaQuery({ maxWidth: 767 });
 
+    const { str } = useLocale();
+    const navigate = useNavigate();
+    const [errorText, setErrorText] = useState(null);
+    const [errorTitle, setErrorTitle] = useState("");
+
+    const handleError = useCallback((reason) => {
+        console.error(reason);
+        const title = str("Error");
+        setErrorText(reason);
+        setErrorTitle(title);
+    }, [str]);
+
     const mapVisual = useCallback((partName) => {
         console.log(partName);
         console.log(partsVisual);
         let entry = carPartsNameToPartsVisualMapping[partName];
-        // console.log(entry);
         if (entry && partsVisual[entry]) {
             return partsVisual[entry];
         } else {
@@ -126,7 +141,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             })
             .catch((err) => {
                 console.error("Error fetching car parts:", err);
-                alert(`Error fetching car parts: ${err.message || err}`);
+                handleError("Error fetching car parts: " + err);
             });
     }, [body, carClass]); // Dependencies for API fetch
 
@@ -166,7 +181,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         setDrawerCurrentPart(newPart);
         setIsDrawerOpen(true);
         setDrawerTab(0); // Always start from the first tab
-    }, [selectedParts, generateInitialGrid, drawerCurrentPart, mapVisual]);
+    }, [selectedParts, generateInitialGrid, mapVisual]);
 
     // Handler for updating the local drawerCurrentPart state
     const updateDrawerCurrentPart = useCallback((updates) => {
@@ -214,6 +229,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
 
     return (
         <div className="car-body-parts-selector">
+            <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle}/>
             <div>
                 <h2>Запчастини</h2>
                 <div>

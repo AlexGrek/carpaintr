@@ -23,6 +23,9 @@ const ColorGrid = React.lazy(() => import('./ColorGrid')); // Used by ColorPicke
 
 // NEW: Import the refactored PrintCalculationDrawer
 import PrintCalculationDrawer from './PrintCalculationDrawer';
+import { isArray, isObjectLike } from 'lodash';
+import ErrorMessage from './layout/ErrorMessage';
+import NotifyMessage from './layout/NotifyMessage';
 
 // --- New Components (moved/refactored) ---
 
@@ -78,7 +81,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
     const [files1w, setFiles1w] = useState([]);
     const [filesOlder, setFilesOlder] = useState([]);
     const [loading, setLoading] = useState(false);
-    const toaster = useToaster();
+    const [e, setE] = useState(null);
     const navigate = useNavigate();
 
     const fetchFiles = useCallback(async () => {
@@ -90,33 +93,24 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
                 setFiles24h(data.modified_last_24h || []);
                 setFiles1w(data.modified_1w_excl_24h || []);
                 setFilesOlder(data.older_than_1w || []);
+                setE(null);
             } else {
-                const errorData = await response.json();
-                toaster.push(
-                    <Message type="error" closable>
-                        {`${str('Failed to load file list:')} ${errorData.message || response.statusText}`}
-                    </Message>,
-                    { placement: 'topEnd' }
-                );
+                const errorData = await response.text();
+                setE(errorData);
                 setFiles24h([]);
                 setFiles1w([]);
                 setFilesOlder([]);
             }
         } catch (error) {
             console.error("Error fetching file list:", error);
-            toaster.push(
-                <Message type="error" closable>
-                    {`${str('Error fetching file list:')} ${error.message}`}
-                </Message>,
-                { placement: 'topEnd' }
-            );
+            setE("Error fetching file list: " + error);
             setFiles24h([]);
             setFiles1w([]);
             setFilesOlder([]);
         } finally {
             setLoading(false);
         }
-    }, [str, toaster]);
+    }, [str]);
 
     useEffect(() => {
         if (show) {
@@ -170,6 +164,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
                 </Drawer.Actions>
             </Drawer.Header>
             <Drawer.Body>
+                <ErrorMessage errorText={e} onClose={() => setE(null)}/>
                 {loading ? (
                     <Placeholder.Paragraph rows={5} />
                 ) : (
@@ -278,9 +273,9 @@ registerTranslations('ua', {
     "N/A": "Н/Д",
     "No data to preview.": "Немає даних для попереднього перегляду.",
     "No body parts selected.": "Не вибрано жодних частин кузова.",
-    "Modified last 24h": "Змінено за останні 24 години",
-    "Modified 1 week excl 24h": "Змінено за останній тиждень (крім 24 год)",
-    "Older than 1 week": "Старіші за 1 тиждень",
+    "Modified last 24h": "Останні",
+    "Modified 1 week excl 24h": "За тиждень",
+    "Older than 1 week": "Старіші",
     "No files in this category.": "Немає файлів у цій категорії.",
     "locale_code": "uk-UA",
     "License plate (optional)": "Держ. номер (необов'язково)",
@@ -303,7 +298,7 @@ registerTranslations('ua', {
     "liftback": "Ліфтбек",
     "cabriolet": "Кабріолет",
 
-    // NEW TRANSLATIONS for Print and Document Generation
+    // TRANSLATIONS for Print and Document Generation
     "Print and Document Generation": "Друк та генерація документів",
     "Document Generation": "Генерація документів",
     "Custom Template Content (HTML/Liquid)": "Власний вміст шаблону (HTML/Liquid)",
@@ -403,21 +398,61 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
 // Memoized VehicleSelect to prevent unnecessary re-renders
 const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, year, setMake, setModel, setYear, carclass, setCarClass, isFromLoading }) => {
     const [makes, setMakes] = useState([]);
+    const [bodyPartsClassMapping, setBodyPartsClassMapping] = useState(null);
+    const [carBodyTypesOptions, setCarBodyTypesOptions] = useState([]);
     const [models, setModels] = useState({});
     const [bodyTypes, setBodyTypes] = useState([]);
     const { str, labels } = useLocale();
     const navigate = useNavigate();
+    const [errorText, setErrorText] = useState(null);
+    const [errorTitle, setErrorTitle] = useState("");
 
     const handleError = useCallback((reason) => {
         console.error(reason);
-        navigate("/cabinet");
-    }, [navigate]);
+        const title = str("Error");
+        setErrorText(reason);
+        setErrorTitle(title);
+    }, [str]);
+
+    const getCarBodyTypeOptions = useCallback((carclass, bodyPartsClassMapping) => {
+        if (bodyPartsClassMapping == null || !carclass) {
+            return [];
+        }
+        if (!bodyPartsClassMapping || !isObjectLike(bodyPartsClassMapping)) {
+            handleError("Wrong type in getCarBodyTypeOptions: " + JSON.stringify(bodyPartsClassMapping))
+            return [];
+        }
+        if (!Object.hasOwn(bodyPartsClassMapping, carclass)) {
+            handleError(`Cannot find key for ${carclass} in getCarBodyTypeOptions: ` + JSON.stringify(bodyPartsClassMapping))
+            return [];
+        }
+        if (!isArray(bodyPartsClassMapping[carclass])) {
+            handleError(`Error for ${carclass} in getCarBodyTypeOptions: ` + JSON.stringify(bodyPartsClassMapping[carclass]))
+            return [];
+        }
+        return bodyPartsClassMapping[carclass];
+    }, [handleError])
+
+    useEffect(() => {
+        const variants = getCarBodyTypeOptions(carclass, bodyPartsClassMapping);
+        const options = variants.map(opt => ({ label: str(opt), value: opt }));
+        setCarBodyTypesOptions(options);
+        if (selectedBodyType != null && variants.length > 0 && !variants.includes(selectedBodyType)) {
+            if (selectedModel != null) {
+                // unsupported class
+                handleError(`Unsupported body type '${str(selectedBodyType)}' for ${carclass} class`);
+            } else {
+                setBodyType(null); // impossible (or unsupported) body type for this class
+            }
+        }
+    }, [bodyPartsClassMapping, carclass, getCarBodyTypeOptions, handleError, selectedBodyType, selectedModel, setBodyType, str])
 
     useEffect(() => {
         authFetch('/api/v1/user/carmakes')
             .then(response => {
                 if (response.status === 403) {
-                    navigate("/cabinet");
+                    // navigate("/cabinet");
+                    handleError("ERROR");
                     return null; // Stop here, don't try to parse JSON
                 }
                 if (!response.ok) {
@@ -429,7 +464,15 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                 if (data) setMakes(data); // Only set if data was parsed
             })
             .catch(handleError);
-    }, [navigate, handleError]); // Add handleError to dependencies
+    }, [navigate, handleError]);
+
+    useEffect(() => {
+        authFetchYaml('/api/v1/user/list_class_body_types', onerror = handleError)
+            .then(data => {
+                if (data) setBodyPartsClassMapping(data); // Only set if data was parsed
+            })
+            .catch(handleError);
+    }, [handleError]);
 
     useEffect(() => {
         setBodyTypes([]);
@@ -447,7 +490,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
             .then(response => response.json())
             .then(setModels)
             .catch(console.error);
-    }, [selectedMake, setModel, setBodyTypes, setBodyType, setModels]); // Explicit dependencies
+    }, [selectedMake, setModel, setBodyTypes, setBodyType, setModels, isFromLoading]); // Explicit dependencies
 
     const handleMakeSelect = useCallback((make) => {
         setMake(make);
@@ -470,6 +513,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
 
     return (
         <div>
+            <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle}/>
             <Tabs defaultActiveKey="1" appearance="pills" style={{ margin: "0 auto" }}>
                 <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
                     <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
@@ -484,7 +528,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                         placeholder={str("CLASS")}
                     />
                     <SelectPicker
-                        data={CAR_BODY_TYPES_OPTIONS.map(opt => ({ label: str(opt.label), value: opt.value }))} // Apply translation here
+                        data={carBodyTypesOptions}
                         onSelect={setBodyType}
                         value={selectedBodyType}
                         placeholder={str("BODY TYPE")}
@@ -524,6 +568,7 @@ const CarPaintEstimator = () => {
     const [paintType, setPaintType] = useState(null);
     const [storeFileName, setStoreFileName] = useState(null);
     const toaster = useToaster();
+    const [n, setN] = useState(null);
     const { str } = useLocale();
     const [searchParams] = useSearchParams(); // Get search params from URL
     const [partsVisual, setPartsVisual] = useState({});
@@ -565,13 +610,8 @@ const CarPaintEstimator = () => {
     const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
 
     const showMessage = useCallback((type, message) => {
-        toaster.push(
-            <Message type={type} closable duration={5000}>
-                {message}
-            </Message>,
-            { placement: 'topEnd' }
-        );
-    }, [toaster]);
+        setN(`${str(capitalizeFirstLetter(type))} ${message}`);
+    }, [str]);
 
     // Function to reset all state to initial values
     const resetCalculationState = useCallback(() => {
@@ -601,6 +641,7 @@ const CarPaintEstimator = () => {
     }, [resetCalculationState, showMessage, str]);
 
     const handleSave = useCallback(async () => {
+
         const dataToSave = {
             model: (make && model) ? { brand: make, model: model } : null,
             year: year,
@@ -704,6 +745,7 @@ const CarPaintEstimator = () => {
 
     return (
         <div className="flex flex-col h-full"> {/* Use flexbox for layout */}
+            <NotifyMessage text={n}/>
             <TopPanel
                 onNew={handleNew}
                 saveEnabled={bodyType != null && year != null && carClass != null}
