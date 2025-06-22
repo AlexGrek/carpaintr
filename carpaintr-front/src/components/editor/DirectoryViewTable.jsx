@@ -111,7 +111,7 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
         <HeaderCell><Trans>Name</Trans></HeaderCell>
         <Cell style={{'cursor': 'pointer', }}>
           {(rowData) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} key={rowData.label}>
               {getIcon(rowData)}
               {renderNameWithExtension(rowData.label)}
             </div>
