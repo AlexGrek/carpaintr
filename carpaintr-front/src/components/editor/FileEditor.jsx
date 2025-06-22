@@ -298,6 +298,10 @@ const FileEditor = ({
 
     const formData = new FormData();
     formData.append('file', new Blob([saveValue]), fileName);
+    if (saveValue == "[object Object]") {
+      setMsg(<Notification type="error" header={str("Save Error")}>File corrupted by frontend</Notification>, { placement: 'topEnd' });
+      return;
+    }
     try {
       setMsg(null);
       const response = await authFetch(`/api/v1/${uploadEndpoint}/${encodeURIComponent(filePath)}`, {
@@ -495,7 +499,7 @@ const FileEditor = ({
             <>
               {isEditing ? (
                 <>
-                  <Button appearance="primary" onClick={handleSave} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
+                  <Button appearance="primary" onClick={() => handleSave()} disabled={!filePath || !hasUnsavedChanges || loadingContent}>
                     <Save style={{ marginRight: 5 }} /> <Trans>Save</Trans>
                   </Button>
                   <Button appearance="subtle" onClick={handleCancelEdit} disabled={loadingContent}>
