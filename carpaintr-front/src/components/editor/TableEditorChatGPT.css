@@ -6,3 +6,7 @@
 .cell-placeholder:hover {
     opacity: .8;
 }
+
+.cell-selected {
+    outline: 1px solid orangered;
+}

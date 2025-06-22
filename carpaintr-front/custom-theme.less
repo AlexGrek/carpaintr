@@ -5,3 +5,37 @@
 @font-size-base: 14px;
 @enable-ripple-effect: false;
 @primary-color-dark: #8a3f26;
+
+.rs-drawer-backdrop {
+  // Ensure the backdrop covers the whole area and is slightly darker
+  background-color: rgba(0, 0, 0, 0.4); /* Slightly dark overlay */
+  -webkit-backdrop-filter: blur(15px); /* Safari blur */
+  backdrop-filter: blur(15px); /* Standard blur effect */
+  transition: all 0.3s ease-in-out; // Smooth transition for blur
+}
+
+.rs-drawer-content {
+  // Use a very subtle translucent background
+  background-color: rgba(255, 255, 255, 0.84); /* Very light, almost transparent background */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); /* Deeper shadow for depth */
+  border-radius: @border-radius; /* Use the custom border-radius */
+  overflow: hidden; /* Ensures child elements respect border-radius */
+
+  // Optional: Apply a very subtle blur to the content *itself* for a frosted glass look
+  // This is a stylistic choice and can be removed if you prefer sharper content
+  // -webkit-backdrop-filter: blur(2px);
+  // backdrop-filter: blur(2px);
+
+  // Smooth entry/exit animation for the drawer itself - now sharper
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0); // Sharper ease animation
+}
+
+.rs-drawer-body {
+  padding: 10pt;
+}
+
+.rs-drawer-header {
+  padding: 15pt;
+  padding-left: 40pt;
+}
