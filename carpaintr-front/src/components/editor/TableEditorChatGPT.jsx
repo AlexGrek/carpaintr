@@ -185,7 +185,7 @@ const TableEditorChatGPT = ({ open, onClose, onSave, fileName, csvData }) => {
           <Button onClick={handleSave} appearance="primary"><Trans>Save</Trans></Button>
         </Drawer.Actions>
       </Drawer.Header>
-      <Drawer.Body>
+      <Drawer.Body style={{backgroundColor: "white"}}>
         <Button appearance="ghost" onClick={addColumn} style={{ marginBottom: 10 }}><Trans>+ Add New Column</Trans></Button>
         <Table
           height={600}
