@@ -2,13 +2,13 @@ use std::string::FromUtf8Error;
 
 use crate::{errors::AppError, exlogging::{log_event, LogLevel}, models::User};
 use serde_json;
-use sled::{Db, Tree};
+use sled::{Tree};
 
 const USERS_TREE_NAME: &str = "users";
 
 #[derive(Clone)]
 pub struct UserDb {
-    db: Db,
+    // db: Db,
     users_tree: Tree,
 }
 
@@ -16,7 +16,7 @@ impl UserDb {
     pub fn new(db_path: &str) -> Result<Self, AppError> {
         let db = sled::open(db_path)?;
         let users_tree = db.open_tree(USERS_TREE_NAME)?;
-        Ok(Self { db, users_tree })
+        Ok(Self { users_tree })
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {

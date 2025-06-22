@@ -61,6 +61,7 @@ pub struct RevertCommit {
     pub commit_hash: String
 }
 
+// If commit_hash is "last" - revert last commit, otherwise revert the hash
 pub async fn revert_commit(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
@@ -69,7 +70,11 @@ pub async fn revert_commit(
     // Read the file content
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
-    fs_manager.revert_commit(&revert.commit_hash).await?;
+    if revert.commit_hash == "last" {
+        fs_manager.revert_last_commit().await?
+    } else {
+        fs_manager.revert_commit(&revert.commit_hash).await?;
+    }
     Ok(Json(revert))
 }
 

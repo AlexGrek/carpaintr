@@ -1,12 +1,15 @@
-use chrono::{Utc, DateTime};
-use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation, errors::ErrorKind};
-use serde::{Serialize, Deserialize};
-use std::path::PathBuf;
-use std::time::SystemTime;
-use tokio::fs;
 use crate::errors::AppError;
 use crate::exlogging::{log_event, LogLevel};
-use crate::utils::{self, user_personal_directory_from_email}; // Required for read_to_string
+use crate::utils::{self, user_personal_directory_from_email};
+use base64::Engine;
+use chrono::{DateTime, Utc};
+use jsonwebtoken::{
+    decode, encode, errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation,
+};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::time::SystemTime;
+use tokio::fs; // Required for read_to_string
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LicenseData {
@@ -23,8 +26,9 @@ pub struct LicenseData {
 impl LicenseData {
     /// Creates a new LicenseData from JWT claims
     pub fn new(claims: LicenseClaims) -> Self {
-        let expiration_datetime = DateTime::<Utc>::from_timestamp(claims.exp.try_into().unwrap(), 0)
-            .expect("Invalid expiration timestamp");
+        let expiration_datetime =
+            DateTime::<Utc>::from_timestamp(claims.exp.try_into().unwrap(), 0)
+                .expect("Invalid expiration timestamp");
 
         // Calculate days left
         let now = Utc::now();
@@ -42,24 +46,6 @@ impl LicenseData {
             days_left,
             level,
         }
-    }
-
-    /// Creates LicenseData instance from a JSON string
-    pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
-        // Parse the JSON into LicenseData, but recalculate days_left
-        let mut license_data: LicenseData = serde_json::from_str(json)?;
-
-        // Parse the expiration date string back to DateTime
-        let expiration_datetime = DateTime::parse_from_rfc3339(&license_data.expiration_date)
-            .expect("Invalid expiration date format")
-            .with_timezone(&Utc);
-
-        // Update days_left based on current time
-        let now = Utc::now();
-        let duration = expiration_datetime.signed_duration_since(now);
-        license_data.days_left = duration.num_days();
-
-        Ok(license_data)
     }
 
     /// Serializes LicenseData to a JSON string
@@ -114,24 +100,24 @@ impl LicenseData {
         self.days_left < 0
     }
 
-    /// Checks if the license will expire within the specified number of days
-    pub fn expires_within_days(&self, days: i64) -> bool {
-        self.days_left >= 0 && self.days_left <= days
-    }
+    // Checks if the license will expire within the specified number of days
+    // pub fn expires_within_days(&self, days: i64) -> bool {
+    //     self.days_left >= 0 && self.days_left <= days
+    // }
 
-    /// Gets expiration date as DateTime<Utc>
-    pub fn get_expiration_datetime(&self) -> DateTime<Utc> {
-        DateTime::parse_from_rfc3339(&self.expiration_date)
-            .expect("Invalid expiration date format")
-            .with_timezone(&Utc)
-    }
+    // /// Gets expiration date as DateTime<Utc>
+    // pub fn get_expiration_datetime(&self) -> DateTime<Utc> {
+    //     DateTime::parse_from_rfc3339(&self.expiration_date)
+    //         .expect("Invalid expiration date format")
+    //         .with_timezone(&Utc)
+    // }
 }
 
 // Define the claims for the JWT license
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LicenseClaims {
     pub sub: String, // Subject (user email)
-    pub exp: usize, // Expiration time as Unix timestamp
+    pub exp: usize,  // Expiration time as Unix timestamp
     #[serde(default = "default_license_level")] // Add this line for default value
     pub level: String, // New field for license level
 }
@@ -159,7 +145,12 @@ pub struct GenerateLicenseByDateRequest {
 }
 
 // Function to generate a JWT license token
-pub fn generate_license_token(email: &str, expiry_date: DateTime<Utc>, level: Option<String>, jwt_secret: &[u8]) -> Result<String, AppError> {
+pub fn generate_license_token(
+    email: &str,
+    expiry_date: DateTime<Utc>,
+    level: Option<String>,
+    jwt_secret: &[u8],
+) -> Result<String, AppError> {
     let expiration = expiry_date.timestamp() as usize;
     let license_level = level.unwrap_or_else(default_license_level); // Use default if not provided
 
@@ -172,7 +163,14 @@ pub fn generate_license_token(email: &str, expiry_date: DateTime<Utc>, level: Op
     let header = Header::default();
     let encoding_key = EncodingKey::from_secret(jwt_secret);
 
-    log_event(LogLevel::Info, format!("License generated: {:?}; expiry date: {:?}", claims, expiry_date), None::<&str>);
+    log_event(
+        LogLevel::Info,
+        format!(
+            "License generated: {:?}; expiry date: {:?}",
+            claims, expiry_date
+        ),
+        None::<&str>,
+    );
 
     encode(&header, &claims, &encoding_key).map_err(AppError::JwtError)
 }
@@ -193,8 +191,41 @@ pub fn decode_license_token(token: &str, jwt_secret: &[u8]) -> Result<LicenseCla
         })
 }
 
+pub fn decode_license_token_no_validation(token: &str) -> Result<LicenseClaims, AppError> {
+    // Split the JWT into its three parts
+    let parts: Vec<&str> = token.split('.').collect();
+    
+    if parts.len() != 3 {
+        return Err(AppError::Unauthorized);
+    }
+    
+    // Get the payload (claims) part - the second part
+    let payload = parts[1];
+    
+    // Add padding if necessary for base64 decoding
+    let payload_padded = match payload.len() % 4 {
+        0 => payload.to_string(),
+        n => format!("{}{}", payload, "=".repeat(4 - n)),
+    };
+    
+    // Decode the base64 payload
+    let decoded_payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&payload_padded)
+        .map_err(|_| AppError::Unauthorized)?;
+    
+    // Parse the JSON claims
+    let claims: LicenseClaims = serde_json::from_slice(&decoded_payload)
+        .map_err(|_| AppError::Unauthorized)?;
+    
+    Ok(claims)
+}
+
 // Function to save a valid license token to a file
-pub async fn save_license_file(user_email: &str, token: &str, data_dir: &PathBuf) -> Result<(), AppError> {
+pub async fn save_license_file(
+    user_email: &str,
+    token: &str,
+    data_dir: &PathBuf,
+) -> Result<(), AppError> {
     // Get the user's directory
     let user_data_dir = ensure_license_path(user_email, data_dir)?;
 
@@ -218,11 +249,16 @@ pub async fn save_license_file(user_email: &str, token: &str, data_dir: &PathBuf
     Ok(())
 }
 
-pub async fn find_latest_license_file(user_email: &str, data_dir: &PathBuf) -> Result<PathBuf, AppError> {
+pub async fn find_latest_license_file(
+    user_email: &str,
+    data_dir: &PathBuf,
+) -> Result<PathBuf, AppError> {
     let user_data_dir = ensure_license_path(user_email, data_dir)?;
 
     // Find the latest license file based on file metadata timestamp
-    let mut entries = fs::read_dir(&user_data_dir).await.map_err(AppError::IoError)?;
+    let mut entries = fs::read_dir(&user_data_dir)
+        .await
+        .map_err(AppError::IoError)?;
     let mut latest_file: Option<PathBuf> = None;
     let mut latest_modified_time = SystemTime::UNIX_EPOCH;
 
@@ -255,11 +291,10 @@ pub async fn read_license_file(license_path: &PathBuf) -> Result<String, AppErro
         .map_err(|e| AppError::IoError(e))
 }
 
-
 pub async fn read_license_file_by_name(
     user_email: &str,
     data_dir: &PathBuf,
-    file_name: &str
+    file_name: &str,
 ) -> Result<String, AppError> {
     // Ensure user license directory exists
     let user_data_dir = ensure_license_path(user_email, data_dir)?;
@@ -272,6 +307,8 @@ pub async fn read_license_file_by_name(
         return Err(AppError::LicenseNotFound);
     }
 
+    utils::safety_check(user_data_dir, license_path.clone())?;
+
     // Read the license file content
     let content = fs::read_to_string(&license_path)
         .await
@@ -281,23 +318,26 @@ pub async fn read_license_file_by_name(
 }
 
 // Convenience function that combines the two operations
-pub async fn read_latest_license_file(user_email: &str, data_dir: &PathBuf) -> Result<String, AppError> {
+pub async fn read_latest_license_file(
+    user_email: &str,
+    data_dir: &PathBuf,
+) -> Result<String, AppError> {
     let license_path = find_latest_license_file(user_email, data_dir).await?;
     read_license_file(&license_path).await
 }
 
 // Function to read a specific license file by timestamp
-pub async fn read_license_file_by_timestamp(user_email: &str, timestamp: u64, data_dir: &PathBuf) -> Result<String, AppError> {
-    let user_data_dir = ensure_license_path(user_email, data_dir)?;
-    let filename = format!("license_{}.jwt", timestamp);
-    let file_path = user_data_dir.join(filename);
+// pub async fn read_license_file_by_timestamp(user_email: &str, timestamp: u64, data_dir: &PathBuf) -> Result<String, AppError> {
+//     let user_data_dir = ensure_license_path(user_email, data_dir)?;
+//     let filename = format!("license_{}.jwt", timestamp);
+//     let file_path = user_data_dir.join(filename);
 
-    if file_path.exists() {
-        read_license_file(&file_path).await
-    } else {
-        Err(AppError::LicenseNotFound)
-    }
-}
+//     if file_path.exists() {
+//         read_license_file(&file_path).await
+//     } else {
+//         Err(AppError::LicenseNotFound)
+//     }
+// }
 
 pub fn ensure_license_path(user_email: &str, data_dir: &PathBuf) -> Result<PathBuf, AppError> {
     let user_data_dir = user_personal_directory_from_email(data_dir, user_email)?;
@@ -306,7 +346,10 @@ pub fn ensure_license_path(user_email: &str, data_dir: &PathBuf) -> Result<PathB
     return Ok(licenses_dir);
 }
 
-pub async fn list_license_files(user_email: &str, data_dir: &PathBuf) -> Result<Vec<String>, AppError> {
+pub async fn list_license_files(
+    user_email: &str,
+    data_dir: &PathBuf,
+) -> Result<Vec<String>, AppError> {
     let user_data_dir = ensure_license_path(user_email, data_dir)?;
 
     // Check if the user directory exists, return empty list if not
@@ -314,7 +357,9 @@ pub async fn list_license_files(user_email: &str, data_dir: &PathBuf) -> Result<
         return Ok(vec![]);
     }
 
-    let mut entries = fs::read_dir(&user_data_dir).await.map_err(AppError::IoError)?;
+    let mut entries = fs::read_dir(&user_data_dir)
+        .await
+        .map_err(AppError::IoError)?;
     let mut license_files = Vec::new();
 
     while let Some(entry) = entries.next_entry().await.map_err(AppError::IoError)? {
@@ -323,7 +368,7 @@ pub async fn list_license_files(user_email: &str, data_dir: &PathBuf) -> Result<
             if let Some(filename) = path.file_name().and_then(|name| name.to_str()) {
                 // Assuming license files follow a pattern, e.g., ending with ".jwt" or ".license"
                 // Adjust this pattern based on your save_license_file implementation
-                 if filename.ends_with(".jwt") || filename.ends_with(".license") {
+                if filename.ends_with(".jwt") || filename.ends_with(".license") {
                     license_files.push(filename.to_string());
                 }
             }
@@ -334,7 +379,11 @@ pub async fn list_license_files(user_email: &str, data_dir: &PathBuf) -> Result<
 }
 
 // New function to delete a specific license file for a user
-pub async fn delete_license_file(user_email: &str, license_filename: &str, data_dir: &PathBuf) -> Result<(), AppError> {
+pub async fn delete_license_file(
+    user_email: &str,
+    license_filename: &str,
+    data_dir: &PathBuf,
+) -> Result<(), AppError> {
     let user_data_dir = ensure_license_path(user_email, data_dir)?;
     let filepath = user_data_dir.join(license_filename);
 
@@ -347,10 +396,11 @@ pub async fn delete_license_file(user_email: &str, license_filename: &str, data_
 
     let check = utils::safety_check(&user_data_dir, &filepath);
     match check {
-        Ok(_) => fs::remove_file(&filepath).await.map_err(AppError::IoError)?,
+        Ok(_) => fs::remove_file(&filepath)
+            .await
+            .map_err(AppError::IoError)?,
         Err(e) => log_event(LogLevel::Error, e.to_string(), Some(user_email)),
     }
-    
 
     Ok(())
 }

@@ -143,58 +143,6 @@ macro_rules! log_info {
     };
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tokio::time::{sleep, Duration};
-
-    #[tokio::test]
-    async fn test_logger_initialization_and_usage() {
-        // Initialize logger
-        let config = LoggerConfig {
-            log_file_path: "test.log".to_string(),
-        };
-        
-        configure_log_event(config).await.unwrap();
-
-        // Test logging
-        log_event(LogLevel::Info, "Test message", Some("test_user"));
-        log_event(LogLevel::Error, "Error message", None::<&str>);
-        log_event(LogLevel::Warn, "Warning message", Some("warn_user"));
-        
-        // Give some time for async operations to complete
-        sleep(Duration::from_millis(200)).await;
-        
-        // Test macros
-        log_info!("Info via macro");
-        log_error!("Error via macro", "macro_user");
-        
-        sleep(Duration::from_millis(200)).await;
-        
-        // Test reading latest logs
-        match get_latest_logs(3).await {
-            Ok(logs) => {
-                println!("Latest 3 logs:");
-                for (i, log) in logs.iter().enumerate() {
-                    println!("{}: {}", i + 1, log);
-                }
-            }
-            Err(e) => eprintln!("Failed to read logs: {}", e),
-        }
-        
-        // Test filtered logs
-        match get_latest_logs_filtered(10, Some(LogLevel::Warn)).await {
-            Ok(logs) => {
-                println!("Latest logs (Warn and above):");
-                for log in logs {
-                    println!("{}", log);
-                }
-            }
-            Err(e) => eprintln!("Failed to read filtered logs: {}", e),
-        }
-    }
-}
-
 /// Read the n latest log statements from the log file
 /// Returns lines in chronological order (oldest first among the n latest)
 pub async fn get_latest_logs(n: usize) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
@@ -275,89 +223,39 @@ pub async fn get_latest_logs(n: usize) -> Result<Vec<String>, Box<dyn std::error
     Ok(lines)
 }
 
-/// Alternative implementation using memory mapping for very large files
-/// Requires the `memmap2` crate: memmap2 = "0.9"
-// #[cfg(feature = "memmap")]
-// pub async fn get_latest_logs_memmap(n: usize) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
-//     use memmap2::MmapOptions;
-//     use std::fs::File;
+// /// Get latest logs with filtering by log level
+// pub async fn get_latest_logs_filtered(
+//     n: usize, 
+//     min_level: Option<LogLevel>
+// ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+//     let all_lines = get_latest_logs(n * 2).await?; // Get more lines to account for filtering
     
-//     let logger = GLOBAL_LOGGER.get()
-//         .ok_or("Logger not initialized. Call configure_log_event() first.")?;
+//     let mut filtered_lines = Vec::new();
     
-//     if n == 0 {
-//         return Ok(Vec::new());
-//     }
-    
-//     let file = File::open(&logger.file_path)?;
-//     let mmap = unsafe { MmapOptions::new().map(&file)? };
-    
-//     if mmap.is_empty() {
-//         return Ok(Vec::new());
-//     }
-    
-//     let mut lines = Vec::new();
-//     let mut line_start = mmap.len();
-    
-//     // Find line boundaries by scanning backwards
-//     for (i, &byte) in mmap.iter().enumerate().rev() {
-//         if byte == b'\n' || i == 0 {
-//             let line_end = if i == 0 { mmap.len() } else { line_start };
-//             let line_begin = if byte == b'\n' { i + 1 } else { i };
+//     for line in all_lines {
+//         if let Some(ref level) = min_level {
+//             // Simple level filtering based on log format
+//             let should_include = match level {
+//                 LogLevel::Error => line.contains("[ERROR]"),
+//                 LogLevel::Warn => line.contains("[ERROR]") || line.contains("[WARN]"),
+//                 LogLevel::Info => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]"),
+//                 LogLevel::Debug => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]") || line.contains("[DEBUG]"),
+//                 LogLevel::Trace => true, // Include all levels
+//             };
             
-//             if line_begin < line_end {
-//                 if let Ok(line) = std::str::from_utf8(&mmap[line_begin..line_end]) {
-//                     let trimmed = line.trim();
-//                     if !trimmed.is_empty() {
-//                         lines.push(trimmed.to_string());
-//                         if lines.len() >= n {
-//                             break;
-//                         }
-//                     }
+//             if should_include {
+//                 filtered_lines.push(line);
+//                 if filtered_lines.len() >= n {
+//                     break;
 //                 }
 //             }
-//             line_start = i;
+//         } else {
+//             filtered_lines.push(line);
+//             if filtered_lines.len() >= n {
+//                 break;
+//             }
 //         }
 //     }
     
-//     // Reverse to get chronological order
-//     lines.reverse();
-//     Ok(lines)
+//     Ok(filtered_lines)
 // }
-
-/// Get latest logs with filtering by log level
-pub async fn get_latest_logs_filtered(
-    n: usize, 
-    min_level: Option<LogLevel>
-) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
-    let all_lines = get_latest_logs(n * 2).await?; // Get more lines to account for filtering
-    
-    let mut filtered_lines = Vec::new();
-    
-    for line in all_lines {
-        if let Some(ref level) = min_level {
-            // Simple level filtering based on log format
-            let should_include = match level {
-                LogLevel::Error => line.contains("[ERROR]"),
-                LogLevel::Warn => line.contains("[ERROR]") || line.contains("[WARN]"),
-                LogLevel::Info => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]"),
-                LogLevel::Debug => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]") || line.contains("[DEBUG]"),
-                LogLevel::Trace => true, // Include all levels
-            };
-            
-            if should_include {
-                filtered_lines.push(line);
-                if filtered_lines.len() >= n {
-                    break;
-                }
-            }
-        } else {
-            filtered_lines.push(line);
-            if filtered_lines.len() >= n {
-                break;
-            }
-        }
-    }
-    
-    Ok(filtered_lines)
-}

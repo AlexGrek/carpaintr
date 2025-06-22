@@ -9,8 +9,6 @@ use axum::{
 use tokio::fs;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-const GLOBAL: &'static str = "global";
-
 pub async fn get_file_list(
     AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,

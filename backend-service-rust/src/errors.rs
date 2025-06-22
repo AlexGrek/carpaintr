@@ -44,12 +44,12 @@ pub enum AppError {
     ConfigError(String),
     #[error("Invalid data: {0}")]
     InvalidData(String),
-    #[error("Cache error: {0}")]
-    CacheError(String),
+    // #[error("Cache error: {0}")]
+    // CacheError(String),
     #[error("Missing expected extension: {0}")]
     MissingExtension(String),
-    #[error("Unknown error")]
-    Unknown,
+    // #[error("Unknown error")]
+    // Unknown,
     #[error("Internal server error: {0}")]
     InternalServerError(String),
     #[error("Bad request: {0}")]
@@ -63,7 +63,7 @@ impl From<TransactionalFsError> for AppError {
             TransactionalFsError::Io(e) => AppError::IoError(e),
             TransactionalFsError::FileNotFound(_) => AppError::FileNotFound, // Map TransactionalFs's specific FileNotFound to AppError's
             TransactionalFsError::GitCommand(msg) => AppError::InternalServerError(format!("Git command failed: {}", msg)),
-            TransactionalFsError::Path(msg) => AppError::InternalServerError(format!("Path error: {}", msg)),
+            // TransactionalFsError::Path(msg) => AppError::InternalServerError(format!("Path error: {}", msg)),
             TransactionalFsError::CommitNotFound(hash) => AppError::BadRequest(format!("Git commit not found: {}", hash)), // Might be a bad request if user provided hash
             TransactionalFsError::GitLogParseError(msg) => AppError::InternalServerError(format!("Git log parsing error: {}", msg)),
             TransactionalFsError::SafetyError(_) => AppError::Forbidden

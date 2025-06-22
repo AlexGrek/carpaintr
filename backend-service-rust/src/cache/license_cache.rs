@@ -1,7 +1,7 @@
 use moka::sync::Cache;
 use std::{sync::Arc, time::Duration};
 use crate::{
-    errors::AppError, license_manager::LicenseData, state::AppState
+    errors::AppError, exlogging::log_event, license_manager::LicenseData, state::AppState
 };
 use std::path::PathBuf;
 
@@ -33,20 +33,21 @@ impl LicenseCache {
     async fn load_license_from_disk(&self, email: &str) -> Result<LicenseData, AppError> {
         let token = crate::license_manager::read_latest_license_file(email, &self.data_dir).await?;
         let data = crate::license_manager::decode_license_token(&token, &self.jwt_license_secret.as_bytes())?;
-        Ok(LicenseData::new(data))
+        let license_data = LicenseData::new(data);
+        log_event(crate::exlogging::LogLevel::Trace, format!("License read from disk: {}", license_data.to_json_pretty()?), Some(email));
+        Ok(license_data)
     }
 
     pub async fn get_license(&self, email: &str) -> Result<LicenseData, AppError> {
 
         // Attempt to get from cache synchronously
-        if let Some(license) = self.cache.get(email) {
+        if let Some(mut license) = self.cache.get(email) {
+            license.refresh_days_left();
             return Ok(license);
         }
 
-        // If not in cache, load from disk asynchronously
-        let license_data = self.load_license_from_disk(email).await?;
-        // Insert into cache. `insert` is synchronous for the sync cache.
-        self.cache.insert(email.to_string(), license_data.clone()); // Await required by moka v0.12+ for async methods
+        let license_data = self.load_license_from_disk(email).await?;        
+        self.cache.insert(email.to_string(), license_data.clone());
         Ok(license_data)
     }
 
@@ -55,15 +56,12 @@ impl LicenseCache {
         self.cache.invalidate(&email.to_string());
     }
 
-    pub fn invalidate_all(&self) {
-        log::debug!("Invalidating all licenses in cache");
-        self.cache.invalidate_all();
-    }
+    // pub fn invalidate_all(&self) {
+    //     log::debug!("Invalidating all licenses in cache");
+    //     self.cache.invalidate_all();
+    // }
 }
 
-// Helper function to access the cache from Actix State (or Axum State in the new version)
-// It needs to take the correct State type depending on the framework.
-// For Axum, State provides Arc<AppState>, so this helper is fine as is.
 pub fn get_license_cache(data: &Arc<AppState>) -> Arc<LicenseCache> {
     Arc::clone(&data.license_cache)
 }

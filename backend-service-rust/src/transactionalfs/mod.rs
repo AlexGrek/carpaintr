@@ -18,8 +18,6 @@ pub enum TransactionalFsError {
     SafetyError(#[from] SafeFsError),
     #[error("Git command error: {0}")]
     GitCommand(String),
-    #[error("Path error: {0}")]
-    Path(String),
     #[error("Commit not found: {0}")]
     CommitNotFound(String),
     #[error("Failed to parse git log output: {0}")]
@@ -307,7 +305,7 @@ impl GitTransactionalFs {
             .await?;
 
         log_event(
-            LogLevel::Debug,
+            LogLevel::Trace,
             format!(
                 "Git command with args {:?} returned stdout: {}, stderr: {}",
                 args,
