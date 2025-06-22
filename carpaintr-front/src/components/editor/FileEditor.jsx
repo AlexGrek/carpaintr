@@ -51,7 +51,7 @@ const FileEditorContainer = styled.div`
   background-color: #fff;
   border: 1px solid #e5e5ea;
   border-radius: 8px;
-  height: 100%;
+  height: 90%;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
@@ -65,6 +65,7 @@ const FileEditorContainer = styled.div`
 
 const Header = styled.div`
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
