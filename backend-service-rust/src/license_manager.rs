@@ -48,24 +48,6 @@ impl LicenseData {
         }
     }
 
-    /// Serializes LicenseData to a JSON string
-    pub fn to_json(&self) -> Result<String, serde_json::Error> {
-        // Create a copy with updated days_left
-        let mut updated = self.clone();
-
-        // Parse the expiration date string back to DateTime
-        let expiration_datetime = DateTime::parse_from_rfc3339(&updated.expiration_date)
-            .expect("Invalid expiration date format")
-            .with_timezone(&Utc);
-
-        // Update days_left based on current time
-        let now = Utc::now();
-        let duration = expiration_datetime.signed_duration_since(now);
-        updated.days_left = duration.num_days();
-
-        serde_json::to_string(&updated)
-    }
-
     /// Serializes LicenseData to a pretty-printed JSON string
     pub fn to_json_pretty(&self) -> Result<String, serde_json::Error> {
         // Create a copy with updated days_left
