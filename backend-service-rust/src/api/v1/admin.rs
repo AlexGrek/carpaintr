@@ -30,18 +30,18 @@ pub async fn generate_license_handler(
     State(app_state): State<Arc<AppState>>,
     AxumJson(request): AxumJson<GenerateLicenseRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let (user_email, expiry_date) = match request {
+    let (user_email, expiry_date, level) = match request {
         GenerateLicenseRequest::ByDays(req) => {
             let expiry_date = Utc::now() + Duration::days(req.days);
-            (req.email, expiry_date)
+            (req.email, expiry_date, req.level)
         }
         GenerateLicenseRequest::ByDate(req) => {
-            (req.email, req.expiry_date)
+            (req.email, req.expiry_date, req.level)
         }
     };
 
     // Generate the JWT token
-    let token = generate_license_token(&user_email, expiry_date, Some("Basic".to_string()), app_state.jwt_license_secret.as_bytes())?;
+    let token = generate_license_token(&user_email, expiry_date, level, app_state.jwt_license_secret.as_bytes())?;
 
     // Save the license file
     save_license_file(&user_email, &token, &app_state.data_dir_path).await?;

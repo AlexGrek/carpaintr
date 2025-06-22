@@ -1,10 +1,4 @@
-/**
- * Decodes JWT token and extracts expiration information
- * 
- * @param {string} token - JWT token string
- * @returns {Object} Object containing expiration date, days till expiration, and expired status
- */
-function decodeJwtExpiration(token) {
+export function decodeJwtData(token) {
   // Guard against invalid input
   if (!token || typeof token !== 'string') {
     throw new Error('Invalid token: Token must be a non-empty string');
@@ -27,6 +21,8 @@ function decodeJwtExpiration(token) {
       throw new Error('Token does not contain expiration information');
     }
 
+    const level = payload.level || "Unknown";
+
     // Convert exp (seconds since epoch) to milliseconds for Date object
     const expirationDate = new Date(payload.exp * 1000);
     const currentDate = new Date();
@@ -41,6 +37,7 @@ function decodeJwtExpiration(token) {
     return {
       expirationDate,
       daysTillExpiration: parseFloat(daysTillExpiration.toFixed(2)),
+      level,
       isExpired
     };
   } catch (error) {
@@ -52,4 +49,4 @@ function decodeJwtExpiration(token) {
   }
 }
 
-export default decodeJwtExpiration;
+export default decodeJwtData;

@@ -9,20 +9,20 @@ registerTranslations('ua', {
     "Expiration date:" : "Дата закінчення:" 
 })
 
-const LicenseVisualize = ({ license }) => {
-    console.log(license);
-    return <div>📜<code>{license.filename}</code>
+const LicenseVisualize = ({ filename, expiration, level }) => {
+    return <div>📜<code>{filename}</code>
 
         <div style={{ textAlign: "center" }}>
-            <div className="text-sm text-gray-600">
-                    {!license.expiration.isExpired && <Stat style={{ textAlign: "right" }}>
+            <div className="fade-in-simple">
+                    {!expiration.isExpired && <Stat style={{ textAlign: "right" }}>
                         <Stat.Label><Trans>Expires in</Trans></Stat.Label>
                         <Stat.Value>
-                            {license.expiration.daysTillExpiration} <Stat.ValueUnit><Trans>Days</Trans></Stat.ValueUnit>
+                            {expiration.daysTillExpiration} <Stat.ValueUnit><Trans>Days</Trans></Stat.ValueUnit>
                         </Stat.Value>
                     </Stat>}
-                    {license.expiration.isExpired && <Tag color="red"><Trans>Expired</Trans></Tag>}
-                    <p><Trans>Expiration date:</Trans><DatePicker readOnly defaultValue={license.expiration.expirationDate} /></p>
+                    {expiration.isExpired && <Tag color="red"><Trans>Expired</Trans></Tag>}
+                    <div style={{display: "flex", justifyContent: "space-evenly", width: "100%"}}><p><Trans>License level</Trans></p><Tag color='yellow'>{level}</Tag></div>
+                    <p><Trans>Expiration date:</Trans><DatePicker readOnly defaultValue={expiration.expirationDate} /></p>
             </div>
         </div>
     </div>

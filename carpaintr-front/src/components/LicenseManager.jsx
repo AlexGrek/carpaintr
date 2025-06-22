@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch } from '../utils/authFetch';
-import decodeJwtExpiration from '../utils/jwtutils';
-import { List, Button, Divider } from 'rsuite';
+import decodeJwtData from '../utils/jwtutils';
+import { List, Button, Divider, Loader } from 'rsuite';
 import LicenseVisualize from './LicenseVisualize';
 import Trans from '../localization/Trans';
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
+import './LicenseManager.css'; // Import the new CSS file
+import ErrorMessage from './layout/ErrorMessage';
+import NotifyMessage from './layout/NotifyMessage';
+import SelectionInput from './SelectionInput';
 
 registerTranslations('ua', {
     "Loading...": "Завантаження...",
@@ -35,7 +39,8 @@ registerTranslations('ua', {
     "Invalid date format.": "Невірний формат дати.",
     "Failed to generate license:": "Не вдалося згенерувати ліцензію:",
     "License generated successfully:": "Ліцензію успішно згенеровано:",
-    "Error generating license:": "Помилка генерування ліцензії:"
+    "Error generating license:": "Помилка генерування ліцензії:",
+    "License level": "Рівень ліцензії"
 });
 
 
@@ -43,18 +48,15 @@ const LicenseManager = ({ userEmail }) => {
     const [licenses, setLicenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [generateType, setGenerateType] = useState('days'); // 'days' or 'date'
-    const [days, setDays] = useState(365); // Default days for generation
-    const [expiryDate, setExpiryDate] = useState(''); // Specific date for generation
-    const [message, setMessage] = useState(''); // To display success/error messages
-    const { str } = useLocale(); // Initialize useLocale hook
-
-    // Base URL for your API - replace with your actual API base URL
+    const [generateType, setGenerateType] = useState('days');
+    const [generateLicenseLevel, setGenerateLicenseLevel] = useState('Basic');
+    const [days, setDays] = useState(365);
+    const [expiryDate, setExpiryDate] = useState('');
+    const [message, setMessage] = useState('');
+    const { str } = useLocale();
     const API_BASE_URL = '/api/v1/admin';
 
-    // Function to fetch licenses for the user
-
-    const fetchLicenseTokenExpiration = async (filepath) => {
+    const fetchLicenseTokenData = React.useCallback(async (filepath) => {
         setError(null);
         try {
             // Use the provided authFetch utility
@@ -72,7 +74,7 @@ const LicenseManager = ({ userEmail }) => {
                 }
             } else {
                 const data = await response.text();
-                const expiration = decodeJwtExpiration(data); // Assuming data is the token
+                const expiration = decodeJwtData(data); // Assuming data is the token
 
                 return expiration;
             }
@@ -80,9 +82,9 @@ const LicenseManager = ({ userEmail }) => {
             console.error(`Error fetching details for ${filepath}:`, detailError);
             return str('Error fetching details');
         }
-    }
+    }, [str, userEmail]);
 
-    const fetchLicenses = async () => {
+    const fetchLicenses = React.useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -108,9 +110,9 @@ const LicenseManager = ({ userEmail }) => {
                 // We need to fetch the content of each license to decode the expiry date
                 const licenseDetails = await Promise.all(data.map(async (filename) => {
                     try {
-                        const expiration = await fetchLicenseTokenExpiration(filename); // Assuming filename is the token
+                        const expiration = await fetchLicenseTokenData(filename); // Assuming filename is the token
 
-                        return { filename, expiration };
+                        return { filename, data: expiration };
 
                     } catch (detailError) {
                         console.error(`Error fetching details for ${filename}:`, detailError);
@@ -125,7 +127,7 @@ const LicenseManager = ({ userEmail }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchLicenseTokenData, str, userEmail]);
 
     // Fetch licenses when the component mounts or userEmail changes
     useEffect(() => {
@@ -135,7 +137,7 @@ const LicenseManager = ({ userEmail }) => {
             setLicenses([]); // Clear licenses if no user email is provided
             setLoading(false);
         }
-    }, [userEmail, str]); // Dependency array includes userEmail and str
+    }, [userEmail, str, fetchLicenses]); // Dependency array includes userEmail and str
 
     // Function to handle license deletion
     const handleDeleteLicense = async (filename) => {
@@ -178,6 +180,7 @@ const LicenseManager = ({ userEmail }) => {
         if (generateType === 'days') {
             requestBody = {
                 email: userEmail,
+                level: generateLicenseLevel,
                 days: parseInt(days, 10), // Ensure days is an integer
             };
         } else { // generateType === 'date'
@@ -188,6 +191,7 @@ const LicenseManager = ({ userEmail }) => {
             }
             requestBody = {
                 email: userEmail,
+                level: generateLicenseLevel,
                 expiry_date: date.toISOString(), // Format as ISO 8601 string
             };
         }
@@ -212,7 +216,6 @@ const LicenseManager = ({ userEmail }) => {
             } else {
                 const successMessage = await response.text(); // Or response.json() if backend returns JSON
                 setMessage(`${str('License generated successfully:')} ${successMessage}`);
-                // Refetch the list of licenses after generation
                 fetchLicenses();
             }
         } catch (err) {
@@ -223,22 +226,22 @@ const LicenseManager = ({ userEmail }) => {
 
 
     return (
-        <div className="container mx-auto p-4">
-            {loading && <p>{str("Loading...")}</p>}
-            {error && <p className="text-red-500">{str("Error: ")}{error}</p>}
-            {message && <p className="text-green-500">{str("Message: ")}{message}</p>}
+        <div className="license-manager-container">
+            {loading && <p className="license-manager-loading"><Loader /></p>}
+            <ErrorMessage errorText={error} onClose={() => setError(null)} />
+            <NotifyMessage text={message} />
 
             {/* Generate New License Form */}
-            <div>
-                <h3 className="text-xl font-semibold mb-2"><Trans>Generate New License</Trans></h3>
-                <form onSubmit={handleGenerateLicense} className="bg-white p-4 rounded-md shadow">
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="userEmail">
+            <div className="license-manager-form-container">
+                <h3 className="license-manager-heading"><Trans>Generate New License</Trans></h3>
+                <form onSubmit={handleGenerateLicense} className="license-manager-form">
+                    <div className="license-manager-form-group">
+                        <label className="license-manager-label" htmlFor="userEmail">
                             <Trans>User Email</Trans>
                         </label>
                         {/* Displaying user email, not editable in this form */}
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-200"
+                            className="license-manager-input license-manager-input-disabled"
                             id="userEmail"
                             type="text"
                             value={userEmail}
@@ -246,29 +249,31 @@ const LicenseManager = ({ userEmail }) => {
                         />
                     </div>
 
+                    <Divider />
+
                     {/* License Generation Type Selection */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                    <div className="license-manager-form-group">
+                        <label className="license-manager-label">
                             <Trans>Expiration Setting</Trans>
                         </label>
-                        <div className="flex items-center">
-                            <label className="mr-4">
+                        <div className="license-manager-radio-group">
+                            <label className="license-manager-radio-label">
                                 <input
                                     type="radio"
                                     value="days"
                                     checked={generateType === 'days'}
                                     onChange={() => setGenerateType('days')}
-                                    className="mr-2"
+                                    className="license-manager-radio-input"
                                 />
                                 <Trans>By Days</Trans>
                             </label>
-                            <label>
+                            <label className="license-manager-radio-label">
                                 <input
                                     type="radio"
                                     value="date"
                                     checked={generateType === 'date'}
                                     onChange={() => setGenerateType('date')}
-                                    className="mr-2"
+                                    className="license-manager-radio-input"
                                 />
                                 <Trans>By Specific Date</Trans>
                             </label>
@@ -277,12 +282,12 @@ const LicenseManager = ({ userEmail }) => {
 
                     {/* Conditional Input based on Generation Type */}
                     {generateType === 'days' && (
-                        <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="days">
+                        <div className="license-manager-form-group">
+                            <label className="license-manager-label" htmlFor="days">
                                 <Trans>Days from now</Trans>
                             </label>
                             <input
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                className="license-manager-input"
                                 id="days"
                                 type="number"
                                 value={days}
@@ -294,27 +299,33 @@ const LicenseManager = ({ userEmail }) => {
                     )}
 
                     {generateType === 'date' && (
-                        <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="expiryDate">
+                        <div className="license-manager-form-group">
+                            <label className="license-manager-label" htmlFor="expiryDate">
                                 <Trans>Expiry Date (UTC)</Trans>
                             </label>
                             {/* Use type="datetime-local" or type="date" depending on desired granularity */}
                             {/* Note: datetime-local input format might need conversion to ISO 8601 */}
                             <input
-                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                className="license-manager-input"
                                 id="expiryDate"
                                 type="datetime-local" // Or "date" if only date is needed
                                 value={expiryDate}
                                 onChange={(e) => setExpiryDate(e.target.value)}
                                 required
                             />
-                            <p className="text-xs text-gray-500 mt-1"><Trans>Enter date and time in UTC.</Trans></p>
+                            <p className="license-manager-help-text"><Trans>Enter date and time in UTC.</Trans></p>
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between">
+                    <Divider />
+
+                    <SelectionInput selectedValue={generateLicenseLevel} onChange={setGenerateLicenseLevel} values={["Basic"]} name={str("License level")} />
+
+                    <Divider />
+
+                    <div className="license-manager-form-actions">
                         <Button
-                            type="submit"
+                            type="submit" appearance='primary'
                         >
                             <Trans>Generate License</Trans>
                         </Button>
@@ -322,14 +333,14 @@ const LicenseManager = ({ userEmail }) => {
                 </form>
             </div>
 
-             <Divider><Trans>Licenses</Trans></Divider>
+            <Divider><Trans>Licenses</Trans></Divider>
 
-            <div className="mb-8">
-                {licenses.length === 0 && !loading && !error && <p><Trans>No licenses found</Trans></p>}
+            <div className="license-manager-licenses-section">
+                {licenses.length === 0 && !loading && !error && <p className="license-manager-no-licenses"><Trans>No licenses found</Trans></p>}
                 <List bordered>
                     {licenses.map((license, index) => (
-                        <List.Item key={index} className="license-item bg-gray-100 p-3 rounded-md shadow flex justify-between items-center">
-                           <LicenseVisualize license={license}/>
+                        <List.Item key={index} className="license-item license-manager-license-item">
+                            <LicenseVisualize filename={license.filename} expiration={license.data} level={license.data.level} />
                             <div>
                                 <Button appearance='link' color='red'
                                     onClick={() => handleDeleteLicense(license.filename)}
