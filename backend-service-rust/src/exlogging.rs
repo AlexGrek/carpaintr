@@ -2,7 +2,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, OnceCell};
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use log;
 
 // Global static instance of the logger

@@ -1,6 +1,5 @@
 use chrono::{Utc, DateTime};
 use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation, errors::ErrorKind};
-use log::Level;
 use serde::{Serialize, Deserialize};
 use std::path::PathBuf;
 use std::time::SystemTime;

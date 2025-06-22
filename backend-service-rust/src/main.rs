@@ -9,9 +9,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
-use env_logger::Builder;
 use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
-use log::LevelFilter;
 
 use crate::{
     auth::Auth,
@@ -147,8 +145,7 @@ async fn main() -> tokio::io::Result<()> {
                 )
                 .nest(
                     "/editor",
-                    Router::new()
-                        .route(
+                    Router::new()                        .route(
                             "/list_files",
                             get(api::v1::admin_editor_endpoints::get_file_list),
                         )

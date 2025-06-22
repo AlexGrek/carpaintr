@@ -6,8 +6,7 @@ use tokio::fs;
 use tokio::process::Command;
 
 use crate::{
-    exlogging::{self, log_event, LogLevel},
-    models::User,
+    exlogging::{log_event, LogLevel},
     utils::{safe_write, safety_check, SafeFsError},
 };
 
