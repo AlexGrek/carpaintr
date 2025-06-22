@@ -36,6 +36,12 @@
   }
 }
 
+.blurred-background {
+  backdrop-filter: blur(8px);       /* Blur the background behind the element */
+  -webkit-backdrop-filter: blur(8px); /* Safari support */
+  opacity: 0.8;                     /* Make the whole element semi-transparent */
+}
+
 /* Gemini: styles for css editor */
 .rdg-light {
     --rdg-background-color: #fff;

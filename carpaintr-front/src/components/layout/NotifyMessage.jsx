@@ -71,7 +71,7 @@ const NotifyMessage = ({
   }
 
   return (
-    <Message 
+    <Message
       className={className} 
       showIcon 
       full

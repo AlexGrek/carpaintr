@@ -1,13 +1,13 @@
 // FileEditor.jsx
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table } from 'rsuite';
-import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import * as yaml from 'js-yaml';
 import Papa from 'papaparse';
-import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import for translations
-import Trans from '../../localization/Trans'; // Import for translations
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import Trans from '../../localization/Trans';
 import TableEditorChatGPT from './TableEditorChatGPT';
 
 // Register translations for FileEditor
@@ -41,7 +41,8 @@ registerTranslations("ua", {
   "File saved": "Файл збережено",
   "Network Error": "Помилка мережі",
   "No file path": "Немає шляху до файлу",
-  "More rows...": "Більше рядків..."
+  "More rows...": "Більше рядків...",
+  "Upload File": "Завантажити файл"
 });
 
 
@@ -54,6 +55,12 @@ const FileEditorContainer = styled.div`
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+
+  ${props => props.dragActive && `
+    border: 2px dashed #1a73e8;
+    background-color: #e8f0fe;
+  `}
 `;
 
 const Header = styled.div`
@@ -71,28 +78,28 @@ const Title = styled.h3`
 `;
 
 const ContentArea = styled.div`
-  flex-grow: 1; /* Allows content area to take available space */
+  flex-grow: 1;
   margin-bottom: 15px;
-  position: relative; /* For overlay */
-  display: flex; /* Ensures content inside is also flexible */
-  flex-direction: column; /* Stacks children vertically if needed */
-  min-height: 0; /* Important for flex-grow to work correctly with overflow */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   text-align: left;
 `;
 
 const PreviewContainer = styled.div`
   position: relative;
-  max-height: 100%; /* Ensure it fits within ContentArea's height */
-  overflow: hidden; /* Truncate content */
+  max-height: 100%;
+  overflow: hidden;
   padding: 10px;
   border: 1px solid #e5e5ea;
   border-radius: 6px;
   background-color: #f9f9f9;
   font-family: "Consolas", monospace;
   font-size: smaller;
-  white-space: pre-wrap; /* Preserve whitespace and wrap text */
-  word-wrap: break-word; /* Break long words */
-  flex-grow: 1; /* Allow preview to grow */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex-grow: 1;
 `;
 
 const TablePreviewContainer = styled.div`
@@ -103,15 +110,15 @@ const TablePreviewContainer = styled.div`
   border-radius: 6px;
   background-color: #fff;
   flex-grow: 1;
-  
+
   .rs-table {
     font-size: 13px;
   }
-  
+
   .rs-table-cell-content {
     padding: 8px 12px;
   }
-  
+
   .more-rows-indicator {
     color: #999;
     font-style: italic;
@@ -128,9 +135,9 @@ const FadeOverlay = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80px; /* Height of the fade effect */
+  height: 80px;
   background: linear-gradient(to top, #f9f9f9 0%, rgba(255, 255, 255, 0) 100%);
-  pointer-events: none; /* Allows clicks to pass through to content below if needed */
+  pointer-events: none;
 `;
 
 const Overlay = styled.div`
@@ -156,12 +163,12 @@ const Footer = styled.div`
   align-items: center;
   padding-top: 10px;
   border-top: 1px solid #f0f0f0;
-  flex-shrink: 0; /* Prevent footer from shrinking */
+  flex-shrink: 0;
 `;
 
 const HeaderActions = styled.div`
   display: flex;
-  gap: 10px; /* Space between buttons */
+  gap: 10px;
   align-items: center;
 `;
 
@@ -184,12 +191,15 @@ const FileEditor = ({
   const [loadingContent, setLoadingContent] = useState(true);
   const [isViewingPreview, setIsViewingPreview] = useState(true);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const [tableEditorOpen, setTableEditorOpen] = useState(false);
   const [yamlEditorOpen, setYamlEditorOpen] = useState(false);
 
   const [msg, setMsg] = useState(null);
-  const { str } = useLocale(); // Destructure str from useLocale
+  const { str } = useLocale();
+
+  const fileInputRef = useRef(null);
 
   // Parse CSV data for table preview
   const csvData = useMemo(() => {
@@ -201,7 +211,7 @@ const FileEditor = ({
       const parsed = Papa.parse(fileContent, {
         header: true,
         skipEmptyLines: true,
-        dynamicTyping: false, // Keep all values as strings for display
+        dynamicTyping: false,
         delimitersToGuess: [',', '\t', '|', ';']
       });
 
@@ -267,26 +277,33 @@ const FileEditor = ({
     if (filePath && readEndpoint) {
       fetchFileContent();
     }
-  }, [filePath, readEndpoint, str]); // Add str to dependency array
+  }, [filePath, readEndpoint, str]);
 
   const validateContent = useCallback((saveValue) => {
     if (!saveValue) {
       saveValue = fileContent
     }
-    if (!filePath) return str("No file path");
-    if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
-      try { yaml.load(saveValue); return null; } catch (e) {
-        return e.message;
+    // Only validate if filePath is provided, otherwise assume it's new content not yet associated with a specific type
+    if (filePath) {
+      if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
+        try { yaml.load(saveValue); return null; } catch (e) {
+          return e.message;
+        }
+      }
+      if (filePath.endsWith('.json')) {
+        try { JSON.parse(saveValue); return null; } catch (e) { return e.message; }
       }
     }
-    if (filePath.endsWith('.json')) {
-      try { JSON.parse(saveValue); return null; } catch (e) { return e.message; }
-    }
-    return null;
-  }, [filePath, fileContent, str]); // Add str to dependency array
+    return null; // No validation needed if no filePath or it's a generic text file
+  }, [filePath, fileContent, str]);
 
   const handleSave = useCallback(async (saveValue) => {
     setMsg(null);
+    if (!filePath) {
+      setMsg(<Notification type="error" header={str("Save Error")}>{str("No file path provided to save to.")}</Notification>, { placement: 'topEnd' });
+      return;
+    }
+
     if (!saveValue) {
       saveValue = fileContent;
     }
@@ -298,7 +315,7 @@ const FileEditor = ({
 
     const formData = new FormData();
     formData.append('file', new Blob([saveValue]), fileName);
-    if (saveValue == "[object Object]") {
+    if (saveValue === "[object Object]") { // Check for accidental object stringification
       setMsg(<Notification type="error" header={str("Save Error")}>File corrupted by frontend</Notification>, { placement: 'topEnd' });
       return;
     }
@@ -312,7 +329,7 @@ const FileEditor = ({
         const errorData = await response.json();
         setMsg(<Notification type="error" header={str("Save Error")}>{str("File not saved:")} {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
       } else {
-        setOriginalContent(fileContent);
+        setOriginalContent(fileContent); // Update originalContent after successful save
         setMsg(<Notification type="success" header={str("Success")}>{str("File saved")}</Notification>, { placement: 'topEnd' });
         setIsEditing(false);
         if (onSaveSuccess) onSaveSuccess();
@@ -320,7 +337,7 @@ const FileEditor = ({
     } catch (error) {
       setMsg(<Notification type="error" header={str("Network Error")}>{str("Failed to save file:")} {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess, str]); // Add str to dependency array
+  }, [fileContent, filePath, fileName, validateContent, uploadEndpoint, onSaveSuccess, str]);
 
 
   const handleDelete = useCallback(async () => {
@@ -328,6 +345,10 @@ const FileEditor = ({
     setMsg(null);
     if (isCommonFile) {
       setMsg(<Notification type="warning" header={str("Permission Denied")}>{str("Cannot delete common files.")}</Notification>, { placement: 'topEnd' });
+      return;
+    }
+    if (!filePath) { // Cannot delete if there's no file path to begin with
+      setMsg(<Notification type="warning" header={str("Warning")}>No file selected to delete.</Notification>, { placement: 'topEnd' });
       return;
     }
     try {
@@ -345,7 +366,7 @@ const FileEditor = ({
     } catch (error) {
       setMsg(<Notification type="error" header={str("Network Error")}>{str("Failed to delete file:")} {error.message}</Notification>, { placement: 'topEnd' });
     }
-  }, [filePath, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose, str]); // Add str to dependency array
+  }, [filePath, isCommonFile, onDeleteSuccess, deleteEndpoint, onClose, str]);
 
   const handleCancelEdit = useCallback(() => {
     setMsg(null);
@@ -376,6 +397,7 @@ const FileEditor = ({
     setFileContent(value);
   }, []);
 
+  // Now, hasUnsavedChanges will correctly reflect if the current fileContent is different from originalContent
   const hasUnsavedChanges = fileContent !== originalContent;
 
   const handleOpenTableEditor = useCallback(() => {
@@ -388,12 +410,76 @@ const FileEditor = ({
 
   const isCSVFile = filePath && filePath.endsWith('.csv');
 
+  const handleFileRead = useCallback((file) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        setFileContent(content);
+        setOriginalContent('');
+        setIsEditing(true); // Enter edit mode
+        setIsViewingPreview(false); // Show as text
+        setMsg(null); // Clear any existing messages
+      };
+      reader.onerror = () => {
+        setMsg(<Notification type="error" header={str("Error")}>Failed to read file.</Notification>, { placement: 'topEnd' });
+      };
+      reader.readAsText(file);
+    }
+  }, [str]);
+
+  const handleFileInputChange = useCallback((e) => {
+    const file = e.target.files[0];
+    handleFileRead(file);
+    e.target.value = null; // Clear the input value
+  }, [handleFileRead]);
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current.click();
+  }, []);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isViewingPreview && !isEditing) {
+      setDragActive(true);
+    }
+  }, [isViewingPreview, isEditing]);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && isViewingPreview && !isEditing) {
+      handleFileRead(e.dataTransfer.files[0]);
+    }
+  }, [handleFileRead, isViewingPreview, isEditing]);
+
+
   return (
-    <FileEditorContainer>
+    <FileEditorContainer
+      dragActive={dragActive}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <Header>
         <Title>{fileName}</Title>
         <HeaderActions>
           <IconButton icon={<Download />} onClick={handleDownload} appearance="subtle" title={str("Download File")} />
+          <IconButton icon={<Upload />} onClick={handleUploadClick} appearance="subtle" title={str("Upload File")} />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInputChange}
+            style={{ display: 'none' }}
+          />
           <IconButton
             icon={<Trash2 />}
             onClick={() => setShowDeleteConfirmation(true)}
@@ -412,7 +498,6 @@ const FileEditor = ({
           <Overlay><Trans>Loading file content...</Trans></Overlay>
         ) : (
           isViewingPreview ? (
-            // Show CSV table preview for CSV files, regular text preview for others
             isCSVFile && tableData && tableData.headers.length > 0 ? (
               <TablePreviewContainer>
                 <Table
