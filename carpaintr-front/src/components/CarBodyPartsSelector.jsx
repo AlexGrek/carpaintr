@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Drawer, Steps, Slider, Divider, Panel, PanelGroup, RadioTileGroup, RadioTile, Carousel, Message } from "rsuite";
-import { Icon } from '@rsuite/icons';
+import { Button, Drawer, Steps, Divider, Panel, PanelGroup, RadioTileGroup, RadioTile } from "rsuite";
 import PinIcon from '@rsuite/icons/Pin';
 import ConversionIcon from '@rsuite/icons/Conversion';
 import OneColumnIcon from '@rsuite/icons/OneColumn';
@@ -12,8 +11,34 @@ import { authFetch } from '../utils/authFetch'; // Assuming authFetch is used, n
 import './CarBodyPartsSelector.css'
 import { useLocale } from "../localization/LocaleContext";
 import { useNavigate } from "react-router-dom";
-import Trans from "../localization/Trans";
 import ErrorMessage from "./layout/ErrorMessage";
+import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from 'lucide-react';
+import MenuTree from "./layout/MenuTree";
+import './CarBodyPartsSelector.css';
+
+const menuItems = [
+    {
+        label: 'Ремонт',
+        subitems: [
+            { label: 'З фарбуванням обох сторін', value: 'paint_two_sides' },
+            { label: 'З фарбуванням зовнішньої сторони', value: 'paint_one_side' },
+            {
+                label: 'Без фарбування',
+                value: 'repair_no_paint'
+            },
+        ],
+    },
+    { label: 'Тільки полірування', value: 'polish' },
+    {
+        label: 'Заміна з фарбуванням',
+        subitems: [
+            { label: 'Оригінальна деталь', value: 'replace_and_paint_original' },
+            { label: 'Неоригінальна деталь', value: 'replace_and_paint_3rdparty' },
+            { label: 'Б/У деталь', value: 'replace_and_paint_used' },
+        ],
+    },
+    { label: 'Заміна без фарбування', value: 'replace_no_paint' },
+];
 
 // Translations for car parts
 const carPartsTranslations = {
@@ -29,23 +54,13 @@ const carPartsTranslations = {
     "Right Front Fender": "Праве переднє крило"
 };
 
-// Actions and their translations/icons
-const actions = {
-    "polish": "Полірування",
-    "replace_and_paint_used": "Заміна з фарбуванням (Б/У деталь)",
-    "replace_and_paint_3rdparty": "Заміна з фарбуванням (неоригінальна деталь)",
-    "replace_and_paint_original": "Заміна з фарбуванням (оригінальна деталь)",
-    "paint_one_side": "Ремонт з фарбуванням зовнішньої сторони",
-    "paint_two_sides": "Ремонт з фарбуванням обох сторін"
-};
-
 const carPartsNameToPartsVisualMapping = {
     "Крыло переднее правое": "front_wing_right",
     "Крыло переднее левое": "front_wing_left",
     "Дверь левая": "door_left",
     "Дверь правая": "door_right",
-    "Дверь  пердняя левая": "front_door_left",
-    "Дверь  пердняя правая": "front_door_right",
+    "Дверь передняя левая": "front_door_left",
+    "Дверь передняя правая": "front_door_right",
     "Бампер задний": "rear_bumper",
     "Бампер передний": "front_bumper"
 };
@@ -85,17 +100,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     const [drawerCurrentPart, setDrawerCurrentPart] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerTab, setDrawerTab] = useState(0);
-
-
-
-    const actionsIcons = {
-        "polish": <PinIcon />,
-        "replace_and_paint_used": <ConversionIcon />,
-        "replace_and_paint_3rdparty": <ConversionIcon />,
-        "replace_and_paint_original": <ConversionIcon />,
-        "paint_one_side": <OneColumnIcon />,
-        "paint_two_sides": <ColumnsIcon />
-    };
 
     const outsideRepairZoneOptions = {
         "no": "без пошкоджень",
@@ -143,7 +147,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 console.error("Error fetching car parts:", err);
                 handleError("Error fetching car parts: " + err);
             });
-    }, [body, carClass]); // Dependencies for API fetch
+    }, [body, carClass, handleError]); // Dependencies for API fetch
 
     // Helper to generate initial grid data
     const generateInitialGrid = useCallback((visual) => {
@@ -229,7 +233,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
 
     return (
         <div className="car-body-parts-selector">
-            <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle}/>
+            <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
             <div>
                 <h2>Запчастини</h2>
                 <div>
@@ -260,9 +264,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                 bordered
                                 onClick={() => handlePartSelect(part.name)} // Click to re-edit
                             >
-                                <p style={{ fontSize: "12px" }}>
-                                    {part.action ? actions[part.action] : "Дія не обрана"}
-                                </p>
                                 <p style={{ fontSize: "10px", color: "#666" }}>
                                     (Клікніть, щоб редагувати)
                                 </p>
@@ -298,29 +299,18 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                     </Drawer.Header>
                     <Drawer.Body>
                         <div>
-                            <Steps current={drawerTab} small>
-                                <Steps.Item title="Тип ремонту" />
-                                <Steps.Item title="Деталі" />
-                                <Steps.Item title="Розрахунки" />
+                            <Steps current={drawerTab} small style={{ color: "black" }}>
+                                <Steps.Item icon={<Focus />} title="Тип ремонту" />
+                                <Steps.Item icon={<Grid2x2X />} title="Деформації" />
+                                <Steps.Item icon={<Grid2x2Plus />} title="Пошкодження" />
+                                <Steps.Item icon={<Handshake />} title="Розрахунки" />
                             </Steps>
                             <div className="drawer-tabs-container">
                                 {drawerTab === 0 && (
+
                                     <div className="carousel-page">
-                                        <RadioTileGroup
-                                            value={drawerCurrentPart.action}
-                                            onChange={(value) => updateDrawerCurrentPart({ action: value })}
-                                        >
-                                            {Object.keys(actions).map((key) => (
-                                                <RadioTile
-                                                    icon={actionsIcons[key]}
-                                                    label={actions[key]}
-                                                    key={key}
-                                                    value={key}
-                                                >
-                                                    Тут може бути опис операції &quot{actions[key]}&quot, але наразі його немає.
-                                                </RadioTile>
-                                            ))}
-                                        </RadioTileGroup>
+                                        <h4 className="body-parts-tab-header">Оберіть дію</h4>
+                                        <MenuTree items={menuItems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} />
                                         <Divider />
                                         <Button
                                             color='green'
@@ -335,7 +325,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                 )}
                                 {drawerTab === 1 && (
                                     <div>
-                                        <p><i>Обрана дія: {actions[drawerCurrentPart.action]}</i></p>
+                                        <h4 className="body-parts-tab-header">Вкажіть зону ремонту</h4>
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <div>
                                                 <GridDraw

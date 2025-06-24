@@ -1,0 +1,156 @@
+.menu-tree {
+  width: 100%;
+  background-color: #ffffff2d;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item-container {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-item-container:last-child {
+  border-bottom: none;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: #ffffff43;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.menu-item.selected {
+  background-color: #faf5f3;
+  color: #e23c1a;
+}
+
+.menu-item.has-subitems {
+  font-weight: 500;
+}
+
+.menu-item-label {
+  flex: 1;
+  font-size: 16px;
+}
+
+.menu-item-arrow {
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.3s ease;
+  transform-origin: center;
+}
+
+.menu-item-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  overflow: hidden;
+  background-color: #fafafa;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  max-height: 0;
+  opacity: 0;
+}
+
+.submenu.expanded {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.submenu-content {
+  transform: translateY(-10px);
+  transition: transform 0.3s ease;
+}
+
+.submenu.expanded .submenu-content {
+  transform: translateY(0);
+}
+
+.submenu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px 12px 40px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-top: 1px solid #f9f2f2;
+  user-select: none;
+}
+
+.submenu-item:first-child {
+  border-top: none;
+}
+
+.submenu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.submenu-item.selected {
+  background-color: #f1eeeca3;
+  color: #e23c1a;
+  font-weight: 500;
+}
+
+.submenu-item-label {
+  font-size: 14px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .menu-item {
+    padding: 14px 16px;
+  }
+  
+  .menu-item-label {
+    font-size: 15px;
+  }
+  
+  .submenu-item {
+    padding: 10px 16px 10px 32px;
+  }
+  
+  .submenu-item-label {
+    font-size: 13px;
+  }
+}
+
+/* Animation keyframes for smooth fly-in effect */
+@keyframes flyIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes flyOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+.submenu.expanded .submenu-content {
+  animation: flyIn 0.3s ease forwards;
+}
+
+.submenu:not(.expanded) .submenu-content {
+  animation: flyOut 0.3s ease forwards;
+}

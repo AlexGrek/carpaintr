@@ -1,3 +1,13 @@
 .carBodyParts-drawer .rs-drawer-body {
     padding: 2em;
 }
+
+.drawer-tabs-container {
+    padding-top: 2em;
+}
+
+.body-parts-tab-header {
+    width: 100%;
+    margin-bottom: 14pt;
+    text-align: center;
+}
