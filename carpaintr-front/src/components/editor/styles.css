@@ -1,0 +1,31 @@
+.editor-output {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.editor-output pre {
+  background-color: #2d2d2d;
+  color: #f8f8f2;
+  padding: 1rem;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.unsupported-field {
+  background-color: #f0f0f0;
+  color: #777;
+  padding: 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  font-size: 0.85em;
+  border: 1px solid #e0e0e0;
+}
+.field-type-label {
+  font-size: 0.75rem;
+  color: #999;
+  margin-left: 8px;
+  font-style: italic;
+}

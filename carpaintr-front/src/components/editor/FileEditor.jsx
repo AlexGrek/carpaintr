@@ -9,6 +9,7 @@ import Papa from 'papaparse';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import Trans from '../../localization/Trans';
 import TableEditorChatGPT from './TableEditorChatGPT';
+import YamlItemsEditorDrawer from './YamlItemsEditorDrawer';
 
 // Register translations for FileEditor
 registerTranslations("ua", {
@@ -617,9 +618,15 @@ const FileEditor = ({
                 </>
               )}
               {filePath && (filePath.endsWith(".yaml") || filePath.endsWith(".yml")) && (
-                <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
-                  <Code style={{ marginRight: 5 }} /> <Trans>Open YAML editor (broken now)</Trans>
-                </Button>
+                <>
+                  <Button appearance="subtle" onClick={handleOpenYamlEditor} disabled={isEditing}>
+                    <ScrollText style={{ marginRight: 5 }} /> <Trans>Open items editor</Trans>
+                  </Button>
+                  <YamlItemsEditorDrawer isOpen={yamlEditorOpen} onClose={() => setYamlEditorOpen(false)} onChange={async (value) => {
+                    setFileContent(value);
+                    await handleSave(value);
+                  }} value={fileContent} />
+                </>
               )}
             </>
           )}
@@ -638,7 +645,6 @@ const FileEditor = ({
         </Drawer.Header>
         <Drawer.Body>
           <p><Trans>Are you sure you want to delete the file</Trans> <strong>&quot;{fileName}&quot;</strong>?</p>
-          <p><Trans>This action cannot be undone.</Trans></p>
           <Button onClick={handleDelete} appearance="primary" color="red">
             <Trash2 style={{ marginRight: 5 }} /> <Trans>Delete Permanently</Trans>
           </Button>
