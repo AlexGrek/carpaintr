@@ -552,7 +552,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
 
 
 // Main Parent component
-const CarPaintEstimator = () => {
+const CarPaintEstimator = ({setChanges}) => {
     const { showReportIssueForm } = useGlobalCallbacks(); // Ensure this is stable, possibly memoize
     const [make, setMake] = useState(null);
     const [model, setModel] = useState(null);
@@ -567,7 +567,6 @@ const CarPaintEstimator = () => {
     const [activePanel, setActivePanel] = useState(1);
     const [paintType, setPaintType] = useState(null);
     const [storeFileName, setStoreFileName] = useState(null);
-    const toaster = useToaster();
     const [n, setN] = useState(null);
     const { str } = useLocale();
     const [searchParams] = useSearchParams(); // Get search params from URL
@@ -587,9 +586,13 @@ const CarPaintEstimator = () => {
 
     const handleSetYear = useCallback((yearVal) => {
         setYear(yearVal);
-        if (bodyType != null)
+        if (bodyType != null) {
+            if (setChanges) {
+                setChanges(true);
+            }
             setActivePanel(2);
-    }, [bodyType]);
+        }
+    }, [bodyType, setChanges]);
 
     const paintTypesAndTranslations = {
         "simple": str("No inclusions"),
