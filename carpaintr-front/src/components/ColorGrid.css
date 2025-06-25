@@ -4,6 +4,10 @@
     grid-template-columns: repeat(4, minmax(24px, 1fr));
     padding: 16px;
   }
+
+  .color-grid-container-selected {
+    padding: 0 16px;
+  }
   
   .color-card {
     border-radius: 8px;
