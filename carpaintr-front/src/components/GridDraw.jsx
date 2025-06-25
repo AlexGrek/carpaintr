@@ -109,6 +109,7 @@ const GridDraw = ({
     gridTemplateRows: `repeat(${internalGridData.length}, 1fr)`,
     outline: isDebouncing ? "3px solid orange" : "3px solid transparent",
     transition: "outline 0.3s ease-in-out",
+    maxWidth: "500px",
   };
 
   return (

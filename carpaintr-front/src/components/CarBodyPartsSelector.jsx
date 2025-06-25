@@ -353,7 +353,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                     <div>
                                         <h3>Підсумок та розрахунки</h3>
                                         <p>Частина: {carPartsTranslations[drawerCurrentPart.name]}</p>
-                                        <p>Дія: {actions[drawerCurrentPart.action]}</p>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <>

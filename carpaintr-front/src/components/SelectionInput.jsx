@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
-import { Button, IconButton, HStack, Loader, Message } from "rsuite";
+import { Button, IconButton, HStack, Loader, Message, SelectPicker } from "rsuite";
 import GridIcon from '@rsuite/icons/Grid';
 import "./SelectionInput.css";
 import isArray from 'lodash/isArray';
 
-const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfirm = true, labels = null, labelFunction = null }) => {
+const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfirm = true, labels = null, labelFunction = null, mode="bubbles" }) => {
     const handleSelect = (value) => {
         if (onChange) onChange(value);
     };
@@ -33,7 +33,7 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
             return labels[item]
         }
     }
-
+    if (mode === "bubbles")
     return (
         <HStack wrap className="selection-input">
             {name && <span>{name}:</span>}
@@ -63,6 +63,18 @@ const SelectionInput = ({ values = [], selectedValue, onChange, name, autoConfir
             )}
         </HStack>
     );
+
+    if (mode === "select") {
+        const data = values.map(item => {
+            return {
+                label: getLabel(item),
+                value: item
+            }
+        })
+        return <SelectPicker style={{minWidth: "100pt"}} placeholder={name} value={selectedValue} data={data} onChange={handleSelect} searchable={data.length > 4}/>
+    }
+
+    return <div/>
 };
 
 export default SelectionInput;

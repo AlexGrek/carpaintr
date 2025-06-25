@@ -323,15 +323,6 @@ const CAR_CLASS_OPTIONS = [
     "A", "B", "C", "D", "E", "F", "SUV 1", "SUV 2", "SUV MAX"
 ].map((i) => ({ label: i, value: i }));
 
-const CAR_BODY_TYPES_OPTIONS = [
-    "hatchback 3 doors",
-    "hatchback 5 doors",
-    "sedan", "cabriolet", "liftback",
-    "wagon", "coupe",
-    "suv 5 doors", "suv 3 doors",
-    "pickup"
-].map((i) => ({ label: i, value: i }));
-
 // Memoized CurrentDateDisplay to prevent unnecessary re-renders
 const CurrentDateDisplay = React.memo(() => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -395,7 +386,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
     );
 });
 
-// Memoized VehicleSelect to prevent unnecessary re-renders
+
 const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake, selectedModel, year, setMake, setModel, setYear, carclass, setCarClass, isFromLoading }) => {
     const [makes, setMakes] = useState([]);
     const [bodyPartsClassMapping, setBodyPartsClassMapping] = useState(null);
@@ -509,15 +500,15 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
         }
     }, [setModel, models, setBodyTypes, setCarClass, setBodyType]);
 
-    const modelOptions = Object.keys(models);
+    const modelOptions = Object.keys(models).sort();
 
     return (
         <div>
             <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle}/>
             <Tabs defaultActiveKey="1" appearance="pills" style={{ margin: "0 auto" }}>
                 <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
-                    <SelectionInput name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
-                    {selectedMake !== null && <SelectionInput name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
+                    <SelectionInput mode="select" name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
+                    {selectedMake !== null && <SelectionInput mode="select" name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
                     {selectedModel !== null && <SelectionInput name={str("Body Type")} labelFunction={str} selectedValue={selectedBodyType} values={labels(bodyTypes)} onChange={setBodyType} placeholder={str("Select Body Type")} />}
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="2" title={str("Type/Class")}>
@@ -740,7 +731,6 @@ const CarPaintEstimator = ({setChanges}) => {
         setShowPrintDrawer(true);
     }, []);
 
-    // Gather all calculation data for printing
     const currentCalculationData = {
         make, model, year, carClass, bodyType,
         licensePlate, VIN, notes, color, paintType, selectedParts
@@ -753,7 +743,7 @@ const CarPaintEstimator = ({setChanges}) => {
                 onNew={handleNew}
                 saveEnabled={bodyType != null && year != null && carClass != null}
                 onSave={handleSave}
-                onLoad={() => setShowLoadDrawer(true)} // Open load drawer
+                onLoad={() => setShowLoadDrawer(true)}
                 onPrint={handlePrint}
                 showReportIssueForm={() => handleOpenNewTab("/report")}
             />
