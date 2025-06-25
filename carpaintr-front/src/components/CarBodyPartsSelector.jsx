@@ -107,6 +107,33 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         "remove": "треба видалити"
     };
 
+    // Handler for closing the drawer, now simplified
+    const handleDrawerClose = useCallback(() => {
+        setIsDrawerOpen(false);
+        setDrawerCurrentPart(null);
+        setDrawerTab(0);
+    }, []);
+
+    // Effect to handle browser history (back button)
+    useEffect(() => {
+        const handlePopState = () => {
+            // If the drawer is open when the back button is pressed,
+            // this listener will close it.
+            if (isDrawerOpen) {
+                handleDrawerClose();
+            }
+        };
+
+        // Add the event listener when the component mounts or isDrawerOpen changes
+        window.addEventListener('popstate', handlePopState);
+
+        // Clean up the event listener
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [isDrawerOpen, handleDrawerClose]);
+
+
     // Effect to update unselectedParts when availableParts changes
     useEffect(() => {
         if (Array.isArray(availableParts)) {
@@ -184,6 +211,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
 
         setDrawerCurrentPart(newPart);
         setIsDrawerOpen(true);
+        // Push a new state to the browser history to handle the back button
+        window.history.pushState({ drawerOpen: true }, '', window.location.href);
         setDrawerTab(0); // Always start from the first tab
     }, [selectedParts, generateInitialGrid, mapVisual]);
 
@@ -197,6 +226,11 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             }
             return updatedPart;
         });
+    }, []);
+
+    // The drawer's onClose event should now trigger history.back()
+    const handleDrawerCloseTrigger = useCallback(() => {
+        window.history.back();
     }, []);
 
     // Handler for adding/updating a part to the global selectedParts
@@ -214,22 +248,15 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         }
 
         onChange(updatedSelectedParts);
-        setIsDrawerOpen(false);
-        setDrawerCurrentPart(null); // Clear local state after committing
-    }, [selectedParts, drawerCurrentPart, onChange]);
+        // Trigger history back to close the drawer and clean up history state
+        handleDrawerCloseTrigger();
+    }, [selectedParts, drawerCurrentPart, onChange, handleDrawerCloseTrigger]);
 
     // Handler for unselecting a part (removing from global selectedParts)
     const handlePartUnselect = useCallback((partToRemove) => {
         // Confirmed to remove based on `partToRemove.name`
         onChange(selectedParts.filter((p) => p.name !== partToRemove.name));
     }, [selectedParts, onChange]);
-
-    // Handler for closing the drawer (resets local state)
-    const handleDrawerClose = useCallback(() => {
-        setIsDrawerOpen(false);
-        setDrawerCurrentPart(null); // Clear local state when drawer is closed without submitting
-        setDrawerTab(0); // Reset tab for next open
-    }, []);
 
     return (
         <div className="car-body-parts-selector">
@@ -290,7 +317,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             {drawerCurrentPart && (
                 <Drawer
                     open={isDrawerOpen}
-                    onClose={handleDrawerClose}
+                    onClose={handleDrawerCloseTrigger}
                     className="carBodyParts-drawer"
                     size={isMobile ? "full" : "md"}
                 >
@@ -353,7 +380,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                     <div>
                                         <h3>Підсумок та розрахунки</h3>
                                         <p>Частина: {carPartsTranslations[drawerCurrentPart.name]}</p>
-                                        <p>Дія: {actions[drawerCurrentPart.action]}</p>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <>
