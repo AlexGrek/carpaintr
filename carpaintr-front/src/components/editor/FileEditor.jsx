@@ -1,7 +1,7 @@
 // FileEditor.jsx
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table } from 'rsuite';
-import { Edit, Save, X, Trash2, Code, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload } from 'lucide-react';
+import { Edit, Save, X, Trash2, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import * as yaml from 'js-yaml';

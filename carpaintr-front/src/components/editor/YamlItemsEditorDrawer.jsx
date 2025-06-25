@@ -6,11 +6,13 @@ import NamedItemEditor from './NamedItemEditor';
 import ErrorMessage from '../layout/ErrorMessage';
 import { useLocale } from '../../localization/LocaleContext';
 import './styles.css';
+import { useMediaQuery } from 'react-responsive';
 
 // The main drawer component that manages the overall state.
 const YamlItemsEditorDrawer = ({ onClose, isOpen, value, onChange }) => {
     const [editedData, setEditedData] = useState(null);
     const { str } = useLocale();
+    const isMobile = useMediaQuery({ maxWidth: 767 });
 
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
@@ -88,7 +90,7 @@ const YamlItemsEditorDrawer = ({ onClose, isOpen, value, onChange }) => {
     };
 
     return (
-            <Drawer size="md" placement="right" open={isOpen} onClose={handleClose}>
+            <Drawer size={isMobile ? "full" : "md"} placement="right" open={isOpen} onClose={handleClose}>
                 <Drawer.Header>
                     <Drawer.Title>YAML Editor</Drawer.Title>
                     <Drawer.Actions>
