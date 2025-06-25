@@ -15,6 +15,7 @@ import ErrorMessage from "./layout/ErrorMessage";
 import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from 'lucide-react';
 import MenuTree from "./layout/MenuTree";
 import './CarBodyPartsSelector.css';
+import jsyaml from 'js-yaml';
 
 const menuItems = [
     {
@@ -117,7 +118,22 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 .filter(partName => !currentlySelectedNames.has(partName));
             setUnselectedParts(newUnselected);
         }
+        console.log(availableParts)
     }, [availableParts, selectedParts]); // Add selectedParts as a dependency
+
+    const fetchPartDetails = useCallback(() => {
+        if (drawerCurrentPart == null) {
+            return null;
+        } else {
+            const i = availableParts.find((item) => item["Список деталь рус"] === drawerCurrentPart.name)
+            if (i)
+                return i;
+            else {
+                console.warn("Impossible state: not found available part by key ", drawerCurrentPart.name);
+                return null;
+            }
+        }
+    }, [drawerCurrentPart, availableParts])
 
     // Effect to fetch available car parts from the API
     useEffect(() => {
@@ -183,6 +199,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             };
 
         setDrawerCurrentPart(newPart);
+        console.log(newPart)
         setIsDrawerOpen(true);
         setDrawerTab(0); // Always start from the first tab
     }, [selectedParts, generateInitialGrid, mapVisual]);
@@ -191,7 +208,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     const updateDrawerCurrentPart = useCallback((updates) => {
         setDrawerCurrentPart(prevPart => {
             const updatedPart = { ...prevPart, ...updates };
-            // Auto-advance tab if action is selected for the first time
             if (prevPart.action !== updatedPart.action && updatedPart.action !== null) {
                 setDrawerTab(1);
             }
@@ -307,7 +323,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                             </Steps>
                             <div className="drawer-tabs-container">
                                 {drawerTab === 0 && (
-
                                     <div className="carousel-page">
                                         <h4 className="body-parts-tab-header">Оберіть дію</h4>
                                         <MenuTree items={menuItems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} />
@@ -321,6 +336,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                         >
                                             Далі
                                         </Button>
+                                        <p style={{opacity: '0.4', fontSize: 'x-small'}}><pre>{jsyaml.dump(fetchPartDetails())}</pre></p>
                                     </div>
                                 )}
                                 {drawerTab === 1 && (
@@ -352,7 +368,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                 {drawerTab === 2 && (
                                     <div>
                                         <h3>Підсумок та розрахунки</h3>
-                                        <p>Частина: {carPartsTranslations[drawerCurrentPart.name]}</p>
+                                        <p>Частина: <pre>{jsyaml.dump(drawerCurrentPart)}</pre></p>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <>
