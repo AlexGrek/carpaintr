@@ -53,7 +53,7 @@ pub async fn read_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = &app_state.data_dir_path;
-    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
+    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(data)
@@ -66,7 +66,9 @@ pub async fn delete_file(
 ) -> Result<impl IntoResponse, AppError> {
     exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file admin request: {:?}", &path.to_string()), Some(user_email.as_str()));
     let user_path = &app_state.data_dir_path;
-    fs::remove_file(user_path.join(path)).await?;
+    let end_path = user_path.join(path);
+    app_state.cache.invalidate(&end_path).await;
+    fs::remove_file(end_path).await?;
     Ok("File deleted")
 }
 
@@ -94,7 +96,8 @@ pub async fn upload_file(
         .bytes()
         .await
         .map_err(|_| AppError::InternalServerError("Failed to read file data".to_string()))?;
-
-    tokio::fs::write(user_path.join(&PathBuf::from(&path)), data).await?;
+    let end_path = user_path.join(&PathBuf::from(&path));
+    app_state.cache.invalidate(&end_path).await;
+    tokio::fs::write(end_path, data).await?;
     Ok(Json("File uploaded and validated successfully"))
 }

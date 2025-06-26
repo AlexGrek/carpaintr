@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, Message, Panel, useToaster, Button, Whisper, Tooltip } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
-import Trans from '../localization/Trans'; // Import Trans component
-import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
-import { formatDistanceToNowStrict, parseISO, format, intervalToDuration } from 'date-fns'; // Import intervalToDuration
-
-registerTranslations('ua', {
-});
+import { useLocale } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
+import { parseISO, intervalToDuration } from 'date-fns'; // Import intervalToDuration
 
 const ServerLogs = () => {
     const [lines, setLines] = useState(100);

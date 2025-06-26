@@ -16,7 +16,7 @@ use crate::{
     cache::license_cache::LicenseCache,
     db::users::UserDb,
     middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
-    state::AppState,
+    state::AppState, utils::DataStorageCache,
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
@@ -79,6 +79,7 @@ async fn main() -> tokio::io::Result<()> {
         jwt_license_secret,
         data_dir_path: PathBuf::from(data_dir_path),
         admin_file_path: PathBuf::from(admin_file_path),
+        cache: DataStorageCache::new(10, 10, 50)
     });
 
     let init_result = api::v1::admin_editor_endpoints::run_list_class_body_types_rebuild(
@@ -121,6 +122,7 @@ async fn main() -> tokio::io::Result<()> {
                 )
                 .route("/listusers", get(api::v1::admin::list_users))
                 .route("/logs", get(api::v1::admin::get_n_logs))
+                .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/manageuser", post(api::v1::admin::manage_user))
                 .route(
                     "/license/invalidate/{email}",

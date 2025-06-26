@@ -16,7 +16,7 @@ pub async fn get_common_file_list(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let fs_manager =
-        GitTransactionalFs::new(app_state.data_dir_path.join(&COMMON), user_email).await?;
+        GitTransactionalFs::new(app_state.data_dir_path.join(&COMMON), user_email, &app_state.cache).await?;
     let data = fs_manager.list_files().await?;
     Ok(Json(data))
 }
@@ -27,7 +27,7 @@ pub async fn get_user_file_list(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file list
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email, &app_state.cache).await?;
     let data = fs_manager.list_files().await?;
     Ok(Json(data))
 }
@@ -39,7 +39,7 @@ pub async fn read_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
+    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(data)
@@ -51,7 +51,7 @@ pub async fn list_commits(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email, &app_state.cache).await?;
     let data = fs_manager.list_commits().await?;
     Ok(Json(data))
 }
@@ -69,7 +69,7 @@ pub async fn revert_commit(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email, &app_state.cache).await?;
     if revert.commit_hash == "last" {
         fs_manager.revert_last_commit().await?
     } else {
@@ -85,10 +85,10 @@ pub async fn delete_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file request: {:?}", &path.to_string()), Some(user_email.as_str()));
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
     fs_manager
         .delete_file(
-            std::path::Path::new(&path),
+            &PathBuf::from(&path),
             &format!("File {} deleted.", &path),
         )
         .await?;
@@ -102,7 +102,7 @@ pub async fn read_common_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
-    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path)
+    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
         .await?;
     Ok(data)
 }
@@ -116,7 +116,7 @@ pub async fn upload_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Expecting a single file field
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone()).await?;
+    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
     let field = multipart
         .next_field()
         .await

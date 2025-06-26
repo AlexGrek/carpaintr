@@ -119,7 +119,7 @@ pub async fn manage_user(
         ManageUserRequest::Delete { email } => {
             // Handle delete action
             app_state.db.delete_user_by_email(&email)?;
-            delete_user_data_gracefully(&app_state.data_dir_path, &email).await?;
+            delete_user_data_gracefully(&app_state.data_dir_path, &email, &app_state.cache).await?;
             Ok(StatusCode::OK) // Return 200 OK on successful deletion
         }
         ManageUserRequest::ChangePassword { email, data } => {
@@ -147,3 +147,11 @@ pub async fn get_n_logs(
     let logs = get_latest_logs(log_query.lines).await.map_err(|err| AppError::BadRequest(err.to_string()))?;
     Ok(Json(logs)) // Return the list of log lines
 }
+
+pub async fn get_cache_status(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    Ok(Json(app_state.cache.get_caches_size().await))
+}
+

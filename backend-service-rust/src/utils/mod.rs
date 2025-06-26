@@ -1,20 +1,160 @@
 use chrono::{DateTime, Duration, Utc};
+use csv_async::AsyncReader;
 use lexiclean::Lexiclean;
+use lru::LruCache;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::collections::HashSet;
-use std::path::Path;
-use std::path::PathBuf;
+use std::num::NonZeroUsize;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::fs;
 use tokio::fs::read_dir;
 use tokio::io;
+use tokio::io::AsyncBufRead;
+use tokio::sync::RwLock;
+use tokio_stream::StreamExt;
+
+use crate::errors::AppError;
+use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
 pub const COMMON: &'static str = "common";
 pub const USERS: &'static str = "users";
 pub const USERS_DELETED: &'static str = "deleted_users";
 pub const CATALOG: &'static str = "catalog";
 
-use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
+#[derive(Debug)]
+pub struct DataStorageCache {
+    as_string: Arc<RwLock<LruCache<PathBuf, String>>>,
+    as_vec_u8: Arc<RwLock<LruCache<PathBuf, Vec<u8>>>>,
+    as_csv: Arc<RwLock<LruCache<PathBuf, Vec<HashMap<String, String>>>>>,
+}
+
+impl DataStorageCache {
+    pub fn new(
+        string_cache_size: usize,
+        vec_u8_cache_size: usize,
+        csv_cache_size: usize,
+    ) -> Self {
+        DataStorageCache {
+            as_string: Arc::new(RwLock::new(LruCache::new(
+                NonZeroUsize::new(string_cache_size).unwrap_or(NonZeroUsize::new(1).unwrap()),
+            ))),
+            as_vec_u8: Arc::new(RwLock::new(LruCache::new(
+                NonZeroUsize::new(vec_u8_cache_size).unwrap_or(NonZeroUsize::new(1).unwrap()),
+            ))),
+            as_csv: Arc::new(RwLock::new(LruCache::new(
+                NonZeroUsize::new(csv_cache_size).unwrap_or(NonZeroUsize::new(1).unwrap()),
+            ))),
+        }
+    }
+
+    pub async fn invalidate(&self, path: &Path) {
+        self.as_string.write().await.pop(path);
+        self.as_vec_u8.write().await.pop(path);
+        self.as_csv.write().await.pop(path);
+    }
+
+    pub async fn get_caches_size(&self) -> Vec<(String, usize, usize)> {
+        let mut sizes = Vec::new();
+
+        let string_cache = self.as_string.read().await;
+        let string_size: usize = string_cache
+            .iter()
+            .map(|(_, v)| v.as_bytes().len())
+            .sum();
+        sizes.push((
+            "String".to_string(),
+            string_cache.len(),
+            string_size,
+        ));
+
+        let vec_u8_cache = self.as_vec_u8.read().await;
+        let vec_u8_size: usize = vec_u8_cache.iter().map(|(_, v)| v.len()).sum();
+        sizes.push(("Vec<u8>".to_string(), vec_u8_cache.len(), vec_u8_size));
+
+        let csv_cache = self.as_csv.read().await;
+        let csv_size: usize = csv_cache
+            .iter()
+            .map(|(_, v)| {
+                v.iter()
+                    .map(|row| {
+                        row.iter()
+                            .map(|(k, v)| k.len() + v.len())
+                            .sum::<usize>()
+                    })
+                    .sum::<usize>()
+            })
+            .sum();
+        sizes.push(("CSV".to_string(), csv_cache.len(), csv_size));
+
+        sizes
+    }
+}
+
+async fn parse_csv_to_string_hashmap_list_async_bufread<R>(
+    reader: R,
+) -> Result<Vec<HashMap<String, String>>, AppError>
+where
+    R: AsyncBufRead + Unpin + Send,
+{
+    let mut csv_reader = AsyncReader::from_reader(reader);
+    let mut records = Vec::new();
+
+    let headers = csv_reader.headers().await?.clone();
+
+    let mut record_stream = csv_reader.records();
+    while let Some(result) = record_stream.next().await {
+        let record = result?;
+        let mut row_map = HashMap::new();
+
+        for (i, field) in record.iter().enumerate() {
+            let header = headers.get(i);
+            row_map.insert(
+                header
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("column_{}", i)),
+                field.to_string(),
+            );
+        }
+
+        records.push(row_map);
+    }
+
+    Ok(records)
+}
+
+async fn parse_csv_file_async<P: AsRef<Path>>(
+    path: P,
+    cache: &DataStorageCache,
+) -> Result<Vec<HashMap<String, String>>, AppError> {
+    let path_buf = path.as_ref().to_path_buf();
+    if let Some(cached_data) = cache.as_csv.write().await.get(&path_buf) {
+        return Ok(cached_data.clone());
+    }
+
+    let file = tokio::fs::File::open(&path).await?;
+    let buf_reader = tokio::io::BufReader::new(file);
+    let parsed_data = parse_csv_to_string_hashmap_list_async_bufread(buf_reader).await?;
+
+    cache
+        .as_csv
+        .write()
+        .await
+        .put(path_buf, parsed_data.clone());
+    Ok(parsed_data)
+}
+
+pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
+    base: P,
+    target: P,
+    cache: &DataStorageCache,
+) -> Result<Vec<HashMap<String, String>>, AppError> {
+    let safe_path = safety_check(&base, &target)?;
+    let parsed = parse_csv_file_async(&safe_path, cache).await?;
+    return Ok(parsed);
+}
 
 #[derive(Debug, Error)]
 pub enum SafeFsError {
@@ -26,14 +166,10 @@ pub enum SafeFsError {
 }
 
 pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeFsError> {
-    // Clean the base path lexically
     let base_clean = base.as_ref().lexiclean();
-
-    // Create the full target path and clean it
     let full_target = base_clean.join(target.as_ref());
     let target_clean = full_target.lexiclean();
 
-    // Check if the cleaned target is within the base directory
     if target_clean.starts_with(&base_clean) {
         Ok(target_clean)
     } else {
@@ -41,37 +177,49 @@ pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeF
     }
 }
 
-/// Safely write content to a file, ensuring it's within user base path
 pub async fn safe_write<P: AsRef<Path>>(
     base: P,
     target: P,
     content: impl AsRef<[u8]>,
+    cache: &DataStorageCache,
 ) -> Result<(), SafeFsError> {
-    safety_check(&base, &target)?;
-    log::debug!("Safely writing file {:?}", target.as_ref());
-    fs::create_dir_all(target.as_ref().parent().unwrap()).await?;
-    fs::write(target, content).await?;
+    let safe_path = safety_check(&base, &target)?;
+    log::debug!("Safely writing file {:?}", safe_path);
+    if let Some(parent) = safe_path.parent() {
+        fs::create_dir_all(parent).await?;
+    }
+    fs::write(&safe_path, content).await?;
+    cache.invalidate(&safe_path).await;
     Ok(())
 }
 
 pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
-    safety_check(&base, &target)?;
-    log::debug!("Safely ensuring directory {:?}", target.as_ref());
-    std::fs::create_dir_all(&target)?;
+    let safe_path = safety_check(&base, &target)?;
+    log::debug!("Safely ensuring directory {:?}", safe_path);
+    std::fs::create_dir_all(&safe_path)?;
     Ok(())
 }
 
-/// Safely read content from a file, ensuring it's within user base path
-pub async fn safe_read<P: AsRef<Path>>(base: P, target: P) -> Result<Vec<u8>, SafeFsError> {
-    safety_check(&base, &target)?;
-    log::debug!("Safely reading file {:?}", target.as_ref());
-    let data = fs::read(target).await?;
+pub async fn safe_read<P: AsRef<Path>>(
+    base: P,
+    target: P,
+    cache: &DataStorageCache,
+) -> Result<Vec<u8>, SafeFsError> {
+    let safe_path = safety_check(&base, &target)?;
+    let path_buf = safe_path.to_path_buf();
+
+    if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
+        return Ok(data.clone());
+    }
+
+    log::debug!("Safely reading file {:?}", safe_path);
+    let data = fs::read(&safe_path).await?;
+    cache.as_vec_u8.write().await.put(path_buf, data.clone());
     Ok(data)
 }
 
 pub fn sanitize_email_for_path(email: &str) -> String {
     percent_encode(email.as_bytes(), NON_ALPHANUMERIC).to_string()
-    // A more robust approach might involve base64 encoding or UUIDs
 }
 
 pub fn user_catalog_directory_from_email(
@@ -86,11 +234,11 @@ pub fn user_catalog_directory_from_email(
 pub async fn delete_user_data_gracefully(
     data_dir: &PathBuf,
     email: &str,
+    cache: &DataStorageCache,
 ) -> Result<(), std::io::Error> {
     let user_catalog = user_personal_directory_from_email(data_dir, email)?;
     let deleted_user_catalog = user_deleted_directory_from_email(data_dir, email)?;
 
-    // Create the deleted user directory if it doesn't exist
     if let Some(parent) = deleted_user_catalog.parent() {
         fs::create_dir_all(parent).await?;
     }
@@ -103,7 +251,6 @@ pub async fn delete_user_data_gracefully(
         let file_name = entry.file_name();
         let dest_path = deleted_user_catalog.join(file_name);
 
-        // Remove destination if it exists (overwrite behavior)
         if dest_path.exists() {
             if dest_path.is_dir() {
                 fs::remove_dir_all(&dest_path).await?;
@@ -111,15 +258,11 @@ pub async fn delete_user_data_gracefully(
                 fs::remove_file(&dest_path).await?;
             }
         }
-
-        // Move the file/directory
+        
+        cache.invalidate(&entry_path).await;
         fs::rename(&entry_path, &dest_path).await?;
-
-        // do nothing if user_catalog does not exist
-        // move all data from user_catalog dir into deleted_user_catalog dir (create if not exist), delete user_catalog
-        // if deleted_user_catalog was previously existing and non-empty - do not care, ovwerwrite whatever we need to overwrite
     }
-    return Ok(());
+    Ok(())
 }
 
 pub fn user_deleted_directory_from_email(
@@ -192,33 +335,29 @@ pub async fn list_catalog_files_user_common<P: AsRef<Path>>(
     return list_unique_file_names_two(&user_dir, &common_dir).await;
 }
 
-// pub async fn get_file_user_common<P: AsRef<Path>>(data_dir: &PathBuf, email: &str, subpath_to_file: &P) -> io::Result<String> {
-//     let user_file_path = user_directory_from_email(data_dir, email)?.join(subpath_to_file);
-//     let common_file_path = common_directory(data_dir)?.join(subpath_to_file);
+pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
+    path: &P,
+    root: &P,
+    cache: &DataStorageCache,
+) -> Result<String, SafeFsError> {
+    let safe_path = safety_check(root, path)?;
+    let path_buf = safe_path.to_path_buf();
 
-//     if fs::metadata(&user_file_path).await.is_ok() {
-//         // File exists in user directory, read from there
-//         fs::read_to_string(user_file_path).await
-//     } else if fs::metadata(&common_file_path).await.is_ok() {
-//         // File doesn't exist in user directory, check common directory
-//         fs::read_to_string(common_file_path).await
-//     } else {
-//         // File not found in either location
-//         Err(io::Error::new(io::ErrorKind::NotFound, "File not found in user or common directory"))
-//     }
-// }
+    if let Some(data) = cache.as_string.write().await.get(&path_buf) {
+        return Ok(data.clone());
+    }
 
-pub async fn get_file_as_string_by_path<P: AsRef<Path>>(path: &P, root: &P) -> Result<String, SafeFsError> {
-    safety_check(root, path)?;
-    let path2 = path.as_ref().to_owned();
-    log::info!("Reading file: {:?}", path2);
-    if fs::metadata(&path).await.is_ok() {
-        return Ok(fs::read_to_string(path).await?)
+    log::info!("Reading file: {:?}", path_buf);
+    if fs::metadata(&path_buf).await.is_ok() {
+        let content = fs::read_to_string(&path_buf).await?;
+        cache
+            .as_string
+            .write()
+            .await
+            .put(path_buf, content.clone());
+        return Ok(content);
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "File not found by path",
-        ).into())
+        Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path").into())
     }
 }
 
@@ -227,23 +366,15 @@ pub async fn get_file_path_user_common<P: AsRef<Path>>(
     email: &str,
     subpath_to_file: &P,
 ) -> io::Result<PathBuf> {
-    // Construct the potential path in the user's directory
     let user_file_path = user_catalog_directory_from_email(data_dir, email)?.join(subpath_to_file);
 
-    // Check if the file exists in the user's directory
     if fs::metadata(&user_file_path).await.is_ok() {
-        // File exists in user directory, return that path
         Ok(user_file_path)
     } else {
-        // File doesn't exist in user directory, construct the path in the common directory
         let common_file_path = common_directory(data_dir)?.join(subpath_to_file);
-
-        // Check if the file exists in the common directory
         if fs::metadata(&common_file_path).await.is_ok() {
-            // File exists in common directory, return that path
             Ok(common_file_path)
         } else {
-            // File not found in either location
             Err(io::Error::new(
                 io::ErrorKind::NotFound,
                 format!(
@@ -326,7 +457,6 @@ pub async fn get_file_summary<P: AsRef<Path>>(dir: P) -> io::Result<FileSummary>
         all_files.push(file_entry);
     }
 
-    // Sort each group by modified date (newest first)
     let sort_desc = |a: &FileEntry, b: &FileEntry| b.modified.cmp(&a.modified);
 
     all_files.sort_by(sort_desc);

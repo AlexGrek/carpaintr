@@ -13,6 +13,8 @@ pub enum AppError {
     #[error("Database error")]
     DbError(#[from] sled::Error),
     #[error("Serialization/Deserialization error")]
+    CsvAsyncError(#[from] csv_async::Error),
+    #[error("Serialization/Deserialization csv error: {0}")]
     SerdeError(#[from] serde_json::Error),
     #[error("JWT error")]
     JwtError(#[from] jsonwebtoken::errors::Error),

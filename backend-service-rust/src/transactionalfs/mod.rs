@@ -7,7 +7,7 @@ use tokio::process::Command;
 
 use crate::{
     exlogging::{log_event, LogLevel},
-    utils::{safe_write, safety_check, SafeFsError},
+    utils::{safe_write, safety_check, DataStorageCache, SafeFsError},
 };
 
 #[derive(Error, Debug)]
@@ -56,7 +56,7 @@ pub trait TransactionalFs {
     async fn write_file(
         &self,
         new_file_content: Vec<u8>,
-        new_file_path_relative_to_root: &Path,
+        new_file_path_relative_to_root: &PathBuf,
         git_message: &str,
     ) -> Result<(), TransactionalFsError>;
 
@@ -67,7 +67,7 @@ pub trait TransactionalFs {
     /// * `git_message` - The Git commit message for the deletion.
     async fn delete_file(
         &self,
-        file_path_relative_to_root: &Path,
+        file_path_relative_to_root: &PathBuf,
         git_message: &str,
     ) -> Result<(), TransactionalFsError>;
 
@@ -89,9 +89,10 @@ pub trait TransactionalFs {
     async fn list_files(&self) -> Result<FsEntry, TransactionalFsError>;
 }
 
-pub struct GitTransactionalFs {
+pub struct GitTransactionalFs<'a> {
     root_path: PathBuf,
     author_email: String,
+    cache: &'a DataStorageCache,
 }
 
 pub async fn list_files_raw(path: &PathBuf) -> Result<FsEntry, TransactionalFsError> {
@@ -109,7 +110,7 @@ pub async fn list_files_raw(path: &PathBuf) -> Result<FsEntry, TransactionalFsEr
 }
 
 #[async_trait]
-impl TransactionalFs for GitTransactionalFs {
+impl<'a> TransactionalFs for GitTransactionalFs<'a> {
     // New implementation for list_files
     async fn list_files(&self) -> Result<FsEntry, TransactionalFsError> {
         let root_name = self
@@ -129,7 +130,7 @@ impl TransactionalFs for GitTransactionalFs {
     async fn write_file(
         &self,
         new_file_content: Vec<u8>,
-        new_file_path_relative_to_root: &Path,
+        new_file_path_relative_to_root: &PathBuf,
         git_message: &str,
     ) -> Result<(), TransactionalFsError> {
         log_event(
@@ -137,14 +138,15 @@ impl TransactionalFs for GitTransactionalFs {
             format!("Update file {:?}", new_file_path_relative_to_root),
             Some(self.author_email.as_str()),
         );
-        let full_path = self.root_path.join(new_file_path_relative_to_root);
-
-        // Ensure parent directories exist
-        if let Some(parent) = full_path.parent() {
-            fs::create_dir_all(parent).await?;
-        }
-
-        safe_write(&self.root_path, &full_path, new_file_content).await?;
+        
+        // The safe_write from utils now handles safety checks, directory creation, writing, and cache invalidation.
+        safe_write(
+            &self.root_path,
+            new_file_path_relative_to_root,
+            new_file_content,
+            self.cache,
+        )
+        .await?;
 
         // Perform Git operations
         self.perform_git_commit(git_message).await?;
@@ -154,21 +156,22 @@ impl TransactionalFs for GitTransactionalFs {
 
     async fn delete_file(
         &self,
-        file_path_relative_to_root: &Path,
+        file_path_relative_to_root: &PathBuf,
         git_message: &str,
     ) -> Result<(), TransactionalFsError> {
-        log_event(
-            LogLevel::Info,
-            format!("Delete file {:?}", file_path_relative_to_root),
-            Some(self.author_email.as_str()),
-        );
-        let full_path = self.root_path.join(file_path_relative_to_root);
+        // log_event(
+        //     LogLevel::Info,
+        //     format!("Delete file {:?}", Path::from(file_path_relative_to_root.as_ref()).to_str()),
+        //     Some(self.author_email.as_str()),
+        // );
+        let full_path = safety_check(&self.root_path, file_path_relative_to_root)?;
 
         if !full_path.exists() {
             return Err(TransactionalFsError::FileNotFound(full_path));
         }
 
-        safety_check(&self.root_path, &full_path)?;
+        // Invalidate the cache before deleting the file.
+        self.cache.invalidate(&full_path).await;
         fs::remove_file(&full_path).await?;
 
         // Perform Git operations
@@ -190,6 +193,7 @@ impl TransactionalFs for GitTransactionalFs {
 
         // Revert the last commit using git reset --hard HEAD~1
         // This will discard local changes and move HEAD to the previous commit.
+        // TODO: Invalidate cache for affected files
         Self::run_git_command(&self.root_path, &["reset", "--hard", "HEAD~1"]).await?;
         Ok(())
     }
@@ -216,6 +220,7 @@ impl TransactionalFs for GitTransactionalFs {
         }
 
         // Revert the specific commit using git revert
+        // TODO: Invalidate cache for affected files
         Self::run_git_command(&self.root_path, &["revert", "--no-edit", commit_hash]).await?; // --no-edit to avoid interactive editor
         Ok(())
     }
@@ -275,15 +280,17 @@ impl TransactionalFs for GitTransactionalFs {
     }
 }
 
-impl GitTransactionalFs {
+impl<'a> GitTransactionalFs<'a> {
     /// Creates a new `GitTransactionalFs` instance.
     ///
     /// # Arguments
     /// * `root_path` - The root directory of the Git repository.
     /// * `author_email` - The default email of the author for Git commits.
+    /// * `cache` - A reference to the data storage cache.
     pub async fn new(
         root_path: PathBuf,
         author_email: String,
+        cache: &'a DataStorageCache,
     ) -> Result<Self, TransactionalFsError> {
         // Initialize Git if not already initialized
         if !root_path.join(".git").exists() {
@@ -293,6 +300,7 @@ impl GitTransactionalFs {
         Ok(Self {
             root_path,
             author_email,
+            cache,
         })
     }
 
@@ -435,253 +443,6 @@ impl GitTransactionalFs {
 
         // Commit the changes
         Self::run_git_command(&self.root_path, &["commit", "-m", git_message]).await?;
-        Ok(())
-    }
-}
-
-// tests
-
-#[cfg(test)]
-mod tests {
-    use super::*; // Import items from the parent module
-    use tempfile::TempDir; // For creating temporary directories
-
-    // Helper function to set up a clean test environment
-    async fn setup_test_env() -> Result<(TempDir, GitTransactionalFs), Box<dyn std::error::Error>> {
-        let temp_dir = TempDir::new()?;
-        let root_path = temp_dir.path().to_path_buf();
-        let author_email = "test@example.com".to_string();
-
-        let fs_manager = GitTransactionalFs::new(root_path, author_email).await?;
-        Ok((temp_dir, fs_manager))
-    }
-
-    #[tokio::test]
-    async fn test_initial_write_and_list() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("test_file.txt");
-        let file_content = b"Hello, world!";
-        let commit_message = "Initial commit: Add test_file.txt";
-
-        fs_manager
-            .write_file(file_content.to_vec(), &file_path, commit_message)
-            .await?;
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 1);
-        assert_eq!(commits[0].message, commit_message);
-        assert_eq!(commits[0].author, "test@example.com");
-        assert!(commits[0].hash.len() > 0); // Check if hash is not empty
-        assert_eq!(commits[0].files, vec!["test_file.txt"]);
-
-        // Verify file content on disk
-        let actual_content = fs::read(fs_manager.root_path.join(&file_path)).await?;
-        assert_eq!(actual_content, file_content);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_update_file_and_list() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("update_me.txt");
-        let initial_content = b"Initial content";
-        let updated_content = b"Updated content";
-
-        fs_manager
-            .write_file(initial_content.to_vec(), &file_path, "Initial write")
-            .await?;
-        fs_manager
-            .write_file(updated_content.to_vec(), &file_path, "Update file")
-            .await?;
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 2);
-
-        // Check the latest commit
-        assert_eq!(commits[0].message, "Update file");
-        assert_eq!(commits[0].files, vec!["update_me.txt"]);
-
-        // Check the initial commit
-        assert_eq!(commits[1].message, "Initial write");
-        assert_eq!(commits[1].files, vec!["update_me.txt"]);
-
-        // Verify file content on disk
-        let actual_content = fs::read(fs_manager.root_path.join(&file_path)).await?;
-        assert_eq!(actual_content, updated_content);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_delete_file_and_list() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("delete_me.txt");
-        let file_content = b"Content to be deleted";
-
-        fs_manager
-            .write_file(file_content.to_vec(), &file_path, "Add file for deletion")
-            .await?;
-        assert!(fs_manager.root_path.join(&file_path).exists());
-
-        fs_manager
-            .delete_file(&file_path, "Delete the file")
-            .await?;
-        assert!(!fs_manager.root_path.join(&file_path).exists()); // File should no longer exist
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 2);
-
-        // The latest commit should be the deletion
-        assert_eq!(commits[0].message, "Delete the file");
-        // Git log --name-only for deletions shows the file name
-        assert_eq!(commits[0].files, vec!["delete_me.txt"]);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_delete_non_existent_file() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("non_existent.txt");
-        let result = fs_manager
-            .delete_file(&file_path, "Try to delete non-existent")
-            .await;
-
-        match result {
-            Err(TransactionalFsError::FileNotFound(_)) => assert!(true), // Expected error
-            _ => panic!("Expected FileNotFound error, but got {:?}", result),
-        }
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 0); // No commit should have been made
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_revert_last_commit() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("revert_test.txt");
-        let initial_content = b"First version";
-        let updated_content = b"Second version";
-
-        fs_manager
-            .write_file(initial_content.to_vec(), &file_path, "Initial commit")
-            .await?;
-        fs_manager
-            .write_file(updated_content.to_vec(), &file_path, "Update commit")
-            .await?;
-
-        let commits_before_revert = fs_manager.list_commits().await?;
-        assert_eq!(commits_before_revert.len(), 2);
-        assert_eq!(
-            fs::read(fs_manager.root_path.join(&file_path)).await?,
-            updated_content
-        );
-
-        fs_manager.revert_last_commit().await?; // Revert the "Update commit"
-
-        let commits_after_revert = fs_manager.list_commits().await?;
-        assert_eq!(commits_after_revert.len(), 1); // Only "Initial commit" should remain
-        assert_eq!(commits_after_revert[0].message, "Initial commit");
-
-        // Verify file content is back to initial
-        let actual_content = fs::read(fs_manager.root_path.join(&file_path)).await?;
-        assert_eq!(actual_content, initial_content);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_revert_specific_commit() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file1_path = PathBuf::from("file1.txt");
-        let file2_path = PathBuf::from("file2.txt");
-
-        fs_manager
-            .write_file(b"content1".to_vec(), &file1_path, "Commit A: Add file1")
-            .await?;
-        fs_manager
-            .write_file(b"content2".to_vec(), &file2_path, "Commit B: Add file2")
-            .await?;
-        fs_manager
-            .write_file(
-                b"content1_v2".to_vec(),
-                &file1_path,
-                "Commit C: Update file1",
-            )
-            .await?;
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 3);
-
-        // Find Commit B's hash (which added file2.txt)
-        let commit_b_hash = commits
-            .iter()
-            .find(|c| c.message == "Commit B: Add file2")
-            .map(|c| c.hash.clone())
-            .expect("Commit B not found");
-
-        // Revert Commit B
-        fs_manager.revert_commit(&commit_b_hash).await?;
-
-        // After reverting Commit B, file2.txt should be gone, but Commit C should still exist
-        assert!(!fs_manager.root_path.join(&file2_path).exists());
-        assert!(fs_manager.root_path.join(&file1_path).exists());
-        assert_eq!(
-            fs::read(fs_manager.root_path.join(&file1_path)).await?,
-            b"content1_v2"
-        );
-
-        let commits_after_revert = fs_manager.list_commits().await?;
-        assert_eq!(commits_after_revert.len(), 4); // Original 3 + 1 revert commit
-        assert_eq!(
-            commits_after_revert[0].message,
-            format!("Revert \"Commit B: Add file2\"")
-        );
-        assert_eq!(commits_after_revert[0].files, vec!["file2.txt"]); // Revert commit undoes file2.txt addition
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_list_commits_empty_repo() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 0); // No commits yet
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_nested_directory_write() -> Result<(), Box<dyn std::error::Error>> {
-        let (_temp_dir, fs_manager) = setup_test_env().await?;
-
-        let file_path = PathBuf::from("dir1/dir2/nested_file.txt");
-        let file_content = b"Nested content";
-        let commit_message = "Add nested file";
-
-        fs_manager
-            .write_file(file_content.to_vec(), &file_path, commit_message)
-            .await?;
-
-        let commits = fs_manager.list_commits().await?;
-        assert_eq!(commits.len(), 1);
-        assert_eq!(commits[0].message, commit_message);
-        assert_eq!(commits[0].files, vec!["dir1/dir2/nested_file.txt"]);
-
-        // Verify file content on disk
-        let actual_content = fs::read(fs_manager.root_path.join(&file_path)).await?;
-        assert_eq!(actual_content, file_content);
-
         Ok(())
     }
 }

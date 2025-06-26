@@ -1,4 +1,4 @@
-use crate::{db::users::UserDb, auth::Auth, cache::license_cache::LicenseCache};
+use crate::{auth::Auth, cache::license_cache::LicenseCache, db::users::UserDb, utils};
 use std::{path::{PathBuf}, sync::Arc};
 
 pub struct AppState {
@@ -8,5 +8,6 @@ pub struct AppState {
     pub admin_file_path: PathBuf,
     pub data_dir_path: PathBuf,
     pub jwt_license_secret: String,
-    pub pdf_gen_api_url_post: String
+    pub pdf_gen_api_url_post: String,
+    pub cache: utils::DataStorageCache
 }

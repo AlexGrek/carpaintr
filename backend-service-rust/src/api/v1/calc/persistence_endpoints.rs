@@ -68,7 +68,7 @@ pub async fn save_calculation(
 
     // Save to file
     log_event(LogLevel::Info, format!("Save calculation {} as {:?}", req.digest(), &file_name), Some(user_email));
-    safe_write(user_path, file_path, json).await?;
+    safe_write(user_path, file_path, json, &app_state.cache).await?;
 
     Ok(Json(SaveSuccessResponse {saved_file_path: file_name}))
 }
@@ -82,7 +82,7 @@ pub async fn get_calculation_file(
     let user_path = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
     let file_path = user_path.join(&CALCULATIONS).join(filename);
 
-    let content = safe_read(&user_path, &file_path).await?;
+    let content = safe_read(&user_path, &file_path, &app_state.cache).await?;
 
     Ok((
         [(CONTENT_TYPE, "application/json")],

@@ -15,6 +15,7 @@ import ManageUsers from './ManageUsers';
 import ServerLogs from './ServerLogs';
 import AdminPanelRequests from './admreq/AdminPanelRequests';
 import FilesystemBrowser from './editor/FilesystemBrowser';
+import ServerStatus from './ServerStatus';
 
 // Custom Nav.Item component to handle active state with React Router
 const NavLink = ({ children, to, ...props }) => {
@@ -50,7 +51,6 @@ const adminFilesystemConfig = [
     }
   ];
 
-
 const AdminTools = () => {
   const isMobile = useMediaQuery({ maxWidth: 767 }); // Define your mobile breakpoint
 
@@ -72,8 +72,8 @@ const AdminTools = () => {
     },
     {
       path: 'data',
-      title: 'Дані',
-      component: <ManageUsers />
+      title: 'Стан сервера',
+      component: <ServerStatus />
     },
     {
       path: 'requests',
