@@ -31,7 +31,6 @@ import NotifyMessage from './layout/NotifyMessage';
 
 // Confirmation Dialog Component
 const ConfirmationDialog = React.memo(({ show, onClose, onConfirm, message }) => {
-    const { str } = useLocale();
     return (
         <Modal open={show} onClose={onClose} size="xs">
             <Modal.Header>

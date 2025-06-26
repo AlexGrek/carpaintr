@@ -1,6 +1,8 @@
 import YAML from 'yaml';
+import Papa from 'papaparse';
 
-export const authFetchYaml = async (url, options = {}, onError = console.error) => {
+// Common fetch functionality
+const performAuthFetch = async (url, options = {}) => {
     const token = localStorage.getItem('authToken');
 
     const headers = {
@@ -8,13 +10,18 @@ export const authFetchYaml = async (url, options = {}, onError = console.error) 
         Authorization: token ? `Bearer ${token}` : '',
     };
 
+    const response = await fetch(url, { ...options, headers });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+    }
+    
+    return response;
+};
+
+export const authFetchYaml = async (url, options = {}, onError = console.error) => {
     try {
-        const response = await fetch(url, { ...options, headers });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
-        }
-
+        const response = await performAuthFetch(url, options);
         const text = await response.text();
 
         try {
@@ -23,6 +30,44 @@ export const authFetchYaml = async (url, options = {}, onError = console.error) 
             onError(`YAML parse error: ${yamlError.message}`);
             return null;
         }
+    } catch (error) {
+        onError(`Fetch error: ${error.message}`);
+        return null;
+    }
+};
+
+export const authFetchCsv = async (url, options = {}, onError = console.error) => {
+    try {
+        const response = await performAuthFetch(url, options);
+        const text = await response.text();
+
+        try {
+            const result = Papa.parse(text, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true
+            });
+            
+            if (result.errors.length > 0) {
+                onError(`CSV parse errors: ${result.errors.map(e => e.message).join(', ')}`);
+            }
+            
+            return result.data;
+        } catch (csvError) {
+            onError(`CSV parse error: ${csvError.message}`);
+            return null;
+        }
+    } catch (error) {
+        onError(`Fetch error: ${error.message}`);
+        return null;
+    }
+};
+
+export const authFetchJson = async (url, options = {}, onError = console.error) => {
+    try {
+        const response = await performAuthFetch(url, options);
+        const data = await response.json();
+        return data;
     } catch (error) {
         onError(`Fetch error: ${error.message}`);
         return null;
