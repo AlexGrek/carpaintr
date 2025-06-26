@@ -5,18 +5,21 @@ use serde_json;
 use sled::{Tree};
 
 const USERS_TREE_NAME: &str = "users";
+const REQUESTS_TREE_NAME: &str = "users";
 
 #[derive(Clone)]
-pub struct UserDb {
+pub struct AppDb {
     // db: Db,
-    users_tree: Tree,
+    pub users_tree: Tree,
+    pub requests_tree: Tree
 }
 
-impl UserDb {
+impl AppDb {
     pub fn new(db_path: &str) -> Result<Self, AppError> {
         let db = sled::open(db_path)?;
         let users_tree = db.open_tree(USERS_TREE_NAME)?;
-        Ok(Self { users_tree })
+        let requests_tree = db.open_tree(REQUESTS_TREE_NAME)?;
+        Ok(Self { users_tree, requests_tree })
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {

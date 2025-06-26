@@ -14,7 +14,7 @@ use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 use crate::{
     auth::Auth,
     cache::license_cache::LicenseCache,
-    db::users::UserDb,
+    db::users::{AppDb},
     middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
     state::AppState, utils::DataStorageCache,
 };
@@ -63,7 +63,7 @@ async fn main() -> tokio::io::Result<()> {
 
     check_admin_file(&admin_file_path);
 
-    let db = UserDb::new(&database_url).expect("Failed to initialize database");
+    let db = AppDb::new(&database_url).expect("Failed to initialize database");
     let auth = Auth::new(jwt_secret.as_bytes());
     let license_cache = LicenseCache::new(
         PathBuf::from(data_dir_path.clone()),

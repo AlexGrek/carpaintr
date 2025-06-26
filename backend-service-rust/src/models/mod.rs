@@ -1,4 +1,5 @@
 pub mod calculations;
+pub mod requests;
 
 use crate::license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest};
 use chrono::{DateTime, Utc};
