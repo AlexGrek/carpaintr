@@ -79,7 +79,7 @@ async fn main() -> tokio::io::Result<()> {
         jwt_license_secret,
         data_dir_path: PathBuf::from(data_dir_path),
         admin_file_path: PathBuf::from(admin_file_path),
-        cache: DataStorageCache::new(10, 10, 50)
+        cache: Arc::new(DataStorageCache::new(10, 10, 50))
     });
 
     let init_result = api::v1::admin_editor_endpoints::run_list_class_body_types_rebuild(

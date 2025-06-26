@@ -165,13 +165,13 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeFsError> {
+pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFsError> {
     let base_clean = base.as_ref().lexiclean();
     let full_target = base_clean.join(target.as_ref());
     let target_clean = full_target.lexiclean();
 
     if target_clean.starts_with(&base_clean) {
-        Ok(target_clean)
+        Ok(target)
     } else {
         Err(SafeFsError::PathTraversalDetected)
     }
@@ -184,18 +184,18 @@ pub async fn safe_write<P: AsRef<Path>>(
     cache: &DataStorageCache,
 ) -> Result<(), SafeFsError> {
     let safe_path = safety_check(&base, &target)?;
-    log::debug!("Safely writing file {:?}", safe_path);
-    if let Some(parent) = safe_path.parent() {
+    log::debug!("Safely writing file {:?}", safe_path.as_ref());
+    if let Some(parent) = safe_path.as_ref().parent() {
         fs::create_dir_all(parent).await?;
     }
     fs::write(&safe_path, content).await?;
-    cache.invalidate(&safe_path).await;
+    cache.invalidate(&safe_path.as_ref()).await;
     Ok(())
 }
 
 pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
     let safe_path = safety_check(&base, &target)?;
-    log::debug!("Safely ensuring directory {:?}", safe_path);
+    log::debug!("Safely ensuring directory {:?}", safe_path.as_ref());
     std::fs::create_dir_all(&safe_path)?;
     Ok(())
 }
@@ -206,13 +206,13 @@ pub async fn safe_read<P: AsRef<Path>>(
     cache: &DataStorageCache,
 ) -> Result<Vec<u8>, SafeFsError> {
     let safe_path = safety_check(&base, &target)?;
-    let path_buf = safe_path.to_path_buf();
+    let path_buf = safe_path.as_ref().to_path_buf();
 
     if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
         return Ok(data.clone());
     }
 
-    log::debug!("Safely reading file {:?}", safe_path);
+    log::debug!("Safely reading file {:?}", safe_path.as_ref());
     let data = fs::read(&safe_path).await?;
     cache.as_vec_u8.write().await.put(path_buf, data.clone());
     Ok(data)
@@ -341,7 +341,7 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     cache: &DataStorageCache,
 ) -> Result<String, SafeFsError> {
     let safe_path = safety_check(root, path)?;
-    let path_buf = safe_path.to_path_buf();
+    let path_buf = safe_path.as_ref().to_path_buf();
 
     if let Some(data) = cache.as_string.write().await.get(&path_buf) {
         return Ok(data.clone());

@@ -9,5 +9,5 @@ pub struct AppState {
     pub data_dir_path: PathBuf,
     pub jwt_license_secret: String,
     pub pdf_gen_api_url_post: String,
-    pub cache: utils::DataStorageCache
+    pub cache: Arc<utils::DataStorageCache>
 }

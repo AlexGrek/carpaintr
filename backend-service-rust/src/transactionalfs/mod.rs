@@ -167,7 +167,7 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
         let full_path = safety_check(&self.root_path, file_path_relative_to_root)?;
 
         if !full_path.exists() {
-            return Err(TransactionalFsError::FileNotFound(full_path));
+            return Err(TransactionalFsError::FileNotFound(full_path.clone()));
         }
 
         // Invalidate the cache before deleting the file.
