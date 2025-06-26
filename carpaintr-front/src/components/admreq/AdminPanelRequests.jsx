@@ -1,5 +1,7 @@
+import SupportTicketListAdmin from "../support/SupportTicketListAdmin";
+
 const AdminPanelRequests = () => {
-    return <div></div>
+    return <SupportTicketListAdmin/>
 }
 
 export default AdminPanelRequests;

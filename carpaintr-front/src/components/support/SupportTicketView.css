@@ -1,0 +1,77 @@
+.support-ticket-container {
+    max-width: 800px;
+    margin: 20px auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    font-family: sans-serif;
+    background: #f9f9f9;
+}
+
+.ticket-header h2 {
+    margin: 0;
+}
+
+.ticket-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.ticket-description {
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.ticket-messages {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.message-bubble {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+    clear: both;
+}
+
+.message-bubble.user {
+    background-color: #e0f7fa;
+    float: left;
+}
+
+.message-bubble.support {
+    background-color: #d1c4e9;
+    float: right;
+}
+
+.message-meta {
+    font-size: 0.8em;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.message-text {
+    white-space: pre-wrap;
+}
+
+.resolved-label {
+    background: #4caf50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 10px;
+    font-size: 0.75em;
+}
+
+.ticket-actions {
+    margin-top: 20px;
+}
+
+.ticket-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}

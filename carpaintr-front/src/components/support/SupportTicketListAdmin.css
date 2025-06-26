@@ -1,0 +1,9 @@
+.admin-ticket-list {
+  padding: 20px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
