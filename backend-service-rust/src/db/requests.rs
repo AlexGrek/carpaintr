@@ -2,7 +2,6 @@ use std::io::{Cursor, Read};
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use sled::Tree;
-use sled::{Config, Db, IVec};
 
 use crate::errors::AppError;
 use crate::exlogging::{log_event, LogLevel};

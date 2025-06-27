@@ -5,7 +5,7 @@ use serde_json;
 use sled::{Tree};
 
 const USERS_TREE_NAME: &str = "users";
-const REQUESTS_TREE_NAME: &str = "users";
+const REQUESTS_TREE_NAME: &str = "support_requests";
 
 #[derive(Clone)]
 pub struct AppDb {
