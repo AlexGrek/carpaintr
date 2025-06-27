@@ -183,6 +183,22 @@ async fn main() -> tokio::io::Result<()> {
             "/user",
             Router::new()
                 .route(
+                    "/support_request_submit",
+                    post(api::v1::support::user_submit),
+                )
+                .route(
+                    "/support_message",
+                    post(api::v1::support::user_add_message),
+                )
+                .route(
+                    "/support_request",
+                    get(api::v1::support::user_get),
+                )
+                .route(
+                    "/support_requests",
+                    get(api::v1::support::user_get_all),
+                )
+                .route(
                     "/calculationstore",
                     get(api::v1::calc::persistence_endpoints::get_calculation_file),
                 )

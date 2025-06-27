@@ -14,6 +14,7 @@ fn utc_now() -> DateTime<Utc> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SupportRequestMessage {
+    #[serde(default)]
     pub email: String,
     #[serde(default)]
     pub is_support_response: bool,
@@ -29,6 +30,7 @@ pub struct SupportRequestMessage {
 pub struct SupportRequest {
     #[serde(default = "generate_random_id")]
     pub id: String,
+    #[serde(default)]
     pub email: String,
     #[serde(default)]
     pub contacts: HashMap<String,String>,

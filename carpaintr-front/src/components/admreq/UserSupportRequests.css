@@ -1,0 +1,66 @@
+.user-support-list {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.support-card {
+  border: 1px solid #ddd;
+  cursor: pointer;
+  background: white;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.support-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.support-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.support-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.support-id {
+  font-size: 0.85em;
+  color: #777;
+}
+
+.support-description {
+  margin-top: 8px;
+  color: #444;
+  font-size: 0.95em;
+}
+
+.support-last-message {
+  margin-top: 10px;
+  font-size: 0.95em;
+  font-weight: bold;
+}
+
+.support-message {
+  color: #5c6bc0; /* indigo - support response */
+}
+
+.user-message {
+  color: #26a69a; /* teal - user message */
+}
+
+.resolved-badge {
+  background: #4caf50;
+  color: white;
+  padding: 2px 8px;
+  font-size: 0.75em;
+  border-radius: 4px;
+  margin-left: 10px;
+}

@@ -1,5 +1,5 @@
 use crate::{
-    db::requests, errors::AppError, middleware::AuthenticatedUser, models::requests::SupportRequestMessage, state::AppState
+    db::requests, errors::AppError, middleware::AuthenticatedUser, models::requests::{SupportRequest, SupportRequestMessage}, state::AppState
 };
 use axum::{
     extract::{Json, Query, State},
@@ -80,13 +80,25 @@ pub async fn user_get_all(
     Ok(Json(requests))
 }
 
+pub async fn user_submit(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    Json(mut r): Json<SupportRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    r.timestamp = Utc::now();
+    r.email = user_email;
+    requests::insert_request(&app_state.db.requests_tree, &r)?;
+    Ok(Json(r))
+}
+
 pub async fn support_add_message(
-    AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
     Query(q): Query<SupportTicketQuery>,
     Json(mut msg): Json<SupportRequestMessage>,
 ) -> Result<impl IntoResponse, AppError> {
     msg.timestamp = Utc::now();
+    msg.email = user_email;
     let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
     match r {
         Some(mut request) => {
@@ -104,7 +116,7 @@ pub async fn support_add_message(
 }
 
 pub async fn user_add_message(
-    AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
     Query(q): Query<SupportTicketQuery>,
     Json(mut msg): Json<SupportRequestMessage>,
@@ -112,6 +124,7 @@ pub async fn user_add_message(
     if msg.is_support_response {
         return Err(AppError::Forbidden);
     }
+    msg.email = user_email;
     msg.timestamp = Utc::now();
     let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
     match r {
