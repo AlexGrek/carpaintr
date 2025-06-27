@@ -27,7 +27,7 @@ const ActiveLicenseMarker = () => {
     }, []);
 
     if (loading) {
-        return <Loader content="Завантаження ліцензії..." />;
+        return <Tag color="grey">Завантаження ліцензії...</Tag>
     }
 
     if (error) {
