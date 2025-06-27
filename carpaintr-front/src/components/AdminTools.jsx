@@ -1,6 +1,6 @@
-import React from 'react';
-import { Nav, Container, Dropdown } from 'rsuite';
-import { Menu } from 'lucide-react'; // Import Menu icon from lucide-react
+import React, { Suspense, lazy } from 'react';
+import { Nav, Container, Dropdown, Loader } from 'rsuite';
+import { Menu } from 'lucide-react';
 import { useMediaQuery } from 'react-responsive';
 import {
   Routes,
@@ -10,50 +10,53 @@ import {
   useResolvedPath
 } from 'react-router-dom';
 
-import CreateUser from './CreateUser';
-import ManageUsers from './ManageUsers';
-import ServerLogs from './ServerLogs';
-import AdminPanelRequests from './admreq/AdminPanelRequests';
-import FilesystemBrowser from './editor/FilesystemBrowser';
-import ServerStatus from './ServerStatus';
+// Lazy load the components
+const CreateUser = lazy(() => import('./CreateUser'));
+const ManageUsers = lazy(() => import('./ManageUsers'));
+const ServerLogs = lazy(() => import('./ServerLogs'));
+const AdminPanelRequests = lazy(() => import('./admreq/AdminPanelRequests'));
+const FilesystemBrowser = lazy(() => import('./editor/FilesystemBrowser'));
+const ServerStatus = lazy(() => import('./ServerStatus'));
 
-// Custom Nav.Item component to handle active state with React Router
-const NavLink = ({ children, to, ...props }) => {
-  let resolved = useResolvedPath(to);
-  let match = useMatch({ path: resolved.pathname, end: true });
+// Custom Nav.Item component wrapped in React.memo for performance
+const NavLink = React.memo(({ children, to, ...props }) => {
+  const resolved = useResolvedPath(to);
+  const match = useMatch({ path: resolved.pathname, end: true });
 
   return (
-    <Nav.Item as={Link} to={to} active={match ? true : false} {...props}>
+    <Nav.Item as={Link} to={to} active={!!match} {...props}>
       {children}
     </Nav.Item>
   );
-};
+});
 
-// Custom Dropdown.Item component to handle active state with React Router
-const DropdownNavLink = ({ children, to, ...props }) => {
-  let resolved = useResolvedPath(to);
-  let match = useMatch({ path: resolved.pathname, end: true });
+// Custom Dropdown.Item component wrapped in React.memo for performance
+const DropdownNavLink = React.memo(({ children, to, ...props }) => {
+  const resolved = useResolvedPath(to);
+  const match = useMatch({ path: resolved.pathname, end: true });
 
   return (
-    <Dropdown.Item as={Link} to={to} active={match ? true : false} {...props}>
+    <Dropdown.Item as={Link} to={to} active={!!match} {...props}>
       {children}
     </Dropdown.Item>
   );
-};
+});
 
+// Defined outside the component to prevent recreation on every render
 const adminFilesystemConfig = [
-    {
-      name: "root", // A name for your single filesystem
-      listEndpoint: "admin/editor/list_files",
-      readEndpoint: "admin/editor/read_file",
-      uploadEndpoint: "admin/editor/upload_file",
-      deleteEndpoint: "admin/editor/delete_file"
-    }
-  ];
+  {
+    name: "root",
+    listEndpoint: "admin/editor/list_files",
+    readEndpoint: "admin/editor/read_file",
+    uploadEndpoint: "admin/editor/upload_file",
+    deleteEndpoint: "admin/editor/delete_file"
+  }
+];
 
 const AdminTools = () => {
-  const isMobile = useMediaQuery({ maxWidth: 767 }); // Define your mobile breakpoint
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
+  // sections array can be memoized with useMemo if it were more complex, but it's fine here.
   const sections = [
     {
       path: 'add-user',
@@ -87,24 +90,14 @@ const AdminTools = () => {
     }
   ];
 
-  return (
-    <div style={{ marginTop: '20px', width: "100%" }}>
-      {isMobile ? (
+  const renderNav = () => {
+    if (isMobile) {
+      return (
         <Dropdown
           title={<Menu/>}
-          trigger="click" // Use 'click' to open the dropdown
+          trigger="click"
           placement="bottomStart"
           style={{ marginBottom: '20px' }}
-          renderTrigger={({ onClose, left, top, className }, ref) => {
-            return (
-              <Menu // Lucide Menu icon
-                ref={ref}
-                className={className}
-                style={{ left, top, cursor: 'pointer', fontSize: '28px', padding: '5px' }} // Adjust size and padding as needed
-                onClick={onClose} // You might want to toggle here, or rely on rsuite's dropdown logic
-              />
-            );
-          }}
         >
           {sections.map(section => (
             <DropdownNavLink to={section.path} key={section.path}>
@@ -112,27 +105,37 @@ const AdminTools = () => {
             </DropdownNavLink>
           ))}
         </Dropdown>
-      ) : (
-        <Nav appearance="subtle" style={{ marginBottom: '20px' }}>
-          {sections.map(section => (
-            <NavLink to={section.path} key={section.path}>
-              {section.title}
-            </NavLink>
-          ))}
-        </Nav>
-      )}
+      );
+    }
+
+    return (
+      <Nav appearance="subtle" style={{ marginBottom: '20px' }}>
+        {sections.map(section => (
+          <NavLink to={section.path} key={section.path}>
+            {section.title}
+          </NavLink>
+        ))}
+      </Nav>
+    );
+  };
+
+  return (
+    <div style={{ marginTop: '20px', width: "100%" }}>
+      {renderNav()}
 
       <Container>
-        <Routes>
-          <Route index element={<CreateUser />} />
-          {sections.map(section => (
-            <Route
-              key={section.path}
-              path={section.path}
-              element={section.component}
-            />
-          ))}
-        </Routes>
+        <Suspense fallback={<Loader/>}>
+          <Routes>
+            <Route index element={<CreateUser />} />
+            {sections.map(section => (
+              <Route
+                key={section.path}
+                path={section.path}
+                element={section.component}
+              />
+            ))}
+          </Routes>
+        </Suspense>
       </Container>
     </div>
   );
