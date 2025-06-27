@@ -70,7 +70,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     const isMobile = useMediaQuery({ maxWidth: 767 });
 
     const { str } = useLocale();
-    const navigate = useNavigate();
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
 

@@ -75,11 +75,11 @@ const SupportRequestForm = () => {
                 placeholder="e.g. telegram=@user, phone=+12345678"
             />
 
-            <div style={{ marginTop: '20px' }}>
+            {(submitted != true) && <div style={{ marginTop: '20px' }}>
                 <Button appearance="primary" onClick={handleSubmit} loading={submitting}>
                     Submit
                 </Button>
-            </div>
+            </div>}
 
             {submitted && (
                 <p style={{ marginTop: '15px', color: 'green' }}>Support request submitted successfully.</p>

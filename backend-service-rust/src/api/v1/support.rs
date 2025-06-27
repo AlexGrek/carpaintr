@@ -1,5 +1,9 @@
 use crate::{
-    db::requests, errors::AppError, middleware::AuthenticatedUser, models::requests::{SupportRequest, SupportRequestMessage}, state::AppState
+    db::requests,
+    errors::AppError,
+    middleware::AuthenticatedUser,
+    models::requests::{SupportRequest, SupportRequestMessage},
+    state::AppState,
 };
 use axum::{
     extract::{Json, Query, State},
@@ -8,6 +12,8 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+pub const DELETED_SUPPORT_REQUESTS: &'static str = "deleted_support_requests";
 
 pub async fn support_get_all_requests(
     AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -29,6 +35,40 @@ pub async fn support_get_unresponded(
 ) -> Result<impl IntoResponse, AppError> {
     let requests = requests::find_unresponded_requests(&app_state.db.requests_tree)?;
     Ok(Json(requests))
+}
+
+pub async fn support_delete(
+    AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    Query(q): Query<SupportTicketQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
+    match r {
+        Some(request) => {
+            let p = app_state.data_dir_path.join(DELETED_SUPPORT_REQUESTS);
+            crate::utils::safe_ensure_directory_exists(&app_state.data_dir_path, &p)?;
+            let filename = p.join(format!(
+                "request_{}.yaml",
+                crate::utils::sanitize_alphanumeric_and_dashes(&request.id)
+            ));
+            let content = serde_yaml::to_string(&request)?;
+            crate::utils::safe_write(
+                &app_state.data_dir_path,
+                &filename,
+                content,
+                &app_state.cache,
+            )
+            .await?;
+            requests::remove_request(&app_state.db.requests_tree, &q.email, &q.id)?;
+            return Ok(());
+        }
+        _ => {
+            return Err(AppError::BadRequest(format!(
+                "Support ticket not found for email={}, id={}",
+                q.email, q.id
+            )))
+        }
+    }
 }
 
 pub async fn support_get(
@@ -56,7 +96,7 @@ pub async fn user_get(
     Query(q): Query<SupportTicketQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     if q.email != user_email {
-        return Err(AppError::Forbidden)
+        return Err(AppError::Forbidden);
     }
     let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
     match r {
@@ -76,7 +116,8 @@ pub async fn user_get_all(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let requests = requests::query_requests_by_user_email(&app_state.db.requests_tree, &user_email)?;
+    let requests =
+        requests::query_requests_by_user_email(&app_state.db.requests_tree, &user_email)?;
     Ok(Json(requests))
 }
 

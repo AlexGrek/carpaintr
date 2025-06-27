@@ -3,6 +3,7 @@ import { Drawer } from 'rsuite';
 import './UserSupportRequests.css';
 import { authFetch } from '../../utils/authFetch';
 import SupportTicketView from '../support/SupportTicketView';
+import { useMediaQuery } from 'react-responsive';
 
 export default function UserSupportRequests() {
   const [requests, setRequests] = useState([]);
@@ -24,9 +25,15 @@ export default function UserSupportRequests() {
     setDrawerOpen(true);
   };
 
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+
   const closeDrawer = () => {
     setDrawerOpen(false);
     setSelectedTicket(null);
+    authFetch('/api/v1/user/support_requests')
+      .then(res => res.json())
+      .then(setRequests)
+      .catch(() => alert('Failed to load support requests'));
   };
 
   return (
@@ -63,7 +70,7 @@ export default function UserSupportRequests() {
         })
       )}
 
-      <Drawer size="lg" placement="right" open={drawerOpen} onClose={closeDrawer}>
+      <Drawer size={isMobile ? "full" : "md"} placement="right" open={drawerOpen} onClose={closeDrawer}>
         <Drawer.Header>
           <Drawer.Title>Support Request</Drawer.Title>
         </Drawer.Header>

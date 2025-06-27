@@ -124,6 +124,9 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/logs", get(api::v1::admin::get_n_logs))
                 .route("/support_message", post(api::v1::support::support_add_message))
                 .route("/support_all", get(api::v1::support::support_get_all_requests))
+                .route("/support_unresponded", get(api::v1::support::support_get_unresponded))
+                .route("/support_delete", delete(api::v1::support::support_delete))
+                .route("/support_get", get(api::v1::support::support_get))
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/manageuser", post(api::v1::admin::manage_user))
                 .route(
