@@ -194,6 +194,10 @@ async fn main() -> tokio::io::Result<()> {
                     post(api::v1::support::user_add_message),
                 )
                 .route(
+                    "/lookup_all_tables",
+                    get(api::v1::calc::data_endpoints::lookup_all_tables),
+                )
+                .route(
                     "/support_request",
                     get(api::v1::support::user_get),
                 )

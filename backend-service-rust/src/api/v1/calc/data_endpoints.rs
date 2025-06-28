@@ -1,5 +1,5 @@
 use crate::{
-    calc::{car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry, seasons::get_current_season_info},
+    calc::{car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry, seasons::get_current_season_info, table_processing::lookup},
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
@@ -8,7 +8,8 @@ use crate::{
         sanitize_alphanumeric_and_dashes_and_dots,
     }, // Import the new CompanyInfo struct
 };
-use axum::{extract::State, response::IntoResponse, Json};
+use axum::{extract::{Query, State}, response::IntoResponse, Json};
+use serde::Deserialize;
 use std::{path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
@@ -85,6 +86,22 @@ pub async fn get_car_parts_by_type_class(
             parts_lines.len()
         )));
     }
+    Ok(Json(parts_lines))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LookupPartQuery {
+    pub car_class: String,
+    pub car_type: String,
+    pub part: String
+}
+
+pub async fn lookup_all_tables(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    Query(q): Query<LookupPartQuery>
+) -> Result<impl IntoResponse, AppError> {
+    let parts_lines = lookup(&q.car_type, &q.car_class, &q.part, &app_state.data_dir_path, &user_email, &app_state.cache).await?;
     Ok(Json(parts_lines))
 }
 

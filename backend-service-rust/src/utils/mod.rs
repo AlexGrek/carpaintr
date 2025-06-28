@@ -34,11 +34,7 @@ pub struct DataStorageCache {
 }
 
 impl DataStorageCache {
-    pub fn new(
-        string_cache_size: usize,
-        vec_u8_cache_size: usize,
-        csv_cache_size: usize,
-    ) -> Self {
+    pub fn new(string_cache_size: usize, vec_u8_cache_size: usize, csv_cache_size: usize) -> Self {
         DataStorageCache {
             as_string: Arc::new(RwLock::new(LruCache::new(
                 NonZeroUsize::new(string_cache_size).unwrap_or(NonZeroUsize::new(1).unwrap()),
@@ -62,15 +58,8 @@ impl DataStorageCache {
         let mut sizes = Vec::new();
 
         let string_cache = self.as_string.read().await;
-        let string_size: usize = string_cache
-            .iter()
-            .map(|(_, v)| v.as_bytes().len())
-            .sum();
-        sizes.push((
-            "String".to_string(),
-            string_cache.len(),
-            string_size,
-        ));
+        let string_size: usize = string_cache.iter().map(|(_, v)| v.as_bytes().len()).sum();
+        sizes.push(("String".to_string(), string_cache.len(), string_size));
 
         let vec_u8_cache = self.as_vec_u8.read().await;
         let vec_u8_size: usize = vec_u8_cache.iter().map(|(_, v)| v.len()).sum();
@@ -81,11 +70,7 @@ impl DataStorageCache {
             .iter()
             .map(|(_, v)| {
                 v.iter()
-                    .map(|row| {
-                        row.iter()
-                            .map(|(k, v)| k.len() + v.len())
-                            .sum::<usize>()
-                    })
+                    .map(|row| row.iter().map(|(k, v)| k.len() + v.len()).sum::<usize>())
                     .sum::<usize>()
             })
             .sum();
@@ -260,7 +245,7 @@ pub async fn delete_user_data_gracefully(
                 fs::remove_file(&dest_path).await?;
             }
         }
-        
+
         cache.invalidate(&entry_path).await;
         fs::rename(&entry_path, &dest_path).await?;
     }
@@ -352,11 +337,7 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     log::info!("Reading file: {:?}", path_buf);
     if fs::metadata(&path_buf).await.is_ok() {
         let content = fs::read_to_string(&path_buf).await?;
-        cache
-            .as_string
-            .write()
-            .await
-            .put(path_buf, content.clone());
+        cache.as_string.write().await.put(path_buf, content.clone());
         return Ok(content);
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path").into())
