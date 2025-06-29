@@ -8,7 +8,7 @@ import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
-import { BrainCircuit, Calculator, Cog, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3 } from 'lucide-react';
+import { BrainCircuit, Calculator, Cog, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -109,6 +109,12 @@ const DashboardNavigationButtons = () => {
             title: str("Customization"),
             description: str("Customize everything"),
             link: "/fileeditor"
+        },
+        {
+            icon: <ScanBarcode />,
+            title: str("Catalog"),
+            description: str("All data"),
+            link: "/catalog"
         },
         {
             icon: <Cog />,
