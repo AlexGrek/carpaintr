@@ -7,6 +7,7 @@ import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
+import { BrainCircuit, Calculator, Cog, FileCheck, FileCode } from 'lucide-react';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -76,31 +77,31 @@ const DashboardNavigationButtons = () => {
     const { str } = useLocale();
     const features = [
         {
-            icon: "🧮",
+            icon: <Calculator />,
             title: str("Calculation"),
             description: str("Price estimation calculator"),
             link: "/calc"
         },
         {
-            icon: "📋",
+            icon: <FileCheck/>,
             title: str("Task Tracking"),
             description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
-            icon: "🤖",
+            icon: <BrainCircuit/>,
             title: str("AI Analytics"),
             description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
-            icon: "🛅",
+            icon: <FileCode/>,
             title: str("Customization"),
             description: str("Customize everything"),
             link: "/fileeditor"
         },
         {
-            icon: "🪙",
+            icon: <Cog/>,
             title: str("Your organization"),
             description: str("Manage access and licensing"),
             link: "/cabinet"
@@ -133,7 +134,7 @@ const AppCard = ({ icon, title, description, link }) => {
     const nav = useNavigate();
     return (
         <div className="app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
-            <div className="feature-icon">{icon}</div>
+            <div className="app-feature-icon">{icon}</div>
             <h3>{title}</h3>
             <p className='fade-in-simple'>{description}</p>
         </div>

@@ -7,7 +7,7 @@ use tokio::process::Command;
 
 use crate::{
     exlogging::{log_event, LogLevel},
-    utils::{safe_write, safety_check, DataStorageCache, SafeFsError},
+    utils::{safe_join, safe_write, DataStorageCache, SafeFsError},
 };
 
 #[derive(Error, Debug)]
@@ -135,11 +135,11 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
     ) -> Result<(), TransactionalFsError> {
         log_event(
             LogLevel::Info,
-            format!("Update file {:?}", new_file_path_relative_to_root),
+            format!("Update file {:?}, root: {:?}", new_file_path_relative_to_root, self.root_path),
             Some(self.author_email.as_str()),
         );
         
-        // The safe_write from utils now handles safety checks, directory creation, writing, and cache invalidation.
+        
         safe_write(
             &self.root_path,
             new_file_path_relative_to_root,
@@ -164,7 +164,7 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
         //     format!("Delete file {:?}", Path::from(file_path_relative_to_root.as_ref()).to_str()),
         //     Some(self.author_email.as_str()),
         // );
-        let full_path = safety_check(&self.root_path, file_path_relative_to_root)?;
+        let full_path = safe_join(&self.root_path, file_path_relative_to_root)?;
 
         if !full_path.exists() {
             return Err(TransactionalFsError::FileNotFound(full_path.clone()));
@@ -293,6 +293,8 @@ impl<'a> GitTransactionalFs<'a> {
         cache: &'a DataStorageCache,
     ) -> Result<Self, TransactionalFsError> {
         // Initialize Git if not already initialized
+        log_event(LogLevel::Info, format!("Initializing git transactional filesystem with root {:?}", root_path.as_os_str().to_str()), Some(&author_email));
+
         if !root_path.join(".git").exists() {
             Self::run_git_command(&root_path, &["init"]).await?;
         }

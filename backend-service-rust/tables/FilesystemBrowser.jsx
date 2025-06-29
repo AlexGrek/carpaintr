@@ -309,7 +309,9 @@ const FilesystemBrowser = ({ filesystems }) => {
     const filesystemOptions = filesystems.map(fs => ({ label: fs.name, value: fs.name }));
     const isCommonFile = selectedFsName === 'common';
 
-    const handleSelect = (eventKey) => {
+    const renderMenu = ({ onClose, left, top, className }, ref) => {
+        const handleSelect = (eventKey) => {
+            onClose();
             if (eventKey === 'upload') {
                 fileInputRef.current?.click();
             } else if (eventKey === 'create-table') {
@@ -320,14 +322,12 @@ const FilesystemBrowser = ({ filesystems }) => {
                 setShowCreateModal(true);
             }
         };
-
-    const renderMenu = () => {
         return (
-            <>
+            <Dropdown.Menu ref={ref} className={className} style={{ left, top }} onSelect={handleSelect}>
                 <Dropdown.Item eventKey="upload" icon={<FileUp size={16} />}>{str('Upload File')}</Dropdown.Item>
                 <Dropdown.Item eventKey="create-table" icon={<Table size={16} />}>{str('Create Table')}</Dropdown.Item>
                 <Dropdown.Item eventKey="create-datasource" icon={<FilePlus size={16} />}>{str('Create Data Source')}</Dropdown.Item>
-            </>
+            </Dropdown.Menu>
         );
     };
 
@@ -381,9 +381,7 @@ const FilesystemBrowser = ({ filesystems }) => {
                         <Input value={formattedDisplayPath} readOnly />
                     </InputGroup>
                     <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
-                    <Dropdown onSelect={handleSelect} renderToggle={(props, ref) => <IconButton {...props} ref={ref} icon={<Plus />} />} placement="bottomEnd" trigger={['click', 'hover']}>
-                        {renderMenu()}
-                    </Dropdown>
+                    <Dropdown renderToggle={(props, ref) => <IconButton {...props} ref={ref} icon={<Plus />} appearance="primary" />} placement="bottomEnd" trigger="click" renderMenu={renderMenu} />
                     {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={() => setShowCommitsDrawer(true)} appearance="subtle" style={{ flexShrink: 0 }} />}
                 </div>
 

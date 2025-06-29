@@ -138,7 +138,7 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
     target: P,
     cache: &DataStorageCache,
 ) -> Result<Vec<HashMap<String, String>>, AppError> {
-    let safe_path = safety_check(&base, &target)?;
+    let safe_path = safety_check_only(&base, &target)?;
     let parsed = parse_csv_file_async(&safe_path, cache).await?;
     return Ok(parsed);
 }
@@ -152,9 +152,9 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFsError> {
+pub fn safety_check_only<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFsError> {
     let base_clean = base.as_ref().lexiclean();
-    let full_target = base_clean.join(target.as_ref());
+    let full_target = target.as_ref().lexiclean();
     let target_clean = full_target.lexiclean();
 
     if target_clean.starts_with(&base_clean) {
@@ -164,15 +164,27 @@ pub fn safety_check<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFsError
     }
 }
 
+pub fn safe_join<P: AsRef<Path>>(base: P, target: P) -> Result<PathBuf, SafeFsError> {
+    let base_clean = base.as_ref().lexiclean();
+    let full_target = base_clean.join(target.as_ref());
+    let target_clean = full_target.lexiclean();
+
+    if target_clean.starts_with(&base_clean) {
+        Ok(full_target)
+    } else {
+        Err(SafeFsError::PathTraversalDetected)
+    }
+}
+
 pub async fn safe_write<P: AsRef<Path>>(
     base: P,
-    target: P,
+    target_relative: P,
     content: impl AsRef<[u8]>,
     cache: &DataStorageCache,
 ) -> Result<(), SafeFsError> {
-    let safe_path = safety_check(&base, &target)?;
-    log::debug!("Safely writing file {:?}", safe_path.as_ref());
-    if let Some(parent) = safe_path.as_ref().parent() {
+    let safe_path = safe_join(&base, &target_relative)?;
+    log::debug!("Safely writing file {:?}", safe_path);
+    if let Some(parent) = safe_path.parent() {
         fs::create_dir_all(parent).await?;
     }
     fs::write(&safe_path, content).await?;
@@ -181,8 +193,8 @@ pub async fn safe_write<P: AsRef<Path>>(
 }
 
 pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
-    let safe_path = safety_check(&base, &target)?;
-    log::debug!("Safely ensuring directory {:?}", safe_path.as_ref());
+    let safe_path = safe_join(&base, &target)?;
+    log::debug!("Safely ensuring directory {:?}", safe_path);
     std::fs::create_dir_all(&safe_path)?;
     Ok(())
 }
@@ -192,14 +204,14 @@ pub async fn safe_read<P: AsRef<Path>>(
     target: P,
     cache: &DataStorageCache,
 ) -> Result<Vec<u8>, SafeFsError> {
-    let safe_path = safety_check(&base, &target)?;
-    let path_buf = safe_path.as_ref().to_path_buf();
+    let safe_path = safe_join(&base, &target)?;
+    let path_buf = safe_path.to_path_buf();
 
     if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
         return Ok(data.clone());
     }
 
-    log::debug!("Safely reading file {:?}", safe_path.as_ref());
+    log::debug!("Safely reading file {:?}", safe_path);
     let data = fs::read(&safe_path).await?;
     cache.as_vec_u8.write().await.put(path_buf, data.clone());
     Ok(data)
@@ -327,7 +339,7 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     root: &P,
     cache: &DataStorageCache,
 ) -> Result<String, SafeFsError> {
-    let safe_path = safety_check(root, path)?;
+    let safe_path = safety_check_only(root, path)?;
     let path_buf = safe_path.as_ref().to_path_buf();
 
     if let Some(data) = cache.as_string.write().await.get(&path_buf) {

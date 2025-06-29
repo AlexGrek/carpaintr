@@ -289,7 +289,7 @@ pub async fn read_license_file_by_name(
         return Err(AppError::LicenseNotFound);
     }
 
-    utils::safety_check(user_data_dir, license_path.clone())?;
+    utils::safety_check_only(user_data_dir, license_path.clone())?;
 
     // Read the license file content
     let content = fs::read_to_string(&license_path)
@@ -376,7 +376,7 @@ pub async fn delete_license_file(
 
     log::info!("Deleting license file: {:?}", filepath);
 
-    let check = utils::safety_check(&user_data_dir, &filepath);
+    let check = utils::safety_check_only(&user_data_dir, &filepath);
     match check {
         Ok(_) => fs::remove_file(&filepath)
             .await

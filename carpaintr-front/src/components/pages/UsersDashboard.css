@@ -28,3 +28,10 @@
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     border-color: #ea580c;
 }
+
+.app-feature-icon svg {
+    font-size: 22pt;
+    margin: auto;
+    text-align: center;
+    display: block;
+}
