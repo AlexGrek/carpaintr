@@ -1,13 +1,14 @@
+// UsersDashboard.jsx
 import { useEffect, useState } from 'react';
 import TopBarUser from '../layout/TopBarUser';
 import { useNavigate } from 'react-router-dom';
-import { Content, Panel, Text, Message } from 'rsuite';
+import { Content, Panel, Text, Message, Dropdown, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
-import { BrainCircuit, Calculator, Cog, FileCheck, FileCode } from 'lucide-react';
+import { BrainCircuit, Calculator, Cog, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3 } from 'lucide-react';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -20,7 +21,10 @@ registerTranslations('ua', {
     "Your organization": "Ваша організація",
     "Manage access and licensing": "Керування доступом та ліцензуванням",
     "Available apps": "Доступні програми",
-    "Your company": "Ваша компанiя"
+    "Your company": "Ваша компанiя",
+    "As list": "У вигляді списку",
+    "As grid": "У вигляді сітки", // New translation
+    "As blocks": "У вигляді блоків", // New translation
 });
 
 const UsersDashboard = () => {
@@ -75,6 +79,12 @@ const Dashboard = () => {
 
 const DashboardNavigationButtons = () => {
     const { str } = useLocale();
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('appViewMode') || 'list');
+
+    useEffect(() => {
+        localStorage.setItem('appViewMode', viewMode);
+    }, [viewMode]);
+
     const features = [
         {
             icon: <Calculator />,
@@ -83,47 +93,76 @@ const DashboardNavigationButtons = () => {
             link: "/calc"
         },
         {
-            icon: <FileCheck/>,
+            icon: <FileCheck />,
             title: str("Task Tracking"),
             description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
-            icon: <BrainCircuit/>,
+            icon: <BrainCircuit />,
             title: str("AI Analytics"),
             description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
         {
-            icon: <FileCode/>,
+            icon: <FileCode />,
             title: str("Customization"),
             description: str("Customize everything"),
             link: "/fileeditor"
         },
         {
-            icon: <Cog/>,
+            icon: <Cog />,
             title: str("Your organization"),
             description: str("Manage access and licensing"),
             link: "/cabinet"
         },
     ];
 
+
+    const renderIconButton = (props, ref) => {
+        return (
+            <Button {...props} ref={ref} circle ><LayoutGrid /></Button>
+        );
+    };
+
+    const handleSelectViewMode = (eventKey) => {
+        setViewMode(eventKey);
+    };
+
     return (
         <section className="apps-list">
-            <div className="container">
-                <div className="section-header">
-                    <h2 className='fade-in-simple'><Trans>Available apps</Trans></h2>
+            <div className="apps-list-container">
+                <div className="apps-list-section-header">
+                    <p><Trans>Available apps</Trans></p>
+                    <Dropdown placement="leftStart" renderToggle={renderIconButton} trigger='click' onSelect={handleSelectViewMode}>
+                        <Dropdown.Item eventKey='list'><p className='app-list-view-mode'><Rows3 /><Trans>As list</Trans></p></Dropdown.Item>
+                        <Dropdown.Item eventKey='grid'><p className='app-list-view-mode'><Grip /><Trans>As grid</Trans></p></Dropdown.Item>
+                        <Dropdown.Item eventKey='blocks'><p className='app-list-view-mode'><Grid2X2 /><Trans>As blocks</Trans></p></Dropdown.Item>
+                    </Dropdown>
                 </div>
-                <div className="features-grid">
-                    {features.map((feature, index) => (
-                        <AppCard
-                            key={index}
-                            icon={feature.icon}
-                            title={feature.title}
-                            description={feature.description}
-                            link={feature.link}
-                        />
-                    ))}
+                <div className={`features-grid ${viewMode}-view`}>
+                    {features.map((feature, index) => {
+                        if (viewMode === 'grid') {
+                            return (
+                                <AppCardCompact
+                                    key={index}
+                                    icon={feature.icon}
+                                    title={feature.title}
+                                    link={feature.link}
+                                />
+                            );
+                        } else {
+                            return (
+                                <AppCard
+                                    key={index}
+                                    icon={feature.icon}
+                                    title={feature.title}
+                                    description={feature.description}
+                                    link={feature.link}
+                                />
+                            );
+                        }
+                    })}
                 </div>
             </div>
         </section>
@@ -141,4 +180,14 @@ const AppCard = ({ icon, title, description, link }) => {
     );
 };
 
-export default UsersDashboard
+const AppCardCompact = ({ icon, title, link }) => {
+    const nav = useNavigate();
+    return (
+        <div className="app-card compact-app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
+            <div className="app-feature-icon">{icon}</div>
+            <h3>{title}</h3>
+        </div>
+    );
+};
+
+export default UsersDashboard;

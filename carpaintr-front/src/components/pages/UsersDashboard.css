@@ -1,3 +1,4 @@
+/* UsersDashboard.css */
 .feature-card.app-card {
     animation: fadeInUpApp 0.5s ease-out;
 }
@@ -34,4 +35,130 @@
     margin: auto;
     text-align: center;
     display: block;
+}
+
+.apps-list-section-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    font-size: x-large;
+    margin: 8pt;
+}
+
+.app-list-view-mode {
+    display: flex;
+    font-size: small;
+    margin: 0 8pt;
+    justify-content: space-between;
+    align-content: baseline;
+    width: 110pt;
+}
+
+/* Styles for list view (default, already largely covered by .app-card) */
+.features-grid.list-view {
+    display: flex;
+    flex-direction: column; /* Stacks items vertically */
+    gap: 1rem; /* Space between list items */
+}
+
+.features-grid.list-view .app-card {
+    width: 100%; /* Full width for list items */
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 1rem 2rem; /* Adjust padding for list view */
+}
+
+.features-grid.list-view .app-card .app-feature-icon {
+    margin-right: 1.5rem; /* Space between icon and text */
+}
+
+.features-grid.list-view .app-card h3 {
+    margin-bottom: 0.5rem; /* Space between title and description */
+}
+
+.features-grid.list-view .app-card p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
+/* Styles for grid view (smartphone menu style) */
+.features-grid.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Max 4 per row, responsive */
+    gap: 1rem; /* Space between grid items */
+    justify-items: center; /* Center items in their grid cells */
+}
+
+.features-grid.grid-view .app-card.compact-app-card {
+    padding: 1rem;
+    box-shadow: none; /* Remove shadow for a lighter feel */
+    border: none; /* Remove border */
+    background: transparent; /* Transparent background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100px; /* Fixed height for consistent sizing */
+    width: 150px; /* Fixed width */
+}
+
+.features-grid.grid-view .app-card.compact-app-card:hover {
+    transform: translateY(-5px); /* Smaller hover effect */
+    background: #f0f0f0; /* Slight background on hover */
+    border-radius: 8px; /* Rounded corners on hover */
+}
+
+.features-grid.grid-view .app-card.compact-app-card .app-feature-icon {
+    margin-bottom: 0.5rem;
+}
+
+.features-grid.grid-view .app-card.compact-app-card h3 {
+    font-size: 0.7em; /* Smaller font size for titles */
+    text-align: center;
+    word-break: break-word; /* Break long words */
+    margin-top: 0;
+}
+
+.features-grid.grid-view .app-card.compact-app-card p {
+    display: none; /* Hide descriptions in compact view */
+}
+
+
+/* Styles for blocks view (hybrid grid) */
+.features-grid.blocks-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid, minimum 200px */
+    gap: 2pt; /* 2pt margin between blocks */
+}
+
+.features-grid.blocks-view .app-card {
+    padding: 1.5rem;
+    border-radius: 8px; /* Rounded corners for blocks */
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Lighter shadow */
+    border: 1px solid #e0e0e0; /* Subtle border */
+    height: auto; /* Allow height to adjust */
+}
+
+.features-grid.blocks-view .app-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-color: #ea580c;
+}
+
+.features-grid.blocks-view .app-card .app-feature-icon {
+    margin-bottom: 1rem;
+}
+
+.features-grid.blocks-view .app-card h3 {
+    font-size: 1.1em;
+    margin-bottom: 0.5rem;
+}
+
+.features-grid.blocks-view .app-card p {
+    font-size: 0.9em;
+    color: #666;
 }

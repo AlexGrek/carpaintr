@@ -381,7 +381,7 @@ const FilesystemBrowser = ({ filesystems }) => {
                         <Input value={formattedDisplayPath} readOnly />
                     </InputGroup>
                     <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
-                    <Dropdown onSelect={handleSelect} renderToggle={(props, ref) => <IconButton {...props} ref={ref} icon={<Plus />} />} placement="bottomEnd" trigger={['click', 'hover']}>
+                    <Dropdown onSelect={handleSelect} renderToggle={(props, ref) => <IconButton {...props} ref={ref} icon={<Plus />} />} placement="bottomEnd" trigger={['click']}>
                         {renderMenu()}
                     </Dropdown>
                     {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={() => setShowCommitsDrawer(true)} appearance="subtle" style={{ flexShrink: 0 }} />}
