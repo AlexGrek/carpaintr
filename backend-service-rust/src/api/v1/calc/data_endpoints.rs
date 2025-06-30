@@ -1,16 +1,27 @@
 use crate::{
-    calc::{car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry, seasons::get_current_season_info, table_processing::lookup},
+    calc::{
+        car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry,
+        seasons::get_current_season_info, table_processing::lookup,
+    },
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
     utils::{
-        list_catalog_files_user_common, sanitize_alphanumeric_and_dashes,
-        sanitize_alphanumeric_and_dashes_and_dots,
+        list_catalog_files_user_common, parse_csv_file_async_safe,
+        sanitize_alphanumeric_and_dashes, sanitize_alphanumeric_and_dashes_and_dots,
     }, // Import the new CompanyInfo struct
 };
-use axum::{extract::{Query, State}, response::IntoResponse, Json};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+    Json,
+};
 use serde::Deserialize;
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+    sync::Arc,
+};
 
 const CARS: &'static str = "cars";
 const GLOBAL: &'static str = "global";
@@ -93,16 +104,47 @@ pub async fn get_car_parts_by_type_class(
 pub struct LookupPartQuery {
     pub car_class: String,
     pub car_type: String,
-    pub part: String
+    pub part: String,
 }
 
 pub async fn lookup_all_tables(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
-    Query(q): Query<LookupPartQuery>
+    Query(q): Query<LookupPartQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let parts_lines = lookup(&q.car_type, &q.car_class, &q.part, &app_state.data_dir_path, &user_email, &app_state.cache).await?;
+    let parts_lines = lookup(
+        &q.car_type,
+        &q.car_class,
+        &q.part,
+        &app_state.data_dir_path,
+        &user_email,
+        &app_state.cache,
+    )
+    .await?;
     Ok(Json(parts_lines))
+}
+
+fn get_unique_values_iter(table: &Vec<HashMap<String, String>>, key: &str) -> Vec<String> {
+    table
+        .iter()
+        .filter_map(|row| row.get(key))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .cloned()
+        .collect()
+}
+
+pub async fn list_all_parts(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,           // Extract user email from the path
+) -> Result<impl IntoResponse, AppError> {
+    let file_path = PathBuf::from(&T1);
+    let t1 =
+        crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
+            .await
+            .map_err(|e| AppError::IoError(e))?;
+    let parsed = parse_csv_file_async_safe(&app_state.data_dir_path, &t1, &app_state.cache).await?;
+    Ok(Json(get_unique_values_iter(&parsed, "Список деталь рус")))
 }
 
 pub async fn get_global_file(

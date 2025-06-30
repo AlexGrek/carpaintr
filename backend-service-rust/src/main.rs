@@ -198,6 +198,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::calc::data_endpoints::lookup_all_tables),
                 )
                 .route(
+                    "/all_parts",
+                    get(api::v1::calc::data_endpoints::list_all_parts),
+                )
+                .route(
                     "/support_request",
                     get(api::v1::support::user_get),
                 )

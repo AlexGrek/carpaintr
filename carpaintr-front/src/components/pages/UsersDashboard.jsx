@@ -63,7 +63,7 @@ const Dashboard = () => {
         fetchAsync();
     }, [str, setLang])
 
-    return <Content>
+    return <Content className='fade-in-simple'>
         <Panel>
             {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />
@@ -180,8 +180,9 @@ const AppCard = ({ icon, title, description, link }) => {
     return (
         <div className="app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="app-feature-icon">{icon}</div>
-            <h3>{title}</h3>
-            <p className='fade-in-simple'>{description}</p>
+            <div><h3>{title}</h3>
+                <p className='app-description'>{description}</p>
+            </div>
         </div>
     );
 };
