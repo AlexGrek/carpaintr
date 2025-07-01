@@ -18,7 +18,10 @@ class ErrorBoundary extends React.Component {
 
     render() {
         if (this.state.hasError) {
-            return <ErrorMessage errorTitle='Critical failure' errorText={this.state.error.toString()}/>;
+            return <div>
+                <ErrorMessage errorTitle='Critical failure' errorText={this.state.error.toString()} />
+                <button onClick={() => location.reload()}>Refresh Page</button>
+            </div>;
         }
 
         return this.props.children;

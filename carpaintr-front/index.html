@@ -5,8 +5,42 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Autolab</title>
+    <style>
+      body {
+        margin: 0;
+        background-color: #e23c1a;
+      }
+
+      #fallback-refresh {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #e23c1a;
+        z-index: 9999;
+      }
+
+      #fallback-refresh button {
+        background: white;
+        border: none;
+        padding: 1em 2em;
+        font-size: 1.2em;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      #fallback-refresh button:hover {
+        background-color: #f2f2f2;
+      }
+    </style>
   </head>
   <body>
+    <div id="fallback-refresh">
+      <button onclick="location.reload()">Refresh Page</button>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
