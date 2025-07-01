@@ -9,7 +9,8 @@ import {
     History,
     FileUp,
     FilePlus,
-    Table
+    Table,
+    Folders
 } from 'lucide-react';
 import styled, { keyframes, css } from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
@@ -17,6 +18,7 @@ import DirectoryViewTable from './DirectoryViewTable';
 import FileEditor from './FileEditor';
 import CommitHistoryDrawer from './CommitHistoryDrawer';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import Trans from '../../localization/Trans';
 
 registerTranslations("ua",
     {
@@ -32,6 +34,7 @@ registerTranslations("ua",
         "Failed to upload file": "Не вдалося завантажити файл",
         "File created successfully": "Файл успішно створено",
         "Failed to create file": "Не вдалося створити файл",
+        "File systems": "Файлові системи",
     }
 );
 
@@ -47,6 +50,15 @@ const slideInLeft = keyframes`
 const slideOutRight = keyframes`
   from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; }
 `;
+
+const FilesystemsHeader = styled.div`
+    display: flex;
+    font-size: large;
+    gap: 10px;
+    width: fit-content;
+    align-items: center;
+    height: 28pt;
+`
 
 const AnimationContainer = styled.div`
   position: absolute;
@@ -310,16 +322,16 @@ const FilesystemBrowser = ({ filesystems }) => {
     const isCommonFile = selectedFsName === 'common';
 
     const handleSelect = (eventKey) => {
-            if (eventKey === 'upload') {
-                fileInputRef.current?.click();
-            } else if (eventKey === 'create-table') {
-                setNewFileType('csv');
-                setShowCreateModal(true);
-            } else if (eventKey === 'create-datasource') {
-                setNewFileType('yaml');
-                setShowCreateModal(true);
-            }
-        };
+        if (eventKey === 'upload') {
+            fileInputRef.current?.click();
+        } else if (eventKey === 'create-table') {
+            setNewFileType('csv');
+            setShowCreateModal(true);
+        } else if (eventKey === 'create-datasource') {
+            setNewFileType('yaml');
+            setShowCreateModal(true);
+        }
+    };
 
     const renderMenu = () => {
         return (
@@ -365,13 +377,20 @@ const FilesystemBrowser = ({ filesystems }) => {
 
             <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontSize: 'smaller', padding: 10 }}>
                 {filesystems.length > 1 && (
-                    <SelectPicker
-                        data={filesystemOptions}
-                        value={selectedFsName}
-                        onChange={(value) => { setSelectedFsName(value); setCurrentPath([]); setViewingFile(null); }}
-                        style={{ width: 120, minWidth: 100, flexShrink: 0 }}
-                        cleanable={false}
-                    />
+                    <div>
+                        <FilesystemsHeader>
+                            <Folders />
+                            <Trans>File systems</Trans>
+                            <SelectPicker
+                                data={filesystemOptions}
+                                value={selectedFsName}
+                                onChange={(value) => { setSelectedFsName(value); setCurrentPath([]); setViewingFile(null); }}
+                                style={{ width: 120, minWidth: 100, flexShrink: 0 }}
+                                cleanable={false}
+                            />
+                        </FilesystemsHeader>
+
+                    </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'nowrap' }}>
                     <InputGroup inside style={{ flexGrow: 1, minWidth: 150, flexShrink: 1 }}>
