@@ -1,17 +1,18 @@
-import { Suspense, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import TopBarUser from '../layout/TopBarUser';
 import { Loader, Nav } from 'rsuite';
-import CarCatalog from '../catalog/CarCatalog';
-import PartsCatalog from '../catalog/PartsCatalog';
 import ErrorBoundary from '../../ErrorBoundary';
 import { registerTranslations } from '../../localization/LocaleContext';
 import Trans from '../../localization/Trans';
 
 registerTranslations("ua", {
-    "Car catalog": "Каталог автомобілів",
-    "Parts catalog": "Каталог запчастин",
-    "Data catalog": "Каталог даних"
+    "Cars": "Автомобілі",
+    "Parts": "Запчастини",
+    "Data": "Дані"
 });
+
+const PartsCatalog = lazy(() => import("../catalog/PartsCatalog"));
+const CarCatalog = lazy(() => import("../catalog/CarCatalog"));
 
 const CatalogPage = () => {
     const [activeKey, setActiveKey] = useState('tab1');
@@ -63,9 +64,9 @@ const CatalogPage = () => {
         <div className='fade-in-simple' style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <Nav appearance="tabs" activeKey={activeKey} onSelect={handleSelect} style={{ borderBottom: '1px solid #e5e5e5' }}>
-                    <Nav.Item eventKey="tab1"><Trans>Car catalog</Trans></Nav.Item>
-                    <Nav.Item eventKey="tab2"><Trans>Parts catalog</Trans></Nav.Item>
-                    <Nav.Item eventKey="tab3"><Trans>Data catalog</Trans></Nav.Item>
+                    <Nav.Item eventKey="tab1"><Trans>Cars</Trans></Nav.Item>
+                    <Nav.Item eventKey="tab2"><Trans>Parts</Trans></Nav.Item>
+                    <Nav.Item eventKey="tab3"><Trans>Data</Trans></Nav.Item>
                 </Nav>
 
                 <div style={{ minHeight: '300px' }}>

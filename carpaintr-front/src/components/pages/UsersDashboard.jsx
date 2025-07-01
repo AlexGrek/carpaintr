@@ -17,6 +17,8 @@ registerTranslations('ua', {
     "Task Tracking": "Відстеження завдань",
     "Under construction": "У розробці",
     "AI Analytics": "Аналітика ШІ",
+    "Catalog": "Каталог",
+    "All data": "Доступні дані",
     "Customization": "Персоналізація",
     "Customize everything": "Глибокі налаштування",
     "Your organization": "Ваша організація",
