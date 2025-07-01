@@ -1,5 +1,6 @@
 // FilesystemBrowser.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SelectPicker, Input, IconButton, InputGroup, Loader, Dropdown, Modal, Button } from 'rsuite';
 import {
     RefreshCw,
@@ -20,6 +21,7 @@ import CommitHistoryDrawer from './CommitHistoryDrawer';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import Trans from '../../localization/Trans';
 
+// Translations remain unchanged
 registerTranslations("ua",
     {
         "Create functionality coming soon!": "На стадії розробки",
@@ -38,6 +40,8 @@ registerTranslations("ua",
     }
 );
 
+
+// Styled-components and keyframes remain unchanged
 const slideInRight = keyframes`
   from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; }
 `;
@@ -95,62 +99,157 @@ const UploaderContainer = styled.div`
     `}
 `;
 
+
 const FilesystemBrowser = ({ filesystems }) => {
     const { str } = useLocale();
-    const [selectedFsName, setSelectedFsName] = useState(filesystems[0]?.name || '');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Component state
+    const [selectedFsName, setSelectedFsName] = useState(null);
     const [currentPath, setCurrentPath] = useState([]);
     const [directoryData, setDirectoryData] = useState(null);
     const [displayedData, setDisplayedData] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [viewingFile, setViewingFile] = useState(null);
 
+    // UI/Animation state
     const [animationDirection, setAnimationDirection] = useState('none');
     const [prevDisplayedData, setPrevDisplayedData] = useState(null);
     const [isAnimating, setIsAnimating] = useState(false);
     const [showCommitsDrawer, setShowCommitsDrawer] = useState(false);
 
-    // New state for upload functionality
+    // Upload/Create state
     const [isDragging, setIsDragging] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [newFileType, setNewFileType] = useState(null); // 'csv' or 'yaml'
+    const [newFileType, setNewFileType] = useState(null);
     const [newFileName, setNewFileName] = useState('');
     const fileInputRef = useRef(null);
+    const initialPathApplied = useRef(false);
 
-    const currentFsConfig = filesystems.find(fs => fs.name === selectedFsName);
+    const currentFsConfig = useMemo(() => filesystems.find(fs => fs.name === selectedFsName), [filesystems, selectedFsName]);
 
-    const fetchData = useCallback(async () => {
+    // --- DATA FETCHING AND STATE INITIALIZATION ---
+
+    // Effect 1: Initialize filesystem from URL on first render
+    useEffect(() => {
+        const fsFromUrl = searchParams.get('fs');
+        const initialFs = filesystems.find(fs => fs.name === fsFromUrl)?.name || filesystems[0]?.name || null;
+        if (initialFs) {
+            setSelectedFsName(initialFs);
+        } else {
+            setLoading(false);
+            setError("No filesystems configured.");
+        }
+    }, []); // Runs only on mount
+
+    // Effect 2: Sync component state back to URL query parameters
+    useEffect(() => {
+        const newParams = new URLSearchParams();
+        if (selectedFsName && filesystems.length > 1) {
+            newParams.set('fs', selectedFsName);
+        }
+
+        const pathParts = [...currentPath];
+        if (viewingFile) {
+            pathParts.push(viewingFile);
+        }
+
+        if (pathParts.length > 0) {
+            newParams.set('path', pathParts.join('/'));
+        }
+        
+        // Update URL only if it has changed, preventing re-renders.
+        if (searchParams.toString() !== newParams.toString()) {
+            setSearchParams(newParams, { replace: true });
+        }
+    }, [selectedFsName, currentPath, viewingFile, filesystems.length, searchParams, setSearchParams]);
+
+    const fetchData = useCallback(async (isRefresh = false) => {
         if (!currentFsConfig?.listEndpoint) {
             setError('List endpoint not configured for the selected filesystem.');
             setLoading(false);
             setDirectoryData(null);
             return;
         }
-        setViewingFile(null);
+        if (!isRefresh) setViewingFile(null);
         setLoading(true);
         setError(null);
         try {
             const response = await authFetch(`/api/v1/${currentFsConfig.listEndpoint}`);
             const parsedData = await response.json();
             setDirectoryData(parsedData);
-            // The logic to reset the current path was causing an infinite loop because
-            // `fetchData` depended on `currentPath`, and this block was calling `setCurrentPath`.
-            // The path is now correctly reset only when the filesystem selection changes.
-            setLoading(false);
+            initialPathApplied.current = false; // Allow path to be re-evaluated from URL
         } catch (err) {
             setError('Failed to fetch data. Please check the network and endpoints.');
-            setLoading(false);
             console.error(err);
+        } finally {
+            setLoading(false);
         }
     }, [currentFsConfig]);
 
-
+    // Effect 3: Fetch data when the selected filesystem changes
     useEffect(() => {
         if (selectedFsName) {
             fetchData();
         }
-    }, [fetchData, selectedFsName]);
+    }, [selectedFsName, fetchData]);
 
+    // Effect 4: Set the current path and viewing file from URL after data loads
+    useEffect(() => {
+        if (!directoryData || initialPathApplied.current) return;
+
+        const pathFromUrl = searchParams.get('path');
+        if (!pathFromUrl) {
+            setCurrentPath([]);
+            setViewingFile(null);
+            initialPathApplied.current = true;
+            return;
+        }
+
+        const segments = pathFromUrl.split('/').filter(Boolean);
+        if (segments.length === 0) {
+            initialPathApplied.current = true;
+            return;
+        }
+
+        let currentLevel = directoryData.Directory;
+        let pathIsValid = true;
+
+        for (let i = 0; i < segments.length - 1; i++) {
+            const nextDir = currentLevel.children?.find(c => 'Directory' in c && c.Directory.name === segments[i]);
+            if (nextDir) {
+                currentLevel = nextDir.Directory;
+            } else {
+                pathIsValid = false;
+                break;
+            }
+        }
+
+        if (pathIsValid) {
+            const lastSegment = segments.at(-1);
+            const fileMatch = currentLevel.children?.find(c => 'File' in c && c.File.name === lastSegment);
+            if (fileMatch) {
+                setCurrentPath(segments.slice(0, -1));
+                setViewingFile(lastSegment);
+            } else {
+                const dirMatch = currentLevel.children?.find(c => 'Directory' in c && c.Directory.name === lastSegment);
+                if (dirMatch) {
+                    setCurrentPath(segments);
+                    setViewingFile(null);
+                } else {
+                    setCurrentPath([]);
+                    setViewingFile(null);
+                }
+            }
+        } else {
+            setCurrentPath([]);
+            setViewingFile(null);
+        }
+        initialPathApplied.current = true;
+    }, [directoryData, searchParams]);
+
+    // Effect 5: Update the list of files/folders to display when navigation occurs
     useEffect(() => {
         if (directoryData) {
             let currentNavData = directoryData.Directory;
@@ -165,12 +264,11 @@ const FilesystemBrowser = ({ filesystems }) => {
                 }
             }
             if (found && currentNavData?.children) {
-                const childrenForDisplay = currentNavData.children.map((child) => {
+                setDisplayedData(currentNavData.children.map((child) => {
                     const isFile = 'File' in child;
                     const name = isFile ? child.File.name : child.Directory.name;
                     return { name, label: name, isFile, value: isFile ? name : undefined };
-                });
-                setDisplayedData(childrenForDisplay);
+                }));
             } else {
                 setDisplayedData([]);
             }
@@ -181,8 +279,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     const formattedDisplayPath = displayPath.length > 1 && displayPath.endsWith('/') ? displayPath.slice(0, -1) : displayPath;
     const fullFilePath = viewingFile ? [...currentPath, viewingFile].join('/') : currentPath.join('/');
 
-    // --- UPLOAD AND FILE CREATION LOGIC ---
-
+    // --- UPLOAD AND FILE CREATION LOGIC (Unchanged) ---
     const handleFileUpload = async (files) => {
         if (!currentFsConfig?.uploadEndpoint) {
             setError(str('Upload endpoint not configured.'));
@@ -190,95 +287,66 @@ const FilesystemBrowser = ({ filesystems }) => {
         }
         setLoading(true);
         const uploadPath = currentPath.join('/');
-
         for (const file of files) {
             const formData = new FormData();
             formData.append('file', file);
             const filePath = uploadPath ? `${uploadPath}/${file.name}` : file.name;
-
             try {
-                const response = await authFetch(`/api/v1/${currentFsConfig.uploadEndpoint}/${encodeURIComponent(filePath)}`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                if (response.ok) {
-                    console.log("FIle uploaded.")
-                } else {
+                const response = await authFetch(`/api/v1/${currentFsConfig.uploadEndpoint}/${encodeURIComponent(filePath)}`, { method: 'POST', body: formData });
+                if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Unknown upload error');
                 }
             } catch (err) {
-                setError(str('Failed to upload file') + err.message);
-                console.error(err);
+                setError(`${str('Failed to upload file')}: ${err.message}`);
             }
         }
-        await fetchData(); // Refresh directory view
+        await fetchData(true);
         setLoading(false);
     };
 
     const handleCreateFile = async () => {
         if (!newFileName || !newFileType || !currentFsConfig?.uploadEndpoint) return;
-
         setLoading(true);
         setShowCreateModal(false);
-
         const extension = `.${newFileType}`;
         const fileNameWithExt = newFileName.endsWith(extension) ? newFileName : `${newFileName}${extension}`;
-        const content = newFileType === 'yaml' ? '' : '""\n'; // Empty CSV with header
+        const content = newFileType === 'yaml' ? '' : '""\n';
         const file = new File([content], fileNameWithExt, { type: newFileType === 'csv' ? 'text/csv' : 'application/x-yaml' });
         const uploadPath = currentPath.join('/');
         const filePath = uploadPath ? `${uploadPath}/${fileNameWithExt}` : fileNameWithExt;
-
         const formData = new FormData();
         formData.append('file', file);
-
         try {
-            const response = await authFetch(`/api/v1/${currentFsConfig.uploadEndpoint}/${encodeURIComponent(filePath)}`, {
-                method: 'POST',
-                body: formData
-            });
+            const response = await authFetch(`/api/v1/${currentFsConfig.uploadEndpoint}/${encodeURIComponent(filePath)}`, { method: 'POST', body: formData });
             if (response.ok) {
-                console.log("File created.");
                 setNewFileName('');
-                await fetchData();
+                await fetchData(true);
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Unknown creation error');
             }
         } catch (err) {
-            setError(str('Failed to create file') + err.message);
-            console.error(err);
+            setError(`${str('Failed to create file')}: ${err.message}`);
         }
         setLoading(false);
     };
 
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    };
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Use a timeout to prevent flickering when moving over child elements
-        setTimeout(() => setIsDragging(false), 50);
-    };
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation(); // Necessary to allow drop
-    };
+    const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setTimeout(() => setIsDragging(false), 50); };
+    const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        if (e.dataTransfer.files?.length > 0) {
             handleFileUpload(e.dataTransfer.files);
             e.dataTransfer.clearData();
         }
     };
-
     // --- END UPLOAD LOGIC ---
 
+    // --- NAVIGATION AND UI HANDLERS ---
     const handleDirectoryClick = (rowData) => {
         if (isAnimating) return;
         setPrevDisplayedData(displayedData);
@@ -318,54 +386,42 @@ const FilesystemBrowser = ({ filesystems }) => {
         }
     };
 
+    const handleFsSelectionChange = (value) => {
+        if (value && value !== selectedFsName) {
+            setSelectedFsName(value);
+            // State for path/file will be cleared by the useEffect for selectedFsName change
+        }
+    };
+    
     const filesystemOptions = filesystems.map(fs => ({ label: fs.name, value: fs.name }));
     const isCommonFile = selectedFsName === 'common';
 
     const handleSelect = (eventKey) => {
-        if (eventKey === 'upload') {
-            fileInputRef.current?.click();
-        } else if (eventKey === 'create-table') {
-            setNewFileType('csv');
-            setShowCreateModal(true);
-        } else if (eventKey === 'create-datasource') {
-            setNewFileType('yaml');
-            setShowCreateModal(true);
-        }
+        if (eventKey === 'upload') fileInputRef.current?.click();
+        else if (eventKey === 'create-table') { setNewFileType('csv'); setShowCreateModal(true); }
+        else if (eventKey === 'create-datasource') { setNewFileType('yaml'); setShowCreateModal(true); }
     };
+    
+    const renderMenu = () => (
+        <>
+            <Dropdown.Item eventKey="upload" icon={<FileUp size={16} />}>{str('Upload File')}</Dropdown.Item>
+            <Dropdown.Item eventKey="create-table" icon={<Table size={16} />}>{str('Create Table')}</Dropdown.Item>
+            <Dropdown.Item eventKey="create-datasource" icon={<FilePlus size={16} />}>{str('Create Data Source')}</Dropdown.Item>
+        </>
+    );
 
-    const renderMenu = () => {
-        return (
-            <>
-                <Dropdown.Item eventKey="upload" icon={<FileUp size={16} />}>{str('Upload File')}</Dropdown.Item>
-                <Dropdown.Item eventKey="create-table" icon={<Table size={16} />}>{str('Create Table')}</Dropdown.Item>
-                <Dropdown.Item eventKey="create-datasource" icon={<FilePlus size={16} />}>{str('Create Data Source')}</Dropdown.Item>
-            </>
-        );
-    };
-
+    // --- RENDER ---
     return (
         <div onDragEnter={handleDragEnter}>
-            <input
-                type="file"
-                multiple
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={(e) => handleFileUpload(e.target.files)}
-            />
-            {currentFsConfig.historyEnabled && <CommitHistoryDrawer show={showCommitsDrawer} onRevert={fetchData} onClose={() => setShowCommitsDrawer(false)} />}
+            <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => handleFileUpload(e.target.files)} />
+            
+            {currentFsConfig?.historyEnabled && <CommitHistoryDrawer show={showCommitsDrawer} onRevert={() => fetchData(true)} onClose={() => setShowCommitsDrawer(false)} />}
 
             <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-                <Modal.Header>
-                    <Modal.Title>{str(newFileType === 'csv' ? 'Create Table' : 'Create Data Source')}</Modal.Title>
-                </Modal.Header>
+                <Modal.Header><Modal.Title>{str(newFileType === 'csv' ? 'Create Table' : 'Create Data Source')}</Modal.Title></Modal.Header>
                 <Modal.Body>
                     <InputGroup>
-                        <Input
-                            placeholder={str("File Name")}
-                            value={newFileName}
-                            onChange={setNewFileName}
-                            onPressEnter={handleCreateFile}
-                        />
+                        <Input placeholder={str("File Name")} value={newFileName} onChange={setNewFileName} onPressEnter={handleCreateFile} />
                         <InputGroup.Addon>.{newFileType}</InputGroup.Addon>
                     </InputGroup>
                 </Modal.Body>
@@ -377,20 +433,18 @@ const FilesystemBrowser = ({ filesystems }) => {
 
             <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontSize: 'smaller', padding: 10 }}>
                 {filesystems.length > 1 && (
-                    <div>
-                        <FilesystemsHeader>
-                            <Folders />
-                            <Trans>File systems</Trans>
-                            <SelectPicker
-                                data={filesystemOptions}
-                                value={selectedFsName}
-                                onChange={(value) => { setSelectedFsName(value); setCurrentPath([]); setViewingFile(null); }}
-                                style={{ width: 120, minWidth: 100, flexShrink: 0 }}
-                                cleanable={false}
-                            />
-                        </FilesystemsHeader>
-
-                    </div>
+                    <FilesystemsHeader>
+                        <Folders />
+                        <Trans>File systems</Trans>
+                        <SelectPicker
+                            data={filesystemOptions}
+                            value={selectedFsName}
+                            onChange={handleFsSelectionChange}
+                            style={{ width: 120, minWidth: 100, flexShrink: 0 }}
+                            cleanable={false}
+                            searchable={false}
+                        />
+                    </FilesystemsHeader>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'nowrap' }}>
                     <InputGroup inside style={{ flexGrow: 1, minWidth: 150, flexShrink: 1 }}>
@@ -399,26 +453,19 @@ const FilesystemBrowser = ({ filesystems }) => {
                         </InputGroup.Button>
                         <Input value={formattedDisplayPath} readOnly />
                     </InputGroup>
-                    <IconButton icon={<RefreshCw />} onClick={fetchData} appearance="subtle" style={{ flexShrink: 0 }} />
+                    <IconButton icon={<RefreshCw />} onClick={() => fetchData(true)} appearance="subtle" style={{ flexShrink: 0 }} />
                     <Dropdown onSelect={handleSelect} renderToggle={(props, ref) => <IconButton {...props} ref={ref} icon={<Plus />} />} placement="bottomEnd" trigger={['click']}>
                         {renderMenu()}
                     </Dropdown>
-                    {currentFsConfig.historyEnabled && <IconButton icon={<History />} onClick={() => setShowCommitsDrawer(true)} appearance="subtle" style={{ flexShrink: 0 }} />}
+                    {currentFsConfig?.historyEnabled && <IconButton icon={<History />} onClick={() => setShowCommitsDrawer(true)} appearance="subtle" style={{ flexShrink: 0 }} />}
                 </div>
 
                 {loading && <Loader center />}
                 {error && <p style={{ color: 'red' }}>Error: {error}</p>}
 
-                <div
-                    style={{ position: 'relative', flexGrow: 1, overflow: 'hidden' }}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                >
+                <div style={{ position: 'relative', flexGrow: 1, overflow: 'hidden' }} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop}>
                     {isDragging ? (
-                        <UploaderContainer $isDragActive={isDragging}>
-                            {str('Drop files here to upload')}
-                        </UploaderContainer>
+                        <UploaderContainer $isDragActive={isDragging}>{str('Drop files here to upload')}</UploaderContainer>
                     ) : (
                         <>
                             {prevDisplayedData && isAnimating && !viewingFile && (
@@ -426,13 +473,11 @@ const FilesystemBrowser = ({ filesystems }) => {
                                     <DirectoryViewTable value={prevDisplayedData} onFileClick={() => { }} onDirectoryClick={() => { }} />
                                 </AnimationContainer>
                             )}
-
                             {!viewingFile && directoryData && (
                                 <AnimationContainer $animateIn={isAnimating} $direction={animationDirection} $isNew={true}>
                                     <DirectoryViewTable value={displayedData} onFileClick={handleFileClick} onDirectoryClick={handleDirectoryClick} />
                                 </AnimationContainer>
                             )}
-
                             {viewingFile !== null && currentFsConfig && (
                                 <AnimationContainer $animateIn={viewingFile !== null && isAnimating} $direction={animationDirection} $isNew={true}>
                                     {viewingFile && (
@@ -441,8 +486,8 @@ const FilesystemBrowser = ({ filesystems }) => {
                                             filePath={fullFilePath}
                                             isCommonFile={isCommonFile}
                                             onClose={handleFileEditorClose}
-                                            onSaveSuccess={fetchData}
-                                            onDeleteSuccess={fetchData}
+                                            onSaveSuccess={() => fetchData(true)}
+                                            onDeleteSuccess={() => fetchData(true)}
                                             readEndpoint={currentFsConfig.readEndpoint}
                                             uploadEndpoint={currentFsConfig.uploadEndpoint}
                                             deleteEndpoint={currentFsConfig.deleteEndpoint}
