@@ -4,6 +4,11 @@ export function useVersionCheck() {
   useEffect(() => {
     const currentVersion = __APP_VERSION__; // from vite.config.ts
 
+    if (import.meta.env.DEV) {
+      // Do not check for version updates in dev
+      return;
+    }
+
     const checkForUpdate = async () => {
       try {
         const res = await fetch('/version.json', { cache: 'no-store' });
