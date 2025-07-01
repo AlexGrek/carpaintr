@@ -10,4 +10,4 @@ carpaintr.zip
 k8s-deploy/secret.yaml
 backend-service-rust/application.log
 **/.DS_store
-application.log
+**/application.log
