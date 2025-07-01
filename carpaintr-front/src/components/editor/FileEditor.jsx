@@ -390,11 +390,12 @@ const FileEditor = ({
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
+    setMsg(<Notification type="info" header={str("Download")}>{str("Downloading file")} {fileName}</Notification>, { placement: 'topEnd' });
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [fileContent, fileName]);
+  }, [fileContent, fileName, str]);
 
   const handleContentChange = useCallback((value) => {
     setFileContent(value);
