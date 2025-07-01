@@ -1,20 +1,51 @@
 import React, { useState, useMemo } from 'react';
-import { Panel, Tag, Badge, Divider, InputGroup, Input, SelectPicker, Button, IconButton } from 'rsuite';
+import { Panel, Tag, Badge, Divider, InputGroup, Input, SelectPicker, Button, IconButton, Text } from 'rsuite';
 import { capitalizeFirstLetter } from '../../utils/utils';
 import { Car, Search, SearchCheck, SortAsc, SortDesc, Tags, X } from 'lucide-react';
+import Trans from '../../localization/Trans';
+import { registerTranslations, useLocale } from '../../localization/LocaleContext';
+
+registerTranslations('ua', {
+    "No data provided": "Дані відсутні",
+    "Price: Low to High": "Ціна: від низької до високої",
+    "Price: High to Low": "Ціна: від високої до низької",
+    "Name: A to Z": "Назва: А до Я",
+    "Name: Z to A": "Назва: Я до А",
+    "Euro Class": "Євро Клас",
+    "SUV First": "Позашляховики спочатку",
+    "Body Type": "Тип кузова",
+    "Class": "Клас",
+    "Search": "Пошук",
+    "Estimated price": "Орієнтовна ціна",
+    "Clear": "Очистити",
+    "Models Found": "Знайдено моделей",
+    "Filtered Models": "Відфільтровані моделі",
+    "Total Models": "Всього моделей",
+    "SUV Models": "Моделі позашляховиків",
+    "Avg. Price": "Середня ціна",
+    "Total": "Всього",
+    "Search by model name...": "Пошук за назвою моделі...",
+    "Vehicle Catalog for": "Каталог автомобілів",
+    "Euro Classifications": "Класифікації Євро",
+    "Body Types": "Типи кузовів",
+    "SUV": "Позашляховик",
+    "Sort by": "Сортувати за",
+});
 
 const CarDataDisplay = ({ data, make }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortMode, setSortMode] = useState('price-asc');
 
+    const { str } = useLocale();
+
     if (!data || typeof data !== 'object') {
-        return <div>No data provided</div>;
+        return <div><Trans>No data provided</Trans></div>;
     }
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'EUR',
+            currency: 'USD',
             minimumFractionDigits: 0,
         }).format(price);
     };
@@ -24,20 +55,22 @@ const CarDataDisplay = ({ data, make }) => {
             'A': 'green',
             'B': 'blue',
             'C': 'cyan',
+            'D': 'yellow',
             'E': 'violet',
             'SUV 1': 'orange',
-            'SUV 2': 'red'
+            'SUV 2': 'red',
+            'SUV MAX': 'red'
         };
         return colorMap[euroClass] || 'gray';
     };
 
     const sortOptions = [
-        { label: 'Price: Low to High', value: 'price-asc' },
-        { label: 'Price: High to Low', value: 'price-desc' },
-        { label: 'Name: A to Z', value: 'name-asc' },
-        { label: 'Name: Z to A', value: 'name-desc' },
-        { label: 'Euro Class', value: 'class' },
-        { label: 'SUV First', value: 'suv-first' }
+        { label: str('Price: Low to High'), value: 'price-asc' },
+        { label: str('Price: High to Low'), value: 'price-desc' },
+        { label: str('Name: A to Z'), value: 'name-asc' },
+        { label: str('Name: Z to A'), value: 'name-desc' },
+        { label: str('Euro Class'), value: 'class' },
+        { label: str('SUV First'), value: 'suv-first' }
     ];
 
     const filteredAndSortedData = useMemo(() => {
@@ -50,7 +83,7 @@ const CarDataDisplay = ({ data, make }) => {
             );
         }
 
-        const classOrder = { 'A': 1, 'B': 2, 'C': 3, 'E': 4, 'SUV 1': 5, 'SUV 2': 6 };
+        const classOrder = { 'A': 1, 'B': 2, 'C': 3, 'E': 4, 'SUV 1': 5, 'SUV 2': 6, 'SUV MAX': 7 };
 
         // Sort based on selected mode
         entries.sort(([nameA, carA], [nameB, carB]) => {
@@ -97,11 +130,8 @@ const CarDataDisplay = ({ data, make }) => {
         <div style={{ padding: '20px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                 <h2 style={{ color: '#3c4043', fontSize: '2.5rem', fontWeight: '300', marginBottom: '10px' }}>
-                    Vehicle Catalog for {capitalizeFirstLetter(make)}
+                    <Trans>Vehicle Catalog for</Trans> {capitalizeFirstLetter(make)}
                 </h2>
-                <p style={{ color: '#666', fontSize: '1.1rem' }}>
-                    Complete overview of available models
-                </p>
             </div>
 
             {/* Controls */}
@@ -119,7 +149,7 @@ const CarDataDisplay = ({ data, make }) => {
                 <div style={{ flex: '1', minWidth: '300px', maxWidth: '400px' }}>
                     <InputGroup inside>
                         <Input
-                            placeholder="Search by model name..."
+                            placeholder={str("Search by model name...")}
                             value={searchTerm}
                             onChange={setSearchTerm}
                             style={{ fontSize: '1rem' }}
@@ -140,7 +170,7 @@ const CarDataDisplay = ({ data, make }) => {
 
                 {/* Sort Controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <span style={{ color: '#666', fontSize: '0.9rem', fontWeight: '600' }}>Sort by:</span>
+                    <span style={{ color: '#666', fontSize: '0.9rem', fontWeight: '600' }}><Trans>Sort by</Trans>:</span>
                     <SelectPicker
                         data={sortOptions}
                         value={sortMode}
@@ -166,7 +196,7 @@ const CarDataDisplay = ({ data, make }) => {
                     borderRadius: '6px',
                     border: '1px solid #e0e0e0'
                 }}>
-                    {filteredAndSortedData.length} model{filteredAndSortedData.length !== 1 ? 's' : ''} found
+                    <Text as="small"><Trans>Total</Trans>: <b>{filteredAndSortedData.length}</b></Text>
                 </div>
             </div>
 
@@ -175,9 +205,9 @@ const CarDataDisplay = ({ data, make }) => {
                 {filteredAndSortedData.length === 0 ? (
                     <Panel style={{ textAlign: 'center', padding: '40px' }}>
                         <div style={{ color: '#ccc', marginBottom: '20px' }}><SearchCheck /></div>
-                        <h4 style={{ color: '#666', marginBottom: '10px' }}>No models found</h4>
+                        <h4 style={{ color: '#666', marginBottom: '10px' }}><Trans>No models found</Trans></h4>
                         <p style={{ color: '#999' }}>
-                            Try adjusting your search term or clearing the search to see all models.
+                            <Trans>Try adjusting your search term or clearing the search to see all models.</Trans>
                         </p>
                         {searchTerm && (
                             <Button
@@ -185,7 +215,7 @@ const CarDataDisplay = ({ data, make }) => {
                                 onClick={clearSearch}
                                 style={{ marginTop: '15px' }}
                             >
-                                Clear Search
+                                <Trans>Clear Search</Trans>
                             </Button>
                         )}
                     </Panel>
@@ -248,7 +278,7 @@ const CarDataDisplay = ({ data, make }) => {
                                     textAlign: 'center'
                                 }}>
                                     <div style={{ color: '#666', fontSize: '0.8rem', marginBottom: '2px' }}>
-                                        Price
+                                        <Trans>Estimated price</Trans>
                                     </div>
                                     <div style={{
                                         fontSize: '1.4rem',
@@ -267,7 +297,7 @@ const CarDataDisplay = ({ data, make }) => {
                                     textAlign: 'center'
                                 }}>
                                     <div style={{ color: '#666', fontSize: '0.8rem', marginBottom: '5px' }}>
-                                        Class
+                                        <Trans>Class</Trans>
                                     </div>
                                     <Tag
                                         color={getClassColor(carData.euro_class)}
@@ -293,7 +323,7 @@ const CarDataDisplay = ({ data, make }) => {
                                         marginBottom: '5px',
                                         fontWeight: '600'
                                     }}>
-                                        Body Types
+                                        <Trans>Body Types</Trans>
                                     </div>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                         {carData.body.map((bodyType, idx) => (
@@ -325,7 +355,7 @@ const CarDataDisplay = ({ data, make }) => {
                                         marginBottom: '5px',
                                         fontWeight: '600'
                                     }}>
-                                        Euro Classifications
+                                        <Trans>Euro Classifications</Trans>
                                     </div>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                         {carData.euro_body_types.map((euroType, idx) => (
@@ -373,7 +403,7 @@ const CarDataDisplay = ({ data, make }) => {
                                     {filteredAndSortedData.length}
                                 </div>
                                 <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                                    {searchTerm ? 'Filtered' : 'Total'} Models
+                                     <Trans>{searchTerm ? 'Filtered' : 'Total'} Models</Trans>
                                 </div>
                             </div>
 
@@ -383,7 +413,7 @@ const CarDataDisplay = ({ data, make }) => {
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#e67e22' }}>
                                     {filteredAndSortedData.filter(([, car]) => car.is_suv).length}
                                 </div>
-                                <div style={{ color: '#666', fontSize: '0.9rem' }}>SUV Models</div>
+                                <div style={{ color: '#666', fontSize: '0.9rem' }}><Trans>SUV Models</Trans></div>
                             </div>
 
                             <Divider vertical style={{ height: '50px' }} />
@@ -392,7 +422,7 @@ const CarDataDisplay = ({ data, make }) => {
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#27ae60' }}>
                                     {formatPrice(Math.round(filteredAndSortedData.reduce((sum, [, car]) => sum + car.estimated_price, 0) / filteredAndSortedData.length))}
                                 </div>
-                                <div style={{ color: '#666', fontSize: '0.9rem' }}>Avg. Price</div>
+                                <div style={{ color: '#666', fontSize: '0.9rem' }}><Trans>Avg. Price</Trans></div>
                             </div>
                         </div>
                     </Panel>

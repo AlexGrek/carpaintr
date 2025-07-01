@@ -1,9 +1,9 @@
-import PlaceholderParagraph from "rsuite/esm/Placeholder/PlaceholderParagraph";
 import TopBarUser from "./TopBarUser";
+import PageLoader from "./PageLoader";
 
 export default function ComponentLoadingPage() {
     return <div>
         <TopBarUser />
-        <PlaceholderParagraph />
+        <PageLoader />
     </div>;
 }

@@ -1,27 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocale } from "../../localization/LocaleContext";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { authFetch } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import SelectionInput from "../SelectionInput";
-import { useNavigate } from "react-router-dom";
 import CarDataDisplay from "./CarDataDisplay";
+
+// Register translations for Ukrainian language
+registerTranslations('ua', {
+    "Error": "Помилка",
+    "Make": "Марка",
+    "Select Make": "Виберіть марку"
+});
 
 const CarCatalog = () => {
     const [makes, setMakes] = useState([]);
-    const navigate = useNavigate();
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
     const [models, setModels] = useState({});
-    const [bodyTypes, setBodyTypes] = useState([]);
     const [selectedMake, setSelectedMake] = useState(null);
-    const [model, setModel] = useState(null);
     const { str } = useLocale();
 
 
     const handleError = useCallback((reason) => {
         console.error(reason);
-        const title = str("Error");
+        const title = str("Error"); // Use str for translation
         setErrorText(reason);
         setErrorTitle(title);
     }, [str]);
@@ -46,9 +49,7 @@ const CarCatalog = () => {
     }, [handleError]);
 
     useEffect(() => {
-        setBodyTypes([]);
-        setModels({});
-
+        setModels([]);
         if (selectedMake === null) {
             return;
         }
@@ -56,7 +57,7 @@ const CarCatalog = () => {
             .then(response => response.json())
             .then(setModels)
             .catch(console.error);
-    }, [selectedMake, setModel, setBodyTypes, setModels]);
+    }, [selectedMake]);
 
     return <div className="fade-in-simple">
         <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
