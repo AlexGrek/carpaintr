@@ -7,7 +7,7 @@ export function useVersionCheck() {
     const checkForUpdate = async () => {
       try {
         const res = await fetch('/version.json', { cache: 'no-store' });
-        const { version: latestVersion } = await res.json();
+        const { appVersion: latestVersion } = await res.json();
 
         if (latestVersion !== currentVersion && latestVersion != undefined) {
           console.warn('New version detected:', latestVersion);
