@@ -41,7 +41,8 @@ const TRANSLATIONS_BASIC = {
     "Articles": "Тексти",
     "Type": "Тип",
     "Error": "Помилка",
-    "Close": "Закрити"
+    "Close": "Закрити",
+    "Table": "Таблиця",
   },
   en: {}
 };

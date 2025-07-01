@@ -2,13 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "../../localization/LocaleContext";
 import { authFetch } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Button } from "rsuite";
+import { Button, Drawer, Loader } from "rsuite";
+import { useMediaQuery } from "react-responsive";
+import PartLookup from "./PartLookup";
 
 const PartsCatalog = () => {
     const [parts, setParts] = useState([]);
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
+    const [chosenPart, setChosenPart] = useState(null);
     const { str } = useLocale();
+    const isMobile = useMediaQuery({ maxWidth: 767 });
 
 
     const handleError = useCallback((reason) => {
@@ -38,11 +42,20 @@ const PartsCatalog = () => {
 
     return <div className="fade-in-simple">
         <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
+        {parts.length == 0 && <Loader />}
         <div>
             {parts.map((part, i) => {
-                return <Button appearance='link' style={{ display: "block" }} key={i}>{part}</Button>
+                return <Button appearance='link' style={{ display: "block" }} key={i} onClick={() => setChosenPart(part)}>{part}</Button>
             })}
         </div>
+        <Drawer placement={isMobile ? 'bottom' : 'right'} size={isMobile ? 'full' : 'lg'} open={chosenPart !== null} onClose={() => setChosenPart(null)}>
+            <Drawer.Header>
+                <Drawer.Title>{chosenPart}</Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body>
+                {chosenPart != null && <PartLookup part={chosenPart}/>}
+            </Drawer.Body>
+        </Drawer>
     </div>
 }
 

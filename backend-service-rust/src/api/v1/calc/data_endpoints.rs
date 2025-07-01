@@ -1,7 +1,7 @@
 use crate::{
     calc::{
         car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry,
-        seasons::get_current_season_info, table_processing::lookup,
+        seasons::get_current_season_info, table_processing::{lookup, lookup_no_type_class},
     },
     errors::AppError,
     middleware::AuthenticatedUser,
@@ -107,6 +107,11 @@ pub struct LookupPartQuery {
     pub part: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct LookupPartNoTypeClassQuery {
+    pub part: String,
+}
+
 pub async fn lookup_all_tables(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
@@ -115,6 +120,21 @@ pub async fn lookup_all_tables(
     let parts_lines = lookup(
         &q.car_type,
         &q.car_class,
+        &q.part,
+        &app_state.data_dir_path,
+        &user_email,
+        &app_state.cache,
+    )
+    .await?;
+    Ok(Json(parts_lines))
+}
+
+pub async fn lookup_all_tables_all_types(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    Query(q): Query<LookupPartNoTypeClassQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let parts_lines = lookup_no_type_class(
         &q.part,
         &app_state.data_dir_path,
         &user_email,

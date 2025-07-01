@@ -1,7 +1,8 @@
 use futures_util::future::join_all;
 use std::collections::HashMap;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 use tokio::fs;
 
 use crate::errors::AppError;
@@ -9,6 +10,8 @@ use crate::exlogging::log_event;
 use crate::utils::{
     parse_csv_file_async_safe, user_catalog_directory_from_email, DataStorageCache, COMMON,
 };
+
+static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
 
 /// Asynchronously reads the contents of a directory and returns a vector of relative file paths.
 ///
@@ -91,6 +94,11 @@ pub async fn all_tables_list(
         user_catalog_directory_from_email(data_dir, user_email)?.as_path(),
     )
     .await
+    .map(|lst| {
+        lst.into_iter()
+            .filter(|p| p.extension().map(|ext| ext == *CSV_EXT).unwrap_or(false))
+            .collect()
+    })
     .map_err(|e| e.into())
 }
 
@@ -101,10 +109,37 @@ pub async fn lookup(
     data_dir: &PathBuf,
     email: &str,
     cache: &DataStorageCache,
-) -> Result<Vec<Option<HashMap<String, String>>>, AppError> {
+) -> Result<Vec<(String, Option<HashMap<String, String>>)>, AppError> {
     let all_tables = all_tables_list(data_dir, email).await?;
     let in_tables =
         lookup_part_in_tables(car_type, car_class, part, all_tables, data_dir, cache).await;
+    let collected: Vec<_> = in_tables
+        .into_iter()
+        .filter_map(|item| {
+            match item {
+                Ok(val) => Some(val), // If Ok, map it to Some(val)
+                Err(e) => {
+                    log_event(
+                        crate::exlogging::LogLevel::Error,
+                        format!("Error while parsing tables: {}", e.to_string()),
+                        Some(email),
+                    );
+                    None
+                }
+            }
+        })
+        .collect();
+    Ok(collected)
+}
+
+pub async fn lookup_no_type_class(
+    part: &str,
+    data_dir: &PathBuf,
+    email: &str,
+    cache: &DataStorageCache,
+) -> Result<Vec<(String, Vec<HashMap<String, String>>)>, AppError> {
+    let all_tables = all_tables_list(data_dir, email).await?;
+    let in_tables = lookup_part_in_tables_any_type(part, all_tables, data_dir, cache).await;
     let collected: Vec<_> = in_tables
         .into_iter()
         .filter_map(|item| {
@@ -131,10 +166,23 @@ pub async fn lookup_part_in_tables(
     tables: Vec<PathBuf>,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Vec<Result<Option<HashMap<String, String>>, AppError>> {
+) -> Vec<Result<(String, Option<HashMap<String, String>>), AppError>> {
     let futures: Vec<_> = tables
         .into_iter()
         .map(|table| lookup_part_in_table(car_type, car_class, part, table, data_dir, cache))
+        .collect();
+    join_all(futures).await
+}
+
+pub async fn lookup_part_in_tables_any_type(
+    part: &str,
+    tables: Vec<PathBuf>,
+    data_dir: &PathBuf,
+    cache: &DataStorageCache,
+) -> Vec<Result<(String, Vec<HashMap<String, String>>), AppError>> {
+    let futures: Vec<_> = tables
+        .into_iter()
+        .map(|table| lookup_part_in_table_any_type(part, table, data_dir, cache))
         .collect();
     join_all(futures).await
 }
@@ -146,7 +194,7 @@ pub async fn lookup_part_in_table(
     file: PathBuf,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Result<Option<HashMap<String, String>>, AppError> {
+) -> Result<(String, Option<HashMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found = data.into_iter().find(|row| {
         if !row.contains_key("Список деталь рус") {
@@ -167,7 +215,41 @@ pub async fn lookup_part_in_table(
         }
         return true;
     });
-    Ok(found)
+    let table_file_name = file
+        .as_path()
+        .file_name()
+        .unwrap_or(OsStr::new("Unknown path"))
+        .to_string_lossy()
+        .to_string();
+    Ok((table_file_name, found))
+}
+
+pub async fn lookup_part_in_table_any_type(
+    part: &str,
+    file: PathBuf,
+    data_dir: &PathBuf,
+    cache: &DataStorageCache,
+) -> Result<(String, Vec<HashMap<String, String>>), AppError> {
+    let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
+    let found: Vec<_> = data
+        .into_iter()
+        .filter(|row| {
+            if !row.contains_key("Список деталь рус") {
+                return false;
+            }
+            if row["Список деталь рус"] != part {
+                return false;
+            }
+            return true;
+        })
+        .collect();
+    let table_file_name = file
+        .as_path()
+        .file_name()
+        .unwrap_or(OsStr::new("Unknown path"))
+        .to_string_lossy()
+        .to_string();
+    Ok((table_file_name, found))
 }
 
 #[cfg(test)]
