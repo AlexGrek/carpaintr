@@ -9,7 +9,7 @@ export function useVersionCheck() {
         const res = await fetch('/version.json', { cache: 'no-store' });
         const { version: latestVersion } = await res.json();
 
-        if (latestVersion !== currentVersion) {
+        if (latestVersion !== currentVersion && latestVersion != undefined) {
           console.warn('New version detected:', latestVersion);
           window.location.reload(true); // force reload
         }
