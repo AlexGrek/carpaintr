@@ -5,6 +5,7 @@ import { authFetch } from '../../utils/authFetch';
 import AdminTools from '../AdminTools';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import AppVersionBadge from '../AppVersionBadge';
 
 registerTranslations('ua', {
   "Admin Page": "Панель адміністратора",
@@ -57,7 +58,7 @@ const AdminPage = () => {
         <>
           <div className='police-line'></div>
           <h3><code><Trans>Admin Page</Trans></code></h3>
-          <Text as="sub">{adminStatus}</Text>
+          <AppVersionBadge/>
           <Breadcrumb>
             <Breadcrumb.Item href="/"><Trans>Home</Trans></Breadcrumb.Item>
             <Breadcrumb.Item href="/dashboard"><Trans>Dashboard</Trans></Breadcrumb.Item>

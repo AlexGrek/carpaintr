@@ -9,6 +9,7 @@ import { useLocale, registerTranslations } from '../../localization/LocaleContex
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
 import { BrainCircuit, Calculator, Cog, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
+import AppVersionBadge from '../AppVersionBadge';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -74,6 +75,7 @@ const Dashboard = () => {
             </Panel>
             <DashboardNavigationButtons />
         </Panel>
+        <AppVersionBadge/>
     </Content>
 }
 
