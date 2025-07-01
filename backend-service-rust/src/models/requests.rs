@@ -27,6 +27,17 @@ pub struct SupportRequestMessage {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FrontendFailureReport {
+    #[serde(default)]
+    pub component: String,
+    #[serde(default)]
+    pub message: String,
+    #[serde(default)]
+    pub app_version: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SupportRequest {
     #[serde(default = "generate_random_id")]
     pub id: String,

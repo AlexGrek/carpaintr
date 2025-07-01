@@ -14,9 +14,10 @@ use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 use crate::{
     auth::Auth,
     cache::license_cache::LicenseCache,
-    db::users::{AppDb},
+    db::users::AppDb,
     middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
-    state::AppState, utils::DataStorageCache,
+    state::AppState,
+    utils::DataStorageCache,
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
@@ -79,7 +80,7 @@ async fn main() -> tokio::io::Result<()> {
         jwt_license_secret,
         data_dir_path: PathBuf::from(data_dir_path),
         admin_file_path: PathBuf::from(admin_file_path),
-        cache: Arc::new(DataStorageCache::new(10, 10, 50))
+        cache: Arc::new(DataStorageCache::new(10, 10, 50)),
     });
 
     let init_result = api::v1::admin_editor_endpoints::run_list_class_body_types_rebuild(
@@ -177,6 +178,10 @@ async fn main() -> tokio::io::Result<()> {
         .route("/license_upload", post(api::v1::user::upload_license))
         .route("/getactivelicense", get(api::v1::user::get_active_license))
         .route("/mylicenses", get(api::v1::user::list_licenses))
+        .route(
+                    "/report_frontend_failure",
+                    post(api::v1::support::report_frontend_failure),
+                )
         .route("/getcompanyinfo", get(api::v1::user::get_company_info))
         .route(
             "/updatecompanyinfo",

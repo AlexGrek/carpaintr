@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop.jsx';
 import ComponentLoadingPage from './components/layout/ComponentLoadingPage.jsx';
 import CatalogPage from './components/pages/CatalogPage.jsx';
 import { useVersionCheck } from './version';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
@@ -33,25 +34,27 @@ function App() {
       <GlobalCallbacksProvider>
         <Router>
           <ScrollToTop />
-          <Suspense fallback={<ComponentLoadingPage/>}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegistrationPage />} />
-              <Route path="/calc" element={<CalcPage />} />
-              <Route path="/admin/*" element={<AdminPage />} />
-              <Route path="/company" element={<CompanyInfoPage />} />
-              <Route path="/catalog" element={<CatalogPage />} />
-              <Route path="/company" element={<CompanyInfoPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/aboutus" element={<AboutUsPage />} />
-              <Route path="/cabinet" element={<CabinetPage />} />
-              <Route path="/fileeditor" element={<FileEditorPage />} />
-              <Route path="/dashboard" element={<UsersDashboard />} />
-              <Route path="/wip" element={<WipPage />} />
-              <Route path="/report" element={<ContactSupport />} />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<ComponentLoadingPage />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegistrationPage />} />
+                <Route path="/calc" element={<CalcPage />} />
+                <Route path="/admin/*" element={<AdminPage />} />
+                <Route path="/company" element={<CompanyInfoPage />} />
+                <Route path="/catalog" element={<CatalogPage />} />
+                <Route path="/company" element={<CompanyInfoPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/aboutus" element={<AboutUsPage />} />
+                <Route path="/cabinet" element={<CabinetPage />} />
+                <Route path="/fileeditor" element={<FileEditorPage />} />
+                <Route path="/dashboard" element={<UsersDashboard />} />
+                <Route path="/wip" element={<WipPage />} />
+                <Route path="/report" element={<ContactSupport />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </Router>
       </GlobalCallbacksProvider>
     </LocaleProvider>

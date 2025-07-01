@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Input, Button } from 'rsuite';
 import { authFetch } from '../../utils/authFetch';
+import AppVersionBadge from '../AppVersionBadge';
 
 const SupportRequestForm = () => {
     const [title, setTitle] = useState('');
@@ -74,6 +75,8 @@ const SupportRequestForm = () => {
                 onChange={setContacts}
                 placeholder="e.g. telegram=@user, phone=+12345678"
             />
+
+            <AppVersionBadge/>
 
             {(submitted != true) && <div style={{ marginTop: '20px' }}>
                 <Button appearance="primary" onClick={handleSubmit} loading={submitting}>

@@ -1,9 +1,12 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::{Mutex, OnceCell};
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use log;
+
+use crate::models::requests::FrontendFailureReport;
 
 // Global static instance of the logger
 static GLOBAL_LOGGER: OnceCell<Arc<AsyncLogger>> = OnceCell::const_new();
@@ -93,6 +96,44 @@ pub async fn configure_log_event(config: LoggerConfig) -> Result<(), Box<dyn std
     GLOBAL_LOGGER.set(Arc::new(logger))
         .map_err(|_| "Logger already initialized")?;
     log_event(LogLevel::Info, &event_text, Some("root"));
+    Ok(())
+}
+
+
+pub async fn store_frontend_failure(
+    report: &FrontendFailureReport,
+    data_dir_path: &PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let log_file_path = data_dir_path.join("frontend_failure_reports.log");
+    
+    // Create the directory if it doesn't exist
+    if let Some(parent) = log_file_path.parent() {
+        tokio::fs::create_dir_all(parent).await?;
+    }
+    
+    // Open file in append mode, create if it doesn't exist
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file_path)
+        .await?;
+    
+    // Create timestamp
+    let timestamp: DateTime<Utc> = Utc::now();
+    
+    // Format the log line
+    let log_line = format!(
+        "{} | {} | {} | {}\n",
+        timestamp.format("%Y-%m-%d %H:%M:%S UTC"),
+        report.component,
+        report.app_version,
+        report.message
+    );
+    
+    // Write to file
+    file.write_all(log_line.as_bytes()).await?;
+    file.flush().await?;
+    
     Ok(())
 }
 

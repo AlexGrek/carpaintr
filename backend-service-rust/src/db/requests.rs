@@ -57,7 +57,8 @@ fn deserialize_composite_key(key_bytes: &[u8]) -> Result<(String, String), Strin
 
 fn create_email_prefix(user_email: &str) -> Vec<u8> {
     let mut prefix_bytes = Vec::new();
-    prefix_bytes.write_u16::<BigEndian>(user_email.len() as u16)
+    prefix_bytes
+        .write_u16::<BigEndian>(user_email.len() as u16)
         .expect("Failed to write email length for prefix");
     prefix_bytes.extend_from_slice(user_email.as_bytes());
     prefix_bytes
@@ -106,26 +107,39 @@ pub fn remove_request(requests_tree: &Tree, email: &str, id: &str) -> Result<boo
     if removed.is_some() {
         log_event(
             LogLevel::Info,
-            format!("Successfully removed support request with email: {}, id: {}", email, id),
+            format!(
+                "Successfully removed support request with email: {}, id: {}",
+                email, id
+            ),
             Some(email),
         );
         Ok(true)
     } else {
         log_event(
             LogLevel::Warn,
-            format!("Support request not found for removal: email: {}, id: {}", email, id),
+            format!(
+                "Support request not found for removal: email: {}, id: {}",
+                email, id
+            ),
             Some(email),
         );
         Ok(false)
     }
 }
 
-pub fn get_request(requests_tree: &Tree, email: &str, id: &str) -> Result<Option<SupportRequest>, AppError> {
+pub fn get_request(
+    requests_tree: &Tree,
+    email: &str,
+    id: &str,
+) -> Result<Option<SupportRequest>, AppError> {
     let key = create_composite_key(email, id);
 
     log_event(
         LogLevel::Info,
-        format!("Attempting to get support request with email: {}, id: {}", email, id),
+        format!(
+            "Attempting to get support request with email: {}, id: {}",
+            email, id
+        ),
         Some(email),
     );
 
@@ -138,7 +152,7 @@ pub fn get_request(requests_tree: &Tree, email: &str, id: &str) -> Result<Option
                 Some(email),
             );
             Ok(Some(req))
-        },
+        }
         None => {
             log_event(
                 LogLevel::Info,
@@ -160,7 +174,10 @@ pub fn list_all_requests(requests_tree: &Tree) -> Result<Vec<SupportRequest>, Ap
     Ok(all_requests)
 }
 
-pub fn query_requests_by_user_email(requests_tree: &Tree, email: &str) -> Result<Vec<SupportRequest>, AppError> {
+pub fn query_requests_by_user_email(
+    requests_tree: &Tree,
+    email: &str,
+) -> Result<Vec<SupportRequest>, AppError> {
     let prefix_bytes = create_email_prefix(email);
 
     let mut user_requests = Vec::new();
@@ -178,6 +195,8 @@ pub fn find_unresponded_requests(requests_tree: &Tree) -> Result<Vec<SupportRequ
         let (_key_ivec, value_ivec) = item_result?;
         let req: SupportRequest = serde_json::from_slice(&value_ivec)?;
         if req.messages.is_empty() {
+            unresponded_requests.push(req);
+        } else if !req.messages.last().unwrap().is_support_response {
             unresponded_requests.push(req);
         }
     }

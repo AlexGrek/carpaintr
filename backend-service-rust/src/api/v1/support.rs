@@ -1,15 +1,12 @@
 use crate::{
-    db::requests,
-    errors::AppError,
-    middleware::AuthenticatedUser,
-    models::requests::{SupportRequest, SupportRequestMessage},
-    state::AppState,
+    db::requests, errors::AppError, exlogging::{log_event, store_frontend_failure}, middleware::AuthenticatedUser, models::requests::{FrontendFailureReport, SupportRequest, SupportRequestMessage}, state::AppState
 };
 use axum::{
     extract::{Json, Query, State},
     response::IntoResponse,
 };
 use chrono::Utc;
+use env_logger::Logger;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -88,6 +85,16 @@ pub async fn support_get(
             )))
         }
     }
+}
+
+pub async fn report_frontend_failure(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    Json(r): Json<FrontendFailureReport>,
+) -> Result<impl IntoResponse, AppError> {
+    log_event(crate::exlogging::LogLevel::Error, format!("Frontend failure: {:?}", &r), Some(user_email));
+    let _ = store_frontend_failure(&r, &app_state.data_dir_path).await; // ignore errors
+    Ok(())
 }
 
 pub async fn user_get(
