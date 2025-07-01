@@ -385,12 +385,22 @@ const FileEditor = ({
 
   const handleDownload = useCallback(() => {
     setMsg(null);
-    const blob = new Blob([fileContent], { type: 'text/plain' });
+    var fileType = 'text/plain';
+    if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+      fileType = 'application/x-yaml;charset=utf-8;';
+    }
+    if (fileName.endsWith(".csv")) {
+      fileType = 'text/csv;charset=utf-8;';
+    }
+    if (fileName.endsWith(".json")) {
+      fileType = 'application/json;charset=utf-8;';
+    }
+    const blob = new Blob([fileContent], { type: fileType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
-    setMsg(<Notification type="info" header={str("Download")}>{str("Downloading file")} {fileName}</Notification>, { placement: 'topEnd' });
+    setMsg(<Notification type="info" header={str("Download File")}>{fileName}</Notification>, { placement: 'topEnd' });
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

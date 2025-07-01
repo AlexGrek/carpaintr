@@ -10,7 +10,7 @@ const filesystemConfigs = [
         deleteEndpoint: "editor/delete_user_file",
         historyEnabled: true
     },
-     {
+    {
         name: "Common",
         listEndpoint: "editor/list_common_files",
         readEndpoint: "editor/read_common_file",
@@ -20,9 +20,11 @@ const filesystemConfigs = [
 ];
 
 const FileEditorPage = () => {
-    return <div><TopBarUser /><div className='fade-in-simple' style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
-        <FilesystemBrowser filesystems={filesystemConfigs} />
-    </div>
+    return <div>
+        <TopBarUser />
+        <div className='fade-in-simple' style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
+            <FilesystemBrowser filesystems={filesystemConfigs} />
+        </div>
     </div>
 }
 
