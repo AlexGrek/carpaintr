@@ -7,6 +7,7 @@ import { LocaleProvider } from './localization/LocaleContext.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import ComponentLoadingPage from './components/layout/ComponentLoadingPage.jsx';
 import CatalogPage from './components/pages/CatalogPage.jsx';
+import { useVersionCheck } from './version';
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
@@ -26,6 +27,7 @@ const HistoryPage = () => <h2>History Page</h2>;
 const AboutUsPage = () => <h2>About Us Page</h2>;
 
 function App() {
+  useVersionCheck();
   return (
     <LocaleProvider>
       <GlobalCallbacksProvider>

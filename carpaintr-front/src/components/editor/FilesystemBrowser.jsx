@@ -1,6 +1,6 @@
 // FilesystemBrowser.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SelectPicker, Input, IconButton, InputGroup, Loader, Dropdown, Modal, Button, Message } from 'rsuite';
+import { SelectPicker, Input, IconButton, InputGroup, Loader, Dropdown, Modal, Button } from 'rsuite';
 import {
     RefreshCw,
     Plus,
