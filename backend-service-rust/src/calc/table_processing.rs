@@ -91,7 +91,7 @@ pub async fn all_tables_list(
 ) -> Result<Vec<PathBuf>, AppError> {
     merge_directories(
         &data_dir.join(COMMON).join(TABLES),
-        user_catalog_directory_from_email(data_dir, user_email)?.as_path(),
+        user_catalog_directory_from_email(data_dir, user_email)?.join(TABLES).as_path(),
     )
     .await
     .map(|lst| {
