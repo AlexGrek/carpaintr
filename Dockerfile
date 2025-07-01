@@ -2,48 +2,43 @@
 
 # ---------- Frontend Build Stage ----------
 FROM node:24-slim AS frontend
-
-WORKDIR /app
-
-COPY carpaintr-front/ ./carpaintr-front
 WORKDIR /app/carpaintr-front
-
+COPY carpaintr-front/package*.json ./
 RUN npm install
-RUN npm run build
+COPY carpaintr-front/ .
+RUN npm run build --production
 
 # ---------- Backend Build Stage ----------
 FROM rust:1.87 AS backend
-
-WORKDIR /app
-
-# Create dummy static to prevent cargo build issues
-RUN mkdir -p backend-service-rust/static
-
-# Copy backend source
-COPY backend-service-rust/ ./backend-service-rust
-COPY --from=frontend /app/carpaintr-front/dist ./backend-service-rust/static
-
 WORKDIR /app/backend-service-rust
+# Create dummy static to prevent cargo build issues before copying frontend
+RUN mkdir -p static
+# Copy backend source for dependencies only
+COPY backend-service-rust/Cargo.toml backend-service-rust/Cargo.lock ./
+# Build a dummy with only dependencies to cache them
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
+# Remove dummy source
+RUN rm -rf src
 
-ENV RUSTFLAGS="-C target-cpu=native" 
-
+# Copy all backend source
+COPY backend-service-rust/ .
+# Copy frontend build artifacts
+COPY --from=frontend /app/carpaintr-front/dist ./static
 # Build backend in release mode
-RUN cargo build --release
+RUN touch src/main.rs && cargo build --release
 
 # ---------- Runtime Stage ----------
-FROM debian:stable
-
-RUN apt-get update && apt-get install -y ca-certificates git && rm -rf /var/lib/apt/lists/*
-
+FROM debian:stable-slim
+# Install only necessary runtime dependencies
+RUN apt-get update && apt-get install -y ca-certificates git --no-install-recommends && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
 # Copy only the binary and static files
 COPY --from=backend /app/backend-service-rust/target/release/rust-web-service /app/backend
 COPY --from=backend /app/backend-service-rust/static /app/static
-
 COPY data/ /var/initialdata
 COPY entrypoint.sh /entrypoint.sh
 
-EXPOSE 8080
+# Set the binary as the entrypoint for better container behavior
+ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["bash", "/entrypoint.sh"]
+EXPOSE 8080
