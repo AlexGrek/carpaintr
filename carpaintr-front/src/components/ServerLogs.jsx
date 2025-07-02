@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader, Message, Panel, useToaster, Button, Whisper, Tooltip } from 'rsuite';
+import { Loader, Panel, Button, Whisper, Tooltip } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import { useLocale } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
 import { parseISO, intervalToDuration } from 'date-fns'; // Import intervalToDuration
@@ -8,28 +8,28 @@ const ServerLogs = () => {
     const [lines, setLines] = useState(100);
     const [log, setLog] = useState([]);
     const { str } = useLocale(); // Initialize useLocale hook
-    const toaster = useToaster();
+    const [frontend, setFrontend] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setLoading(true);
         const fetchData = async () => {
             try {
-                const response = await authFetch('/api/v1/admin/logs?lines=' + lines);
+                const response = await authFetch(`/api/v1/admin/logs${frontend}?lines=` + lines);
                 if (!response.ok) {
                     throw new Error(`${str('Error: ')}${response.statusText}`);
                 }
                 const data = await response.json();
                 setLog(data);
             } catch (err) {
-                toaster.push(<Message type="error" header="Error" closable duration={5000}>{err.message}</Message>);
+                console.error(err);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-    }, [str, lines, toaster]);
+    }, [str, lines, frontend]);
 
     const parseAndStyleLogLine = (line) => {
         const timestampRegex = /(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC\])/;
@@ -92,6 +92,7 @@ const ServerLogs = () => {
     return (
         <Panel shaded>
             <p>Showing last <b>{lines}</b> log lines</p>
+            <Button onClick={() => setFrontend("_frontend")} disabled={frontend != ""} appearance='link'>See frontend failure logs</Button>
             <div style={{ fontFamily: 'monospace', fontSize: '0.85em', textAlign: 'left', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', maxHeight: '500px', overflowY: 'auto' }}>
                 {log.map((item, i) => {
                     return <p key={i} style={{ margin: '2px 0' }}>{parseAndStyleLogLine(item)}</p>

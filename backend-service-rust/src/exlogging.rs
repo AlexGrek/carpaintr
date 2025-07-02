@@ -1,10 +1,10 @@
-use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::{Mutex, OnceCell};
-use tokio::fs::OpenOptions;
-use tokio::io::AsyncWriteExt;
 use chrono::{DateTime, Utc};
 use log;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use tokio::fs::OpenOptions;
+use tokio::io::AsyncWriteExt;
+use tokio::sync::{Mutex, OnceCell};
 
 use crate::models::requests::FrontendFailureReport;
 
@@ -59,9 +59,15 @@ impl AsyncLogger {
 
     async fn write_log(&self, level: LogLevel, message: &str, user: Option<&str>) {
         let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f UTC");
-        
+
         let log_entry = match user {
-            Some(u) => format!("[{}] [{}] [User: {}] {}\n", timestamp, level.as_str(), u, message),
+            Some(u) => format!(
+                "[{}] [{}] [User: {}] {}\n",
+                timestamp,
+                level.as_str(),
+                u,
+                message
+            ),
             None => format!("[{}] [{}] {}\n", timestamp, level.as_str(), message),
         };
 
@@ -90,50 +96,52 @@ impl AsyncLogger {
 }
 
 /// Initialize the global logger with configuration
-pub async fn configure_log_event(config: LoggerConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn configure_log_event(
+    config: LoggerConfig,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let event_text = format!("Logger initialized with config: {:?}", &config);
     let logger = AsyncLogger::new(config).await?;
-    GLOBAL_LOGGER.set(Arc::new(logger))
+    GLOBAL_LOGGER
+        .set(Arc::new(logger))
         .map_err(|_| "Logger already initialized")?;
     log_event(LogLevel::Info, &event_text, Some("root"));
     Ok(())
 }
-
 
 pub async fn store_frontend_failure(
     report: &FrontendFailureReport,
     data_dir_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let log_file_path = data_dir_path.join("frontend_failure_reports.log");
-    
+
     // Create the directory if it doesn't exist
     if let Some(parent) = log_file_path.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
-    
+
     // Open file in append mode, create if it doesn't exist
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
         .open(&log_file_path)
         .await?;
-    
+
     // Create timestamp
-    let timestamp: DateTime<Utc> = Utc::now();
-    
+    let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f UTC");
+
     // Format the log line
     let log_line = format!(
-        "{} | {} | {} | {}\n",
-        timestamp.format("%Y-%m-%d %H:%M:%S UTC"),
+        "[{}] [{}] {} | {}\n",
+        timestamp,
         report.component,
         report.app_version,
         report.message
     );
-    
+
     // Write to file
     file.write_all(log_line.as_bytes()).await?;
     file.flush().await?;
-    
+
     Ok(())
 }
 
@@ -154,7 +162,7 @@ pub fn log_event(level: LogLevel, message: impl AsRef<str>, user: Option<impl As
         let logger = Arc::clone(logger);
         let message = message.as_ref().to_string();
         let user_str = user.map(|u| u.as_ref().to_string());
-        
+
         tokio::spawn(async move {
             logger.write_log(level, &message, user_str.as_deref()).await;
         });
@@ -184,42 +192,51 @@ macro_rules! log_info {
     };
 }
 
+pub async fn get_latest_logs(
+    n: usize,
+) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
+    let logger = GLOBAL_LOGGER
+        .get()
+        .ok_or("Logger not initialized. Call configure_log_event() first.")?;
+
+    let file_path = &logger.file_path;
+    return get_latest_log_lines(n, file_path).await;
+}
+
 /// Read the n latest log statements from the log file
 /// Returns lines in chronological order (oldest first among the n latest)
-pub async fn get_latest_logs(n: usize) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
-    let logger = GLOBAL_LOGGER.get()
-        .ok_or("Logger not initialized. Call configure_log_event() first.")?;
-    
-    let file_path = &logger.file_path;
-    
+pub async fn get_latest_log_lines<P: AsRef<Path>>(
+    n: usize,
+    file_path: P,
+) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
     if n == 0 {
         return Ok(Vec::new());
     }
-    
+
     let mut file = tokio::fs::File::open(file_path).await?;
     let file_size = file.metadata().await?.len();
-    
+
     if file_size == 0 {
         return Ok(Vec::new());
     }
-    
+
     let mut lines = Vec::new();
     let mut buffer = Vec::new();
     let chunk_size = 8192; // 8KB chunks
     let mut position = file_size;
     let mut current_line = Vec::new();
-    
+
     // Read file backwards in chunks
     while position > 0 && lines.len() < n {
         let read_size = std::cmp::min(chunk_size, position);
         position -= read_size;
-        
+
         // Read chunk
         use tokio::io::{AsyncReadExt, AsyncSeekExt};
         file.seek(std::io::SeekFrom::Start(position)).await?;
         buffer.resize(read_size as usize, 0);
         file.read_exact(&mut buffer).await?;
-        
+
         // Process chunk backwards
         for &byte in buffer.iter().rev() {
             if byte == b'\n' {
@@ -241,12 +258,12 @@ pub async fn get_latest_logs(n: usize) -> Result<Vec<String>, Box<dyn std::error
                 current_line.push(byte);
             }
         }
-        
+
         if lines.len() >= n {
             break;
         }
     }
-    
+
     // Handle the last line if we reached the beginning of file
     if position == 0 && !current_line.is_empty() && lines.len() < n {
         current_line.reverse();
@@ -257,46 +274,9 @@ pub async fn get_latest_logs(n: usize) -> Result<Vec<String>, Box<dyn std::error
             }
         }
     }
-    
+
     // Reverse to get chronological order (oldest first among the n latest)
     lines.reverse();
-    
+
     Ok(lines)
 }
-
-// /// Get latest logs with filtering by log level
-// pub async fn get_latest_logs_filtered(
-//     n: usize, 
-//     min_level: Option<LogLevel>
-// ) -> Result<Vec<String>, Box<dyn std::error::Error + Send + Sync>> {
-//     let all_lines = get_latest_logs(n * 2).await?; // Get more lines to account for filtering
-    
-//     let mut filtered_lines = Vec::new();
-    
-//     for line in all_lines {
-//         if let Some(ref level) = min_level {
-//             // Simple level filtering based on log format
-//             let should_include = match level {
-//                 LogLevel::Error => line.contains("[ERROR]"),
-//                 LogLevel::Warn => line.contains("[ERROR]") || line.contains("[WARN]"),
-//                 LogLevel::Info => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]"),
-//                 LogLevel::Debug => line.contains("[ERROR]") || line.contains("[WARN]") || line.contains("[INFO]") || line.contains("[DEBUG]"),
-//                 LogLevel::Trace => true, // Include all levels
-//             };
-            
-//             if should_include {
-//                 filtered_lines.push(line);
-//                 if filtered_lines.len() >= n {
-//                     break;
-//                 }
-//             }
-//         } else {
-//             filtered_lines.push(line);
-//             if filtered_lines.len() >= n {
-//                 break;
-//             }
-//         }
-//     }
-    
-//     Ok(filtered_lines)
-// }

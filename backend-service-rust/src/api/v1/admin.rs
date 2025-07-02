@@ -1,17 +1,27 @@
+use crate::{
+    errors::AppError,
+    exlogging::{get_latest_log_lines, get_latest_logs},
+    license_manager::{
+        delete_license_file,
+        generate_license_token,
+        list_license_files,
+        read_license_file_by_name,
+        save_license_file, // Import new functions
+    },
+    middleware::AuthenticatedUser,
+    models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest},
+    state::AppState,
+    utils::delete_user_data_gracefully,
+};
 use axum::{
     extract::{Json as AxumJson, Path, Query, State},
     http::{header, Response, StatusCode},
     response::IntoResponse,
     Json,
 };
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use chrono::{Utc, Duration};
-use crate::{
-    errors::AppError, exlogging::get_latest_logs, license_manager::{
-        delete_license_file, generate_license_token, list_license_files, read_license_file_by_name, save_license_file // Import new functions
-    }, middleware::AuthenticatedUser, models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest}, state::AppState, utils::delete_user_data_gracefully
-};
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
 pub async fn check_admin_status(
@@ -35,13 +45,16 @@ pub async fn generate_license_handler(
             let expiry_date = Utc::now() + Duration::days(req.days);
             (req.email, expiry_date, req.level)
         }
-        GenerateLicenseRequest::ByDate(req) => {
-            (req.email, req.expiry_date, req.level)
-        }
+        GenerateLicenseRequest::ByDate(req) => (req.email, req.expiry_date, req.level),
     };
 
     // Generate the JWT token
-    let token = generate_license_token(&user_email, expiry_date, level, app_state.jwt_license_secret.as_bytes())?;
+    let token = generate_license_token(
+        &user_email,
+        expiry_date,
+        level,
+        app_state.jwt_license_secret.as_bytes(),
+    )?;
 
     // Save the license file
     save_license_file(&user_email, &token, &app_state.data_dir_path).await?;
@@ -50,7 +63,10 @@ pub async fn generate_license_handler(
     app_state.license_cache.invalidate_license(&user_email);
 
     // Return the generated token (or a confirmation message)
-    Ok(Json(format!("License generated and saved for {}.", user_email)))
+    Ok(Json(format!(
+        "License generated and saved for {}.",
+        user_email
+    )))
 }
 
 // New handler to list all license files for a specific user (admin only)
@@ -83,15 +99,14 @@ pub async fn delete_user_license_handler(
     Ok(StatusCode::OK) // Return 200 OK on successful deletion
 }
 
-
-
 pub async fn get_user_license_handler(
     AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
     State(app_state): State<Arc<AppState>>,
     Path((user_email, license_filename)): Path<(String, String)>, // Extract email and filename from path
 ) -> Result<impl IntoResponse, AppError> {
     // Call the new function to delete the license file
-    let jwt = read_license_file_by_name(&user_email, &app_state.data_dir_path, &license_filename).await?;
+    let jwt =
+        read_license_file_by_name(&user_email, &app_state.data_dir_path, &license_filename).await?;
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
@@ -127,7 +142,9 @@ pub async fn manage_user(
             // Hash the new password
             let hashed_password = app_state.auth.hash_password(&data)?;
             // Update the user's password hash in the database
-            app_state.db.change_user_password_hash(&email, hashed_password)?;
+            app_state
+                .db
+                .change_user_password_hash(&email, hashed_password)?;
             Ok(StatusCode::OK) // Return 200 OK on successful password change
         }
     }
@@ -135,7 +152,7 @@ pub async fn manage_user(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogLinesQuery {
-    pub lines: usize
+    pub lines: usize,
 }
 
 // Existing handler to list all users by email (admin only)
@@ -144,7 +161,21 @@ pub async fn get_n_logs(
     State(_app_state): State<Arc<AppState>>,
     Query(log_query): Query<LogLinesQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let logs = get_latest_logs(log_query.lines).await.map_err(|err| AppError::BadRequest(err.to_string()))?;
+    let logs = get_latest_logs(log_query.lines)
+        .await
+        .map_err(|err| AppError::BadRequest(err.to_string()))?;
+    Ok(Json(logs)) // Return the list of log lines
+}
+
+pub async fn get_n_logs_frontend(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Query(log_query): Query<LogLinesQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let log_file_path = app_state.data_dir_path.join("frontend_failure_reports.log");
+    let logs = get_latest_log_lines(log_query.lines, log_file_path)
+        .await
+        .map_err(|err| AppError::BadRequest(err.to_string()))?;
     Ok(Json(logs)) // Return the list of log lines
 }
 
@@ -154,4 +185,3 @@ pub async fn get_cache_status(
 ) -> Result<impl IntoResponse, AppError> {
     Ok(Json(app_state.cache.get_caches_size().await))
 }
-

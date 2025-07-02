@@ -123,6 +123,7 @@ async fn main() -> tokio::io::Result<()> {
                 )
                 .route("/listusers", get(api::v1::admin::list_users))
                 .route("/logs", get(api::v1::admin::get_n_logs))
+                .route("/logs_frontend", get(api::v1::admin::get_n_logs_frontend))
                 .route("/support_message", post(api::v1::support::support_add_message))
                 .route("/support_all", get(api::v1::support::support_get_all_requests))
                 .route("/support_unresponded", get(api::v1::support::support_get_unresponded))
