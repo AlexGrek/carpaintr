@@ -1,0 +1,25 @@
+.calculation-table-container {
+  margin: 20px 0;
+}
+
+.table-header {
+  margin-bottom: 10px;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.calculation-table {
+  margin-bottom: 15px;
+}
+
+.totals-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.totals-label {
+  margin-right: 10px;
+}

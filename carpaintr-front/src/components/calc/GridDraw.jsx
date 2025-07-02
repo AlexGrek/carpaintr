@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { RadioGroup, Radio, Button, ButtonGroup, Divider, Whisper, Tooltip } from 'rsuite';
 import "./GridDraw.css";
 
-const ColorBlock = ({color}) => {
-  return <div style={{border: '1px solid grey', backgroundColor: color, width: '6pt', height: '6pt', marginRight: '3pt', display: 'inline-block'}}/>
+const ColorBlock = ({ color }) => {
+  return <div style={{ border: '1px solid grey', backgroundColor: color, width: '6pt', height: '6pt', marginRight: '3pt', display: 'inline-block' }} />
 }
 
 const GridDraw = ({
@@ -42,8 +42,8 @@ const GridDraw = ({
     }
     debounceTimeoutRef.current = setTimeout(() => {
       let marked = [];
-      newGrid.forEach((slice, y) => 
-        slice.forEach((value, x) => 
+      newGrid.forEach((slice, y) =>
+        slice.forEach((value, x) =>
           value > 1 && marked.push(`"${x},${y}"`)));
       let data = marked.join(",");
       console.log(`Updating outer state with new grid data: ${data}`);
@@ -126,7 +126,7 @@ const GridDraw = ({
             <Tooltip>Оберіть тип пошкодження на наступній панелі та відмітьте пошкоджені місця відповідним кольором на схемі, приблизно зафарбувавши зону пошкодження за допомогою квадратиків нижче. Використовуйте інструмент "очистка" для того, щоб очистити квадратики. Ви можете використовувати різні типи пошкоджень на одній схемі, обираючи різні інструменти. Кожному типу пошкоджень відповідає певний колір.</Tooltip>
           }
         >
-          <Button appearance="link" style={{display: "inline"}}>Як?</Button>
+          <Button appearance="link" style={{ display: "inline" }}>Як?</Button>
         </Whisper>
       </p>
       <div className="grid-controls">
@@ -138,9 +138,9 @@ const GridDraw = ({
           onChange={setCurrentMode}
         >
           <Radio value={0}>Очистка</Radio>
-          <Radio value={1}><ColorBlock color='yellow'/> Прогин</Radio>
-          <Radio value={2}><ColorBlock color='orange'/> Складні пошкодження</Radio>
-          <Radio value={3}><ColorBlock color='red'/> Розрив, складки</Radio>
+          <Radio value={1}><ColorBlock color='yellow' /> Прогин</Radio>
+          <Radio value={2}><ColorBlock color='orange' /> Складні пошкодження</Radio>
+          <Radio value={3}><ColorBlock color='red' /> Розрив, складки</Radio>
         </RadioGroup>
       </div>
 

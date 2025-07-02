@@ -1,15 +1,15 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, useToaster, Divider, Input, Modal, Drawer, Text, HStack, IconButton } from 'rsuite';
-import { authFetch, authFetchYaml } from '../utils/authFetch';
-import SelectionInput from './SelectionInput'; // Assuming SelectionInput is also optimized with React.memo
+import { SelectPicker, Button, DatePicker, VStack, Stack, Tabs, Placeholder, PanelGroup, Panel, Message, Divider, Input, Modal, Drawer, Text, HStack, IconButton } from 'rsuite';
+import { authFetch, authFetchYaml } from '../../utils/authFetch';
+import SelectionInput from '../SelectionInput';
 import { useNavigate, useSearchParams } from "react-router-dom"; // Import useSearchParams
-import Trans from '../localization/Trans';
-import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import registerTranslations
-import { useGlobalCallbacks } from "./GlobalCallbacksContext"; // Ensure this context is stable
+import Trans from '../../localization/Trans';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import registerTranslations
+import { useGlobalCallbacks } from "../GlobalCallbacksContext"; // Ensure this context is stable
 import { useMediaQuery } from 'react-responsive';
 import './CarPaintEstimator.css';
-import { capitalizeFirstLetter, handleOpenNewTab } from '../utils/utils';
+import { capitalizeFirstLetter, handleOpenNewTab } from '../../utils/utils';
 import PlusRoundIcon from '@rsuite/icons/PlusRound';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TableIcon from '@rsuite/icons/Table';
@@ -19,13 +19,13 @@ import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 
 // Lazy load components for better initial bundle size
 const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
-const ColorGrid = React.lazy(() => import('./ColorGrid')); // Used by ColorPicker
+const ColorGrid = React.lazy(() => import('../ColorGrid')); // Used by ColorPicker
 
 // NEW: Import the refactored PrintCalculationDrawer
-import PrintCalculationDrawer from './PrintCalculationDrawer';
+import PrintCalculationDrawer from '../PrintCalculationDrawer';
 import { isArray, isObjectLike } from 'lodash';
-import ErrorMessage from './layout/ErrorMessage';
-import NotifyMessage from './layout/NotifyMessage';
+import ErrorMessage from '../layout/ErrorMessage';
+import NotifyMessage from '../layout/NotifyMessage';
 
 // --- New Components (moved/refactored) ---
 

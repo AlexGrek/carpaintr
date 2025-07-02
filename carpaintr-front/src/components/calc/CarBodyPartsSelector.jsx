@@ -4,18 +4,32 @@ import PinIcon from '@rsuite/icons/Pin';
 import ConversionIcon from '@rsuite/icons/Conversion';
 import OneColumnIcon from '@rsuite/icons/OneColumn';
 import ColumnsIcon from '@rsuite/icons/Columns';
-import SelectionInput from './SelectionInput'
+import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
-import { authFetch } from '../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
+import { authFetch } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
-import { useLocale } from "../localization/LocaleContext";
+import { useLocale } from "../../localization/LocaleContext";
 import { useNavigate } from "react-router-dom";
-import ErrorMessage from "./layout/ErrorMessage";
+import ErrorMessage from "../layout/ErrorMessage";
 import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from 'lucide-react';
-import MenuTree from "./layout/MenuTree";
+import MenuTree from "../layout/MenuTree";
 import './CarBodyPartsSelector.css';
 import jsyaml from 'js-yaml';
+import CalculationTable from "./CalculationTable";
+
+const exampleCalcFunction = (data) => {
+    return data.map(item => ({
+        operation: item.name,
+        estimation: item.hours,
+        price: item.hours * item.rate,
+    }));
+};
+
+const exampleData = [
+    { name: 'Welding', hours: 3, rate: 50 },
+    { name: 'Painting', hours: 2, rate: 40 },
+];
 
 const menuItems = [
     {
@@ -335,7 +349,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                         >
                                             Далі
                                         </Button>
-                                        <p style={{opacity: '0.4', fontSize: 'x-small'}}><pre>{jsyaml.dump(fetchPartDetails())}</pre></p>
+                                        <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(fetchPartDetails())}</pre></p>
                                     </div>
                                 )}
                                 {drawerTab === 1 && (
@@ -377,6 +391,11 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                         )}
                                         {/* Add more calculation details here */}
                                         <Divider />
+                                        <CalculationTable
+                                            name="Workshop Operations"
+                                            calcFunction={exampleCalcFunction}
+                                            calcData={exampleData}
+                                        />
                                         <Button color='blue' appearance="primary" block onClick={handleAddOrUpdatePart}>
                                             Підтвердити та додати/оновити
                                         </Button>
