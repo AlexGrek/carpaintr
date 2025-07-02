@@ -69,17 +69,6 @@ const carPartsTranslations = {
     "Right Front Fender": "Праве переднє крило"
 };
 
-const carPartsNameToPartsVisualMapping = {
-    "Крыло переднее правое": "front_wing_right",
-    "Крыло переднее левое": "front_wing_left",
-    "Дверь левая": "door_left",
-    "Дверь правая": "door_right",
-    "Дверь передняя левая": "front_door_left",
-    "Дверь передняя правая": "front_door_right",
-    "Бампер задний": "rear_bumper",
-    "Бампер передний": "front_bumper"
-};
-
 const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVisual }) => {
     const isMobile = useMediaQuery({ maxWidth: 767 });
 
@@ -97,7 +86,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     const mapVisual = useCallback((partName) => {
         console.log(partName);
         console.log(partsVisual);
-        let entry = carPartsNameToPartsVisualMapping[partName];
+        let entry = partName;
         if (entry && partsVisual[entry]) {
             return partsVisual[entry];
         } else {
@@ -190,7 +179,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             }
             grid.push(row);
         }
-        console.log("Grid generated for ", JSON.stringify(visual));
+        // console.log("Grid generated for ", JSON.stringify(visual));
         return grid;
     }, []);
 
