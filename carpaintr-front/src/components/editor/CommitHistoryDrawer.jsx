@@ -8,23 +8,23 @@ import Trans from '../../localization/Trans'; // Import for translations
 
 // Register translations for CommitHistoryDrawer
 registerTranslations("ua", {
-  "Commit History": "Історія коммітів",
+  "Commit History": "Історія змін",
   "Cancel": "Скасувати",
-  "Failed to load commit history.": "Не вдалося завантажити історію коммітів.",
-  "No commits found.": "Коммітів не знайдено.",
+  "Failed to load commit history.": "Не вдалося завантажити історію змін.",
+  "No commits found.": "Змін не знайдено.",
   "Hash:": "Хеш:",
   "Author:": "Автор:",
   "Message:": "Повідомлення:",
   "Files:": "Файли:",
-  "Revert": "Відновити",
-  "Confirm Revert": "Підтвердити відновлення",
-  "Are you sure you want to revert commit": "Ви впевнені, що хочете відновити комміт",
+  "Revert": "Скасувати зміну",
+  "Confirm Revert": "Підтвердити скасування",
+  "Are you sure you want to revert commit": "Ви впевнені, що хочете скасувати зміну",
   "This action cannot be undone.": "Цю дію неможливо скасувати.",
   "Confirm": "Підтвердити",
   "Error": "Помилка",
   "Success": "Успіх",
-  "reverted successfully!": "успішно відновлено!",
-  "Error reverting commit": "Помилка відновлення комміту"
+  "reverted successfully!": "успішно скасовано!",
+  "Error reverting commit": "Помилка скасування комміту"
 });
 
 const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {

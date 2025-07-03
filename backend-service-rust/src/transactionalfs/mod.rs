@@ -293,7 +293,7 @@ impl<'a> GitTransactionalFs<'a> {
         cache: &'a DataStorageCache,
     ) -> Result<Self, TransactionalFsError> {
         // Initialize Git if not already initialized
-        log_event(LogLevel::Info, format!("Initializing git transactional filesystem with root {:?}", root_path.as_os_str().to_str()), Some(&author_email));
+        // log_event(LogLevel::Info, format!("Initializing git transactional filesystem with root {:?}", root_path.as_os_str().to_str()), Some(&author_email));
 
         if !root_path.join(".git").exists() {
             Self::run_git_command(&root_path, &["init"]).await?;
@@ -314,16 +314,16 @@ impl<'a> GitTransactionalFs<'a> {
             .output()
             .await?;
 
-        log_event(
-            LogLevel::Trace,
-            format!(
-                "Git command with args {:?} returned stdout: {}, stderr: {}",
-                args,
-                String::from_utf8_lossy(&output.stderr),
-                String::from_utf8_lossy(&output.stdout)
-            ),
-            None::<&str>,
-        );
+        // log_event(
+        //     LogLevel::Trace,
+        //     format!(
+        //         "Git command with args {:?} returned stdout: {}, stderr: {}",
+        //         args,
+        //         String::from_utf8_lossy(&output.stderr),
+        //         String::from_utf8_lossy(&output.stdout)
+        //     ),
+        //     None::<&str>,
+        // );
 
         if !output.status.success() {
             return Err(TransactionalFsError::GitCommand(format!(
