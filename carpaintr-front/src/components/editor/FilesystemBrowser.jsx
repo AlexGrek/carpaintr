@@ -133,7 +133,9 @@ const FilesystemBrowser = ({ filesystems }) => {
 
     // Effect 1: Initialize filesystem from URL on first render
     useEffect(() => {
+        // throw new Error();
         const fsFromUrl = searchParams.get('fs');
+        // const pathFromUrl = searchParams.get('path');
         const initialFs = filesystems.find(fs => fs.name === fsFromUrl)?.name || filesystems[0]?.name || null;
         if (initialFs) {
             setSelectedFsName(initialFs);
@@ -141,10 +143,22 @@ const FilesystemBrowser = ({ filesystems }) => {
             setLoading(false);
             setError("No filesystems configured.");
         }
+        // if (pathFromUrl) {
+        //     setCurrentPath(pathFromUrl);
+        // }
     }, []); // Runs only on mount
 
     // Effect 2: Sync component state back to URL query parameters
     useEffect(() => {
+        console.log(initialPathApplied);
+        console.log(selectedFsName);
+        console.log(currentPath);
+        console.log(viewingFile);
+        console.log(filesystems.length);
+        console.log(searchParams);
+        if (!initialPathApplied.current) {
+            return;
+        }
         const newParams = new URLSearchParams();
         if (selectedFsName && filesystems.length > 1) {
             newParams.set('fs', selectedFsName);
@@ -158,7 +172,7 @@ const FilesystemBrowser = ({ filesystems }) => {
         if (pathParts.length > 0) {
             newParams.set('path', pathParts.join('/'));
         }
-        
+
         // Update URL only if it has changed, preventing re-renders.
         if (searchParams.toString() !== newParams.toString()) {
             setSearchParams(newParams, { replace: true });
@@ -392,7 +406,7 @@ const FilesystemBrowser = ({ filesystems }) => {
             // State for path/file will be cleared by the useEffect for selectedFsName change
         }
     };
-    
+
     const filesystemOptions = filesystems.map(fs => ({ label: fs.name, value: fs.name }));
     const isCommonFile = selectedFsName === 'common';
 
@@ -401,7 +415,7 @@ const FilesystemBrowser = ({ filesystems }) => {
         else if (eventKey === 'create-table') { setNewFileType('csv'); setShowCreateModal(true); }
         else if (eventKey === 'create-datasource') { setNewFileType('yaml'); setShowCreateModal(true); }
     };
-    
+
     const renderMenu = () => (
         <>
             <Dropdown.Item eventKey="upload" icon={<FileUp size={16} />}>{str('Upload File')}</Dropdown.Item>
@@ -414,7 +428,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     return (
         <div onDragEnter={handleDragEnter}>
             <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => handleFileUpload(e.target.files)} />
-            
+
             {currentFsConfig?.historyEnabled && <CommitHistoryDrawer show={showCommitsDrawer} onRevert={() => fetchData(true)} onClose={() => setShowCommitsDrawer(false)} />}
 
             <Modal open={showCreateModal} onClose={() => setShowCreateModal(false)}>
