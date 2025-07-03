@@ -8,7 +8,7 @@ import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
-import { BrainCircuit, Calculator, Cog, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
+import { BrainCircuit, Calculator, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
 
 registerTranslations('ua', {
@@ -93,8 +93,14 @@ const DashboardNavigationButtons = () => {
         {
             icon: <Calculator />,
             title: str("Calculation"),
-            description: str("Price estimation calculator"),
+            description: str("Price estimation calculator") + " (outdated)",
             link: "/calc"
+        },
+        {
+            icon: <DraftingCompass />,
+            title: str("Calculation"),
+            description: str("Price estimation calculator"),
+            link: "/calc2"
         },
         {
             icon: <FileCheck />,

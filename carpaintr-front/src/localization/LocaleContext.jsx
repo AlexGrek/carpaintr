@@ -43,6 +43,7 @@ const TRANSLATIONS_BASIC = {
     "Error": "Помилка",
     "Close": "Закрити",
     "Table": "Таблиця",
+    "Back": "Назад",
   },
   en: {}
 };

@@ -15,6 +15,7 @@ const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
 const LoginPage = lazy(() => import('./components/pages/LoginPage.jsx'));
 const RegistrationPage = lazy(() => import('./components/pages/RegistrationPage.jsx'));
 const CalcPage = lazy(() => import('./components/pages/CalcPage.jsx'));
+const CalcPageV2 = lazy(() => import('./components/pages/CalcPageV2.jsx'));
 const AdminPage = lazy(() => import('./components/pages/AdminPage.jsx'));
 const CompanyInfoPage = lazy(() => import('./components/pages/CompanyInfoPage.jsx'));
 const CabinetPage = lazy(() => import('./components/pages/CabinetPage.jsx'));
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/calc" element={<CalcPage />} />
+                <Route path="/calc2/*" element={<CalcPageV2 />} />
                 <Route path="/admin/*" element={<AdminPage />} />
                 <Route path="/company" element={<CompanyInfoPage />} />
                 <Route path="/catalog" element={<CatalogPage />} />
