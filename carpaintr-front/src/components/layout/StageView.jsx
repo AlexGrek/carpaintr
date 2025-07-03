@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button, Loader } from 'rsuite';
 import 'rsuite/dist/rsuite.min.css'; // Using pre-compiled CSS for simplicity
 import { ChevronLeft, Home, User, Settings, CheckCircle } from 'lucide-react';
+import { useLocale } from '../../localization/LocaleContext';
 
 // --- RSuite Color Palette (for inline styles) ---
 // These CSS variables are available because we import the RSuite stylesheet.
@@ -74,6 +75,7 @@ function StageView({ stages, initialState = {}, animationDelay = 200 }) {
   const [previousStageIndex, setPreviousStageIndex] = useState(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [stageData, setStageDataState] = useState(initialState);
+  const { str } = useLocale();
   
   // Initialize state for each stage, enabling the first one by default.
   const [stagesState, setStagesState] = useState(() =>
@@ -105,6 +107,8 @@ function StageView({ stages, initialState = {}, animationDelay = 200 }) {
    * @param {object} newData - The new data to merge into the state.
    */
   const handleSetStageData = (newData) => {
+    console.log("State update registered")
+    console.log(newData);
     setStageDataState(prevData => ({ ...prevData, ...newData }));
   };
 
@@ -191,7 +195,7 @@ function StageView({ stages, initialState = {}, animationDelay = 200 }) {
               style={styles.navButton}
             >
               {Icon ? <Icon size={20} /> : <span>{index + 1}</span>}
-              {isActive && <span>{stage.title}</span>}
+              {isActive && <span>{str(stage.title)}</span>}
             </Button>
           );
         })}
