@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const CalcPage = () => {
 
-      const [hasChanges, setHasChanges] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,9 +60,9 @@ const CalcPage = () => {
     }
   }, [navigate, confirmNavigation]);
 
-    return <div><TopBarUser onNavigate={handleNavigation}/><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
-        <CarPaintEstimator setChanges={setHasChanges} /></div>
-    </div>
+  return <div><TopBarUser onNavigate={handleNavigation} /><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
+    <CarPaintEstimator setChanges={setHasChanges} /></div>
+  </div>
 }
 
 export default CalcPage

@@ -48,7 +48,7 @@ const PartsCatalog = () => {
                 return <Button appearance='link' style={{ display: "block" }} key={i} onClick={() => setChosenPart(part)}>{part}</Button>
             })}
         </div>
-        <Drawer placement={isMobile ? 'bottom' : 'right'} size={isMobile ? 'full' : 'lg'} open={chosenPart !== null} onClose={() => setChosenPart(null)}>
+        <Drawer placement={!isMobile ? 'bottom' : 'right'} size={isMobile ? 'full' : 'lg'} open={chosenPart !== null} onClose={() => setChosenPart(null)}>
             <Drawer.Header>
                 <Drawer.Title>{chosenPart}</Drawer.Title>
             </Drawer.Header>
