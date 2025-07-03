@@ -4,7 +4,7 @@ import './CarPaintEstimator.css';
 import './calc_translations';
 import StageView from '../layout/StageView';
 import { AppWindowMac, CarFront, Paintbrush } from 'lucide-react';
-import CalcMainMenuStage from './CalcmainMenuStage';
+import CalcMainMenuStage from './CalcMainMenuStage';
 
 const stages = [
     {
