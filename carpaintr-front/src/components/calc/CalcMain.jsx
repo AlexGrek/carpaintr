@@ -1,14 +1,6 @@
 /* eslint-disable react/display-name */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button, VStack, Placeholder, PanelGroup, Panel, Divider, Input } from 'rsuite';
-import { authFetch, authFetchYaml } from '../../utils/authFetch';
-import SelectionInput from '../SelectionInput';
-import { useSearchParams } from "react-router-dom"; // Import useSearchParams
-import Trans from '../../localization/Trans';
-import { useLocale, registerTranslations } from '../../localization/LocaleContext'; // Import registerTranslations
-import { useGlobalCallbacks } from "../GlobalCallbacksContext"; // Ensure this context is stable
+import React from 'react';
 import './CarPaintEstimator.css';
-import { capitalizeFirstLetter, handleOpenNewTab } from '../../utils/utils';
 import './calc_translations';
 import StageView from '../layout/StageView';
 import { AppWindowMac, CarFront, Paintbrush } from 'lucide-react';

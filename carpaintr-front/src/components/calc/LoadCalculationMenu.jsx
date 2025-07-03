@@ -5,7 +5,7 @@ import { useLocale } from "../../localization/LocaleContext";
 import { useMediaQuery } from "react-responsive";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
-import { HStack, VStack, Drawer, Text, Button, Message, Stack, Placeholder, Panel } from "rsuite";
+import { HStack, VStack, Text, Message, Stack, Placeholder, Panel } from "rsuite";
 import { DownloadCloud } from "lucide-react";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import Trans from "../../localization/Trans";

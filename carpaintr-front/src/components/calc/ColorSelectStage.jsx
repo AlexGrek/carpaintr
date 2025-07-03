@@ -1,12 +1,9 @@
-import { Button, Divider, HStack, IconButton, Input, Panel, Placeholder, VStack } from "rsuite";
+import { Button, HStack, IconButton, Panel, Placeholder, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
-import VehicleSelect from "./VehicleSelect";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useState } from "react";
 import SelectionInput from "../SelectionInput";
-import { ArrowLeftCircle } from "lucide-react";
 import ArrowBackIcon from '@rsuite/icons/ArrowBack';
 
 const ColorPicker = React.lazy(() => import("./ColorPicker"));
