@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, ButtonGroup, Drawer, Panel } from 'rsuite';
+import { Button, ButtonGroup, Drawer, Loader, Panel } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import ReloadIcon from '@rsuite/icons/Reload';
 import LicenseManager from './LicenseManager';
 import Trans from '../localization/Trans'; // Import Trans component
 import { useLocale, registerTranslations } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
+import { useNavigate } from 'react-router-dom';
+import ErrorMessage from './layout/ErrorMessage';
 
 registerTranslations('ua', {
   "Not set": "Не встановлено",
@@ -78,7 +80,8 @@ const ManageUsers = () => {
   const [confirmationFunc, setConfirmationFunc] = useState(null);
   const [confirmationText, setConfirmationText] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
-  const { str } = useLocale(); // Initialize useLocale hook
+  const { str } = useLocale();
+  const navigate = useNavigate();
 
   const withConfirmation = (user, text, func) => {
     setEditingUser(user)
@@ -90,7 +93,34 @@ const ManageUsers = () => {
     console.log("WithConfirmation called")
   }
 
-  const fetchData = async () => {
+  const handleImpersonation = async (req) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/v1/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: req
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Unauthorized: ', response.status);
+      }
+
+      if (!response.ok) throw new Error('Login failed. Please try again.');
+
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem('authToken', data.token); // Store the token in localStorage
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = React.useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/admin/listusers');
       if (!response.ok) {
@@ -103,11 +133,11 @@ const ManageUsers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [str]);
 
   useEffect(() => {
     fetchData();
-  }, [str]); // Add str to dependency array
+  }, [fetchData, str]);
 
   const sendManagementRequest = async (body) => {
     console.log("Management request: ", JSON.stringify(body))
@@ -152,6 +182,16 @@ const ManageUsers = () => {
     setLicenseEditorOpen(true)
   }
 
+  const handleImpersonateClick = async (user) => {
+    const managementRequest = {
+      "action": "impersonate",
+      "email": user,
+    }
+
+    await handleImpersonation(managementRequest)
+  }
+
+
   const handleLicenseEditorClose = () => {
     setEditingUser(null)
     setLicenseEditorOpen(false)
@@ -172,13 +212,15 @@ const ManageUsers = () => {
 
   return (
     <div>
+      <ErrorMessage errorText={error} />
+      {loading && <Loader />}
       <Drawer open={licenseEditorOpen} onClose={handleLicenseEditorClose} size={"full"}>
         <Drawer.Header>
           {editingUser}
         </Drawer.Header>
         <Drawer.Body>
           {editingUser && <div>
-            <LicenseManager userEmail={editingUser}/>
+            <LicenseManager userEmail={editingUser} />
           </div>}
         </Drawer.Body>
       </Drawer>
@@ -205,6 +247,7 @@ const ManageUsers = () => {
             <Button onClick={() => withConfirmation(user, str("Delete user"), async () => handleDeleteUser(email))}><Trans>Delete</Trans></Button>
             <Button onClick={() => handleChPassUser(email, "temporary_password_42")}><Trans>Change password</Trans></Button>
             <Button onClick={() => handleLicenseManagementClick(user)}><Trans>Manage licenses</Trans></Button>
+            <Button onClick={() => handleImpersonateClick(user)}><Trans>Impersonate</Trans></Button>
           </ButtonGroup>
           {/* <code>{JSON.stringify(user)}</code> */}
         </Panel>
