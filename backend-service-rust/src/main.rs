@@ -131,6 +131,7 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/support_get", get(api::v1::support::support_get))
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/manageuser", post(api::v1::admin::manage_user))
+                .route("/impersonate", post(api::v1::auth::impersonate))
                 .route(
                     "/license/invalidate/{email}",
                     post(api::v1::license::invalidate_license_cache_admin),

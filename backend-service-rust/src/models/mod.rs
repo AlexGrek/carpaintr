@@ -26,6 +26,12 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct ImpersonateRequest {
+    pub action: String,
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LoginResponse {
     pub token: String,
 }

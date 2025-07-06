@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, ButtonGroup, Drawer, Loader, Panel } from 'rsuite';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, resetCompanyInfo } from '../utils/authFetch';
 import ReloadIcon from '@rsuite/icons/Reload';
 import LicenseManager from './LicenseManager';
 import Trans from '../localization/Trans'; // Import Trans component
@@ -26,7 +26,8 @@ registerTranslations('ua', {
   "Delete user": "Видалити користувача",
   "Delete": "Видалити",
   "Change password": "Змінити пароль",
-  "Manage licenses": "Керування ліцензіями"
+  "Manage licenses": "Керування ліцензіями",
+  "Impersonate": "Увійти як"
 });
 
 const DisplayUserData = ({ data }) => {
@@ -96,10 +97,10 @@ const ManageUsers = () => {
   const handleImpersonation = async (req) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/admin/impersonate', {
+      const response = await authFetch('/api/v1/admin/impersonate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: req
+        body: JSON.stringify(req)
       });
 
       if (response.status === 401 || response.status === 403) {
@@ -111,6 +112,7 @@ const ManageUsers = () => {
       const data = await response.json();
       if (data.token) {
         localStorage.setItem('authToken', data.token); // Store the token in localStorage
+        resetCompanyInfo();
         navigate('/dashboard');
       }
     } catch (error) {

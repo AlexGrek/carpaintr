@@ -115,3 +115,7 @@ export const getCompanyInfo = () => {
     }
     return null;
 }
+
+export const resetCompanyInfo = () => {
+    localStorage.removeItem("company");
+}

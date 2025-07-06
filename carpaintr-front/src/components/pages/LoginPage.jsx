@@ -3,6 +3,7 @@ import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsui
 import { useNavigate } from 'react-router-dom';
 import Trans from '../../localization/Trans';
 import { useLocale } from '../../localization/LocaleContext';
+import { resetCompanyInfo } from '../../utils/authFetch';
 
 
 const LoginPage = () => {
@@ -30,6 +31,7 @@ const LoginPage = () => {
       const data = await response.json();
       if (data.token) {
         localStorage.setItem('authToken', data.token); // Store the token in localStorage
+        resetCompanyInfo();
         navigate('/dashboard');
       }
     } catch (error) {
