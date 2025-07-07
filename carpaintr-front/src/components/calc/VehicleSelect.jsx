@@ -135,7 +135,9 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
             <Tabs defaultActiveKey="1" appearance="pills" style={{ margin: "0 auto" }}>
                 <Tabs.Tab eventKey="1" title={str("Models")} style={{ width: "100%" }}>
                     <SelectionInput mode="select" name={str("Make")} values={makes} labelFunction={capitalizeFirstLetter} selectedValue={selectedMake} onChange={handleMakeSelect} placeholder={str("Select Make")} />
+                    <br />
                     {selectedMake !== null && <SelectionInput mode="select" name={str("Model")} selectedValue={selectedModel} values={modelOptions} onChange={handleModelSelect} placeholder={str("Select Model")} />}
+                    <br />
                     {selectedModel !== null && <SelectionInput name={str("Body Type")} labelFunction={str} selectedValue={selectedBodyType} values={labels(bodyTypes)} onChange={setBodyType} placeholder={str("Select Body Type")} />}
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="2" title={str("Type/Class")}>
@@ -145,6 +147,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                         value={carclass}
                         placeholder={str("CLASS")}
                     />
+                    <br />
                     <SelectPicker
                         data={carBodyTypesOptions}
                         onSelect={setBodyType}

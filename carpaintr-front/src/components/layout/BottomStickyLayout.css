@@ -1,0 +1,31 @@
+.layout-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.layout-content {
+    flex: 1;
+    padding-bottom: 80px;
+    /* space for sticky panel */
+}
+
+.layout-bottom-panel {
+    padding: 1rem;
+    background-color: #f8f8f8;
+    border-top: 1px solid #ccc;
+    transition: all 0.3s ease;
+}
+
+/* Sticky mode: fixed at bottom */
+.layout-bottom-panel.sticky {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+}
+
+/* Attached mode: stays in flow */
+.layout-bottom-panel.attached {
+    position: static;
+}

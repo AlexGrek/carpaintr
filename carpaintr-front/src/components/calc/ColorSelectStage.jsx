@@ -5,6 +5,7 @@ import { useLocale } from "../../localization/LocaleContext";
 import React, { useCallback, useEffect, useState } from "react";
 import SelectionInput from "../SelectionInput";
 import ArrowBackIcon from '@rsuite/icons/ArrowBack';
+import BottomStickyLayout from "../layout/BottomStickyLayout";
 
 const ColorPicker = React.lazy(() => import("./ColorPicker"));
 
@@ -42,18 +43,19 @@ const ColorSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStar
   return (
     <div style={styles.sampleStage}>
       <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
-        <Panel header={str("Color and paint type")} eventKey={2}>
+        <BottomStickyLayout bottomPanel={
+          <HStack justifyContent="space-between">
+            <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
+            <Button onClick={handleClose} disabled={paintType === null || color === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
+          </HStack>
+        }>
           <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>
             <ColorPicker setColor={setColor} selectedColor={color} />
           </React.Suspense>
           <VStack justifyContent='center' alignItems='center' style={{ margin: "40px" }}>
             <SelectionInput name={str("Paint type")} values={Object.keys(paintTypesAndTranslations)} labels={paintTypesAndTranslations} selectedValue={paintType} onChange={setPaintType} placeholder={str("Select paint type")} />
           </VStack>
-          <HStack justifyContent="space-between">
-            <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
-            <Button onClick={handleClose} disabled={paintType === null || color === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
-          </HStack>
-        </Panel>
+        </BottomStickyLayout>
       </div>
     </div>
   );

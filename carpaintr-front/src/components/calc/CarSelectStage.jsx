@@ -1,10 +1,11 @@
-import { Button, Divider, Input, Panel } from "rsuite";
+import { Button, Divider, Input, Panel, Text } from "rsuite";
 import { styles } from "../layout/StageView";
 import VehicleSelect from "./VehicleSelect";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import BottomStickyLayout from "../layout/BottomStickyLayout";
 
 const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
 
@@ -61,7 +62,8 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
   return (
     <div style={styles.sampleStage}>
       <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
-        <Panel className='fade-in-simple' header={year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`} eventKey={1}>
+        <BottomStickyLayout bottomPanel={<Button onClick={handleClose} disabled={carClass === null || bodyType === null || year === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>}>
+          <Text size='sm'>{year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`}</Text>
           <VehicleSelect
             selectedBodyType={bodyType}
             carclass={carClass}
@@ -79,8 +81,7 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
           <Input value={licensePlate} onChange={setLicensePlate} placeholder={str('License plate (optional)')}></Input>
           <Input value={VIN} onChange={setVIN} placeholder={str('VIN (optional)')}></Input>
           <Input as='textarea' value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
-        </Panel>
-        <Button onClick={handleClose} disabled={carClass === null || bodyType === null || year === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
+        </BottomStickyLayout>
       </div>
     </div>
   );
