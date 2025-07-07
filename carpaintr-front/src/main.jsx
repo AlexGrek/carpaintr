@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import 'rsuite/dist/rsuite.min.css'
 import '../styles.less';
+import { CustomProvider } from 'rsuite'
 
 const fallbackEl = document.getElementById('fallback-refresh');
 if (fallbackEl) {
@@ -12,7 +13,10 @@ if (fallbackEl) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <CustomProvider>
+      <App />
+    </CustomProvider>
+
   </StrictMode>,
 )
 
