@@ -242,16 +242,24 @@ pub async fn license_file_data(
 }
 
 pub async fn list_licenses(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Ensure admin is authenticated
-    State(app_state): State<Arc<AppState>>,           // Extract user email from the path
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    // Call the new function to list license files
     let license_files = list_license_files(&user_email, &app_state.data_dir_path).await?;
-    let futures: Vec<LicenseData> = stream::iter(license_files)
+    let results: Vec<Result<LicenseData, AppError>> = stream::iter(license_files)
         .map(|f| license_file_data(&user_email, &app_state.data_dir_path, f))
         .buffer_unordered(10)
-        .filter_map(|result| async {result.ok()})
         .collect()
         .await;
-    Ok(Json(futures))
+
+    // Check for any errors
+    let mut licenses = Vec::with_capacity(results.len());
+    for result in results {
+        match result {
+            Ok(data) => licenses.push(data),
+            Err(err) => return Err(err), // Return the first error found
+        }
+    }
+
+    Ok(Json(licenses))
 }

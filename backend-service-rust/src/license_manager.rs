@@ -176,29 +176,29 @@ pub fn decode_license_token(token: &str, jwt_secret: &[u8]) -> Result<LicenseCla
 pub fn decode_license_token_no_validation(token: &str) -> Result<LicenseClaims, AppError> {
     // Split the JWT into its three parts
     let parts: Vec<&str> = token.split('.').collect();
-    
+
     if parts.len() != 3 {
-        return Err(AppError::Unauthorized);
+        return Err(AppError::InvalidData(token.to_string()));
     }
-    
+
     // Get the payload (claims) part - the second part
     let payload = parts[1];
-    
-    // Add padding if necessary for base64 decoding
-    let payload_padded = match payload.len() % 4 {
-        0 => payload.to_string(),
-        n => format!("{}{}", payload, "=".repeat(4 - n)),
-    };
-    
+
+    // // Add padding if necessary for base64 decoding (ERROR IN THIS CODE)
+    // let payload_padded = match payload.len() % 4 {
+    //     0 => payload.to_string(),
+    //     n => format!("{}{}", payload, "=".repeat(4 - n)),
+    // };
+
     // Decode the base64 payload
     let decoded_payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&payload_padded)
-        .map_err(|_| AppError::Unauthorized)?;
-    
+        .decode(&payload)
+        .map_err(|err| AppError::InvalidData(err.to_string()))?;
+
     // Parse the JSON claims
-    let claims: LicenseClaims = serde_json::from_slice(&decoded_payload)
-        .map_err(|_| AppError::Unauthorized)?;
-    
+    let claims: LicenseClaims =
+        serde_json::from_slice(&decoded_payload).map_err(|_| AppError::Unauthorized)?;
+
     Ok(claims)
 }
 

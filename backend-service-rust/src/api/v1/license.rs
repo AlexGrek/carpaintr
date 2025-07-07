@@ -1,10 +1,7 @@
 use axum::{extract::{State, Path}, response::IntoResponse, Json};
 use std::sync::Arc;
 use crate::{
-    state::AppState,
-    errors::AppError,
-    middleware::AuthenticatedUser, // Use our custom extractor
-    cache::license_cache::get_license_cache,
+    cache::license_cache::get_license_cache, errors::AppError, license_manager::list_license_files, middleware::AuthenticatedUser, state::AppState
 };
 
 pub async fn get_license(
@@ -14,6 +11,14 @@ pub async fn get_license(
     let license_cache = get_license_cache(&app_state);
     let license_data = license_cache.get_license(&user_email).await?;
     Ok(Json(license_data))
+}
+
+pub async fn get_license_list(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from extension
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let license_files = list_license_files(&user_email, &app_state.data_dir_path).await?;
+    Ok(Json(license_files)) // Return the list of filenames as JSON
 }
 
 // Admin endpoint to invalidate license cache for a specific user

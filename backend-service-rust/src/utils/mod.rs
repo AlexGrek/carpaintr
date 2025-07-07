@@ -22,6 +22,7 @@ use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 
 use crate::errors::AppError;
+use crate::exlogging::log_event;
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
 pub const COMMON: &'static str = "common";
@@ -192,6 +193,15 @@ pub fn safety_check_only<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFs
     if target_clean.starts_with(&base_clean) {
         Ok(target)
     } else {
+        log_event(
+            crate::exlogging::LogLevel::Warn,
+            format!(
+                "Path traversal detected: {} <- {}",
+                base_clean.to_string_lossy(),
+                target_clean.to_string_lossy()
+            ),
+            None::<&str>,
+        );
         Err(SafeFsError::PathTraversalDetected)
     }
 }

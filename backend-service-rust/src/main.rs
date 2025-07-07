@@ -114,6 +114,7 @@ async fn main() -> tokio::io::Result<()> {
         .route("/register", post(api::v1::auth::register))
         .route("/login", post(api::v1::auth::login))
         .route("/license", get(api::v1::license::get_license))
+        .route("/getlicenses", get(api::v1::license::get_license_list))
         .nest(
             "/admin",
             Router::new()
