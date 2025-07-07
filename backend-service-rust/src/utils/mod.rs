@@ -83,104 +83,6 @@ impl DataStorageCache {
     }
 }
 
-async fn detect_separator_async<R>(mut reader: R) -> Result<(u8, String), AppError>
-where
-    R: AsyncBufRead + Unpin + Send,
-{
-    let separators = [b',', b';', b'\t', b'|'];
-    let mut sample = String::new();
-    let mut lines_read = 0;
-
-    // Read first few lines to detect separator
-    while lines_read < 3 {
-        let mut line = String::new();
-        match reader.read_line(&mut line).await? {
-            0 => break, // EOF
-            _ => {
-                sample.push_str(&line);
-                lines_read += 1;
-            }
-        }
-    }
-
-    if sample.is_empty() {
-        return Err(AppError::InvalidData("Empty file".to_string()));
-    }
-
-    let mut max_count = 0;
-    let mut best_sep = b',';
-
-    for &sep in &separators {
-        let count = sample.bytes().filter(|&b| b == sep).count();
-        if count > max_count {
-            max_count = count;
-            best_sep = sep;
-        }
-    }
-
-    Ok((best_sep, sample))
-}
-
-async fn parse_csv_to_string_hashmap_list_async_bufread<R>(
-    mut reader: R,
-) -> Result<Vec<HashMap<String, String>>, AppError>
-where
-    R: AsyncBufRead + Unpin + Send,
-{
-    // Read only first two lines to detect delimiter
-    let mut first_line = String::new();
-    let mut second_line = String::new();
-
-    // Read first line
-    if reader.read_line(&mut first_line).await? == 0 {
-        return Err(AppError::InvalidData("Empty file".to_string()));
-    }
-
-    // Read second line
-    reader.read_line(&mut second_line).await?;
-
-    // Detect delimiter from first two lines
-    let sample = format!("{}{}", first_line, second_line);
-    let delimiter = detect_separator_from_string(&sample);
-
-    // Combine the lines we've read with the rest of the content
-    let mut remaining_content = String::new();
-    reader.read_to_string(&mut remaining_content).await?;
-
-    let full_content = format!("{}{}{}", first_line, second_line, remaining_content);
-
-    // Create CSV reader with detected delimiter
-    let cursor = std::io::Cursor::new(full_content.as_bytes());
-    let async_cursor = tokio::io::BufReader::new(cursor);
-
-    let mut csv_reader = AsyncReaderBuilder::new()
-        .delimiter(delimiter)
-        .has_headers(true)
-        .create_reader(async_cursor);
-
-    let mut records = Vec::new();
-    let headers = csv_reader.headers().await?.clone();
-    let mut record_stream = csv_reader.records();
-
-    while let Some(result) = record_stream.next().await {
-        let record = result?;
-        let mut row_map = HashMap::new();
-
-        for (i, field) in record.iter().enumerate() {
-            let header = headers.get(i);
-            row_map.insert(
-                header
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| format!("column_{}", i)),
-                field.to_string(),
-            );
-        }
-        records.push(row_map);
-    }
-
-    Ok(records)
-}
-
 // Helper function for string-based delimiter detection
 fn detect_separator_from_string(content: &str) -> u8 {
     let separators = [b',', b';', b'\t', b'|'];
@@ -188,7 +90,7 @@ fn detect_separator_from_string(content: &str) -> u8 {
     let mut best_sep = b',';
 
     // Only check first few lines for efficiency
-    let sample: String = content.lines().take(3).collect::<Vec<_>>().join("\n");
+    let sample: String = content.lines().take(2).collect::<Vec<_>>().join("\n");
 
     for &sep in &separators {
         let count = sample.bytes().filter(|&b| b == sep).count();
