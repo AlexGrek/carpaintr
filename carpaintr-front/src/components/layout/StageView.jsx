@@ -41,11 +41,11 @@ export const styles = {
     width: '100%',
   },
   sampleStage: {
-    padding: '20px',
+    padding: '10px',
     textAlign: 'center',
     border: `1px dashed ${rsuiteColors.border}`,
     borderRadius: '8px',
-    margin: '0 20px',
+    margin: '0 5px',
   },
   sampleStageInner: {
     transition: 'opacity 200ms ease-in-out',
@@ -54,7 +54,7 @@ export const styles = {
     display: 'flex',
     gap: '10px',
     justifyContent: 'center',
-    marginTop: '20px',
+    marginTop: '16px',
   }
 };
 

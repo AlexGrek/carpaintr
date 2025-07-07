@@ -2,16 +2,35 @@ import { Button, HStack, IconButton, Panel, Placeholder, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import SelectionInput from "../SelectionInput";
 import ArrowBackIcon from '@rsuite/icons/ArrowBack';
 
 const ColorPicker = React.lazy(() => import("./ColorPicker"));
 
-const ColorSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo }) => {
+const ColorSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
   const [color, setColor] = useState(null);
   const [paintType, setPaintType] = useState(null);
   const { str } = useLocale();
+
+  useEffect(() => {
+    const p = stageData['paint'];
+    if (p) {
+      setColor(p.color ?? null);
+      setPaintType(p.paintType ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleClose = useCallback(() => {
+    const data = {
+      color, paintType
+    };
+    if (onMoveForward) {
+      onMoveForward();
+    }
+    setStageData({ 'paint': data });
+  }, [color, onMoveForward, paintType, setStageData])
 
   const paintTypesAndTranslations = {
     "simple": str("No inclusions"),
@@ -31,8 +50,8 @@ const ColorSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStar
             <SelectionInput name={str("Paint type")} values={Object.keys(paintTypesAndTranslations)} labels={paintTypesAndTranslations} selectedValue={paintType} onChange={setPaintType} placeholder={str("Select paint type")} />
           </VStack>
           <HStack justifyContent="space-between">
-            <IconButton icon={<ArrowBackIcon/>} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
-            <Button onClick={onMoveForward} disabled={paintType === null || color === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
+            <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
+            <Button onClick={handleClose} disabled={paintType === null || color === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>
           </HStack>
         </Panel>
       </div>
