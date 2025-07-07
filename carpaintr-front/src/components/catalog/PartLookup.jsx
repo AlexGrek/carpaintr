@@ -10,8 +10,6 @@ import Trans from "../../localization/Trans";
 const StyledTableContainer = styled.div`
   margin-bottom: 20px;
   overflow-x: auto; /* Ensures horizontal scrolling on small screens */
-  border: 1px solid #e5e5ea; /* RSuite default border color */
-  border-radius: 6px; /* RSuite default border radius */
 `;
 
 registerTranslations('ua', {
@@ -58,7 +56,7 @@ const PartLookup = ({ part }) => {
     }, [part, handleError]);
 
     return (
-        <Panel bordered>
+        <div>
             {loading && <Loader center />}
             {errorText && (
                 <ErrorMessage
@@ -104,7 +102,7 @@ const PartLookup = ({ part }) => {
                 })
             )}
             {!loading && !errorText && !data && <p><Trans>No data found.</Trans></p>}
-        </Panel>
+        </div>
     );
 };
 
