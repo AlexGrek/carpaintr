@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Loader, Panel, Table } from "rsuite";
+import { Loader, Table } from "rsuite";
 import { registerTranslations, useLocale } from "../../localization/LocaleContext";
 import styled from 'styled-components';
 import Trans from "../../localization/Trans";

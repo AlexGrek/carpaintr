@@ -53,7 +53,7 @@ const PartsCatalog = () => {
                 <Drawer.Title>{chosenPart}</Drawer.Title>
             </Modal.Header>
             <Modal.Body>
-                {chosenPart != null && <PartLookup part={chosenPart}/>}
+                {chosenPart != null && <PartLookup part={chosenPart} />}
             </Modal.Body>
         </Modal>
     </div>

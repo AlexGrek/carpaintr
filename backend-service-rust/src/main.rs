@@ -272,29 +272,29 @@ async fn main() -> tokio::io::Result<()> {
             Router::new()
                 .route(
                     "/list_user_files",
-                    get(api::editor_endpoints::get_user_file_list),
+                    get(api::v1::editor_endpoints::get_user_file_list),
                 )
                 .route(
                     "/list_common_files",
-                    get(api::editor_endpoints::get_common_file_list),
+                    get(api::v1::editor_endpoints::get_common_file_list),
                 )
                 .route(
                     "/read_user_file/{path}",
-                    get(api::editor_endpoints::read_user_file),
+                    get(api::v1::editor_endpoints::read_user_file),
                 )
                 .route(
                     "/delete_user_file/{path}",
-                    delete(api::editor_endpoints::delete_user_file),
+                    delete(api::v1::editor_endpoints::delete_user_file),
                 )
                 .route(
                     "/upload_user_file/{path}",
-                    post(api::editor_endpoints::upload_user_file),
+                    post(api::v1::editor_endpoints::upload_user_file),
                 )
-                .route("/list_commits", get(api::editor_endpoints::list_commits))
-                .route("/revert_commit", post(api::editor_endpoints::revert_commit))
+                .route("/list_commits", get(api::v1::editor_endpoints::list_commits))
+                .route("/revert_commit", post(api::v1::editor_endpoints::revert_commit))
                 .route(
                     "/read_common_file/{path}",
-                    get(api::editor_endpoints::read_common_file),
+                    get(api::v1::editor_endpoints::read_common_file),
                 ),
         )
         .layer(from_fn_with_state(

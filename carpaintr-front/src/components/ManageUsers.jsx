@@ -244,7 +244,6 @@ const ManageUsers = () => {
       {users.map(user => {
         const email = user
         return <Panel bordered collapsible key={email} header={email}>
-          {/* <DisplayUserData data={user} /> */}
           <ButtonGroup>
             <Button onClick={() => withConfirmation(user, str("Delete user"), async () => handleDeleteUser(email))}><Trans>Delete</Trans></Button>
             <Button onClick={() => handleChPassUser(email, "temporary_password_42")}><Trans>Change password</Trans></Button>
