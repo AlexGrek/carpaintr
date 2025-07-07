@@ -1,4 +1,4 @@
-import { Button, HStack, IconButton, Panel, Placeholder, VStack } from "rsuite";
+import { Button, HStack, IconButton, Message, Panel, Placeholder, toaster, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
@@ -12,7 +12,9 @@ import { authFetchYaml } from "../../utils/authFetch";
 const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
   const [partsVisual, setPartsVisual] = useState({});
   const [selectedParts, setSelectedParts] = useState([]);
+  const [calculations, setCalculations] = useState({});
   const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,20 +23,29 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
         setPartsVisual(data);
       } catch (error) {
         console.error("Failed to fetch parts_visual:", error);
+        toaster.push(<Message type="error">{error.toString()}</Message>)
       }
     };
     fetchData();
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    const parts = stageData['parts'];
+    if (parts) {
+      setSelectedParts(parts.selectedParts);
+      setCalculations(parts.calculations);
+    }
+  }, [stageData])
 
   const handleClose = useCallback(() => {
     const data = {
-      partsVisual, selectedParts
+      partsVisual, selectedParts, calculations
     };
     if (onMoveForward) {
       onMoveForward();
     }
     setStageData({ 'parts': data });
-  }, [onMoveForward, partsVisual, selectedParts, setStageData])
+  }, [onMoveForward, partsVisual, selectedParts, setStageData, calculations])
 
   return (
     <div style={styles.sampleStage}>
