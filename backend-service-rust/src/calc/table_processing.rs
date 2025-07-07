@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use tokio::fs;
 
+use crate::calc::constants::*;
 use crate::errors::AppError;
 use crate::exlogging::log_event;
 use crate::utils::{
@@ -91,7 +92,9 @@ pub async fn all_tables_list(
 ) -> Result<Vec<PathBuf>, AppError> {
     merge_directories(
         &data_dir.join(COMMON).join(TABLES),
-        user_catalog_directory_from_email(data_dir, user_email)?.join(TABLES).as_path(),
+        user_catalog_directory_from_email(data_dir, user_email)?
+            .join(TABLES)
+            .as_path(),
     )
     .await
     .map(|lst| {
@@ -197,18 +200,18 @@ pub async fn lookup_part_in_table(
 ) -> Result<(String, Option<HashMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found = data.into_iter().find(|row| {
-        if !row.contains_key("Список деталь рус") {
+        if !row.contains_key(CAR_PART_DETAIL_RUS_FIELD) {
             return false;
         }
-        if row["Список деталь рус"] != part {
+        if row[CAR_PART_DETAIL_RUS_FIELD] != part {
             return false;
         }
-        if let Some(val) = row.get("Список тип") {
+        if let Some(val) = row.get(CAR_PART_TYPE_FIELD) {
             if val != car_type {
                 return false;
             }
         }
-        if let Some(val) = row.get("Список класс") {
+        if let Some(val) = row.get(CAR_PART_CLASS_FIELD) {
             if val != car_class {
                 return false;
             }
@@ -234,10 +237,10 @@ pub async fn lookup_part_in_table_any_type(
     let found: Vec<_> = data
         .into_iter()
         .filter(|row| {
-            if !row.contains_key("Список деталь рус") {
+            if !row.contains_key(CAR_PART_DETAIL_RUS_FIELD) {
                 return false;
             }
-            if row["Список деталь рус"] != part {
+            if row[CAR_PART_DETAIL_RUS_FIELD] != part {
                 return false;
             }
             return true;

@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use csv::ReaderBuilder;
+use crate::calc::constants::*; 
 
 // Define the structure to represent car data
 // This handles the fields we care about (estimated_price, body, is_suv)
@@ -30,33 +31,32 @@ pub fn parse_car_yaml<P: AsRef<Path>>(path: P) -> Result<HashMap<String, CarData
 }
 
 
-// NAME MAPPING
 pub fn body_type_into_t1_entry(s: &str) -> String {
     match s {
-        "wagon" => "УНИВЕРСАЛ".into(),
-        "pickup" => "ПИКАП".into(),
-        "sedan" => "СЕДАН".into(),
-        "liftback" => "ЛИФТБЭК 5 дверей".into(),
-        "hatchback 5 doors" => "ХЕТЧБЕК 5 дверей".into(),
-        "hatchback 3 doors" => "ХЕТЧБЕК 3 двери".into(),
-        "suv 3 doors" => "ВНЕДОРОЖНИК 3 дверный".into(),
-        "suv 5 doors" => "ВНЕДОРОЖНИК 5 дверный".into(),
-        "coupe" => "КУПЕ".into(),
+        BODY_TYPE_WAGON => T1_ENTRY_WAGON.into(),
+        BODY_TYPE_PICKUP => T1_ENTRY_PICKUP.into(),
+        BODY_TYPE_SEDAN => T1_ENTRY_SEDAN.into(),
+        BODY_TYPE_LIFTBACK => T1_ENTRY_LIFTBACK.into(),
+        BODY_TYPE_HATCHBACK_5_DOORS => T1_ENTRY_HATCHBACK_5_DOORS.into(),
+        BODY_TYPE_HATCHBACK_3_DOORS => T1_ENTRY_HATCHBACK_3_DOORS.into(),
+        BODY_TYPE_SUV_3_DOORS => T1_ENTRY_SUV_3_DOORS.into(),
+        BODY_TYPE_SUV_5_DOORS => T1_ENTRY_SUV_5_DOORS.into(),
+        BODY_TYPE_COUPE => T1_ENTRY_COUPE.into(),
         x => x.into(),
     }
 }
 
 pub fn t1_entry_into_body_type(s: &str) -> String {
     match s {
-        "УНИВЕРСАЛ" => "wagon".into(),
-        "ПИКАП" => "pickup".into(),
-        "СЕДАН" => "sedan".into(),
-        "ЛИФТБЭК 5 дверей" => "liftback".into(),
-        "ХЕТЧБЕК 5 дверей" => "hatchback 5 doors".into(),
-        "ХЕТЧБЕК 3 двери" => "hatchback 3 doors".into(),
-        "ВНЕДОРОЖНИК 3 дверный" => "suv 3 doors".into(),
-        "ВНЕДОРОЖНИК 5 дверный" => "suv 5 doors".into(),
-        "КУПЕ" => "coupe".into(),
+        T1_ENTRY_WAGON => BODY_TYPE_WAGON.into(),
+        T1_ENTRY_PICKUP => BODY_TYPE_PICKUP.into(),
+        T1_ENTRY_SEDAN => BODY_TYPE_SEDAN.into(),
+        T1_ENTRY_LIFTBACK => BODY_TYPE_LIFTBACK.into(),
+        T1_ENTRY_HATCHBACK_5_DOORS => BODY_TYPE_HATCHBACK_5_DOORS.into(),
+        T1_ENTRY_HATCHBACK_3_DOORS => BODY_TYPE_HATCHBACK_3_DOORS.into(),
+        T1_ENTRY_SUV_3_DOORS => BODY_TYPE_SUV_3_DOORS.into(),
+        T1_ENTRY_SUV_5_DOORS => BODY_TYPE_SUV_5_DOORS.into(),
+        T1_ENTRY_COUPE => BODY_TYPE_COUPE.into(),
         x => x.into(),
     }
 }
@@ -77,36 +77,6 @@ pub struct CarPart {
 
     #[serde(rename = "Список деталь укр")]
     pub detail_ukr: String,
-    
-    // #[serde(rename = "порядок печати")]
-    // pub print_order: String,
-    
-    // #[serde(rename = "съемная несъемная")]
-    // pub removable: String,
-    
-    // #[serde(rename = "красится наружно  или 2 стороны")]
-    // pub paint_type: String,
-    
-    // #[serde(rename = "с чего сделан")]
-    // pub material: String,
-    
-    // #[serde(rename = "Ремонт з зовнішнім фарбуванням")]
-    // pub repair_external_paint: String,
-    
-    // #[serde(rename = "Ремонт з фарбуваням 2 сторони")]
-    // pub repair_two_side_paint: String,
-    
-    // #[serde(rename = "Ремонт без фарбування")]
-    // pub repair_no_paint: String,
-    
-    // #[serde(rename = "Заміна  оригінал деталь з фарбуванням")]
-    // pub replace_original_with_paint: String,
-    
-    // #[serde(rename = "Заміна Не оригінал деталь з фарбуванням")]
-    // pub replace_non_original_with_paint: String,
-    
-    // #[serde(rename = "Полірування")]
-    // pub polishing: String,
 }
 
 pub fn parse_csv_t1<P: AsRef<Path>>(path: P) -> Result<Vec<CarPart>, Box<dyn Error>> {
