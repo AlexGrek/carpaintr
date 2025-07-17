@@ -132,7 +132,7 @@ export const LocaleProvider = ({ children }) => {
     }
 
     if (currentLang !== 'en') {
-      console.warn("Untranslated text detected:", s);
+      console.log("Untranslated text detected:", s);
     }
 
     return s;

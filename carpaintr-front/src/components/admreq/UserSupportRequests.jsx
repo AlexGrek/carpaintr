@@ -4,6 +4,18 @@ import './UserSupportRequests.css';
 import { authFetch } from '../../utils/authFetch';
 import SupportTicketView from '../support/SupportTicketView';
 import { useMediaQuery } from 'react-responsive';
+import Trans from '../../localization/Trans';
+import { registerTranslations } from '../../localization/LocaleContext';
+
+registerTranslations("ua", {
+  "Type your message...": "Введіть ваше повідомлення...",
+  "Send": "Надіслати",
+  "Support Request": "Запит до підтримки",
+  "Refresh": "Оновити",
+  "Your Support Requests": "Ваші запити до підтримки",
+  "Description:": "Опис:",
+});
+
 
 export default function UserSupportRequests() {
   const [requests, setRequests] = useState([]);
@@ -38,9 +50,9 @@ export default function UserSupportRequests() {
 
   return (
     <div className="user-support-list">
-      <h2>Your Support Requests</h2>
+      <h2><Trans>Your Support Requests</Trans></h2>
       {requests.length === 0 ? (
-        <p>No support requests found.</p>
+        <p><Trans>No support requests found.</Trans></p>
       ) : (
         requests.map((req) => {
           const lastMsg = getLastMessage(req);
@@ -52,17 +64,16 @@ export default function UserSupportRequests() {
               </div>
 
               <div className="support-description">
-                Description: {trim(req.description, 20)}
+                <Trans>Description:</Trans> {trim(req.description, 20)}
               </div>
 
               <div
-                className={`support-last-message ${
-                  lastMsg?.isSupportResponse ? 'support-message' : 'user-message'
-                }`}
+                className={`support-last-message ${lastMsg?.isSupportResponse ? 'support-message' : 'user-message'
+                  }`}
               >
                 Last: {trim(lastMsg?.text, 20)}
                 {lastMsg?.resolved && (
-                  <span className="resolved-badge">Resolved</span>
+                  <span className="resolved-badge"><Trans>Resolved</Trans></span>
                 )}
               </div>
             </div>
@@ -72,7 +83,7 @@ export default function UserSupportRequests() {
 
       <Drawer size={isMobile ? "full" : "md"} placement="right" open={drawerOpen} onClose={closeDrawer}>
         <Drawer.Header>
-          <Drawer.Title>Support Request</Drawer.Title>
+          <Drawer.Title><Trans>Support Request</Trans></Drawer.Title>
         </Drawer.Header>
         <Drawer.Body>
           {selectedTicket && <SupportTicketView ticket={selectedTicket} isSupport={false} />}

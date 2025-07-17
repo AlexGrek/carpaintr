@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Button, Input, Checkbox } from 'rsuite';
 import './SupportTicketView.css';
 import { authFetch } from '../../utils/authFetch';
+import Trans from '../../localization/Trans';
+import { useLocale } from '../../localization/LocaleContext';
 
 export default function SupportTicketView({ ticket, isSupport }) {
     const [localTicket, setLocalTicket] = useState({ ...ticket });
     const [messageText, setMessageText] = useState('');
     const [resolved, setResolved] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const { str } = useLocale();
 
     const sendMessage = async () => {
         if (!messageText.trim()) return;
@@ -61,7 +65,7 @@ export default function SupportTicketView({ ticket, isSupport }) {
                     <div key={index} className={`message-bubble ${msg.isSupportResponse ? 'support' : 'user'}`}>
                         <div className="message-meta">
                             {msg.email} · {formatDate(msg.timestamp)}
-                            {msg.resolved && <span className="resolved-label">✓ Resolved</span>}
+                            {msg.resolved && <span className="resolved-label">✓ <Trans>Resolved</Trans></span>}
                         </div>
                         <div className="message-text">{msg.text}</div>
                     </div>
@@ -74,19 +78,19 @@ export default function SupportTicketView({ ticket, isSupport }) {
                     rows={3}
                     value={messageText}
                     onChange={setMessageText}
-                    placeholder="Type your message..."
+                    placeholder={str("Type your message...")}
                 />
                 {isSupport && (
                     <Checkbox checked={resolved} onChange={(_, checked) => setResolved(checked)}>
-                        Mark as resolved
+                        <Trans>Mark as resolved</Trans>
                     </Checkbox>
                 )}
                 <div className="ticket-buttons">
                     <Button appearance="primary" onClick={sendMessage} loading={loading}>
-                        Send
+                        <Trans>Send</Trans>
                     </Button>
                     <Button appearance="default" onClick={refreshTicket}>
-                        Refresh
+                        <Trans>Refresh</Trans>
                     </Button>
                 </div>
             </div>

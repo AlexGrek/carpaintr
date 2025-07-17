@@ -1,7 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { Input, Button } from 'rsuite';
+import { Input, Button, TagPicker } from 'rsuite';
 import { authFetch } from '../../utils/authFetch';
 import AppVersionBadge from '../AppVersionBadge';
+import { registerTranslations, useLocale } from '../../localization/LocaleContext';
+import Trans from '../../localization/Trans';
+
+registerTranslations("ua", {
+    "Short summary of the issue": "Узагальнений опис запиту",
+    "bug": "Баг",
+    "issue": "Проблема",
+    "question": "Запитання",
+    "error": "Помилка",
+    "request": "Запит",
+    "proposal": "Пропозиція",
+    "Detailed description": "Детальний опис",
+    "Choose request type": "Виберіть тип запиту",
+    "Submit a Support Request": "Надіслати запит до підтримки",
+    "Title": "Тема",
+    "Contacts": "Контакти",
+    "Submit": "Надіслати",
+    "Phone number, viber, telegram, email, etc.": "Телефон, вайбер, електронна пошта...",
+    "Support request submitted successfully.": "Запит надіслано"
+});
 
 const SupportRequestForm = () => {
     const [title, setTitle] = useState('');
@@ -10,6 +30,8 @@ const SupportRequestForm = () => {
     const [contacts, setContacts] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+
+    const { str } = useLocale();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -46,48 +68,55 @@ const SupportRequestForm = () => {
             setReqType('');
             setContacts('');
         } else {
-            alert('Submission failed.');
+            alert(str('Submission failed.'));
         }
     };
 
+    const types = ["bug", "issue", "question", "error", "request", "proposal"].map(
+        item => ({ label: str(item), value: item })
+    );
+
     return (
-        <div style={{ maxWidth: '600px', margin: '30px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-            <h2>Submit a Support Request</h2>
+        <>
+            <h2><Trans>Submit a Support Request</Trans></h2>
+            <div style={{ maxWidth: '600px', margin: '30px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
 
-            <label>Title</label>
-            <Input value={title} onChange={setTitle} placeholder="Short summary of the issue" />
+                <label><Trans>Title</Trans></label>
+                <Input value={title} onChange={setTitle} placeholder={str("Short summary of the issue")} />
 
-            <label style={{ marginTop: '15px' }}>Description</label>
-            <Input
-                as="textarea"
-                rows={4}
-                value={description}
-                onChange={setDescription}
-                placeholder="Detailed description of the problem"
-            />
+                <label style={{ marginTop: '15px' }}><Trans>Description</Trans></label>
+                <Input
+                    as="textarea"
+                    rows={4}
+                    value={description}
+                    onChange={setDescription}
+                    placeholder={str("Detailed description")}
+                />
 
-            <label style={{ marginTop: '15px' }}>Type</label>
-            <Input value={reqType} onChange={setReqType} placeholder="e.g. bug, login, billing" />
+                <label style={{ marginTop: '15px' }}><Trans>Type</Trans></label>
+                <TagPicker block value={reqType.split(" ")} data={types} onChange={(val) => setReqType(val.join(" "))} placeholder={str("Choose request type")}></TagPicker>
 
-            <label style={{ marginTop: '15px' }}>Contacts (key=value, comma-separated)</label>
-            <Input
-                value={contacts}
-                onChange={setContacts}
-                placeholder="e.g. telegram=@user, phone=+12345678"
-            />
 
-            <AppVersionBadge/>
+                <label style={{ marginTop: '15px' }}><Trans>Contacts</Trans></label>
+                <Input
+                    value={contacts}
+                    onChange={setContacts}
+                    placeholder={str("Phone number, viber, telegram, email, etc.")}
+                />
 
-            {(submitted != true) && <div style={{ marginTop: '20px' }}>
-                <Button appearance="primary" onClick={handleSubmit} loading={submitting}>
-                    Submit
-                </Button>
-            </div>}
+                <AppVersionBadge />
 
-            {submitted && (
-                <p style={{ marginTop: '15px', color: 'green' }}>Support request submitted successfully.</p>
-            )}
-        </div>
+                {(submitted != true) && <div style={{ marginTop: '20px' }}>
+                    <Button appearance="primary" onClick={handleSubmit} loading={submitting} disabled={reqType == '' || title == '' || description.length < 2}>
+                        <Trans>Submit</Trans>
+                    </Button>
+                </div>}
+
+                {submitted && (
+                    <p style={{ marginTop: '15px', color: 'green' }}><Trans>Support request submitted successfully.</Trans></p>
+                )}
+            </div>
+        </>
     );
 }
 
