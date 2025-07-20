@@ -17,6 +17,7 @@ import MenuTree from "../layout/MenuTree";
 import './CarBodyPartsSelector.css';
 import jsyaml from 'js-yaml';
 import CalculationTable from "./CalculationTable";
+import { stripExt } from "../../utils/utils";
 
 const exampleCalcFunction = (data) => {
     return data.map(item => ({
@@ -99,10 +100,14 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     // State for parts not yet selected by the user, derived from availableParts
     const [unselectedParts, setUnselectedParts] = useState([]);
 
+    const [processors, setProcessors] = useState([]);
+    const [tableDataRepository, setTableDataRepository] = useState({});
+
     // Local state for the part being currently configured in the drawer
     const [drawerCurrentPart, setDrawerCurrentPart] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerTab, setDrawerTab] = useState(0);
+    const [requiredTablesForCurrentPart, setRequiredTablesForCurrentPart] = useState({});
 
     const outsideRepairZoneOptions = {
         "no": "без пошкоджень",
@@ -123,20 +128,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         console.log(availableParts)
     }, [availableParts, selectedParts]); // Add selectedParts as a dependency
 
-    const fetchPartDetails = useCallback(() => {
-        if (drawerCurrentPart == null) {
-            return null;
-        } else {
-            const i = availableParts.find((item) => item["Список деталь рус"] === drawerCurrentPart.name)
-            if (i)
-                return i;
-            else {
-                console.warn("Impossible state: not found available part by key ", drawerCurrentPart.name);
-                return null;
-            }
-        }
-    }, [drawerCurrentPart, availableParts])
-
     // Effect to fetch available car parts from the API
     useEffect(() => {
         if (carClass == null || body == null) {
@@ -146,6 +137,22 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         // Reset availableParts and unselectedParts when carClass or body changes
         setAvailableParts([]);
         setUnselectedParts([]);
+
+        authFetch("/api/v1/user/processors_bundle")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch plugin bundle: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(code => {
+                const sandbox = { exports: {} };
+                new Function("exports", code)(sandbox.exports);
+                const plugins = sandbox.exports.default;
+                setProcessors(plugins);
+                console.log("Plugins initialized", plugins, code, JSON.stringify(sandbox));
+            })
+            .catch(handleError);
 
         authFetch(`/api/v1/user/carparts/${carClass}/${body}`)
             .then(response => {
@@ -183,6 +190,56 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         return grid;
     }, []);
 
+    const getOrFetchTableData = useCallback((partName) => {
+        if (tableDataRepository[partName] != undefined) {
+            return tableDataRepository[partName];
+        }
+        // fetch
+        const params = new URLSearchParams({
+            car_class: carClass,
+            car_type: body,
+            part: partName
+        });
+        authFetch(`/api/v1/user/lookup_all_tables?${params}`)
+            .then(response => {
+                // No navigation logic here, this component should not dictate routing.
+                // If 403 occurs, authFetch should handle it (e.g., redirect to login).
+                if (!response.ok) {
+                    console.error(`HTTP error ${response.status}`);
+                    // Optionally, handle specific errors or show user feedback
+                    return Promise.reject(`Failed to fetch car parts: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    const preprocessedTables = data.map((table) => {
+                        let name = stripExt(table[0]);
+                        let file = table[0];
+                        let data = table[1];
+                        return {
+                            name, data, file
+                        }
+                    })
+                    setTableDataRepository((repo) => { return { ...repo, [partName]: preprocessedTables } })
+                };
+            })
+            .catch((err) => {
+                console.error("Error fetching car parts table data:", err);
+                handleError("Error fetching table data: " + err);
+            });
+        return {};
+    }, [body, carClass, handleError, tableDataRepository])
+
+    useEffect(() => {
+        if (drawerCurrentPart) {
+            // not null or undefined
+            if (tableDataRepository[drawerCurrentPart.name] != undefined) {
+                setDrawerCurrentPart((part) => { return { ...part, tableData: tableDataRepository[drawerCurrentPart.name] } })
+            }
+        }
+    }, [tableDataRepository])
+
     // Handler for selecting a new part from the dropdown
     const handlePartSelect = useCallback((partName) => {
         // Check if the part is already in selectedParts (e.g., if re-opening for edit)
@@ -197,14 +254,15 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 damageLevel: 0,
                 name: partName,
                 grid: generateInitialGrid(mapVisual(partName ? partName : "")),
-                outsideRepairZone: null
+                outsideRepairZone: null,
+                tableData: getOrFetchTableData(partName)
             };
 
         setDrawerCurrentPart(newPart);
         console.log(newPart)
         setIsDrawerOpen(true);
         setDrawerTab(0); // Always start from the first tab
-    }, [selectedParts, generateInitialGrid, mapVisual]);
+    }, [selectedParts, generateInitialGrid, mapVisual, getOrFetchTableData]);
 
     // Handler for updating the local drawerCurrentPart state
     const updateDrawerCurrentPart = useCallback((updates) => {
@@ -338,7 +396,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                         >
                                             Далі
                                         </Button>
-                                        <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(fetchPartDetails())}</pre></p>
+                                        <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(drawerCurrentPart)}</pre></p>
                                     </div>
                                 )}
                                 {drawerTab === 1 && (

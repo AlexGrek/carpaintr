@@ -8,6 +8,8 @@ use lru::LruCache;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -421,6 +423,97 @@ pub async fn get_file_path_user_common<P: AsRef<Path>>(
             ))
         }
     }
+}
+
+/// Asynchronously reads the contents of a directory and returns a vector of relative file paths.
+///
+/// # Arguments
+///
+/// * `dir_path` - The path to the directory to read.
+///
+/// # Returns
+///
+/// A `Result` containing a vector of `PathBuf`s representing the relative paths of the files
+/// in the directory, or an `std::io::Error` if the directory cannot be read.
+async fn read_directory_contents(dir_path: &Path) -> std::io::Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    let mut reader = match fs::read_dir(dir_path).await {
+        Ok(reader) => reader,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(e) => return Err(e),
+    };
+
+    while let Some(entry) = reader.next_entry().await? {
+        let path = entry.path();
+        if path.is_file() {
+            paths.push(path);
+        }
+    }
+    Ok(paths)
+}
+
+/// Merges the contents of a "common" and a "user" directory.
+///
+/// Reads the file paths from both directories and merges them. If a file with the
+/// same name exists in both directories, the one from the "user" directory is kept.
+///
+/// # Arguments
+///
+/// * `common_dir` - The path to the "common" directory.
+/// * `user_dir` - The path to the "user" directory.
+///
+/// # Returns
+///
+/// A `Result` containing a vector of `PathBuf`s with the merged and unique file paths,
+/// or an `std::io::Error` if the "common" directory cannot be read.
+pub async fn merge_directories(
+    common_dir: &Path,
+    user_dir: &Path,
+) -> std::io::Result<Vec<PathBuf>> {
+    // Read the user directory first. If it doesn't exist, this will be an empty vec.
+    let user_files = read_directory_contents(user_dir).await?;
+
+    // Read the common directory. An error here will propagate.
+    let common_files = read_directory_contents(common_dir).await?;
+
+    let mut final_paths: HashMap<OsString, PathBuf> = HashMap::new();
+
+    // Insert common files first
+    for path in common_files {
+        if let Some(filename) = path.file_name() {
+            final_paths.insert(filename.to_os_string(), path);
+        }
+    }
+
+    // Insert user files, overwriting any common files with the same name
+    for path in user_files {
+        if let Some(filename) = path.file_name() {
+            final_paths.insert(filename.to_os_string(), path);
+        }
+    }
+
+    Ok(final_paths.into_values().collect())
+}
+
+pub async fn all_files_with_extension(
+    data_dir: &PathBuf,
+    user_email: &str,
+    subdir: &str,
+    extension: &OsStr,
+) -> Result<Vec<PathBuf>, AppError> {
+    merge_directories(
+        &data_dir.join(COMMON).join(subdir),
+        user_catalog_directory_from_email(data_dir, user_email)?
+            .join(subdir)
+            .as_path(),
+    )
+    .await
+    .map(|lst| {
+        lst.into_iter()
+            .filter(|p| p.extension().map(|ext| ext == extension).unwrap_or(false))
+            .collect()
+    })
+    .map_err(|e| e.into())
 }
 
 pub fn sanitize_alphanumeric_and_dashes(input: &str) -> String {

@@ -118,7 +118,7 @@ pub async fn lookup_all_tables(
     Query(q): Query<LookupPartQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     let parts_lines = lookup(
-        &q.car_type,
+        &body_type_into_t1_entry(&q.car_type),
         &q.car_class,
         &q.part,
         &app_state.data_dir_path,

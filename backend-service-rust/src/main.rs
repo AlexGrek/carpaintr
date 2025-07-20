@@ -202,6 +202,10 @@ async fn main() -> tokio::io::Result<()> {
                     post(api::v1::support::user_add_message),
                 )
                 .route(
+                    "/processors_bundle",
+                    get(api::v1::calc::plugin_endpoints::get_all_plugins),
+                )
+                .route(
                     "/lookup_all_tables",
                     get(api::v1::calc::data_endpoints::lookup_all_tables),
                 )

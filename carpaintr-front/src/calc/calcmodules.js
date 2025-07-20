@@ -1,4 +1,4 @@
-const expressionRow = (table, prop, text) => {
+const evalRow = (table, prop, text) => {
     const expression = table[prop];
     try {
         const result = eval(expression);
@@ -24,8 +24,8 @@ export const partRemovalAndInstallation = {
     process: (tables) => {
         const t1 = tables["t1"];
         return [
-            expressionRow(t1, "Снятие", "Снятие детали " + t1["Список деталь рус"]), 
-            expressionRow(t1, "Установка", "Установка детали " + t1["Список деталь рус"])
+            evalRow(t1, "Снятие", "Снятие детали " + t1["Список деталь рус"]),
+            evalRow(t1, "Установка", "Установка детали " + t1["Список деталь рус"])
         ];
     }
- }
+}
