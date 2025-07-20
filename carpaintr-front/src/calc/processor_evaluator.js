@@ -52,12 +52,14 @@ export function evaluate_processor(processor, stuff) {
             return item;
         })
         return {
+            name: processor.name,
             result: processedRows,
             text: resultRows.map(JSON.stringify).join(';'),
             error: null
         }
     } catch (e) {
         return {
+            name: processor.name,
             result: null,
             text: e.toString(),
             error: e,
