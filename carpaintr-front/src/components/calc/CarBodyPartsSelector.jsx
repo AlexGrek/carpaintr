@@ -1,16 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Button, Drawer, Steps, Divider, Panel, PanelGroup, RadioTileGroup, RadioTile } from "rsuite";
-import PinIcon from '@rsuite/icons/Pin';
-import ConversionIcon from '@rsuite/icons/Conversion';
-import OneColumnIcon from '@rsuite/icons/OneColumn';
-import ColumnsIcon from '@rsuite/icons/Columns';
+import { useEffect, useState, useCallback } from "react";
+import { Button, Drawer, Steps, Divider, Panel, PanelGroup } from "rsuite";
 import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
 import { authFetch } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
 import { useLocale } from "../../localization/LocaleContext";
-import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../layout/ErrorMessage";
 import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from 'lucide-react';
 import MenuTree from "../layout/MenuTree";
@@ -107,7 +102,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     const [drawerCurrentPart, setDrawerCurrentPart] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerTab, setDrawerTab] = useState(0);
-    const [requiredTablesForCurrentPart, setRequiredTablesForCurrentPart] = useState({});
 
     const outsideRepairZoneOptions = {
         "no": "без пошкоджень",
