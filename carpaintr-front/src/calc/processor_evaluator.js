@@ -47,8 +47,9 @@ export function evaluate_processor(processor, stuff) {
         let processedRows = resultRows.map((item) => {
             if (!isEmptyOrWhitespace(item.evaluate)) {
                 // evaluate!
-                return eval(item.evaluate);
-            }
+                return {...item, estimation: eval(item.evaluate.replace(",", "."))};
+            };
+            return item;
         })
         return {
             result: processedRows,

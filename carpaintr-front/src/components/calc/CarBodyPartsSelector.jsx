@@ -14,6 +14,7 @@ import jsyaml from 'js-yaml';
 import CalculationTable from "./CalculationTable";
 import { stripExt } from "../../utils/utils";
 import { evaluate_processor, make_sandbox, make_sandbox_extensions, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
+import { EvaluationResultsTable } from "./EvaluationResultsTable";
 
 const exampleCalcFunction = (data) => {
     return data.map(item => ({
@@ -339,7 +340,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 }
                 return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
             });
-            setCalculations(<pre>{JSON.stringify(processorsEvaluated, null, 2)}</pre>); // TODO: do table
+            setCalculations(processorsEvaluated); // TODO: do table
         }
     }, [drawerTab, drawerCurrentPart, carClass, body, processors])
 
@@ -464,7 +465,9 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                 {drawerTab === 2 && (
                                     <div>
                                         <h3>Підсумок та розрахунки</h3>
-                                        {calculations}
+                                        <EvaluationResultsTable
+                                            data={calculations}
+                                        />
                                         <p>Частина: <pre>{jsyaml.dump(drawerCurrentPart)}</pre></p>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
@@ -475,11 +478,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                         )}
                                         {/* Add more calculation details here */}
                                         <Divider />
-                                        <CalculationTable
-                                            name="Workshop Operations"
-                                            calcFunction={exampleCalcFunction}
-                                            calcData={exampleData}
-                                        />
+
                                         <Button color='blue' appearance="primary" block onClick={handleAddOrUpdatePart}>
                                             Підтвердити та додати/оновити
                                         </Button>
