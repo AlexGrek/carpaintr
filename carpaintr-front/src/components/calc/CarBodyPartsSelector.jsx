@@ -13,6 +13,7 @@ import './CarBodyPartsSelector.css';
 import jsyaml from 'js-yaml';
 import CalculationTable from "./CalculationTable";
 import { stripExt } from "../../utils/utils";
+import { evaluate_processor, make_sandbox, make_sandbox_extensions, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 
 const exampleCalcFunction = (data) => {
     return data.map(item => ({
@@ -80,8 +81,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
     }, [str]);
 
     const mapVisual = useCallback((partName) => {
-        console.log(partName);
-        console.log(partsVisual);
+        // console.log(partName);
+        // console.log(partsVisual);
         let entry = partName;
         if (entry && partsVisual[entry]) {
             return partsVisual[entry];
@@ -119,7 +120,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 .filter(partName => !currentlySelectedNames.has(partName));
             setUnselectedParts(newUnselected);
         }
-        console.log(availableParts)
+        // console.log(availableParts)
     }, [availableParts, selectedParts]); // Add selectedParts as a dependency
 
     // Effect to fetch available car parts from the API
@@ -140,11 +141,11 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 return response.text();
             })
             .then(code => {
-                const sandbox = { exports: {} };
+                const sandbox = { exports: {}, ...make_sandbox_extensions() };
                 new Function("exports", code)(sandbox.exports);
-                const plugins = sandbox.exports.default;
+                const plugins = sandbox.exports.default.map(p => verify_processor(p));
                 setProcessors(plugins);
-                console.log("Plugins initialized", plugins, code, JSON.stringify(sandbox));
+                // console.log("Plugins initialized", plugins, jsyaml.dump(JSON.parse(JSON.stringify(sandbox))));
             })
             .catch(handleError);
 
@@ -253,7 +254,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
             };
 
         setDrawerCurrentPart(newPart);
-        console.log(newPart)
         setIsDrawerOpen(true);
         setDrawerTab(0); // Always start from the first tab
     }, [selectedParts, generateInitialGrid, mapVisual, getOrFetchTableData]);
@@ -300,6 +300,48 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         setDrawerCurrentPart(null); // Clear local state when drawer is closed without submitting
         setDrawerTab(0); // Reset tab for next open
     }, []);
+
+    const [calculations, setCalculations] = useState(null);
+
+    useEffect(() => {
+        /* {
+                action: null,
+                replace: false,
+                original: true,
+                damageLevel: 0,
+                name: partName,
+                grid: generateInitialGrid(mapVisual(partName ? partName : "")),
+                outsideRepairZone: null,
+                tableData: getOrFetchTableData(partName)
+            }; */
+        // const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
+        if (drawerCurrentPart && drawerTab == 2) {
+            const tdata = drawerCurrentPart.tableData.reduce((acc, item) => {
+                acc[item.name] = item.data;
+                return acc;
+            }, {});
+            const stuff = {
+                name: drawerCurrentPart.name,
+                repairAction: drawerCurrentPart.action,
+                files: [],
+                carClass: carClass,
+                carBodyType: body,
+                carYear: 1999,
+                carModel: {},
+                tableData: tdata,
+                paint: {} // TODO: make it useful
+            };
+
+            let processorsEvaluated = processors.map((proc) => {
+                let missing = validate_requirements(proc, tdata);
+                if (missing == null) {
+                    return evaluate_processor(proc, stuff)
+                }
+                return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
+            });
+            setCalculations(<pre>{JSON.stringify(processorsEvaluated, null, 2)}</pre>); // TODO: do table
+        }
+    }, [drawerTab, drawerCurrentPart, carClass, body, processors])
 
     return (
         <div className="car-body-parts-selector">
@@ -422,6 +464,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                 {drawerTab === 2 && (
                                     <div>
                                         <h3>Підсумок та розрахунки</h3>
+                                        {calculations}
                                         <p>Частина: <pre>{jsyaml.dump(drawerCurrentPart)}</pre></p>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (

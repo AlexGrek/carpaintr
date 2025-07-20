@@ -189,9 +189,10 @@ const ProcessorGenerator = () => {
 
         const code = `({
     name: "${name}",
-    run: (carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+    run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
         // - init section -
         var output = [];
+        const { mkRow } = x;
 
         // - check data section -
         // leave blank now, there are no data validation stages yet
