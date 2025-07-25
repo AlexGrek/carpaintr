@@ -16,7 +16,6 @@ createRoot(document.getElementById('root')).render(
     <CustomProvider>
       <App />
     </CustomProvider>
-
   </StrictMode>,
 )
 

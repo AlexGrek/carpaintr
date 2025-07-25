@@ -3,6 +3,7 @@ import { Loader, Message, Panel, useToaster, Button, Whisper, Tooltip, Table } f
 import { authFetch } from '../utils/authFetch';
 import { useLocale } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
 import { parseISO, intervalToDuration } from 'date-fns'; // Import intervalToDuration
+import ResponseBrowser from './utility/ResponseBrowser';
 
 const ServerStatus = () => {
     const { str } = useLocale(); // Initialize useLocale hook
@@ -41,25 +42,30 @@ const ServerStatus = () => {
     console.log(data);
 
     return (
-        <Panel shaded>
-            {msg && msg}
-            <h4>Cache status</h4>
-            {loading && <Loader />}
-            <Table data={data} cellBordered style={{ backgroundColor: 'white' }}>
-                <Table.Column width={200}>
-                    <Table.HeaderCell>Cache type</Table.HeaderCell>
-                    <Table.Cell dataKey="id" />
-                </Table.Column >
-                <Table.Column width={150}>
-                    <Table.HeaderCell>Records</Table.HeaderCell>
-                    <Table.Cell dataKey="items" />
-                </Table.Column>
-                <Table.Column width={150}>
-                    <Table.HeaderCell>Bytes</Table.HeaderCell>
-                    <Table.Cell dataKey="bytes" />
-                </Table.Column>
-            </Table>
-        </Panel>
+        <div>
+            <Panel shaded header='Cache' collapsible>
+                {msg && msg}
+                <h4>Cache status</h4>
+                {loading && <Loader />}
+                <Table data={data} cellBordered style={{ backgroundColor: 'white' }}>
+                    <Table.Column width={200}>
+                        <Table.HeaderCell>Cache type</Table.HeaderCell>
+                        <Table.Cell dataKey="id" />
+                    </Table.Column >
+                    <Table.Column width={150}>
+                        <Table.HeaderCell>Records</Table.HeaderCell>
+                        <Table.Cell dataKey="items" />
+                    </Table.Column>
+                    <Table.Column width={150}>
+                        <Table.HeaderCell>Bytes</Table.HeaderCell>
+                        <Table.Cell dataKey="bytes" />
+                    </Table.Column>
+                </Table>
+            </Panel>
+            <Panel shaded header='Attachments' collapsible>
+                <ResponseBrowser url={'/api/v1/admin/attachment_list'} />
+            </Panel>
+        </div>
     );
 }
 

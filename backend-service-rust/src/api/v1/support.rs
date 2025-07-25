@@ -1,5 +1,10 @@
 use crate::{
-    db::requests, errors::AppError, exlogging::{log_event, store_frontend_failure}, middleware::AuthenticatedUser, models::requests::{FrontendFailureReport, SupportRequest, SupportRequestMessage}, state::AppState
+    db::{attachment, requests},
+    errors::AppError,
+    exlogging::{log_event, store_frontend_failure},
+    middleware::AuthenticatedUser,
+    models::requests::{FrontendFailureReport, SupportRequest, SupportRequestMessage},
+    state::AppState,
 };
 use axum::{
     extract::{Json, Query, State},
@@ -92,7 +97,11 @@ pub async fn report_frontend_failure(
     State(app_state): State<Arc<AppState>>,
     Json(r): Json<FrontendFailureReport>,
 ) -> Result<impl IntoResponse, AppError> {
-    log_event(crate::exlogging::LogLevel::Error, format!("Frontend failure: {:?}", &r), Some(user_email));
+    log_event(
+        crate::exlogging::LogLevel::Error,
+        format!("Frontend failure: {:?}", &r),
+        Some(user_email),
+    );
     let _ = store_frontend_failure(&r, &app_state.data_dir_path).await; // ignore errors
     Ok(())
 }
@@ -134,8 +143,17 @@ pub async fn user_submit(
     Json(mut r): Json<SupportRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     r.timestamp = Utc::now();
-    r.email = user_email;
+    r.email = user_email.clone();
     requests::insert_request(&app_state.db.requests_tree, &r)?;
+    for attachment_id in r.attachments.iter() {
+        attachment::set_attachment_lifecycle_checked(
+            attachment_id,
+            Some(user_email.clone()),
+            &app_state.db.attachments_tree,
+            attachment::AttachmentLifecycle::SupportRequestActive,
+            None
+        )?;
+    }
     Ok(Json(r))
 }
 

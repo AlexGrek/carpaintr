@@ -1,0 +1,264 @@
+/* ObjectBrowser.css */
+
+/* Basic container styles */
+.object-browser-container {
+  font-family: 'Inter', sans-serif; /* Ensure modern font throughout */
+  border: none; /* Remove default border */
+  border-radius: 12px; /* More rounded corners */
+  overflow: hidden;
+  background-color: #ffffff; /* Clean white background */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Softer, more pronounced shadow */
+  margin: 20px auto; /* Center the component with some margin */
+  max-width: 95%; /* Responsive width */
+  width: 100%; /* Ensure it takes full width within max-width */
+}
+
+/* Tab Navbar styles */
+.tab-navbar {
+  display: flex;
+  background-color: #f0f4f8; /* Light blue-grey for tabs */
+  border-bottom: 1px solid #e0e6ed;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  padding: 0 10px; /* Some padding for the navbar itself */
+  overflow-x: auto; /* Allow horizontal scrolling on small screens if many tabs */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+}
+
+.tab-item {
+  flex-shrink: 0; /* Prevent tabs from shrinking */
+  padding: 14px 22px; /* Increased padding for touch targets */
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: 16px; /* Slightly larger font */
+  font-weight: 500;
+  color: #526c8a; /* Muted blue for inactive text */
+  transition: background-color 0.3s ease, color 0.3s ease, border-bottom 0.3s ease;
+  border-bottom: 3px solid transparent; /* Thicker active tab highlight */
+  white-space: nowrap; /* Prevent tab text from wrapping */
+}
+
+.tab-item:hover {
+  background-color: #e6edf3;
+  color: #334e68; /* Darker blue on hover */
+}
+
+.tab-item.active {
+  background-color: #ffffff; /* White background for active tab */
+  color: #007bff; /* Primary blue for active text */
+  border-bottom: 3px solid #007bff; /* Primary blue highlight */
+  font-weight: 600;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for active tab */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+/* Tab content styles */
+.tab-content {
+  padding: 20px; /* More generous padding */
+  min-height: 300px; /* Adjust as needed */
+  background-color: #fff;
+  overflow: auto; /* Allow scrolling if content overflows */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* JSON Viewer styles (for the tree view - now a browsing menu) */
+.object-browser-view {
+  font-family: 'Inter', sans-serif; /* Use Inter for the tree view as well for consistency */
+  font-size: 15px; /* Slightly larger font for better readability */
+  line-height: 1.6; /* Adjusted line height */
+  color: #2c3e50; /* Darker, softer text color */
+  padding-left: 0px; /* No padding for root, indentation handled by json-item */
+}
+
+.json-object-node,
+.json-array-node {
+  margin: 0; /* No margin on nodes themselves, handled by json-item */
+  position: relative;
+  /* Added for visual separation of top-level nodes */
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.json-object-node:last-child,
+.json-array-node:last-child {
+  border-bottom: none; /* No border for the last item */
+}
+
+.json-root-node {
+  border-bottom: none; /* Root node doesn't need a bottom border */
+}
+
+
+.json-node-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px; /* Padding for the clickable header area */
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 8px; /* Slightly rounded corners for header */
+  margin-bottom: 2px; /* Small space between header and children */
+}
+
+.json-node-header:hover {
+  background-color: #f8f9fa; /* Subtle hover effect */
+}
+
+.json-toggle {
+  cursor: pointer;
+  margin-right: 10px; /* More space for the toggle */
+  color: #7f8c8d; /* Muted grey for toggle */
+  font-weight: bold;
+  user-select: none;
+  transition: transform 0.2s ease; /* Smooth rotation */
+  display: inline-block;
+  width: 18px; /* Larger touch target for toggle */
+  height: 18px; /* Ensure square touch target */
+  text-align: center;
+  line-height: 18px; /* Center the arrow vertically */
+}
+
+.json-toggle.expanded {
+  transform: rotate(90deg); /* Rotate right arrow to point down */
+}
+
+.json-toggle.collapsed {
+  transform: rotate(0deg); /* Right arrow remains pointing right */
+}
+
+.json-node-label {
+  font-weight: 600;
+  color: #34495e; /* Darker blue-grey for labels */
+  margin-right: 8px;
+}
+
+.json-summary {
+  color: #95a5a6; /* Lighter grey for summary */
+  font-style: italic;
+  font-size: 0.9em; /* Slightly smaller font for summary */
+}
+
+.json-item {
+  display: flex;
+  align-items: baseline; /* Align key/index and value */
+  margin-left: 35px; /* Increased indentation for nesting, accounts for toggle width */
+  padding: 6px 0; /* Vertical padding for each item */
+  border-bottom: 1px dashed #f0f0f0; /* Subtle dashed separator */
+}
+
+.json-item:last-child {
+  border-bottom: none; /* No border for the last item in a group */
+}
+
+
+.json-key {
+  color: #34495e; /* Darker blue-grey for keys */
+  margin-right: 10px; /* More space between key and value */
+  white-space: nowrap;
+  font-weight: 500; /* Medium weight for keys */
+  flex-shrink: 0; /* Prevent key from shrinking */
+}
+
+.json-index {
+  color: #007bff; /* Primary blue for array index */
+  margin-right: 10px;
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.json-value {
+  word-break: break-all;
+  padding: 0 2px;
+  border-radius: 4px;
+  font-weight: 400; /* Regular weight for values */
+  color: #2c3e50; /* Consistent text color */
+}
+
+.json-value.type-string {
+  color: #28a745; /* Green for strings */
+}
+
+.json-value.type-number {
+  color: #6f42c1; /* Purple for numbers */
+}
+
+.json-value.type-boolean {
+  color: #fd7e14; /* Orange for booleans */
+}
+
+.json-value.type-null {
+  color: #7f8c8d; /* Muted grey for null */
+  font-style: italic;
+}
+
+/* Animation for expanding/collapsing content */
+.json-children {
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease-out; /* Smoother cubic-bezier ease */
+  max-height: 0; /* Collapsed state */
+  opacity: 0; /* Start invisible */
+}
+
+.json-children.expanded-content {
+  max-height: 2000px; /* Increased max-height for very large objects */
+  opacity: 1; /* Fully visible */
+  transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s ease-in; /* Slightly different ease for expansion */
+}
+
+
+/* For preformatted code views (JSON, YAML) */
+.json-code,
+.yaml-code {
+  background-color: #f8f9fa; /* Lighter background for code blocks */
+  padding: 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border: 1px solid #e9ecef; /* Subtle border */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner shadow */
+  font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace; /* Keep monospace for raw code views */
+  font-size: 14px;
+  line-height: 1.6;
+  color: #34495e; /* Darker text for code */
+}
+
+
+/* Mobile-first adjustments */
+@media (max-width: 768px) {
+  .object-browser-container {
+    border-radius: 0; /* Full width on mobile, no rounded corners at edges */
+    margin: 0; /* No side margins on mobile */
+    max-width: 100%;
+  }
+
+  .tab-item {
+    padding: 12px 15px; /* Slightly less padding for tabs on mobile */
+    font-size: 14px;
+  }
+
+  .tab-navbar {
+    padding: 0 5px; /* Less padding for navbar on mobile */
+  }
+
+  .tab-content {
+    padding: 15px; /* Slightly less padding for content on mobile */
+  }
+
+  .json-item {
+    margin-left: 25px; /* Slightly less indentation on mobile */
+  }
+
+  .json-toggle {
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    font-size: 0.9em; /* Smaller toggle icon */
+  }
+
+  .json-node-header {
+    padding: 8px 10px; /* Smaller padding for mobile headers */
+  }
+}

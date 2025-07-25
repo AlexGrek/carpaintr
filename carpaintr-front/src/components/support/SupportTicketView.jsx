@@ -4,6 +4,7 @@ import './SupportTicketView.css';
 import { authFetch } from '../../utils/authFetch';
 import Trans from '../../localization/Trans';
 import { useLocale } from '../../localization/LocaleContext';
+import AttachmentList from '../AttachmentList';
 
 export default function SupportTicketView({ ticket, isSupport }) {
     const [localTicket, setLocalTicket] = useState({ ...ticket });
@@ -58,6 +59,10 @@ export default function SupportTicketView({ ticket, isSupport }) {
                     Type: {localTicket.req_type || 'General'} | Created: {formatDate(localTicket.timestamp)}
                 </p>
                 <p className="ticket-description">{localTicket.description}</p>
+            </div>
+
+            <div>
+                <AttachmentList attachments={localTicket.attachments}/>
             </div>
 
             <div className="ticket-messages">

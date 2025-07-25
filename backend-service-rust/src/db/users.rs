@@ -6,12 +6,14 @@ use sled::{Tree};
 
 const USERS_TREE_NAME: &str = "users";
 const REQUESTS_TREE_NAME: &str = "support_requests";
+const ATTACHMENTS_TREE_NAME: &str = "attachments";
 
 #[derive(Clone)]
 pub struct AppDb {
     // db: Db,
     pub users_tree: Tree,
-    pub requests_tree: Tree
+    pub requests_tree: Tree,
+    pub attachments_tree: Tree
 }
 
 impl AppDb {
@@ -19,7 +21,8 @@ impl AppDb {
         let db = sled::open(db_path)?;
         let users_tree = db.open_tree(USERS_TREE_NAME)?;
         let requests_tree = db.open_tree(REQUESTS_TREE_NAME)?;
-        Ok(Self { users_tree, requests_tree })
+        let attachments_tree = db.open_tree(ATTACHMENTS_TREE_NAME)?;
+        Ok(Self { users_tree, requests_tree, attachments_tree })
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {

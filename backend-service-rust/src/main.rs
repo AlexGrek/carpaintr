@@ -14,6 +14,7 @@ use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 use crate::{
     auth::Auth,
     cache::license_cache::LicenseCache,
+    cleanup::cleanup_task,
     db::users::AppDb,
     middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
     state::AppState,
@@ -27,6 +28,7 @@ mod api;
 mod auth;
 mod cache;
 mod calc;
+mod cleanup;
 mod db;
 mod errors;
 mod exlogging;
@@ -36,6 +38,20 @@ mod models;
 mod state;
 mod transactionalfs;
 mod utils;
+
+fn spawn_periodic_cleanup(state: Arc<AppState>) {
+    tokio::spawn(async move {
+        // Run once at startup
+        cleanup_task(state.clone()).await;
+
+        // Repeat every 3 hours
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(3 * 60 * 60));
+        loop {
+            interval.tick().await;
+            cleanup_task(state.clone()).await;
+        }
+    });
+}
 
 #[tokio::main]
 async fn main() -> tokio::io::Result<()> {
@@ -82,6 +98,8 @@ async fn main() -> tokio::io::Result<()> {
         admin_file_path: PathBuf::from(admin_file_path),
         cache: Arc::new(DataStorageCache::new(10, 10, 50)),
     });
+
+    spawn_periodic_cleanup(shared_state.clone());
 
     let init_result = api::v1::admin_editor_endpoints::run_list_class_body_types_rebuild(
         &shared_state.data_dir_path,
@@ -133,6 +151,10 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/manageuser", post(api::v1::admin::manage_user))
                 .route("/impersonate", post(api::v1::auth::impersonate))
+                .route(
+                    "/attachment_list",
+                    get(api::v1::attachments::admin_all_attachments),
+                )
                 .route(
                     "/license/invalidate/{email}",
                     post(api::v1::license::invalidate_license_cache_admin),
@@ -200,6 +222,22 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/support_message",
                     post(api::v1::support::user_add_message),
+                )
+                .route(
+                    "/attach",
+                    post(api::v1::attachments::attach)
+                )
+                .route(
+                    "/attachment/{id}",
+                    get(api::v1::attachments::get_att_file),
+                )
+                .route(
+                    "/attachment_list",
+                    get(api::v1::attachments::my_attachments),
+                )
+                .route(
+                    "/attachment_meta/{id}",
+                    get(api::v1::attachments::get_att_metadata),
                 )
                 .route(
                     "/lookup_all_tables",

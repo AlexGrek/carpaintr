@@ -29,6 +29,7 @@ pub const COMMON: &'static str = "common";
 pub const USERS: &'static str = "users";
 pub const USERS_DELETED: &'static str = "deleted_users";
 pub const CATALOG: &'static str = "catalog";
+pub const ATTACHMENTS: &'static str = "attachments";
 
 #[derive(Debug)]
 pub struct DataStorageCache {
@@ -185,7 +186,7 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-pub fn safety_check_only<P: AsRef<Path>>(base: P, target: P) -> Result<P, SafeFsError> {
+pub fn safety_check_only<P: AsRef<Path>, P2: AsRef<Path>>(base: P, target: P2) -> Result<P2, SafeFsError> {
     let base_clean = base.as_ref().lexiclean();
     let full_target = target.as_ref().lexiclean();
     let target_clean = full_target.lexiclean();
@@ -223,7 +224,7 @@ pub async fn safe_write<P: AsRef<Path>>(
     target_relative: P,
     content: impl AsRef<[u8]>,
     cache: &DataStorageCache,
-) -> Result<(), SafeFsError> {
+) -> Result<PathBuf, SafeFsError> {
     let safe_path = safe_join(&base, &target_relative)?;
     log::debug!("Safely writing file {:?}", safe_path);
     if let Some(parent) = safe_path.parent() {
@@ -231,7 +232,7 @@ pub async fn safe_write<P: AsRef<Path>>(
     }
     fs::write(&safe_path, content).await?;
     cache.invalidate(&safe_path.as_ref()).await;
-    Ok(())
+    Ok(safe_path)
 }
 
 pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
@@ -396,6 +397,36 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path").into())
     }
+}
+
+pub async fn get_file_bytes<P: AsRef<Path>>(
+    path: &P,
+    root: &P,
+    cache: &DataStorageCache,
+) -> Result<Vec<u8>, SafeFsError> {
+    let safe_path = safety_check_only(root, path)?;
+    let path_buf = safe_path.as_ref().to_path_buf();
+
+    if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
+        return Ok(data.clone());
+    }
+
+    log::debug!("Safely reading file {:?}", path_buf);
+    let data = fs::read(&safe_path).await?;
+    cache.as_vec_u8.write().await.put(path_buf, data.clone());
+    Ok(data)
+}
+
+pub async fn get_file_bytes_no_cache<P: AsRef<Path>, P2: AsRef<Path>>(
+    path: &P,
+    root: &P2,
+) -> Result<Vec<u8>, SafeFsError> {
+    let safe_path = safety_check_only(root, path)?;
+    let path_buf = safe_path.as_ref().to_path_buf();
+
+    log::debug!("Safely reading file {:?}", path_buf);
+    let data = fs::read(&safe_path).await?;
+    Ok(data)
 }
 
 pub async fn get_file_path_user_common<P: AsRef<Path>>(

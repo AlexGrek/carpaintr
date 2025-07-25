@@ -16,7 +16,6 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
                 setBaseColors(data);
             } catch (error) {
                 console.error("Failed to fetch colors:", error);
-                // Handle error appropriately, e.g., show an error message
             }
         };
         fetchData();
@@ -32,7 +31,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
         <div>
             {displayColors.map((subgrid, index) => (
                 // Add a unique key for list rendering
-                <React.Suspense key={index} fallback={<Placeholder.Paragraph rows={1} />}>
+                <React.Suspense key={index} fallback={<Placeholder.Paragraph rows={6} />}>
                     <ColorGrid colors={subgrid} selectedColor={selectedColor} onChange={setColor} />
                 </React.Suspense>
             ))}

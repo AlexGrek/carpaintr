@@ -1,0 +1,73 @@
+/* ResponseBrowser.css */
+
+.response-browser-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    /* Ensure some height for visibility */
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Loader styles */
+.loader {
+    border: 8px solid #f3f3f3;
+    /* Light grey */
+    border-top: 8px solid #3498db;
+    /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-message {
+    font-size: 1.2em;
+    color: #555;
+}
+
+/* Error message styles */
+.error-message {
+    background-color: #ffe0e0;
+    border: 1px solid #ff9999;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #cc0000;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message h2 {
+    color: #cc0000;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.error-message p {
+    margin-bottom: 5px;
+}
+
+/* No data message styles */
+.no-data-message {
+    font-size: 1.1em;
+    color: #777;
+    padding: 20px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    text-align: center;
+}

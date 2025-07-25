@@ -6,3 +6,4 @@ pub mod calc;
 pub mod admin_editor_endpoints;
 pub mod support;
 pub mod editor_endpoints;
+pub mod attachments;

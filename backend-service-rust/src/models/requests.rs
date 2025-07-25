@@ -44,6 +44,8 @@ pub struct SupportRequest {
     #[serde(default)]
     pub email: String,
     #[serde(default)]
+    pub attachments: Vec<String>,
+    #[serde(default)]
     pub contacts: HashMap<String,String>,
     #[serde(default)]
     pub description: String,
