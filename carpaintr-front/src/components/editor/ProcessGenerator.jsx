@@ -24,8 +24,37 @@ import {
 } from 'rsuite';
 import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud } from 'lucide-react';
 import { authFetch } from '../../utils/authFetch';
+import Trans from '../../localization/Trans';
+import { registerTranslations, useLocale } from '../../localization/LocaleContext';
 
 const uploadEndpoint = 'editor/upload_user_file';
+
+registerTranslations("ua", {
+    "Generated Code for": "Згенерований код для",
+    "You can make final manual edits below before uploading.": "Ви можете внести остаточні ручні зміни перед завантаженням.",
+    "Back to Form": "Повернутись до форми",
+    "Upload to Server": "Завантажити на сервер",
+    "Ordering Number": "Номер замовлення",
+    "Required Repair Types": "Необхідні типи ремонту",
+    "Add Item": "Додати елемент",
+    "JS expression for the value. E.g., `tableData[\"t1\"][\"field1\"]`": "JS-вираз для значення. Наприклад, `tableData[\"t1\"][\"field1\"]`",
+    "Tooltip": "Підказка",
+    "Condition": "Умова",
+    "Optional JS expression. If filled, wraps the row in an `if` block.": "Необов'язковий JS-вираз. Якщо заповнено, обгортає рядок у блок `if`.",
+    "Remove Clause": "Видалити результат",
+    "Add Row Clause": "Додати результат рядка",
+    "Generate Code": "Згенерувати код",
+    "Required Tables": "Необхідні таблиці",
+    "Required Files": "Необхідні файли",
+    "Processor Generator": "Генератор процесора",
+    "Processor Name": "Назва процесора",
+    "Used for the object `name` and the filename (spaces become underscores).": "Використовується для імені об'єкта та назви файлу (пробіли замінюються на підкреслення).",
+    "Category": "Категорія",
+    "Row Clause Section": "Секція результатів рядка",
+    "Variables": "Змінні",
+    "Evaluate": "Обчислити"
+});
+
 
 // Helper for unique IDs in lists
 let clauseIdCounter = 0;
@@ -54,16 +83,16 @@ const StringListEditor = ({ value = [], onChange, label }) => {
             {value.map((item, index) => (
                 <Stack key={index} spacing={6} style={{ marginBottom: '5px' }}>
                     <Input value={item} onChange={(val) => handleChange(val, index)} />
-                    <Whisper placement="top" speaker={<Tooltip>Duplicate</Tooltip>}>
+                    <Whisper placement="top" speaker={<Tooltip><Trans>Duplicate</Trans></Tooltip>}>
                         <IconButton icon={<Copy size={16} />} onClick={() => handleDuplicate(index)} />
                     </Whisper>
-                    <Whisper placement="top" speaker={<Tooltip>Remove</Tooltip>}>
+                    <Whisper placement="top" speaker={<Tooltip><Trans>Remove</Trans></Tooltip>}>
                         <IconButton icon={<Trash2 size={16} />} color="red" appearance="subtle" onClick={() => handleRemove(index)} />
                     </Whisper>
                 </Stack>
             ))}
             <Button appearance="ghost" onClick={handleAdd} startIcon={<PlusCircle size={16} />}>
-                Add Item
+                <Trans>Add Item</Trans>
             </Button>
         </Form.Group>
     );
@@ -79,6 +108,7 @@ StringListEditor.propTypes = {
 //      Row Clause Editor
 // ==================================
 const ClauseListEditor = ({ value = [], onChange }) => {
+    const { str } = useLocale();
     const handleAddClause = () => {
         const newClause = {
             id: nextId(),
@@ -103,39 +133,39 @@ const ClauseListEditor = ({ value = [], onChange }) => {
     };
 
     return (
-        <Panel header="Row Clause Section" bordered>
+        <Panel header={str("Row Clause Section")} bordered>
             <p style={{ fontFamily: 'monospace', color: '#777', marginBottom: '1rem' }}>
-                Variables: (carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint)
+                <Trans>Variables</Trans>: (carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint)
             </p>
             {value.map((clause) => (
                 <Panel key={clause.id} bordered style={{ marginBottom: '10px' }}>
                     <Form layout="horizontal">
                         <Form.Group>
-                            <Form.ControlLabel>Name</Form.ControlLabel>
+                            <Form.ControlLabel><Trans>Name</Trans></Form.ControlLabel>
                             <Form.Control name="name" value={clause.name} onChange={(val) => handleClauseChange(clause.id, 'name', val)} />
                         </Form.Group>
                         <Form.Group>
-                            <Form.ControlLabel>Evaluate</Form.ControlLabel>
+                            <Form.ControlLabel><Trans>Evaluate</Trans></Form.ControlLabel>
                             <Form.Control name="evaluate" value={clause.evaluate} onChange={(val) => handleClauseChange(clause.id, 'evaluate', val)} />
-                            <Form.HelpText>JS expression for the value. E.g., `tableData["t1"]["field1"]`</Form.HelpText>
+                            <Form.HelpText><Trans>JS expression for the value. E.g., `tableData["t1"]["field1"]`</Trans></Form.HelpText>
                         </Form.Group>
                         <Form.Group>
-                            <Form.ControlLabel>Tooltip</Form.ControlLabel>
+                            <Form.ControlLabel><Trans>Tooltip</Trans></Form.ControlLabel>
                             <Form.Control name="tooltip" value={clause.tooltip} onChange={(val) => handleClauseChange(clause.id, 'tooltip', val)} />
                         </Form.Group>
                         <Form.Group>
-                            <Form.ControlLabel>Condition</Form.ControlLabel>
+                            <Form.ControlLabel><Trans>Condition</Trans></Form.ControlLabel>
                             <Form.Control name="condition" value={clause.condition} onChange={(val) => handleClauseChange(clause.id, 'condition', val)} />
-                            <Form.HelpText>Optional JS expression. If filled, wraps the row in an `if` block.</Form.HelpText>
+                            <Form.HelpText><Trans>Optional JS expression. If filled, wraps the row in an `if` block.</Trans></Form.HelpText>
                         </Form.Group>
                         <Button color="red" appearance="subtle" onClick={() => handleRemoveClause(clause.id)}>
-                            Remove Clause
+                            <Trans>Remove Clause</Trans>
                         </Button>
                     </Form>
                 </Panel>
             ))}
             <Button appearance="primary" onClick={handleAddClause} startIcon={<PlusCircle size={16} />}>
-                Add Row Clause
+                <Trans>Add Row Clause</Trans>
             </Button>
         </Panel>
     );
@@ -150,6 +180,7 @@ ClauseListEditor.propTypes = {
 //      Main Generator Component
 // ==================================
 const ProcessorGenerator = () => {
+    const { str } = useLocale();
     const [stage, setStage] = useState('form'); // 'form' or 'code'
     const [uploading, setUploading] = useState(false);
     const [formData, setFormData] = useState({
@@ -255,38 +286,38 @@ ${renderClauses()}
 
     const renderStage1 = () => (
         <>
-            <Header><h2>Processor Generator</h2></Header>
+            <Header><h2><Trans>Processor Generator</Trans></h2></Header>
             <Content>
                 <Form fluid model={formModel} formValue={formData} onChange={setFormData}>
                     <Form.Group>
-                        <Form.ControlLabel>Processor Name</Form.ControlLabel>
+                        <Form.ControlLabel><Trans>Processor Name</Trans></Form.ControlLabel>
                         <Form.Control name="name" />
-                        <Form.HelpText>Used for the object `name` and the filename (spaces become underscores).</Form.HelpText>
+                        <Form.HelpText><Trans>Used for the object `name` and the filename (spaces become underscores).</Trans></Form.HelpText>
                     </Form.Group>
 
                     <Form.Group>
-                        <Form.ControlLabel>Category</Form.ControlLabel>
+                        <Form.ControlLabel><Trans>Category</Trans></Form.ControlLabel>
                         <Form.Control name="category" />
                     </Form.Group>
 
                     <Form.Group>
-                        <Form.ControlLabel>Ordering Number</Form.ControlLabel>
+                        <Form.ControlLabel><Trans>Ordering Number</Trans></Form.ControlLabel>
                         <Form.Control name="orderingNum" accepter={InputNumber} />
                     </Form.Group>
 
                     <Form.Group>
-                        <Form.ControlLabel>Required Repair Types</Form.ControlLabel>
+                        <Form.ControlLabel><Trans>Required Repair Types</Trans></Form.ControlLabel>
                         <Form.Control name="requiredRepairTypes" data={repairTypeOptions} accepter={TagPicker} style={{ width: '100%' }} />
                     </Form.Group>
 
                     <StringListEditor
-                        label="Required Tables"
+                        label={str("Required Tables")}
                         value={formData.requiredTables}
                         onChange={(value) => setFormData({ ...formData, requiredTables: value })}
                     />
 
                     <StringListEditor
-                        label="Required Files"
+                        label={str("Required Files")}
                         value={formData.requiredFiles}
                         onChange={(value) => setFormData({ ...formData, requiredFiles: value })}
                     />
@@ -299,7 +330,7 @@ ${renderClauses()}
                     <Form.Group>
                         <ButtonToolbar>
                             <Button appearance="primary" onClick={generateProcessorCode}>
-                                Generate Code
+                                <Trans>Generate Code</Trans>
                             </Button>
                         </ButtonToolbar>
                     </Form.Group>
@@ -311,8 +342,8 @@ ${renderClauses()}
     const renderStage2 = () => (
         <>
             <Header>
-                <h2>Generated Code for '{formData.name}'</h2>
-                <p>You can make final manual edits below before uploading.</p>
+                <h2><Trans>Generated Code for</Trans> '{formData.name}'</h2>
+                <p><Trans>You can make final manual edits below before uploading.</Trans></p>
             </Header>
             <Content>
                 <Input
@@ -323,11 +354,11 @@ ${renderClauses()}
                     style={{ fontFamily: 'monospace', fontSize: '12px', marginBottom: '1rem' }}
                 />
                 <ButtonToolbar>
-                    <Button onClick={() => setStage('form')} startIcon={<ArrowLeft />}>
-                        Back to Form
+                    <Button onClick={() => setStage('form')} color='red' startIcon={<ArrowLeft />}>
+                        <Trans>Back to Form</Trans>
                     </Button>
-                    <Button appearance="primary" onClick={handleUpload} loading={uploading} startIcon={!uploading && <UploadCloud />}>
-                        Upload to Server
+                    <Button appearance="primary" color='green' onClick={handleUpload} loading={uploading} startIcon={!uploading && <UploadCloud />}>
+                        <Trans>Upload to Server</Trans>
                     </Button>
                 </ButtonToolbar>
             </Content>

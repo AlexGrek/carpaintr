@@ -32,7 +32,7 @@ const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStart
             </div>
           })}
         </BottomStickyLayout>
-        <PrintCalculationDrawer show={printDrawerOpen} onClose={() => setPrintDrawerOpen(false)} calculationData={stageData.calculations || null} />
+        <PrintCalculationDrawer show={printDrawerOpen} onClose={() => setPrintDrawerOpen(false)} calculationData={stageData.parts || null} />
       </div>
     </div>
   );

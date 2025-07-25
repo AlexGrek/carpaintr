@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Message, InlineEdit, Panel, Stack } from 'rsuite';
 import './EvaluationResultsTable.css';
+import Trans from '../../localization/Trans';
+import { registerTranslations } from '../../localization/LocaleContext';
+
+registerTranslations("ua", {
+    "Name": "Найменування",
+    "Estimation": "Оцінка",
+    "Price": "Ціна",
+    "Sum": "Сума",
+    "Total": "Всього",
+});
+
 
 export const EvaluationResultsTable = ({ data, prices = {} }) => {
     const [priceState, setPriceState] = useState({ ...prices });
@@ -46,10 +57,10 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                             <thead>
                                 <tr>
                                     <th style={{ width: '40px' }}>#</th>
-                                    <th style={{ width: '100%' }}>Name</th>
-                                    <th>Estimation</th>
-                                    <th>Price</th>
-                                    <th>Sum</th>
+                                    <th style={{ width: '100%' }}><Trans>Name</Trans></th>
+                                    <th><Trans>Estimation</Trans></th>
+                                    <th><Trans>Price</Trans></th>
+                                    <th><Trans>Sum</Trans></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -73,7 +84,7 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                                     );
                                 })}
                                 <tr className="total-row">
-                                    <td colSpan={4} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total:</td>
+                                    <td colSpan={4} style={{ textAlign: 'right', fontWeight: 'bold' }}><Trans>Total</Trans>:</td>
                                     <td style={{ fontWeight: 'bold' }}>
                                         {entry.result
                                             .reduce((acc, row) => {

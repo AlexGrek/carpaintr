@@ -93,4 +93,11 @@ registerTranslations('ua', {
     "Error generating preview:": "Помилка при генерації попереднього перегляду:",
     "Failed to download PDF:": "Не вдалося завантажити PDF:",
     "Error downloading PDF:": "Помилка при завантаженні PDF:",
+
+    "New calculation": "Новий розрахунок",
+    "Finalize": "Таблиці",
+    "Body parts": "Деталі",
+    "Paint select": "Колір",
+    "Car select": "Автомобіль",
+    "Menu": "Розрахунок"
 });
