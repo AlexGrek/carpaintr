@@ -28,7 +28,7 @@ const ColorGrid = ({ colors, selectedColor, onChange }) => {
     if (color)
       return renderColor(color);
     else {
-      console.error(color);
+      // console.error(color);
       return <p>{JSON.stringify(color)}</p>
     }
   }

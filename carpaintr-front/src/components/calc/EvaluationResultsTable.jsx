@@ -42,10 +42,11 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
 
                 return (
                     <Panel key={index} bordered header={entry.name}>
-                        <table className="evaluation-table">
+                        <table className="evaluation-table modern">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th style={{ width: '40px' }}>#</th>
+                                    <th style={{ width: '100%' }}>Name</th>
                                     <th>Estimation</th>
                                     <th>Price</th>
                                     <th>Sum</th>
@@ -55,9 +56,9 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                                 {entry.result.map((row, i) => {
                                     const price = priceState[row.name] ?? 1;
                                     const sum = (row.estimation * price).toFixed(2);
-
                                     return (
                                         <tr key={i}>
+                                            <td>{i + 1}</td>
                                             <td title={row.tooltip || ''}>{row.name}</td>
                                             <td>{row.estimation}</td>
                                             <td>
@@ -71,6 +72,17 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                                         </tr>
                                     );
                                 })}
+                                <tr className="total-row">
+                                    <td colSpan={4} style={{ textAlign: 'right', fontWeight: 'bold' }}>Total:</td>
+                                    <td style={{ fontWeight: 'bold' }}>
+                                        {entry.result
+                                            .reduce((acc, row) => {
+                                                const price = priceState[row.name] ?? 1;
+                                                return acc + row.estimation * price;
+                                            }, 0)
+                                            .toFixed(2)}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </Panel>

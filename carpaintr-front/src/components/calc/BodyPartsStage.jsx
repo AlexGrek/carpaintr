@@ -7,6 +7,7 @@ import SelectionInput from "../SelectionInput";
 import ArrowBackIcon from '@rsuite/icons/ArrowBack';
 import CarBodyPartsSelector from "./CarBodyPartsSelector";
 import { authFetchYaml } from "../../utils/authFetch";
+import BottomStickyLayout from "../layout/BottomStickyLayout";
 
 
 const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
@@ -50,17 +51,20 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
   return (
     <div style={styles.sampleStage}>
       <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
-        <CarBodyPartsSelector
-          partsVisual={partsVisual}
-          selectedParts={selectedParts}
-          onChange={handleSetSelectedParts}
-          carClass={stageData['car'].carClass ?? null}
-          body={stageData['car'].bodyType ?? null} />
+        <BottomStickyLayout bottomPanel={
+          <HStack justifyContent="space-between">
+            <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
+            <Button onClick={handleClose} disabled={selectedParts === null || selectedParts.length === 0} color='green' appearance='primary'><Trans>Accept</Trans></Button>
+          </HStack>
+        }>
+          <CarBodyPartsSelector
+            partsVisual={partsVisual}
+            selectedParts={selectedParts}
+            onChange={handleSetSelectedParts}
+            carClass={stageData['car'].carClass ?? null}
+            body={stageData['car'].bodyType ?? null} />
+        </BottomStickyLayout>
       </div>
-      <HStack justifyContent="space-between">
-        <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
-        <Button onClick={handleClose} disabled={selectedParts === null || selectedParts.length === 0} color='green' appearance='primary'><Trans>Accept</Trans></Button>
-      </HStack>
     </div>
   );
 };

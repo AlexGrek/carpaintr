@@ -1,3 +1,4 @@
+import { isNumber } from "lodash";
 
 
 export const defaultProcessor = {
@@ -43,11 +44,19 @@ export function isEmptyOrWhitespace(str) {
 export function evaluate_processor(processor, stuff) {
     const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
     try {
+        
         const resultRows = processor.run(make_sandbox(), carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint);
+        console.log("Results row is: ", resultRows);
         let processedRows = resultRows.map((item) => {
             if (!isEmptyOrWhitespace(item.evaluate)) {
                 // evaluate!
-                return {...item, estimation: eval(item.evaluate.replace(",", "."))};
+                console.log("evaluating", item.evaluate.replace(",", "."));
+                let estimation = eval(item.evaluate.replace(",", "."));
+                console.log("result =", estimation);
+                if (!isNumber(estimation)) {
+                    estimation = "[error]"
+                }
+                return {...item, estimation: estimation};
             };
             return item;
         })

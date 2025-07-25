@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './ObjectBrowser.css'; // Custom CSS file for ObjectBrowser specific styles
+import jsyaml from 'js-yaml';
 
 // Recursive component to render object/array structure with expand/collapse
 const JsonViewer = ({ data, level = 0, initialExpanded = false, isRoot = false }) => {
@@ -105,8 +106,7 @@ const ObjectBrowser = ({ jsonObject }) => {
   // Placeholder for YAML conversion (you'd use js-yaml here)
   const getYaml = () => {
     try {
-      // return jsyaml.dump(jsonObject); // This is where js-yaml would go
-      return "YAML conversion (requires js-yaml)";
+      return jsyaml.dump(jsonObject); // This is where js-yaml would go
     } catch (e) {
       return `Error converting to YAML: ${e.message}`;
     }
