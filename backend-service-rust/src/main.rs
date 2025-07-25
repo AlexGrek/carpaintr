@@ -240,6 +240,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::attachments::get_att_metadata),
                 )
                 .route(
+                    "/processors_bundle",
+                    get(api::v1::calc::plugin_endpoints::get_all_plugins),
+                )
+                .route(
                     "/lookup_all_tables",
                     get(api::v1::calc::data_endpoints::lookup_all_tables),
                 )

@@ -1,6 +1,6 @@
 // FilesystemBrowser.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SelectPicker, Input, IconButton, InputGroup, Loader, Dropdown, Modal, Button } from 'rsuite';
 import {
     RefreshCw,
@@ -9,9 +9,10 @@ import {
     X,
     History,
     FileUp,
-    FilePlus,
     Table,
-    Folders
+    Folders,
+    Atom,
+    FileHeart
 } from 'lucide-react';
 import styled, { keyframes, css } from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
@@ -37,6 +38,7 @@ registerTranslations("ua",
         "File created successfully": "Файл успішно створено",
         "Failed to create file": "Не вдалося створити файл",
         "File systems": "Файлові системи",
+        "Create Processor": "Створити процесор"
     }
 );
 
@@ -126,6 +128,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     const [newFileName, setNewFileName] = useState('');
     const fileInputRef = useRef(null);
     const initialPathApplied = useRef(false);
+    const navigate = useNavigate();
 
     const currentFsConfig = useMemo(() => filesystems.find(fs => fs.name === selectedFsName), [filesystems, selectedFsName]);
 
@@ -293,6 +296,8 @@ const FilesystemBrowser = ({ filesystems }) => {
     const formattedDisplayPath = displayPath.length > 1 && displayPath.endsWith('/') ? displayPath.slice(0, -1) : displayPath;
     const fullFilePath = viewingFile ? [...currentPath, viewingFile].join('/') : currentPath.join('/');
 
+    
+
     // --- UPLOAD AND FILE CREATION LOGIC (Unchanged) ---
     const handleFileUpload = async (files) => {
         if (!currentFsConfig?.uploadEndpoint) {
@@ -414,13 +419,17 @@ const FilesystemBrowser = ({ filesystems }) => {
         if (eventKey === 'upload') fileInputRef.current?.click();
         else if (eventKey === 'create-table') { setNewFileType('csv'); setShowCreateModal(true); }
         else if (eventKey === 'create-datasource') { setNewFileType('yaml'); setShowCreateModal(true); }
+        else if (eventKey === "create-proc") {
+            navigate("/create-proc");
+        }
     };
 
     const renderMenu = () => (
         <>
             <Dropdown.Item eventKey="upload" icon={<FileUp size={16} />}>{str('Upload File')}</Dropdown.Item>
             <Dropdown.Item eventKey="create-table" icon={<Table size={16} />}>{str('Create Table')}</Dropdown.Item>
-            <Dropdown.Item eventKey="create-datasource" icon={<FilePlus size={16} />}>{str('Create Data Source')}</Dropdown.Item>
+            <Dropdown.Item eventKey="create-datasource" icon={<FileHeart size={16} />}>{str('Create Data Source')}</Dropdown.Item>
+            <Dropdown.Item eventKey="create-proc" icon={<Atom size={16} />}>{str('Create Processor')}</Dropdown.Item>
         </>
     );
 

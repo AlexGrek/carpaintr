@@ -1,0 +1,25 @@
+.evaluation-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.evaluation-table th,
+.evaluation-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.evaluation-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.evaluation-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.evaluation-table td:nth-child(3) {
+  min-width: 80px;
+}

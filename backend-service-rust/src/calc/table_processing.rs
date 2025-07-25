@@ -1,88 +1,15 @@
 use futures_util::future::join_all;
 use std::collections::HashMap;
-use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
+use std::ffi::OsStr;
+use std::path::PathBuf;
 use std::sync::LazyLock;
-use tokio::fs;
 
 use crate::calc::constants::*;
 use crate::errors::AppError;
 use crate::exlogging::log_event;
-use crate::utils::{
-    parse_csv_file_async_safe, user_catalog_directory_from_email, DataStorageCache, COMMON,
-};
+use crate::utils::{self, parse_csv_file_async_safe, DataStorageCache};
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
-
-/// Asynchronously reads the contents of a directory and returns a vector of relative file paths.
-///
-/// # Arguments
-///
-/// * `dir_path` - The path to the directory to read.
-///
-/// # Returns
-///
-/// A `Result` containing a vector of `PathBuf`s representing the relative paths of the files
-/// in the directory, or an `std::io::Error` if the directory cannot be read.
-async fn read_directory_contents(dir_path: &Path) -> std::io::Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    let mut reader = match fs::read_dir(dir_path).await {
-        Ok(reader) => reader,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(e) => return Err(e),
-    };
-
-    while let Some(entry) = reader.next_entry().await? {
-        let path = entry.path();
-        if path.is_file() {
-            paths.push(path);
-        }
-    }
-    Ok(paths)
-}
-
-/// Merges the contents of a "common" and a "user" directory.
-///
-/// Reads the file paths from both directories and merges them. If a file with the
-/// same name exists in both directories, the one from the "user" directory is kept.
-///
-/// # Arguments
-///
-/// * `common_dir` - The path to the "common" directory.
-/// * `user_dir` - The path to the "user" directory.
-///
-/// # Returns
-///
-/// A `Result` containing a vector of `PathBuf`s with the merged and unique file paths,
-/// or an `std::io::Error` if the "common" directory cannot be read.
-pub async fn merge_directories(
-    common_dir: &Path,
-    user_dir: &Path,
-) -> std::io::Result<Vec<PathBuf>> {
-    // Read the user directory first. If it doesn't exist, this will be an empty vec.
-    let user_files = read_directory_contents(user_dir).await?;
-
-    // Read the common directory. An error here will propagate.
-    let common_files = read_directory_contents(common_dir).await?;
-
-    let mut final_paths: HashMap<OsString, PathBuf> = HashMap::new();
-
-    // Insert common files first
-    for path in common_files {
-        if let Some(filename) = path.file_name() {
-            final_paths.insert(filename.to_os_string(), path);
-        }
-    }
-
-    // Insert user files, overwriting any common files with the same name
-    for path in user_files {
-        if let Some(filename) = path.file_name() {
-            final_paths.insert(filename.to_os_string(), path);
-        }
-    }
-
-    Ok(final_paths.into_values().collect())
-}
 
 pub const TABLES: &'static str = "tables";
 
@@ -90,19 +17,7 @@ pub async fn all_tables_list(
     data_dir: &PathBuf,
     user_email: &str,
 ) -> Result<Vec<PathBuf>, AppError> {
-    merge_directories(
-        &data_dir.join(COMMON).join(TABLES),
-        user_catalog_directory_from_email(data_dir, user_email)?
-            .join(TABLES)
-            .as_path(),
-    )
-    .await
-    .map(|lst| {
-        lst.into_iter()
-            .filter(|p| p.extension().map(|ext| ext == *CSV_EXT).unwrap_or(false))
-            .collect()
-    })
-    .map_err(|e| e.into())
+    utils::all_files_with_extension(data_dir, user_email, TABLES, &CSV_EXT).await
 }
 
 pub async fn lookup(
@@ -200,6 +115,7 @@ pub async fn lookup_part_in_table(
 ) -> Result<(String, Option<HashMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found = data.into_iter().find(|row| {
+        let debug_data: Vec<&String> = row.keys().into_iter().collect();
         if !row.contains_key(CAR_PART_DETAIL_RUS_FIELD) {
             return false;
         }
@@ -257,6 +173,8 @@ pub async fn lookup_part_in_table_any_type(
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::merge_directories;
+
     use super::*;
     use std::fs::File;
     use tempfile::tempdir;

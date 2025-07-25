@@ -9,6 +9,7 @@ import ComponentLoadingPage from './components/layout/ComponentLoadingPage.jsx';
 import CatalogPage from './components/pages/CatalogPage.jsx';
 import { useVersionCheck } from './version';
 import ErrorBoundary from './ErrorBoundary.jsx';
+import CreateProcPage from './components/pages/CreateProcPage.jsx';
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/dashboard" element={<UsersDashboard />} />
                 <Route path="/wip" element={<WipPage />} />
                 <Route path="/report" element={<ContactSupport />} />
+                <Route path="/create-proc" element={<CreateProcPage />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
