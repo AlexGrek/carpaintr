@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Button, Drawer, Steps, Divider, Panel, PanelGroup } from "rsuite";
+import { Button, Drawer, Steps, Divider, Panel, PanelGroup, VStack } from "rsuite";
 import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
@@ -15,6 +15,8 @@ import CalculationTable from "./CalculationTable";
 import { stripExt } from "../../utils/utils";
 import { evaluate_processor, make_sandbox, make_sandbox_extensions, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
+import ObjectBrowser from "../utility/ObjectBrowser";
+import BottomStickyLayout from "../layout/BottomStickyLayout";
 
 const exampleCalcFunction = (data) => {
     return data.map(item => ({
@@ -67,7 +69,7 @@ const carPartsTranslations = {
     "Right Front Fender": "Праве переднє крило"
 };
 
-const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVisual }) => {
+const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalculations, body, carClass, partsVisual }) => {
     const isMobile = useMediaQuery({ maxWidth: 767 });
 
     const { str } = useLocale();
@@ -302,8 +304,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
         setDrawerTab(0); // Reset tab for next open
     }, []);
 
-    const [calculations, setCalculations] = useState(null);
-
     useEffect(() => {
         /* {
                 action: null,
@@ -340,7 +340,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                 }
                 return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
             });
-            setCalculations(processorsEvaluated); // TODO: do table
+            setCalculations({ ...calculations, [drawerCurrentPart.name]: processorsEvaluated });
         }
     }, [drawerTab, drawerCurrentPart, carClass, body, processors])
 
@@ -437,7 +437,12 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                     </div>
                                 )}
                                 {drawerTab === 1 && (
-                                    <div>
+                                    <BottomStickyLayout bottomPanel={<VStack>
+                                        <Button color='green' appearance="primary" block onClick={() => setDrawerTab(2)}>
+                                            Розрахувати вартість
+                                        </Button>
+                                        <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
+                                    </VStack>}>
                                         <h4 className="body-parts-tab-header">Вкажіть зону ремонту</h4>
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <div>
@@ -455,20 +460,23 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                                 />
                                             </div>
                                         )}
-                                        <Divider />
-                                        <Button color='green' appearance="primary" block onClick={() => setDrawerTab(2)}>
-                                            Розрахувати вартість
-                                        </Button>
-                                        <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
-                                    </div>
+
+                                    </BottomStickyLayout>
                                 )}
                                 {drawerTab === 2 && (
-                                    <div>
+                                    <BottomStickyLayout bottomPanel={<VStack>
+                                        <Button color='blue' appearance="primary" block onClick={handleAddOrUpdatePart}>
+                                            Підтвердити та додати/оновити
+                                        </Button>
+                                        <Button appearance="subtle" block onClick={() => setDrawerTab(1)}>Повернутися до деталей</Button>
+                                    </VStack>}>
                                         <h3>Підсумок та розрахунки</h3>
                                         <EvaluationResultsTable
-                                            data={calculations}
+                                            data={calculations[drawerCurrentPart.name] || []}
                                         />
-                                        <p>Частина: <pre>{jsyaml.dump(drawerCurrentPart)}</pre></p>
+                                        <Panel shaded collapsible header="Дані">
+                                            <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />
+                                        </Panel>
                                         {/* Display other details from drawerCurrentPart */}
                                         {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                             <>
@@ -476,14 +484,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, body, carClass, partsVi
                                                 <p>Поза зоною ремонту: {outsideRepairZoneOptions[drawerCurrentPart.outsideRepairZone]}</p>
                                             </>
                                         )}
-                                        {/* Add more calculation details here */}
-                                        <Divider />
+                                    </BottomStickyLayout>
 
-                                        <Button color='blue' appearance="primary" block onClick={handleAddOrUpdatePart}>
-                                            Підтвердити та додати/оновити
-                                        </Button>
-                                        <Button appearance="subtle" block onClick={() => setDrawerTab(1)}>Повернутися до деталей</Button>
-                                    </div>
                                 )}
                             </div>
                         </div>

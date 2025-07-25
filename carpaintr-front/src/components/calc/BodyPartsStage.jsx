@@ -62,7 +62,9 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
             selectedParts={selectedParts}
             onChange={handleSetSelectedParts}
             carClass={stageData['car'].carClass ?? null}
-            body={stageData['car'].bodyType ?? null} />
+            body={stageData['car'].bodyType ?? null}
+            calculations={calculations}
+            setCalculations={setCalculations} />
         </BottomStickyLayout>
       </div>
     </div>

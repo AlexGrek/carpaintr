@@ -18,11 +18,11 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
     }
 
     return (
-        <Stack direction="column" spacing={20}>
+        <Stack direction="column" spacing={20} alignItems='stretch'>
             {data.map((entry, index) => {
                 if (!entry || typeof entry !== 'object') {
                     return (
-                        <Panel key={index} header={entry.name} >
+                        <Panel key={index} header={entry.name} style={{width: "100%"}}>
                             <Message type="error" showIcon>
                                 Invalid entry at index {index}
                             </Message>
@@ -32,7 +32,7 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
 
                 if (!entry.result) {
                     return (
-                        <Panel key={index} header={entry.name} >
+                        <Panel key={index} header={entry.name} style={{width: "100%", padding: "0"}}>
                             <Message key={index} type="error" showIcon>
                                 {entry.text || 'Unknown error'}
                             </Message>
@@ -41,7 +41,7 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                 }
 
                 return (
-                    <Panel key={index} bordered header={entry.name}>
+                    <Panel key={index} bordered header={entry.name} style={{width: "100%"}}>
                         <table className="evaluation-table modern">
                             <thead>
                                 <tr>
