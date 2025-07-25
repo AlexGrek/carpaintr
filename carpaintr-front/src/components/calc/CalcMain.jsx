@@ -3,7 +3,7 @@ import React from 'react';
 import './CarPaintEstimator.css';
 import './calc_translations';
 import StageView from '../layout/StageView';
-import { AppWindowMac, Car, CarFront, Paintbrush } from 'lucide-react';
+import { AppWindowMac, Car, CarFront, Paintbrush, Table2 } from 'lucide-react';
 import CalcMainMenuStage from './CalcMainMenuStage';
 
 const stages = [
@@ -30,6 +30,12 @@ const stages = [
         title: 'Body parts',
         icon: Car,
         component: React.lazy(() => import('./BodyPartsStage')),
+    },
+    {
+        name: 'tableStage',
+        title: 'Finalize',
+        icon: Table2,
+        component: React.lazy(() => import('./TableFinalStage')),
     },
 ]
 

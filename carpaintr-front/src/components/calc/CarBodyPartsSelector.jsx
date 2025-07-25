@@ -405,6 +405,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                     open={isDrawerOpen}
                     onClose={handleDrawerClose}
                     className="carBodyParts-drawer"
+                    backdrop='static'
                     size={isMobile ? "full" : "md"}
                 >
                     <Drawer.Header>
