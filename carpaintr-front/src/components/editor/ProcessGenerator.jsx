@@ -21,6 +21,7 @@ import {
     Header,
     Content,
     Schema,
+    Divider,
 } from 'rsuite';
 import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud } from 'lucide-react';
 import { authFetch } from '../../utils/authFetch';
@@ -34,15 +35,15 @@ registerTranslations("ua", {
     "You can make final manual edits below before uploading.": "Ви можете внести остаточні ручні зміни перед завантаженням.",
     "Back to Form": "Повернутись до форми",
     "Upload to Server": "Завантажити на сервер",
-    "Ordering Number": "Номер замовлення",
+    "Ordering Number": "Номер таблиці (порядок)",
     "Required Repair Types": "Необхідні типи ремонту",
     "Add Item": "Додати елемент",
     "JS expression for the value. E.g., `tableData[\"t1\"][\"field1\"]`": "JS-вираз для значення. Наприклад, `tableData[\"t1\"][\"field1\"]`",
     "Tooltip": "Підказка",
-    "Condition": "Умова",
+    "Condition": "Умова відображення",
     "Optional JS expression. If filled, wraps the row in an `if` block.": "Необов'язковий JS-вираз. Якщо заповнено, обгортає рядок у блок `if`.",
-    "Remove Clause": "Видалити результат",
-    "Add Row Clause": "Додати результат рядка",
+    "Remove Clause": "Видалити рядок виводу",
+    "Add Row Clause": "Додати рядок виводу",
     "Generate Code": "Згенерувати код",
     "Required Tables": "Необхідні таблиці",
     "Required Files": "Необхідні файли",
@@ -50,15 +51,21 @@ registerTranslations("ua", {
     "Processor Name": "Назва процесора",
     "Used for the object `name` and the filename (spaces become underscores).": "Використовується для імені об'єкта та назви файлу (пробіли замінюються на підкреслення).",
     "Category": "Категорія",
-    "Row Clause Section": "Секція результатів рядка",
-    "Variables": "Змінні",
-    "Evaluate": "Обчислити"
+    "Row Clause Section": "Секція рядків виводу",
+    "Variables": "Параметри",
+    "Evaluate": "Вираз для обчислення або значення",
 });
 
 
 // Helper for unique IDs in lists
 let clauseIdCounter = 0;
 const nextId = () => `clause_${Date.now()}_${clauseIdCounter++}`;
+
+const Variables = () => {
+    return <p style={{ fontFamily: 'monospace', fontSize: 'x-small', color: '#777', marginBottom: '1rem' }}>
+        <Trans>Variables</Trans>: (carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint)
+    </p>
+}
 
 // ==================================
 //      String List Editor
@@ -94,6 +101,7 @@ const StringListEditor = ({ value = [], onChange, label }) => {
             <Button appearance="ghost" onClick={handleAdd} startIcon={<PlusCircle size={16} />}>
                 <Trans>Add Item</Trans>
             </Button>
+            <Divider />
         </Form.Group>
     );
 };
@@ -134,11 +142,9 @@ const ClauseListEditor = ({ value = [], onChange }) => {
 
     return (
         <Panel header={str("Row Clause Section")} bordered>
-            <p style={{ fontFamily: 'monospace', color: '#777', marginBottom: '1rem' }}>
-                <Trans>Variables</Trans>: (carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint)
-            </p>
+            <Variables />
             {value.map((clause) => (
-                <Panel key={clause.id} bordered style={{ marginBottom: '10px' }}>
+                <Panel shaded key={clause.id} bordered style={{ marginBottom: '10px', backgroundColor: 'ghostwhite' }}>
                     <Form layout="horizontal">
                         <Form.Group>
                             <Form.ControlLabel><Trans>Name</Trans></Form.ControlLabel>
@@ -190,6 +196,7 @@ const ProcessorGenerator = () => {
         requiredTables: ['t1'],
         requiredRepairTypes: [],
         requiredFiles: [],
+        shouldRunCondition: "",
         clauses: [
             { id: nextId(), name: 'mount part', evaluate: 'tableData["t1"]["field1"]', tooltip: 'Just mount part', condition: '' },
             { id: nextId(), name: 'paint part (one side)', evaluate: 'tableData["t1"]["field2"]', tooltip: 'Just paint part', condition: 'repairAction == "paint_one_side"' },
@@ -204,7 +211,7 @@ const ProcessorGenerator = () => {
     ].map(item => ({ label: item, value: item }));
 
     const generateProcessorCode = useCallback(() => {
-        const { name, category, orderingNum, requiredTables, requiredRepairTypes, requiredFiles, clauses } = formData;
+        const { name, category, orderingNum, requiredTables, requiredRepairTypes, requiredFiles, clauses, shouldRunCondition } = formData;
 
         const renderClauses = () => {
             return clauses.map(clause => {
@@ -220,6 +227,9 @@ const ProcessorGenerator = () => {
 
         const code = `({
     name: "${name}",
+    shouldRun: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+        ${shouldRunCondition || "return true;"}
+    },
     run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
         // - init section -
         var output = [];
@@ -310,6 +320,23 @@ ${renderClauses()}
                         <Form.Control name="requiredRepairTypes" data={repairTypeOptions} accepter={TagPicker} style={{ width: '100%' }} />
                     </Form.Group>
 
+                    <Panel collapsible bordered header={str("Condition")}>
+                        <Form.Group>
+                            <Variables />
+                            <Form.ControlLabel><Trans>Condition</Trans></Form.ControlLabel>
+                            <Input
+                                as="textarea"
+                                rows={5}
+                                name="shouldRunCondition"
+                                value={formData.shouldRunCondition}
+                                onChange={value =>
+                                    setFormData({ ...formData, shouldRunCondition: value })
+                                }
+                                style={{ fontFamily: 'monospace', fontSize: '12px', marginBottom: '1rem' }}
+                            />
+                        </Form.Group>
+                    </Panel>
+
                     <StringListEditor
                         label={str("Required Tables")}
                         value={formData.requiredTables}
@@ -371,6 +398,7 @@ ${renderClauses()}
         category: StringType(),
         orderingNum: NumberType(),
         requiredTables: ArrayType(),
+        shouldRunCondition: StringType(),
         requiredRepairTypes: ArrayType(),
         requiredFiles: ArrayType(),
     });

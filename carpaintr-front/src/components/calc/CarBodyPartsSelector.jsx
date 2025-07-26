@@ -13,7 +13,7 @@ import './CarBodyPartsSelector.css';
 import jsyaml from 'js-yaml';
 import CalculationTable from "./CalculationTable";
 import { stripExt } from "../../utils/utils";
-import { evaluate_processor, make_sandbox, make_sandbox_extensions, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
+import { evaluate_processor, make_sandbox, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import ObjectBrowser from "../utility/ObjectBrowser";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
@@ -333,7 +333,11 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 paint: {} // TODO: make it useful
             };
 
-            let processorsEvaluated = processors.map((proc) => {
+            let processorsEvaluated = processors
+                .filter((proc) => {
+                    return should_evaluate_processor(proc, stuff);
+                })
+                .map((proc) => {
                 let missing = validate_requirements(proc, tdata);
                 if (missing == null) {
                     return evaluate_processor(proc, stuff)

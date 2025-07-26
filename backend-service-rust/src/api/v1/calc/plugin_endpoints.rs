@@ -55,7 +55,7 @@ where
 async fn bundle_plugins_for_user(
     user_email: &str,
     data_dir: &PathBuf,
-    cache: &DataStorageCache,
+    _cache: &DataStorageCache, // TODO: use cache
 ) -> Result<String, AppError> {
     let all_js_files = utils::all_files_with_extension(data_dir, user_email, PROCS, &JS_EXT).await?;
     Ok(bundle_plugins_as_array(all_js_files).await?)
