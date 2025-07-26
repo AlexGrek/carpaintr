@@ -58,6 +58,7 @@ export function should_evaluate_processor(processor, stuff) {
         console.error(e);
         return false;
     }
+}
 
 export function evaluate_processor(processor, stuff) {
     const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
