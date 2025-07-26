@@ -334,13 +334,14 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
             };
 
             let processorsEvaluated = processors
-                .filter((proc) => {
-                    return should_evaluate_processor(proc, stuff);
-                })
                 .map((proc) => {
                 let missing = validate_requirements(proc, tdata);
                 if (missing == null) {
-                    return evaluate_processor(proc, stuff)
+                    if (should_evaluate_processor(proc, stuff)) {
+                        return evaluate_processor(proc, stuff);
+                    } else {
+                        return "Condition not met to run processor " + proc.name;
+                    }
                 }
                 return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
             });
