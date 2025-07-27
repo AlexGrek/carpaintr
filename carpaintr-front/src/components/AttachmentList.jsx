@@ -11,7 +11,7 @@ const formatSize = (bytes) => {
 };
 
 const isImage = (filename) => /\.(png|jpe?g|gif|bmp|webp)$/i.test(filename);
-const isArchive = (filename) => /\.(zip|rar|7z)$/i.test(filename);
+const isArchive = (filename) => /\.(zip|rar|7z|xlsx|docx)$/i.test(filename);
 const isPDF = (filename) => /\.pdf$/i.test(filename);
 
 const AttachmentList = ({ attachments }) => {
