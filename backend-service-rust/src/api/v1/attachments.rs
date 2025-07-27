@@ -19,6 +19,7 @@ use axum::{
     Json,
 };
 use std::{path::PathBuf, sync::Arc};
+
 fn rename_file(original: &str, id: &str) -> String {
     // Find the last dot to separate filename and extension
     let (name, ext) = match original.rfind('.') {
@@ -39,7 +40,6 @@ fn rename_file(original: &str, id: &str) -> String {
         format!("{}__{}.{}", id, original_truncated, ext)
     }
 }
-
 
 pub async fn get_att_metadata(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -85,16 +85,26 @@ pub async fn get_att_file(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let user = if is_admin_async(&user_email, &app_state.admin_file_path).await? {
+    let support_access = is_admin_async(&user_email, &app_state.admin_file_path).await?;
+    let user = if support_access {
         None
     } else {
         Some(user_email.clone())
     };
     let data = try_get_by_id_checked_or_public(&app_state.db.attachments_tree, &id, user)?;
-    let user_path =
-        crate::utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
     match data {
         Some(handle) => {
+            let user_path = if support_access {
+                crate::utils::user_personal_directory_from_email(
+                    &app_state.data_dir_path,
+                    &handle.owner_user_email,
+                )?
+            } else {
+                crate::utils::user_personal_directory_from_email(
+                    &app_state.data_dir_path,
+                    &user_email,
+                )?
+            };
             let file: Vec<u8> = get_file_bytes_no_cache(&handle.file_path, &user_path).await?;
             let content_disposition = format!("attachment; filename=\"{}\"", handle.file_name);
 
