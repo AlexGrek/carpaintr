@@ -19,20 +19,18 @@ use axum::{
     Json,
 };
 use std::{path::PathBuf, sync::Arc};
-
 fn rename_file(original: &str, id: &str) -> String {
     // Find the last dot to separate filename and extension
     let (name, ext) = match original.rfind('.') {
         Some(dot_pos) => {
-            let name = &original[..dot_pos];
-            let extension = &original[dot_pos + 1..]; // Skip the dot
-            (name, extension)
+            let (name_part, ext_part) = original.split_at(dot_pos);
+            (name_part, &ext_part[1..]) // Skip the dot
         }
         None => (original, ""), // No extension found
     };
 
-    // Truncate the filename (without extension) to max 10 characters
-    let original_truncated = if name.len() > 20 { &name[..20] } else { name };
+    // Safely truncate the filename to 20 Unicode characters
+    let original_truncated: String = name.chars().take(20).collect();
 
     // Return formatted string with or without extension
     if ext.is_empty() {
@@ -41,6 +39,7 @@ fn rename_file(original: &str, id: &str) -> String {
         format!("{}__{}.{}", id, original_truncated, ext)
     }
 }
+
 
 pub async fn get_att_metadata(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
