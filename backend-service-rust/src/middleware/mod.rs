@@ -8,7 +8,7 @@ use axum::{
 };
 // Removed: use tower_http::handle_error::HandleErrorLayer; // Not used in this file
 
-use crate::{cache::license_cache::get_license_cache, errors::AppError, state::AppState};
+use crate::{auth::admin_check::is_admin_async, cache::license_cache::get_license_cache, errors::AppError, state::AppState};
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -87,13 +87,7 @@ pub async fn admin_check_middleware(
     req: Request<Body>,                               // Request<Body>
     next: Next,                                       // Next
 ) -> Result<Response, AppError> {
-    // Read admin list EVERY time as requested
-    let admins_file = File::open(&app_state.admin_file_path)
-        .map_err(|_| AppError::ConfigError("Could not open admins.txt".into()))?;
-    let reader = BufReader::new(admins_file);
-    let admins: HashSet<String> = reader.lines().filter_map(|line| line.ok()).collect();
-
-    if admins.contains(&user_email) {
+    if is_admin_async(&user_email, &app_state.admin_file_path).await? {
         Ok(next.run(req).await)
     } else {
         Err(AppError::AdminCheckFailed)

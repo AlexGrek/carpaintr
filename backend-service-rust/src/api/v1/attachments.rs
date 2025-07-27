@@ -1,4 +1,5 @@
 use crate::{
+    auth::admin_check::is_admin_async,
     db::attachment::{
         self, handle_attachment, list_all_attachments_for_all_users, list_all_attachments_for_user,
         try_get_by_id, try_get_by_id_checked, try_get_by_id_checked_or_public, AttachmentHandle,
@@ -31,7 +32,7 @@ fn rename_file(original: &str, id: &str) -> String {
     };
 
     // Truncate the filename (without extension) to max 10 characters
-    let original_truncated = if name.len() > 10 { &name[..10] } else { name };
+    let original_truncated = if name.len() > 20 { &name[..20] } else { name };
 
     // Return formatted string with or without extension
     if ext.is_empty() {
@@ -46,11 +47,12 @@ pub async fn get_att_metadata(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let data = try_get_by_id_checked_or_public(
-        &app_state.db.attachments_tree,
-        &id,
-        Some(user_email.clone()),
-    )?;
+    let user = if is_admin_async(&user_email, &app_state.admin_file_path).await? {
+        None
+    } else {
+        Some(user_email.clone())
+    };
+    let data = try_get_by_id_checked_or_public(&app_state.db.attachments_tree, &id, user)?;
     if data.is_none() {
         return Err(AppError::FileNotFound);
     }
@@ -84,11 +86,12 @@ pub async fn get_att_file(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let data = try_get_by_id_checked_or_public(
-        &app_state.db.attachments_tree,
-        &id,
-        Some(user_email.clone()),
-    )?;
+    let user = if is_admin_async(&user_email, &app_state.admin_file_path).await? {
+        None
+    } else {
+        Some(user_email.clone())
+    };
+    let data = try_get_by_id_checked_or_public(&app_state.db.attachments_tree, &id, user)?;
     let user_path =
         crate::utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
     match data {
