@@ -6,7 +6,7 @@ import { Content, Panel, Text, Message, Dropdown, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
-import { getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
+import { getCompanyInfo, fetchCompanyInfo, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
 import { BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
@@ -42,11 +42,6 @@ const Dashboard = () => {
     const { str, setLang } = useLocale();
 
     useEffect(() => {
-        if (getCompanyInfo() != null) {
-            setCompany(getCompanyInfo());
-            return;
-        }
-
         const reportError = (err) => {
             console.error(err);
             setMessage({ "type": "error", "title": str("Failed to get company info"), "message": `${err}` });
@@ -77,7 +72,7 @@ const Dashboard = () => {
             </Panel>
             <DashboardNavigationButtons />
         </Panel>
-        <AppVersionBadge/>
+        <AppVersionBadge />
     </Content>
 }
 

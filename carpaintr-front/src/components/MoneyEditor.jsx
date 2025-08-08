@@ -33,7 +33,9 @@ export default function MoneyEditor({ value, onChange, preferredCurrency }) {
         onChange={handleAmountChange}
         placeholder="0.00"
         style={{
-          borderColor: isAmountValid ? undefined : 'red'
+          borderColor: isAmountValid ? undefined : 'red',
+          color: isAmountValid ? undefined : 'red',
+          textAlign: 'right'
         }}
       />
       <InputPicker

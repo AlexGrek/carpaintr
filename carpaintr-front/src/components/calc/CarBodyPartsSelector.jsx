@@ -3,7 +3,7 @@ import { Button, Drawer, Steps, Divider, Panel, PanelGroup, VStack } from "rsuit
 import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
 import GridDraw from "./GridDraw";
-import { authFetch } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
+import { authFetch, getCompanyInfo, getOrFetchCompanyInfo } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
 import { useLocale } from "../../localization/LocaleContext";
 import ErrorMessage from "../layout/ErrorMessage";
@@ -77,6 +77,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
 
+    const [company, setCompany] = useState(null);
+
     const handleError = useCallback((reason) => {
         console.error(reason);
         const title = str("Error");
@@ -129,6 +131,13 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
     // Effect to fetch available car parts from the API
     useEffect(() => {
+        const updateCompanyInfo = async () => {
+            let info = await getOrFetchCompanyInfo();
+            if (info != null)
+                setCompany(info);
+        }
+        updateCompanyInfo();
+
         if (carClass == null || body == null) {
             return;
         }
@@ -336,16 +345,16 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
             let processorsEvaluated = processors
                 .map((proc) => {
-                let missing = validate_requirements(proc, tdata);
-                if (missing == null) {
-                    if (should_evaluate_processor(proc, stuff)) {
-                        return evaluate_processor(proc, stuff);
-                    } else {
-                        return "Condition not met to run processor " + proc.name;
+                    let missing = validate_requirements(proc, tdata);
+                    if (missing == null) {
+                        if (should_evaluate_processor(proc, stuff)) {
+                            return evaluate_processor(proc, stuff);
+                        } else {
+                            return "Condition not met to run processor " + proc.name;
+                        }
                     }
-                }
-                return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
-            });
+                    return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
+                });
             setCalculations({ ...calculations, [drawerCurrentPart.name]: processorsEvaluated });
         }
     }, [drawerTab, drawerCurrentPart, carClass, body, processors])
@@ -480,6 +489,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                                         <h3>Підсумок та розрахунки</h3>
                                         <EvaluationResultsTable
                                             data={calculations[drawerCurrentPart.name] || []}
+                                            currency={company.pricing_preferences.norm_price.currency}
                                         />
                                         <Panel shaded collapsible header="Дані">
                                             <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />

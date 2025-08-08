@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Navbar, Nav, Loader, Stack } from 'rsuite';
+import { Notification } from 'rsuite';
 import { SelectPicker } from "rsuite";
-import { useNavigate } from 'react-router-dom';
 import { authFetch, getCompanyInfo, fetchCompanyInfo } from '../../utils/authFetch';
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import Trans from '../../localization/Trans';
@@ -74,6 +73,7 @@ const LanguageMenu = () => {
         label: '🇺🇦 Українська', value: 'ua'
     }]
     return <div>
+        {message && <Notification header={message.title}>{message.message}</Notification>}
         <span><Trans>App language</Trans></span>
         <SelectPicker data={data} appearance="subtle" style={{ margin: "0 2pt" }} cleanable={false} searchable={false} onChange={handleSetLang} value={currentLang} />
         <br />

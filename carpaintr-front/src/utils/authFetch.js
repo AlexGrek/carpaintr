@@ -11,11 +11,11 @@ const performAuthFetch = async (url, options = {}) => {
     };
 
     const response = await fetch(url, { ...options, headers });
-    
+
     if (!response.ok) {
         throw new Error(`HTTP error ${response.status}`);
     }
-    
+
     return response;
 };
 
@@ -47,11 +47,11 @@ export const authFetchCsv = async (url, options = {}, onError = console.error) =
                 dynamicTyping: true,
                 skipEmptyLines: true
             });
-            
+
             if (result.errors.length > 0) {
                 onError(`CSV parse errors: ${result.errors.map(e => e.message).join(', ')}`);
             }
-            
+
             return result.data;
         } catch (csvError) {
             onError(`CSV parse error: ${csvError.message}`);
@@ -118,4 +118,14 @@ export const getCompanyInfo = () => {
 
 export const resetCompanyInfo = () => {
     localStorage.removeItem("company");
+}
+
+export const getOrFetchCompanyInfo = async () => {
+    let info = getCompanyInfo();
+    if (info != null) {
+        return info;
+    }
+
+    // have to fetch
+    return await fetchCompanyInfo();
 }

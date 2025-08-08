@@ -13,7 +13,7 @@ registerTranslations("ua", {
 });
 
 
-export const EvaluationResultsTable = ({ data, prices = {} }) => {
+export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => {
     const [priceState, setPriceState] = useState({ ...prices });
 
     const handlePriceChange = (name, value) => {
@@ -59,7 +59,7 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                                     <th style={{ width: '40px' }}>#</th>
                                     <th style={{ width: '100%' }}><Trans>Name</Trans></th>
                                     <th><Trans>Estimation</Trans></th>
-                                    <th><Trans>Price</Trans></th>
+                                    <th><Trans>Price</Trans>{currency && `(${currency})`}</th>
                                     <th><Trans>Sum</Trans></th>
                                 </tr>
                             </thead>
@@ -79,7 +79,7 @@ export const EvaluationResultsTable = ({ data, prices = {} }) => {
                                                     style={{ minWidth: 60 }}
                                                 />
                                             </td>
-                                            <td>{sum}</td>
+                                            <td><b>{sum}</b> {currency}</td>
                                         </tr>
                                     );
                                 })}
