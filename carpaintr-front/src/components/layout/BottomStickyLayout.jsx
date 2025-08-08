@@ -30,7 +30,7 @@ export default function BottomStickyLayout({ children, bottomPanel }) {
 
     return (
         <div className="layout-container fade-in-simple" ref={containerRef}>
-            <div className="layout-content">{children}</div>
+            <div className={`layout-content ${isSticky ? 'vscroll' : ''}`}>{children}</div>
 
             <div className={`layout-bottom-panel ${isSticky ? 'sticky' : 'attached'}`}>
                 {bottomPanel}

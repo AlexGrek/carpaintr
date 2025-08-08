@@ -26,6 +26,7 @@ const CarBodyPartDrawer = ({
     processors, // Pass this down
     carClass, // Pass this down
     body, // Pass this down
+    onSetIsCalculating
 }) => {
     const [drawerTab, setDrawerTab] = useState(0);
 
@@ -33,7 +34,15 @@ const CarBodyPartDrawer = ({
         if (drawerCurrentPart) {
             setDrawerTab(0);
         }
-    }, [drawerCurrentPart]); // The dependency array ensures this runs only when the part changes
+    }, [drawerCurrentPart]);
+
+    React.useEffect(() => {
+        if (drawerTab == 2) {
+            onSetIsCalculating(true);
+        } else {
+            onSetIsCalculating(false);
+        }
+    }, [drawerTab, onSetIsCalculating])
 
     if (!drawerCurrentPart) {
         return null;
@@ -73,7 +82,9 @@ const CarBodyPartDrawer = ({
                         )}
                         {drawerTab === 1 && (
                             <BottomStickyLayout bottomPanel={<VStack>
-                                <Button color='green' appearance="primary" block onClick={() => setDrawerTab(2)}>
+                                <Button color='green' appearance="primary" block onClick={() => {
+                                    setDrawerTab(2);
+                                }}>
                                     Розрахувати вартість
                                 </Button>
                                 <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
@@ -108,6 +119,7 @@ const CarBodyPartDrawer = ({
                                     <EvaluationResultsTable
                                         data={calculations[drawerCurrentPart.name] || []}
                                         currency={company.pricing_preferences.norm_price.currency}
+                                        basePrice={company.pricing_preferences.norm_price.amount}
                                     />
                                     <Panel shaded collapsible header="Дані">
                                         <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />

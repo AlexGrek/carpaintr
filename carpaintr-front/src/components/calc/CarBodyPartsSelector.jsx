@@ -1,36 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
-import { Button, Drawer, Steps, Divider, Panel, PanelGroup, VStack } from "rsuite";
+import { Button, Divider, Panel, PanelGroup } from "rsuite";
 import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
-import GridDraw from "./GridDraw";
-import { authFetch, getCompanyInfo, getOrFetchCompanyInfo } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
+import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
 import './CarBodyPartsSelector.css'
 import { useLocale } from "../../localization/LocaleContext";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from 'lucide-react';
-import MenuTree from "../layout/MenuTree";
 import './CarBodyPartsSelector.css';
-import jsyaml from 'js-yaml';
-import CalculationTable from "./CalculationTable";
 import { stripExt } from "../../utils/utils";
-import { evaluate_processor, make_sandbox, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
-import { EvaluationResultsTable } from "./EvaluationResultsTable";
-import ObjectBrowser from "../utility/ObjectBrowser";
-import BottomStickyLayout from "../layout/BottomStickyLayout";
+import { evaluate_processor, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import CarBodyPartDrawer from "./CarBodyPartDrawer";
-
-const exampleCalcFunction = (data) => {
-    return data.map(item => ({
-        operation: item.name,
-        estimation: item.hours,
-        price: item.hours * item.rate,
-    }));
-};
-
-const exampleData = [
-    { name: 'Welding', hours: 3, rate: 50 },
-    { name: 'Painting', hours: 2, rate: 40 },
-];
 
 const menuItems = [
     {
@@ -109,7 +88,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
     // Local state for the part being currently configured in the drawer
     const [drawerCurrentPart, setDrawerCurrentPart] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [drawerTab, setDrawerTab] = useState(0);
+    const [isCalculating, setIsCalculating] = useState(false);
 
     const outsideRepairZoneOptions = {
         "no": "без пошкоджень",
@@ -127,7 +106,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 .filter(partName => !currentlySelectedNames.has(partName));
             setUnselectedParts(newUnselected);
         }
-        // console.log(availableParts)
+        console.log(availableParts)
     }, [availableParts, selectedParts]); // Add selectedParts as a dependency
 
     // Effect to fetch available car parts from the API
@@ -237,7 +216,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 console.error("Error fetching car parts table data:", err);
                 handleError("Error fetching table data: " + err);
             });
-        return {};
+        return [];
     }, [body, carClass, handleError, tableDataRepository])
 
     useEffect(() => {
@@ -269,16 +248,12 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
         setDrawerCurrentPart(newPart);
         setIsDrawerOpen(true);
-        setDrawerTab(0); // Always start from the first tab
     }, [selectedParts, generateInitialGrid, mapVisual, getOrFetchTableData]);
 
     // Handler for updating the local drawerCurrentPart state
     const updateDrawerCurrentPart = useCallback((updates) => {
         setDrawerCurrentPart(prevPart => {
             const updatedPart = { ...prevPart, ...updates };
-            if (prevPart.action !== updatedPart.action && updatedPart.action !== null) {
-                setDrawerTab(1);
-            }
             return updatedPart;
         });
     }, []);
@@ -312,22 +287,11 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
     const handleDrawerClose = useCallback(() => {
         setIsDrawerOpen(false);
         setDrawerCurrentPart(null); // Clear local state when drawer is closed without submitting
-        setDrawerTab(0); // Reset tab for next open
     }, []);
 
     useEffect(() => {
-        /* {
-                action: null,
-                replace: false,
-                original: true,
-                damageLevel: 0,
-                name: partName,
-                grid: generateInitialGrid(mapVisual(partName ? partName : "")),
-                outsideRepairZone: null,
-                tableData: getOrFetchTableData(partName)
-            }; */
-        // const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
-        if (drawerCurrentPart && drawerTab == 2) {
+        if (drawerCurrentPart && isCalculating && company && drawerCurrentPart.tableData) {
+            console.log(drawerCurrentPart.tableData)
             const tdata = drawerCurrentPart.tableData.reduce((acc, item) => {
                 acc[item.name] = item.data;
                 return acc;
@@ -359,7 +323,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 });
             setCalculations({ ...calculations, [drawerCurrentPart.name]: processorsEvaluated });
         }
-    }, [drawerTab, drawerCurrentPart, carClass, body, processors])
+    }, [drawerCurrentPart, carClass, body, processors, isCalculating, company, setCalculations])
 
     return (
         <div className="car-body-parts-selector">
@@ -397,6 +361,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 processors={processors}
                 carClass={carClass}
                 body={body}
+                onSetIsCalculating={setIsCalculating}
             />
 
             <div>

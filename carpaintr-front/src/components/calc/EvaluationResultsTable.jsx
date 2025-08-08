@@ -13,7 +13,7 @@ registerTranslations("ua", {
 });
 
 
-export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => {
+export const EvaluationResultsTable = ({ data, prices = {}, currency = "", basePrice = 1 }) => {
     const [priceState, setPriceState] = useState({ ...prices });
 
     const handlePriceChange = (name, value) => {
@@ -66,7 +66,7 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                             </thead>
                             <tbody>
                                 {entry.result.map((row, i) => {
-                                    const price = priceState[row.name] ?? 1;
+                                    const price = priceState[row.name] ?? basePrice;
                                     const sum = (row.estimation * price).toFixed(2);
                                     return (
                                         <tr key={i}>
@@ -89,7 +89,7 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                                     <td><pre><b>
                                         {entry.result
                                             .reduce((acc, row) => {
-                                                const price = priceState[row.name] ?? 1;
+                                                const price = priceState[row.name] ?? basePrice;
                                                 return acc + row.estimation * price;
                                             }, 0)
                                             .toFixed(2)}

@@ -28,7 +28,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
     const displayColors = baseColors.rows;
 
     return (
-        <div className="vscroll">
+        <div>
             {displayColors.map((subgrid, index) => (
                 // Add a unique key for list rendering
                 <React.Suspense key={index} fallback={<Placeholder.Paragraph rows={6} />}>
