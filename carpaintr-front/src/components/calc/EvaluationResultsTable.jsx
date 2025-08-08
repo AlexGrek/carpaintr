@@ -56,11 +56,11 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                         <table className="evaluation-table modern">
                             <thead>
                                 <tr>
-                                    <th style={{ width: '40px' }}>#</th>
-                                    <th style={{ width: '100%' }}><Trans>Name</Trans></th>
+                                    <th style={{ width: '35px' }}>#</th>
+                                    <th style={{ width: '90%' }}><Trans>Name</Trans></th>
                                     <th><Trans>Estimation</Trans></th>
-                                    <th><Trans>Price</Trans>{currency && `(${currency})`}</th>
-                                    <th><Trans>Sum</Trans></th>
+                                    <th><Trans>Price</Trans> {currency && `(${currency})`}</th>
+                                    <th><Trans>Sum</Trans> {currency && `(${currency})`}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -69,29 +69,30 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                                     const sum = (row.estimation * price).toFixed(2);
                                     return (
                                         <tr key={i}>
-                                            <td>{i + 1}</td>
+                                            <td className='evaluation-table-cell-numeric'>{i + 1}</td>
                                             <td title={row.tooltip || ''}>{row.name}</td>
-                                            <td>{row.estimation}</td>
-                                            <td>
+                                            <td className='evaluation-table-cell-numeric'>{row.estimation}</td>
+                                            <td className='evaluation-table-cell-numeric'>
                                                 <InlineEdit
                                                     defaultValue={price}
                                                     onChange={(value) => handlePriceChange(row.name, value)}
                                                     style={{ minWidth: 60 }}
                                                 />
                                             </td>
-                                            <td><b>{sum}</b> {currency}</td>
+                                            <td className='evaluation-table-cell-numeric'>{sum}</td>
                                         </tr>
                                     );
                                 })}
                                 <tr className="total-row">
                                     <td colSpan={4} style={{ textAlign: 'right', fontWeight: 'bold' }}><Trans>Total</Trans>:</td>
-                                    <td style={{ fontWeight: 'bold' }}>
+                                    <td><pre><b>
                                         {entry.result
                                             .reduce((acc, row) => {
                                                 const price = priceState[row.name] ?? 1;
                                                 return acc + row.estimation * price;
                                             }, 0)
                                             .toFixed(2)}
+                                            </b> {currency}</pre>
                                     </td>
                                 </tr>
                             </tbody>

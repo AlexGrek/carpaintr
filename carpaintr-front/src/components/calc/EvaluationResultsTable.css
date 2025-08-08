@@ -4,11 +4,14 @@
   margin-top: 10px;
 }
 
+.evaluation-table th {
+  text-align: center;
+}
+
 .evaluation-table th,
 .evaluation-table td {
   border: 1px solid #ddd;
   padding: 8px;
-  text-align: left;
 }
 
 .evaluation-table th {
@@ -34,7 +37,7 @@
 
 .evaluation-table th,
 .evaluation-table td {
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 
 .evaluation-table th {
@@ -45,6 +48,10 @@
 
 .evaluation-table td {
   color: #444;
+}
+
+.evaluation-table-cell-numeric {
+  text-align: right !important;
 }
 
 .evaluation-table tr:hover {
