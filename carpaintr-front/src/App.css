@@ -55,6 +55,12 @@
   padding-right: 12px;
 }
 
+.vscroll {
+  max-height: 80vh;
+  padding: 4pt;
+  overflow-y: auto;
+}
+
 /* For mobile devices with a max-width of 767px */
 @media (max-width: 767px) {
   .some-padding-sides {
