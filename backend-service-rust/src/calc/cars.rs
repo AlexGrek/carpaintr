@@ -70,12 +70,15 @@ pub struct CarPart {
     pub type_field: String,
     
     #[serde(rename = "Список деталь рус")]
+    #[serde(default)]
     pub detail_rus: String,
     
     #[serde(rename = "Список деталь eng")]
+    #[serde(default)]
     pub detail_eng: String,
 
     #[serde(rename = "Список деталь укр")]
+    #[serde(default)]
     pub detail_ukr: String,
 }
 

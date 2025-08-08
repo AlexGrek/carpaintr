@@ -120,7 +120,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
             // Filter out parts that are already in selectedParts
             const currentlySelectedNames = new Set(selectedParts.map(p => p.name));
             const newUnselected = availableParts
-                .map(part => part["Список деталь рус"])
+                .map(part => part["Список деталь укр"])
                 .filter(partName => !currentlySelectedNames.has(partName));
             setUnselectedParts(newUnselected);
         }

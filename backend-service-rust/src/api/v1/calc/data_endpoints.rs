@@ -1,7 +1,10 @@
 use crate::{
     calc::{
-        car_class_to_body_type::CLASS_TYPE_MAPPING_FILE, cars::body_type_into_t1_entry,
-        seasons::get_current_season_info, table_processing::{lookup, lookup_no_type_class},
+        car_class_to_body_type::CLASS_TYPE_MAPPING_FILE,
+        cars::body_type_into_t1_entry,
+        constants::CAR_PART_DETAIL_UKR_FIELD,
+        seasons::get_current_season_info,
+        table_processing::{lookup, lookup_no_type_class},
     },
     errors::AppError,
     middleware::AuthenticatedUser,
@@ -164,7 +167,10 @@ pub async fn list_all_parts(
             .await
             .map_err(|e| AppError::IoError(e))?;
     let parsed = parse_csv_file_async_safe(&app_state.data_dir_path, &t1, &app_state.cache).await?;
-    Ok(Json(get_unique_values_iter(&parsed, "Список деталь рус")))
+    Ok(Json(get_unique_values_iter(
+        &parsed,
+        CAR_PART_DETAIL_UKR_FIELD,
+    )))
 }
 
 pub async fn get_global_file(

@@ -116,10 +116,10 @@ pub async fn lookup_part_in_table(
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found = data.into_iter().find(|row| {
         let debug_data: Vec<&String> = row.keys().into_iter().collect();
-        if !row.contains_key(CAR_PART_DETAIL_RUS_FIELD) {
+        if !row.contains_key(CAR_PART_DETAIL_UKR_FIELD) {
             return false;
         }
-        if row[CAR_PART_DETAIL_RUS_FIELD] != part {
+        if row[CAR_PART_DETAIL_UKR_FIELD] != part {
             return false;
         }
         if let Some(val) = row.get(CAR_PART_TYPE_FIELD) {
@@ -153,10 +153,10 @@ pub async fn lookup_part_in_table_any_type(
     let found: Vec<_> = data
         .into_iter()
         .filter(|row| {
-            if !row.contains_key(CAR_PART_DETAIL_RUS_FIELD) {
+            if !row.contains_key(CAR_PART_DETAIL_UKR_FIELD) {
                 return false;
             }
-            if row[CAR_PART_DETAIL_RUS_FIELD] != part {
+            if row[CAR_PART_DETAIL_UKR_FIELD] != part {
                 return false;
             }
             return true;
