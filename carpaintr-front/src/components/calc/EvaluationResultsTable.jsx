@@ -33,7 +33,7 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
             {data.map((entry, index) => {
                 if (!entry || typeof entry !== 'object') {
                     return (
-                        <Panel key={index} header={entry.name} style={{width: "100%"}}>
+                        <Panel key={index} header={entry.name} style={{ width: "100%" }}>
                             <Message type="error" showIcon>
                                 Invalid entry at index {index}
                             </Message>
@@ -43,7 +43,7 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
 
                 if (!entry.result) {
                     return (
-                        <Panel key={index} header={entry.name} style={{width: "100%", padding: "0"}}>
+                        <Panel key={index} header={entry.name} style={{ width: "100%", padding: "0" }}>
                             <Message key={index} type="error" showIcon>
                                 {entry.text || 'Unknown error'}
                             </Message>
@@ -52,7 +52,8 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                 }
 
                 return (
-                    <Panel key={index} bordered header={entry.name} style={{width: "100%"}}>
+                    <div key={index} style={{ width: "100%", marginBottom: "12px" }}>
+                        <h4>{entry.name}</h4>
                         <table className="evaluation-table modern">
                             <thead>
                                 <tr>
@@ -92,12 +93,12 @@ export const EvaluationResultsTable = ({ data, prices = {}, currency = "" }) => 
                                                 return acc + row.estimation * price;
                                             }, 0)
                                             .toFixed(2)}
-                                            </b> {currency}</pre>
+                                    </b> {currency}</pre>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-                    </Panel>
+                    </div>
                 );
             })}
         </Stack>

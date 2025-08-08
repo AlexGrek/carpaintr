@@ -3,6 +3,8 @@ import csv
 import yaml
 from collections import defaultdict
 
+# usage: python3 transmutate_csv_into_yaml.py tdvr.csv Деталь "Вид ремонта" > data/common/global/parts_repair_types.yaml
+
 def clean(value):
     return str(value).strip()
 

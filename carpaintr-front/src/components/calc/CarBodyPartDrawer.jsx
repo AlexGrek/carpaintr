@@ -50,31 +50,26 @@ const CarBodyPartDrawer = ({
             <Drawer.Header>
                 <Drawer.Title>{drawerCurrentPart.name}</Drawer.Title>
             </Drawer.Header>
-            <Drawer.Body>
+            <Drawer.Body className="no-padding-sides">
                 <div>
-                    <Steps current={drawerTab} small style={{ color: "black" }}>
-                        <Steps.Item icon={<Focus />} title="Тип ремонту" />
-                        <Steps.Item icon={<Grid2x2X />} title="Деформації" />
-                        <Steps.Item icon={<Grid2x2Plus />} title="Пошкодження" />
-                        <Steps.Item icon={<Handshake />} title="Розрахунки" />
-                    </Steps>
                     <div className="drawer-tabs-container">
                         {drawerTab === 0 && (
-                            <div className="carousel-page fade-in-expand-simple">
-                                <h4 className="body-parts-tab-header">Оберіть дію</h4>
-                                <MenuTree items={menuItems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} />
-                                <Divider />
-                                <Button
-                                    color='green'
-                                    appearance="primary"
-                                    block
-                                    onClick={() => setDrawerTab(1)}
-                                    disabled={!drawerCurrentPart.action} // Disable if no action selected
-                                >
-                                    Далі
-                                </Button>
-                                {/* <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(drawerCurrentPart)}</pre></p> */}
-                            </div>
+                            <BottomStickyLayout bottomPanel={<Button
+                                color='green'
+                                appearance="primary"
+                                block
+                                onClick={() => setDrawerTab(1)}
+                                disabled={!drawerCurrentPart.action} // Disable if no action selected
+                            >
+                                Далі
+                            </Button>}>
+                                <div className="some-padding-sides carousel-page fade-in-expand-simple">
+                                    <h4 className="body-parts-tab-header">Оберіть дію</h4>
+                                    <MenuTree items={menuItems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} />
+                                    <Divider />
+                                    {/* <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(drawerCurrentPart)}</pre></p> */}
+                                </div>
+                            </BottomStickyLayout>
                         )}
                         {drawerTab === 1 && (
                             <BottomStickyLayout bottomPanel={<VStack>
@@ -85,7 +80,7 @@ const CarBodyPartDrawer = ({
                             </VStack>}>
                                 <h4 className="body-parts-tab-header">Вкажіть зону ремонту</h4>
                                 {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
-                                    <div>
+                                    <div className="some-padding-sides">
                                         <GridDraw
                                             gridData={drawerCurrentPart.grid}
                                             visual={mapVisual(drawerCurrentPart.name)}
@@ -109,14 +104,15 @@ const CarBodyPartDrawer = ({
                                 </Button>
                                 <Button appearance="subtle" block onClick={() => setDrawerTab(1)}>Повернутися до деталей</Button>
                             </VStack>}>
-                                <h3>Підсумок та розрахунки</h3>
-                                <EvaluationResultsTable
-                                    data={calculations[drawerCurrentPart.name] || []}
-                                    currency={company.pricing_preferences.norm_price.currency}
-                                />
-                                <Panel shaded collapsible header="Дані">
-                                    <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />
-                                </Panel>
+                                <div className="some-padding-sides"><h3>Підсумок та розрахунки</h3>
+                                    <EvaluationResultsTable
+                                        data={calculations[drawerCurrentPart.name] || []}
+                                        currency={company.pricing_preferences.norm_price.currency}
+                                    />
+                                    <Panel shaded collapsible header="Дані">
+                                        <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />
+                                    </Panel>
+                                </div>
                                 {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
                                     <>
                                         <p>Зона пошкодження: {drawerCurrentPart.grid && drawerCurrentPart.grid.flat().filter(cell => cell === 1).length} клітинок</p>

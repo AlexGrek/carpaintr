@@ -8,15 +8,15 @@
 }
 
 .police-line {
-  width: 100%; /* Full viewport width */
-  height: 50px; /* Adjust the height as needed */
-  background: repeating-linear-gradient(
-    45deg,
-    yellow 0,
-    yellow 25px,
-    black 25px,
-    black 50px
-  );
+  width: 100%;
+  /* Full viewport width */
+  height: 50px;
+  /* Adjust the height as needed */
+  background: repeating-linear-gradient(45deg,
+      yellow 0,
+      yellow 25px,
+      black 25px,
+      black 50px);
   border-radius: 8pt;
 }
 
@@ -37,56 +37,80 @@
 }
 
 .blurred-background {
-  backdrop-filter: blur(8px);       /* Blur the background behind the element */
-  -webkit-backdrop-filter: blur(8px); /* Safari support */
-  opacity: 0.8;                     /* Make the whole element semi-transparent */
+  backdrop-filter: blur(8px);
+  /* Blur the background behind the element */
+  -webkit-backdrop-filter: blur(8px);
+  /* Safari support */
+  opacity: 0.8;
+  /* Make the whole element semi-transparent */
+}
+
+.no-padding-sides {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.some-padding-sides {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* For mobile devices with a max-width of 767px */
+@media (max-width: 767px) {
+  .some-padding-sides {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
 }
 
 .fade-in-expand-simple {
   opacity: 0;
   max-height: 0;
-  overflow: hidden; /* This is crucial to prevent content from overflowing during the animation */
+  overflow: hidden;
+  /* This is crucial to prevent content from overflowing during the animation */
   animation: fadeInExpand 250ms ease-out forwards;
 }
 
 @keyframes fadeInExpand {
   to {
     opacity: 1;
-    max-height: 100vh; /* Or any other large value that's guaranteed to be greater than the content's height */
+    max-height: 100vh;
+    /* Or any other large value that's guaranteed to be greater than the content's height */
   }
 }
 
 /* Gemini: styles for css editor */
 .rdg-light {
-    --rdg-background-color: #fff;
-    --rdg-header-background-color: #f8f9fa;
-    --rdg-row-hover-background-color: #e0e0e0;
-    --rdg-selection-color: #66afe9;
-    --rdg-border-color: #dee2e6;
-    --rdg-font-size: 13px;
-    --rdg-cell-padding: 8px;
-    --rdg-highlight-color: #d1eaff;
+  --rdg-background-color: #fff;
+  --rdg-header-background-color: #f8f9fa;
+  --rdg-row-hover-background-color: #e0e0e0;
+  --rdg-selection-color: #66afe9;
+  --rdg-border-color: #dee2e6;
+  --rdg-font-size: 13px;
+  --rdg-cell-padding: 8px;
+  --rdg-highlight-color: #d1eaff;
 }
 
 .rdg-cell {
-    border-right: 1px solid var(--rdg-border-color);
-    border-bottom: 1px solid var(--rdg-border-color);
-    /* Ensure text in cells doesn't wrap unnecessarily */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  border-right: 1px solid var(--rdg-border-color);
+  border-bottom: 1px solid var(--rdg-border-color);
+  /* Ensure text in cells doesn't wrap unnecessarily */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rdg-header-row .rdg-cell {
-    border-bottom: 1px solid var(--rdg-border-color);
-    font-weight: bold;
+  border-bottom: 1px solid var(--rdg-border-color);
+  font-weight: bold;
 }
 
 .rdg-row {
-    border-bottom: 1px solid var(--rdg-border-color);
+  border-bottom: 1px solid var(--rdg-border-color);
 }
 
 /* Ensure the header row doesn't have extra padding */
 .rdg-header-row {
-    padding-right: var(--rdg-scrollbar-size, 0px); /* Adjust for scrollbar if present */
+  padding-right: var(--rdg-scrollbar-size, 0px);
+  /* Adjust for scrollbar if present */
 }

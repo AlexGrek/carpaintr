@@ -12,9 +12,12 @@
 
 .layout-bottom-panel {
     padding: 1rem;
-    background-color: #f8f8f8;
+    background-image: linear-gradient(to bottom, #f8f8f8, rgba(248, 248, 248, 0));
     border-top: 1px solid #ccc;
     transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    /* Blur the background behind the element */
+    -webkit-backdrop-filter: blur(8px);
 }
 
 /* Sticky mode: fixed at bottom */
