@@ -53,6 +53,7 @@ const menuItems = [
         ],
     },
     { label: 'Заміна без фарбування', value: 'replace_no_paint' },
+    { label: 'Розтонування', value: 'toning' },
 ];
 
 // Translations for car parts
