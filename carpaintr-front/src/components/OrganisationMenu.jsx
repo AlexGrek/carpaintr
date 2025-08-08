@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useLocale, registerTranslations } from '../localization/LocaleContext';
 import { fetchCompanyInfo, authFetch } from '../utils/authFetch';
-import { Button, Divider, Input, Text, Message, InputGroup } from 'rsuite';
+import { Button, Divider, Input, Text, Message } from 'rsuite';
 import Trans from '../localization/Trans';
 import MoneyEditor from './MoneyEditor';
 
@@ -9,7 +9,9 @@ registerTranslations("ua",
     {
         "Company name": "Назва компанії",
         "Company address": "Адреса компанії",
-        "Save changes": "Зберегти зміни"
+        "Save changes": "Зберегти зміни",
+        "Norm price": "Ціна нормогодини",
+        "Preferred currency": "Валюта"
     }
 );
 
@@ -36,7 +38,7 @@ const OrganisationMenu = () => {
         }
 
         await pushAsync();
-    }, [])
+    }, [setLang])
 
     const handleSave = useCallback(async () => await save(company), [company, save])
 
