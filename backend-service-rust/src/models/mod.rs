@@ -1,7 +1,10 @@
 pub mod calculations;
 pub mod requests;
 
-use crate::license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest};
+use crate::{
+    license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest},
+    utils::money::MoneyWithCurrency,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid; // Import new structs
@@ -46,8 +49,30 @@ fn default_lang() -> String {
     "ua".to_string()
 }
 
+fn default_currency() -> String {
+    MoneyWithCurrency::default().currency
+}
+
 fn default_empty_string() -> String {
     "".to_string()
+}
+
+// Struct to represent the company information stored in company.json
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PricingPreferences {
+    #[serde(default = "default_currency")]
+    pub preferred_currency: String,
+    #[serde(default)]
+    pub norm_price: MoneyWithCurrency,
+}
+
+impl Default for PricingPreferences {
+    fn default() -> Self {
+        Self {
+            preferred_currency: default_currency(),
+            norm_price: MoneyWithCurrency::default(),
+        }
+    }
 }
 
 // Struct to represent the company information stored in company.json
@@ -66,6 +91,10 @@ pub struct CompanyInfo {
 
     #[serde(default = "default_lang")]
     pub lang_output: String,
+
+    // money stuff
+    #[serde(default)]
+    pub pricing_preferences: PricingPreferences,
 }
 
 #[derive(Debug, Serialize)]

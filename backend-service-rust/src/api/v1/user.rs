@@ -6,7 +6,7 @@ use crate::{
         read_license_file_by_name, save_license_file, LicenseData,
     },
     middleware::AuthenticatedUser,
-    models::CompanyInfo,
+    models::{CompanyInfo, PricingPreferences},
     state::AppState,
     utils, // Import the new CompanyInfo struct
 };
@@ -119,6 +119,7 @@ pub async fn find_or_create_company_info(
             current_time: Utc::now(),
             lang_output: "ua".into(),
             lang_ui: "ua".into(),
+            pricing_preferences: PricingPreferences::default()
         };
 
         let dummy_json = serde_json::to_string_pretty(&dummy_info).map_err(|e| {

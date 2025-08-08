@@ -27,6 +27,8 @@ use crate::errors::AppError;
 use crate::exlogging::log_event;
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
+pub mod money;
+
 pub const COMMON: &'static str = "common";
 pub const USERS: &'static str = "users";
 pub const USERS_DELETED: &'static str = "deleted_users";

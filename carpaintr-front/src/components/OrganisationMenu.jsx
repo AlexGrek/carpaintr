@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useLocale, registerTranslations } from '../localization/LocaleContext';
 import { fetchCompanyInfo, authFetch } from '../utils/authFetch';
-import { Button, Divider, Input, Text, Message } from 'rsuite';
+import { Button, Divider, Input, Text, Message, InputGroup } from 'rsuite';
 import Trans from '../localization/Trans';
+import MoneyEditor from './MoneyEditor';
 
 registerTranslations("ua",
     {
@@ -37,7 +38,7 @@ const OrganisationMenu = () => {
         await pushAsync();
     }, [])
 
-    const handleSave = useCallback(async () => await save(company), [company])
+    const handleSave = useCallback(async () => await save(company), [company, save])
 
     useEffect(() => {
         const reportError = (err) => {
@@ -68,6 +69,18 @@ const OrganisationMenu = () => {
         <Text><Trans>Company address</Trans></Text>
         {company &&
             <Input value={company.company_addr} onChange={(value) => setCompany({ ...company, company_addr: value })}></Input>
+        }
+        <Divider></Divider>
+        <Text><Trans>Preferred currency</Trans></Text>
+        {company &&
+            <Input value={company.pricing_preferences.preferred_currency} onChange={(value) => setCompany({ ...company, pricing_preferences: { ...company.pricing_preferences, preferred_currency: value } })}></Input>
+        }
+        <Text><Trans>Norm price</Trans></Text>
+        {company &&
+            <MoneyEditor
+                preferredCurrency={company.pricing_preferences.preferred_currency}
+                value={company.pricing_preferences.norm_price}
+                onChange={(value) => setCompany({ ...company, pricing_preferences: { ...company.pricing_preferences, norm_price: value } })} />
         }
         <Divider></Divider>
         <Button appearance='primary' onClick={handleSave} disabled={company == null}><Trans>Save changes</Trans></Button>
