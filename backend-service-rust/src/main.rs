@@ -12,13 +12,7 @@ use axum::{
 use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 
 use crate::{
-    auth::Auth,
-    cache::license_cache::LicenseCache,
-    cleanup::cleanup_task,
-    db::users::AppDb,
-    middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
-    state::AppState,
-    utils::DataStorageCache,
+    api::v1::admin::{generate_invite_handler, list_archived_invite_handler, list_invite_handler}, auth::Auth, cache::license_cache::LicenseCache, cleanup::cleanup_task, db::users::AppDb, middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware}, state::AppState, utils::DataStorageCache
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
@@ -160,6 +154,9 @@ async fn main() -> tokio::io::Result<()> {
                     post(api::v1::license::invalidate_license_cache_admin),
                 )
                 .route("/license/generate", post(generate_license_handler))
+                .route("/invite/generate", post(generate_invite_handler))
+                .route("/invite/list", get(list_invite_handler))
+                .route("/invite/list_archived", get(list_archived_invite_handler))
                 .route(
                     "/license/list/{user_email}",
                     get(list_user_licenses_handler),

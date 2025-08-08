@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Nav, Container, Dropdown, Loader } from 'rsuite';
+import { Nav, Container, Dropdown, Loader, Placeholder } from 'rsuite';
 import { Menu } from 'lucide-react';
 import { useMediaQuery } from 'react-responsive';
 import {
@@ -14,6 +14,7 @@ import {
 const CreateUser = lazy(() => import('./CreateUser'));
 const ManageUsers = lazy(() => import('./ManageUsers'));
 const ServerLogs = lazy(() => import('./ServerLogs'));
+const InvitesPanel = lazy(() => import('./license/InvitesPanel'));
 const AdminPanelRequests = lazy(() => import('./admreq/AdminPanelRequests'));
 const FilesystemBrowser = lazy(() => import('./editor/FilesystemBrowser'));
 const ServerStatus = lazy(() => import('./ServerStatus'));
@@ -59,14 +60,19 @@ const AdminTools = () => {
   // sections array can be memoized with useMemo if it were more complex, but it's fine here.
   const sections = [
     {
-      path: 'add-user',
-      title: 'Додати користувача',
-      component: <CreateUser />
+      path: 'home',
+      title: 'Меню',
+      component: <Placeholder.Paragraph />
     },
     {
       path: 'manage-users',
       title: 'Керування користувачами',
       component: <ManageUsers />
+    },
+    {
+      path: 'invites',
+      title: 'Запрошення',
+      component: <InvitesPanel />
     },
     {
       path: 'logs',
@@ -86,7 +92,7 @@ const AdminTools = () => {
     {
       path: 'files',
       title: 'Файли',
-      component: <FilesystemBrowser filesystems={adminFilesystemConfig}/>
+      component: <FilesystemBrowser filesystems={adminFilesystemConfig} />
     }
   ];
 
@@ -94,7 +100,7 @@ const AdminTools = () => {
     if (isMobile) {
       return (
         <Dropdown
-          title={<Menu/>}
+          title={<Menu />}
           trigger="click"
           placement="bottomStart"
           style={{ marginBottom: '20px' }}
@@ -124,7 +130,7 @@ const AdminTools = () => {
       {renderNav()}
 
       <Container>
-        <Suspense fallback={<Loader/>}>
+        <Suspense fallback={<Loader />}>
           <Routes>
             <Route index element={<CreateUser />} />
             {sections.map(section => (

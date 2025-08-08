@@ -8,6 +8,7 @@ use crate::{
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub mod admin_check;
+pub mod invite;
 
 // Token expiration time (e.g., 7 days)
 const ONE_WEEK: usize = 60 * 60 * 24 * 7;

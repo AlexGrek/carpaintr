@@ -1,8 +1,16 @@
-use axum::{extract::{State, Json}, http::StatusCode, response::IntoResponse};
-use std::sync::Arc;
 use crate::{
-    errors::AppError, middleware::AuthenticatedUser, models::{ImpersonateRequest, LoginRequest, LoginResponse, RegisterRequest, User}, state::AppState
+    auth::invite::process_invite,
+    errors::AppError,
+    middleware::AuthenticatedUser,
+    models::{ImpersonateRequest, LoginRequest, LoginResponse, RegisterRequest, User},
+    state::AppState,
 };
+use axum::{
+    extract::{Json, State},
+    http::StatusCode,
+    response::IntoResponse,
+};
+use std::sync::Arc;
 use uuid::Uuid;
 
 pub async fn register(
@@ -19,7 +27,21 @@ pub async fn register(
 
     app_state.db.insert_user(&user)?;
 
-    log::info!("Auth event -> {}", format!("User with ID {:?} created: {}", &user.id, &user.email));
+    log::info!(
+        "Register event -> {}",
+        format!("User with ID {:?} created: {}", &user.id, &user.email)
+    );
+
+    if !req.invite.is_empty() {
+        log::info!(
+            "Using invite {}",
+            format!(
+                "User with ID {:?} email {:?} used invite code: {}",
+                &user.id, &user.email, &req.invite
+            )
+        );
+        process_invite(&req.email, &req.invite, &app_state).await?;
+    }
 
     Ok(StatusCode::OK)
 }
@@ -28,16 +50,24 @@ pub async fn login(
     State(app_state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let user = app_state.db.find_user_by_email(&req.email)?
+    let user = app_state
+        .db
+        .find_user_by_email(&req.email)?
         .ok_or(AppError::InvalidCredentials)?;
 
-    if !app_state.auth.verify_password(&req.password, &user.password_hash)? {
+    if !app_state
+        .auth
+        .verify_password(&req.password, &user.password_hash)?
+    {
         return Err(AppError::InvalidCredentials);
     }
 
     let token = app_state.auth.create_token(&user.email)?;
 
-    log::info!("Auth event -> {}", format!("User logged in: {}", &user.email));
+    log::info!(
+        "Auth event -> {}",
+        format!("User logged in: {}", &user.email)
+    );
 
     Ok(Json(LoginResponse { token }))
 }
@@ -47,12 +77,17 @@ pub async fn impersonate(
     State(app_state): State<Arc<AppState>>,
     Json(req): Json<ImpersonateRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let user = app_state.db.find_user_by_email(&req.email)?
+    let user = app_state
+        .db
+        .find_user_by_email(&req.email)?
         .ok_or(AppError::InvalidCredentials)?;
 
     let token = app_state.auth.create_token(&user.email)?;
 
-    log::info!("Impersonation event -> {}", format!("User impersonated in: {}", &user.email));
+    log::info!(
+        "Impersonation event -> {}",
+        format!("User impersonated in: {}", &user.email)
+    );
 
     Ok(Json(LoginResponse { token }))
 }

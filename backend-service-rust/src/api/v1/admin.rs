@@ -1,4 +1,5 @@
 use crate::{
+    auth::invite::{create_invite, list_active_invites, list_archived_invites},
     errors::AppError,
     exlogging::{get_latest_log_lines, get_latest_logs},
     license_manager::{
@@ -9,7 +10,10 @@ use crate::{
         save_license_file, // Import new functions
     },
     middleware::AuthenticatedUser,
-    models::{license_requests::GenerateLicenseRequest, AdminStatus, ManageUserRequest},
+    models::{
+        invite::GenerateInviteRequest, license_requests::GenerateLicenseRequest, AdminStatus,
+        ManageUserRequest,
+    },
     state::AppState,
     utils::delete_user_data_gracefully,
 };
@@ -67,6 +71,41 @@ pub async fn generate_license_handler(
         "License generated and saved for {}.",
         user_email
     )))
+}
+
+// Handler for generating invite files
+pub async fn generate_invite_handler(
+    AuthenticatedUser(admin_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    AxumJson(request): AxumJson<GenerateInviteRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let invite = create_invite(
+        request.evaluation_license_duration_days,
+        request.usage_policy,
+        &admin_email,
+        &app_state,
+    )
+    .await?;
+    // Return the generated invite
+    Ok(Json(invite))
+}
+
+pub async fn list_invite_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let invites = list_active_invites(&app_state).await?;
+    // Return the generated invite
+    Ok(Json(invites))
+}
+
+pub async fn list_archived_invite_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let invites = list_archived_invites(&app_state).await?;
+    // Return the generated invite
+    Ok(Json(invites))
 }
 
 // New handler to list all license files for a specific user (admin only)

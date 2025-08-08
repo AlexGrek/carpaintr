@@ -1,5 +1,6 @@
 pub mod calculations;
 pub mod requests;
+pub mod invite;
 
 use crate::{
     license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest},
@@ -20,6 +21,8 @@ pub struct User {
 pub struct RegisterRequest {
     pub email: String,
     pub password: String,
+    #[serde(default)]
+    pub invite: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

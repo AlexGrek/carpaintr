@@ -8,6 +8,7 @@ const RegistrationPage = () => {
   // State for email, password, and loading status
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [invite, setInvite] = useState('');
   const [loading, setLoading] = useState(false);
 
   // rsuite toaster for displaying messages
@@ -25,7 +26,7 @@ const RegistrationPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send email and password in the request body as JSON
-        body: JSON.stringify({ email: email, password: password })
+        body: JSON.stringify({ email: email, password: password, invite: invite })
       });
 
       // Check if the response was successful (status code 2xx)
@@ -69,6 +70,11 @@ const RegistrationPage = () => {
             <Form.ControlLabel>Пароль</Form.ControlLabel>
             {/* Input field for password, type="password" to mask input */}
             <Input type="password" value={password} onChange={value => setPassword(value)} />
+          </Form.Group>
+          <Form.Group>
+            <Form.ControlLabel>Код запрошення (необов'язково)</Form.ControlLabel>
+            {/* Input field for password, type="password" to mask input */}
+            <Input value={invite} onChange={value => setInvite(value)} />
           </Form.Group>
           {/* Form group for the registration button */}
           <Form.Group>
