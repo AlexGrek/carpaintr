@@ -5,7 +5,7 @@ set -e
 
 # Define source and target directories.
 # INITIAL_DATA is the source directory containing initial data.
-INITIAL_DATA="/var/initialdata"
+INITIAL_DATA="/var/initialdata/common"
 # TARGET is the destination directory, typically mounted as a volume,
 # where data will be copied. This variable is expected to be set
 # as an environment variable in the Docker container, e.g., DATA_DIR_PATH.
