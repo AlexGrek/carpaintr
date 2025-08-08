@@ -95,7 +95,7 @@ const StringListEditor = ({ value = [], onChange, label }) => {
         <Form.Group>
             <Form.ControlLabel>{label}</Form.ControlLabel>
             {value.map((item, index) => (
-                <Stack className='fade-in-simple' key={index} spacing={6} style={{ marginBottom: '5px' }}>
+                <Stack className='fade-in-expand-simple' key={index} spacing={6} style={{ marginBottom: '5px' }}>
                     <Input value={item} onChange={(val) => handleChange(val, index)} />
                     <Whisper placement="top" speaker={<Tooltip><Trans>Duplicate</Trans></Tooltip>}>
                         <IconButton icon={<Copy size={16} />} onClick={() => handleDuplicate(index)} />

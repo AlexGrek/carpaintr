@@ -42,6 +42,20 @@
   opacity: 0.8;                     /* Make the whole element semi-transparent */
 }
 
+.fade-in-expand-simple {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden; /* This is crucial to prevent content from overflowing during the animation */
+  animation: fadeInExpand 250ms ease-out forwards;
+}
+
+@keyframes fadeInExpand {
+  to {
+    opacity: 1;
+    max-height: 100vh; /* Or any other large value that's guaranteed to be greater than the content's height */
+  }
+}
+
 /* Gemini: styles for css editor */
 .rdg-light {
     --rdg-background-color: #fff;

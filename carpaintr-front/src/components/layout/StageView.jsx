@@ -43,9 +43,9 @@ export const styles = {
   sampleStage: {
     padding: '10px',
     textAlign: 'center',
-    border: `1px dashed ${rsuiteColors.border}`,
-    borderRadius: '8px',
-    margin: '0 5px',
+    // border: `1px dashed ${rsuiteColors.border}`,
+    // borderRadius: '8px',
+    margin: '0 3px',
   },
   sampleStageInner: {
     transition: 'opacity 200ms ease-in-out',
