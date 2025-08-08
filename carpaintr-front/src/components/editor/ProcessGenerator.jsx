@@ -1,6 +1,6 @@
 // components/ProcessorGenerator.jsx
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, Suspense, lazy } from 'react';
 import PropTypes from 'prop-types';
 import {
     Form,
@@ -22,13 +22,18 @@ import {
     Content,
     Schema,
     Divider,
+    Dropdown,
+    HStack,
 } from 'rsuite';
-import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud } from 'lucide-react';
+import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud, Trash, CopyPlus, Table } from 'lucide-react';
 import { authFetch } from '../../utils/authFetch';
 import Trans from '../../localization/Trans';
 import { registerTranslations, useLocale } from '../../localization/LocaleContext';
+import SearchIcon from '@rsuite/icons/Search';
 
 const uploadEndpoint = 'editor/upload_user_file';
+
+const PartsCatalog = lazy(() => import("../catalog/PartsCatalog"));
 
 registerTranslations("ua", {
     "Generated Code for": "Згенерований код для",
@@ -43,6 +48,7 @@ registerTranslations("ua", {
     "Condition": "Умова відображення",
     "Optional JS expression. If filled, wraps the row in an `if` block.": "Необов'язковий JS-вираз. Якщо заповнено, обгортає рядок у блок `if`.",
     "Remove Clause": "Видалити рядок виводу",
+    "Duplicate Clause": "Дублювати рядок виводу",
     "Add Row Clause": "Додати рядок виводу",
     "Generate Code": "Згенерувати код",
     "Required Tables": "Необхідні таблиці",
@@ -54,6 +60,7 @@ registerTranslations("ua", {
     "Row Clause Section": "Секція рядків виводу",
     "Variables": "Параметри",
     "Evaluate": "Вираз для обчислення або значення",
+    "Catalog": "Каталог"
 });
 
 
@@ -88,7 +95,7 @@ const StringListEditor = ({ value = [], onChange, label }) => {
         <Form.Group>
             <Form.ControlLabel>{label}</Form.ControlLabel>
             {value.map((item, index) => (
-                <Stack key={index} spacing={6} style={{ marginBottom: '5px' }}>
+                <Stack className='fade-in-simple' key={index} spacing={6} style={{ marginBottom: '5px' }}>
                     <Input value={item} onChange={(val) => handleChange(val, index)} />
                     <Whisper placement="top" speaker={<Tooltip><Trans>Duplicate</Trans></Tooltip>}>
                         <IconButton icon={<Copy size={16} />} onClick={() => handleDuplicate(index)} />
@@ -115,7 +122,7 @@ StringListEditor.propTypes = {
 // ==================================
 //      Row Clause Editor
 // ==================================
-const ClauseListEditor = ({ value = [], onChange }) => {
+const ClauseListEditor = ({ value = [], onChange, tables = [] }) => {
     const { str } = useLocale();
     const handleAddClause = () => {
         const newClause = {
@@ -124,6 +131,14 @@ const ClauseListEditor = ({ value = [], onChange }) => {
             evaluate: '',
             tooltip: '',
             condition: '',
+        };
+        onChange([...value, newClause]);
+    };
+
+    const handleDuplicateClause = (clause) => {
+        const newClause = {
+            ...clause,
+            id: nextId(),
         };
         onChange([...value, newClause]);
     };
@@ -144,7 +159,7 @@ const ClauseListEditor = ({ value = [], onChange }) => {
         <Panel header={str("Row Clause Section")} bordered>
             <Variables />
             {value.map((clause) => (
-                <Panel shaded key={clause.id} bordered style={{ marginBottom: '10px', backgroundColor: 'ghostwhite' }}>
+                <Panel shaded className='fade-in-simple' key={clause.id} bordered style={{ marginBottom: '10px', backgroundColor: 'ghostwhite' }}>
                     <Form layout="horizontal">
                         <Form.Group>
                             <Form.ControlLabel><Trans>Name</Trans></Form.ControlLabel>
@@ -153,7 +168,13 @@ const ClauseListEditor = ({ value = [], onChange }) => {
                         <Form.Group>
                             <Form.ControlLabel><Trans>Evaluate</Trans></Form.ControlLabel>
                             <Form.Control name="evaluate" value={clause.evaluate} onChange={(val) => handleClauseChange(clause.id, 'evaluate', val)} />
+                            <Dropdown title={<Table />}>
+                                {tables.map(tableName => {
+                                    return <Dropdown.Item key={tableName} onClick={() => handleClauseChange(clause.id, 'evaluate', `tableData["${tableName}"][""]`)}>{tableName}</Dropdown.Item>
+                                })}
+                            </Dropdown>
                             <Form.HelpText><Trans>JS expression for the value. E.g., `tableData["t1"]["field1"]`</Trans></Form.HelpText>
+
                         </Form.Group>
                         <Form.Group>
                             <Form.ControlLabel><Trans>Tooltip</Trans></Form.ControlLabel>
@@ -164,9 +185,10 @@ const ClauseListEditor = ({ value = [], onChange }) => {
                             <Form.Control name="condition" value={clause.condition} onChange={(val) => handleClauseChange(clause.id, 'condition', val)} />
                             <Form.HelpText><Trans>Optional JS expression. If filled, wraps the row in an `if` block.</Trans></Form.HelpText>
                         </Form.Group>
-                        <Button color="red" appearance="subtle" onClick={() => handleRemoveClause(clause.id)}>
-                            <Trans>Remove Clause</Trans>
-                        </Button>
+                        <IconButton icon={<CopyPlus />} circle onClick={() => handleDuplicateClause(clause)}>
+                        </IconButton>
+                        <IconButton icon={<Trash />} color="red" circle appearance="subtle" onClick={() => handleRemoveClause(clause.id)}>
+                        </IconButton>
                     </Form>
                 </Panel>
             ))}
@@ -179,6 +201,7 @@ const ClauseListEditor = ({ value = [], onChange }) => {
 
 ClauseListEditor.propTypes = {
     value: PropTypes.arrayOf(PropTypes.object).isRequired,
+    tables: PropTypes.arrayOf(PropTypes.string).isRequired,
     onChange: PropTypes.func.isRequired,
 };
 
@@ -189,6 +212,7 @@ const ProcessorGenerator = () => {
     const { str } = useLocale();
     const [stage, setStage] = useState('form'); // 'form' or 'code'
     const [uploading, setUploading] = useState(false);
+    const [catalogOpen, setCatalogOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: 'demo_processor',
         category: 'General',
@@ -227,10 +251,10 @@ const ProcessorGenerator = () => {
 
         const code = `({
     name: "${name}",
-    shouldRun: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+    shouldRun: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing) => {
         ${shouldRunCondition || "return true;"}
     },
-    run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+    run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing) => {
         // - init section -
         var output = [];
         const { mkRow } = x;
@@ -295,9 +319,15 @@ ${renderClauses()}
     };
 
     const renderStage1 = () => (
-        <>
-            <Header><h2><Trans>Processor Generator</Trans></h2></Header>
-            <Content>
+        <HStack alignItems='flex-start' justifyContent='center' spacing='50'>
+            {catalogOpen && <Suspense fallback={<Loader/>}>
+                <Panel bordered style={{marginRight: '18pt', minWidth: '230px'}}>
+                    <PartsCatalog/>
+                </Panel>
+            </Suspense>}
+            <Content style={{maxWidth: "600px"}}>
+                <IconButton icon={<SearchIcon/>} appearance={catalogOpen ? "primary" : "default"} onClick={() => setCatalogOpen(!catalogOpen)}><Trans>Catalog</Trans></IconButton>
+                <Header><h2><Trans>Processor Generator</Trans></h2></Header>
                 <Form fluid model={formModel} formValue={formData} onChange={setFormData}>
                     <Form.Group>
                         <Form.ControlLabel><Trans>Processor Name</Trans></Form.ControlLabel>
@@ -352,6 +382,7 @@ ${renderClauses()}
                     <ClauseListEditor
                         value={formData.clauses}
                         onChange={(value) => setFormData({ ...formData, clauses: value })}
+                        tables={formData.requiredTables}
                     />
 
                     <Form.Group>
@@ -363,7 +394,7 @@ ${renderClauses()}
                     </Form.Group>
                 </Form>
             </Content>
-        </>
+        </HStack>
     );
 
     const renderStage2 = () => (

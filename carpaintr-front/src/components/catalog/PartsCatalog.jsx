@@ -13,6 +13,7 @@ const PartsCatalog = () => {
     const [chosenPart, setChosenPart] = useState(null);
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
+    const [isExpanded, setIsExpanded] = useState(false);
 
 
     const handleError = useCallback((reason) => {
@@ -48,12 +49,12 @@ const PartsCatalog = () => {
                 return <Button appearance='link' style={{ display: "block" }} key={i} onClick={() => setChosenPart(part)}>{part}</Button>
             })}
         </div>
-        <Modal size={isMobile ? 'full' : 'lg'} open={chosenPart !== null} onClose={() => setChosenPart(null)}>
+        <Modal size={(isMobile || isExpanded) ? 'full' : 'lg'} open={chosenPart !== null} onClose={() => setChosenPart(null)}>
             <Modal.Header>
                 <Drawer.Title>{chosenPart}</Drawer.Title>
             </Modal.Header>
             <Modal.Body>
-                {chosenPart != null && <PartLookup part={chosenPart} />}
+                {chosenPart != null && <PartLookup part={chosenPart} onExpand={() => setIsExpanded(true)} />}
             </Modal.Body>
         </Modal>
     </div>

@@ -340,7 +340,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 carYear: 1999,
                 carModel: {},
                 tableData: tdata,
-                paint: {} // TODO: make it useful
+                paint: {}, // TODO: make it useful
+                pricing: company.pricing_preferences
             };
 
             let processorsEvaluated = processors

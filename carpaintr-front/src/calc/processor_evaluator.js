@@ -49,9 +49,9 @@ export function isEmptyOrWhitespace(str) {
 }
 
 export function should_evaluate_processor(processor, stuff) {
-    const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
+    const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing } = stuff;
     try {
-        const shouldRun = processor.shouldRun(make_sandbox(), carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint);
+        const shouldRun = processor.shouldRun(make_sandbox(), carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing);
         return shouldRun;
     } catch (e) {
         console.error("Table skipped due to error in shouldRun: ", processor.name);
@@ -61,9 +61,9 @@ export function should_evaluate_processor(processor, stuff) {
 }
 
 export function evaluate_processor(processor, stuff) {
-    const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint } = stuff;
+    const { carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing } = stuff;
     try {
-        const resultRows = processor.run(make_sandbox(), carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint);
+        const resultRows = processor.run(make_sandbox(), carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing);
         let processedRows = resultRows.map((item) => {
             if (!isEmptyOrWhitespace(item.evaluate)) {
                 // evaluate!

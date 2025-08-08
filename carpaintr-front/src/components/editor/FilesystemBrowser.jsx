@@ -296,7 +296,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     const formattedDisplayPath = displayPath.length > 1 && displayPath.endsWith('/') ? displayPath.slice(0, -1) : displayPath;
     const fullFilePath = viewingFile ? [...currentPath, viewingFile].join('/') : currentPath.join('/');
 
-    
+
 
     // --- UPLOAD AND FILE CREATION LOGIC (Unchanged) ---
     const handleFileUpload = async (files) => {

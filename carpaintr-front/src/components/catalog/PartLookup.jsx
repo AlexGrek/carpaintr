@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Loader, Table } from "rsuite";
+import { Button, IconButton, Loader, Panel, Table } from "rsuite";
 import { registerTranslations, useLocale } from "../../localization/LocaleContext";
 import styled from 'styled-components';
 import Trans from "../../localization/Trans";
+import { ArrowDownLine } from '@rsuite/icons';
 
 // Styled components for the table container if you want custom spacing/overflow behavior
 const StyledTableContainer = styled.div`
@@ -16,17 +17,24 @@ registerTranslations('ua', {
     "Error": "Помилка",
     "Table": "Таблиця",
     "Unnamed Table": "Безіменна таблиця",
-    "No data found.": "Даних не знайдено."
+    "No data found.": "Даних не знайдено.",
+    "Expand": "Відкрити"
 });
 
 const { Column, HeaderCell, Cell } = Table;
 
-const PartLookup = ({ part }) => {
+const PartLookup = ({ part, onExpand = () => {} }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [errorText, setErrorText] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
+    const [expanded, setExpanded] = useState([]);
     const { str } = useLocale();
+
+    useEffect(() => {
+        if (expanded.length > 0)
+            onExpand();
+    }, [expanded, onExpand])
 
     const handleError = useCallback((reason) => {
         console.error(reason);
@@ -78,27 +86,36 @@ const PartLookup = ({ part }) => {
 
                     // Extract all unique column headers from all rows in the tableData
                     const columns = Array.from(new Set(tableData.flatMap(Object.keys)));
-
-                    return (
-                        <StyledTableContainer key={tableName || `table-${index}`}>
-                            <h4><Trans>Table</Trans> {tableName || `Unnamed Table ${index + 1}`}</h4>
-                            <Table
-                                data={tableData}
-                                autoHeight
-                                wordWrap
-                                minHeight={200} // Minimum height to prevent flickering during data load
-                                bordered
-                                cellBordered
-                            >
-                                {columns.map(columnKey => (
-                                    <Column key={columnKey} flexGrow={1} minWidth={100}>
-                                        <HeaderCell>{columnKey}</HeaderCell>
-                                        <Cell dataKey={columnKey} />
-                                    </Column>
-                                ))}
-                            </Table>
-                        </StyledTableContainer>
-                    );
+                    if (expanded.includes(tableName))
+                        return (
+                            <StyledTableContainer key={tableName || `table-${index}`}>
+                                <h4><Trans>Table</Trans> {tableName || `Unnamed Table ${index + 1}`}</h4>
+                                <Table
+                                    data={tableData}
+                                    autoHeight
+                                    wordWrap
+                                    minHeight={200} // Minimum height to prevent flickering during data load
+                                    bordered
+                                    resizable
+                                    virtualized
+                                    cellBordered
+                                    className="fade-in-simple"
+                                >
+                                    {columns.map(columnKey => (
+                                        <Column key={columnKey} flexGrow={1} minWidth={100}>
+                                            <HeaderCell>{columnKey}</HeaderCell>
+                                            <Cell dataKey={columnKey} />
+                                        </Column>
+                                    ))}
+                                </Table>
+                            </StyledTableContainer>
+                        );
+                    else {
+                        return (<Panel key={tableName} header={tableName}>
+                            <p>{columns.join(", ")}</p>
+                            <IconButton icon={<ArrowDownLine />} onClick={() => setExpanded([...expanded, tableName])}><Trans>Expand</Trans></IconButton>
+                        </Panel>)
+                    }
                 })
             )}
             {!loading && !errorText && !data && <p><Trans>No data found.</Trans></p>}
