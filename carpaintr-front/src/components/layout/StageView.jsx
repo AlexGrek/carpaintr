@@ -45,8 +45,9 @@ export const styles = {
     textAlign: 'center',
     // border: `1px dashed ${rsuiteColors.border}`,
     // borderRadius: '8px',
-    margin: '0 3px',
+    margin: '0 auto',
     width: '100%',
+    maxWidth: '500pt',
   },
   sampleStageInner: {
     transition: 'opacity 200ms ease-in-out',

@@ -328,25 +328,28 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
     return (
         <div className="car-body-parts-selector">
-            <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
-            <div>
-                <h2>Запчастини</h2>
+            <div className="car-container-container">
+                <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
+                <CarDiagram />
                 <div>
-                    {/* Only show SelectionInput if there are unselected parts */}
-                    {unselectedParts.length > 0 && (
-                        <SelectionInput
-                            name="Додати запчастини"
-                            labels={carPartsTranslations}
-                            values={unselectedParts}
-                            selectedValue={null}
-                            onChange={handlePartSelect}
-                            autoConfirm={false}
-                        />
-                    )}
+                    <h2>Запчастини</h2>
+                    <div className="pop-in-simple" style={{ maxWidth: '500pt' }}>
+                        {/* Only show SelectionInput if there are unselected parts */}
+                        {unselectedParts.length > 0 && (
+                            <SelectionInput
+                                name="Додати запчастини"
+                                labels={carPartsTranslations}
+                                values={unselectedParts}
+                                selectedValue={null}
+                                onChange={handlePartSelect}
+                                autoConfirm={false}
+                            />
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <CarDiagram/>
+
+            </div>
 
             <CarBodyPartDrawer
                 isDrawerOpen={isDrawerOpen}
@@ -369,7 +372,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
             <div>
                 <Divider />
-                <PanelGroup className="flex flex-wrap gap-2">
+                <PanelGroup>
                     {Array.isArray(selectedParts) && selectedParts.length > 0 ? (
                         selectedParts.map((part) => (
                             <Panel
@@ -388,7 +391,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                                     color="red"
                                     appearance="ghost"
                                     onClick={(e) => {
-                                        e.stopPropagation(); // Prevent Panel onClick from firing
+                                        e.stopPropagation();
                                         handlePartUnselect(part);
                                     }}
                                     style={{ marginTop: '5px' }}

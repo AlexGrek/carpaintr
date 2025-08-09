@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import ContextMenu from "./ContextMenu";
 import CarPart from "./CarPart";
-import { Panel } from 'rsuite';
 import './CarDiagram.css';
 
 export const partSubComponents = {
@@ -121,7 +120,6 @@ const CarDiagram = () => {
     ];
 
     return (
-        <div className="car-container-container">
             <div className="car-container" onClick={closeMenu}>
                 {carParts.map(part => (
                     <CarPart
@@ -140,7 +138,6 @@ const CarDiagram = () => {
                     />
                 )}
             </div>
-        </div>
     );
 };
 

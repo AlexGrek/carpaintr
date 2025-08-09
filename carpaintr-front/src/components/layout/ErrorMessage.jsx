@@ -10,7 +10,7 @@ const ErrorMessage = ({
   onClose = null,
   showSettingsButton = true,
   settingsPath = '/cabinet',
-  className = 'fade-in-simple'
+  className = 'pop-in-simple'
 }) => {
   const navigate = useNavigate();
 
