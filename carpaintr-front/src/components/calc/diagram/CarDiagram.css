@@ -1,26 +1,40 @@
+/* CSS Variables for scaling */
+:root {
+  --car-scale: 1;
+  --car-font-size: 12px;
+}
+
 /* Car Diagram Container */
 .car-container {
   position: relative;
-  width: 100%;
-  margin: 0 auto;
-  max-width: 450px;
+  width: 450px;
   height: 800px;
+  overflow: visible;
+  margin: 0 auto;
+  transform: scale(var(--car-scale));
+  transform-origin: top center;
+}
+
+.car-container-container {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
 }
 
 /* Base Car Part Styles */
 .car-part {
   position: absolute;
-  background-color: rgba(200, 210, 220, 0.4);
+  background-color: rgba(200, 210, 220, 0.2);
   border: 2px solid #1a1a1a9f;
-  border-radius: 2px;
+  border-radius: 4px;
   box-sizing: border-box;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: rgba(0, 0, 0, 0.7);
-  font-size: 10px;
+  color: rgba(0, 0, 0, 0.8);
+  font-size: var(--car-font-size);
   font-weight: 500;
   text-align: center;
   padding: 2px;
@@ -156,51 +170,50 @@
   height: 120px;
 }
 
-/* Doors */
+/* Doors - Recalculated for 20px side panels */
 .front-door-left {
   top: 180px;
   left: 70px;
-  width: 70px;
+  width: 60px;
   height: 170px;
 }
 
 .front-door-right {
   top: 180px;
-  left: 310px;
-  width: 70px;
+  left: 320px;
+  width: 60px;
   height: 170px;
 }
 
 .rear-door-left {
   top: 350px;
   left: 70px;
-  width: 70px;
+  width: 60px;
   height: 170px;
 }
 
 .rear-door-right {
   top: 350px;
-  left: 310px;
-  width: 70px;
+  left: 320px;
+  width: 60px;
   height: 170px;
 }
 
-/* Side Panels */
+/* Side Panels - 20px wide, fits between doors and main body */
 .side-panel-left {
   color: transparent;
   top: 180px;
-  left: 140px;
-  width: 10px;
+  left: 130px;
+  width: 20px;
   height: 340px;
 }
 
 .side-panel-right {
   color: transparent;
   top: 180px;
-  left: 140px;
-  width: 10px;
+  left: 300px;
+  width: 20px;
   height: 340px;
-  transform: translateX(160px);
 }
 
 /* Wheels */
@@ -250,6 +263,7 @@
   padding: 10px;
   z-index: 1000;
   min-width: 200px;
+  max-width: 90vw;
 }
 
 .context-menu-header {
@@ -271,13 +285,232 @@
   padding: 8px 12px;
   cursor: pointer;
   border-radius: 4px;
-}
-
-.context-menu-item:hover {
-  background-color: beige;
-  transition: background-color .2s;
+  font-size: 14px;
 }
 
 .context-menu-item:hover {
   background-color: #f5f5f5;
+}
+
+/* Responsive scaling using CSS variables */
+@media (max-width: 768px) {
+  :root {
+    --car-scale: 1.0;
+    --car-font-size: 10px;
+  }
+  
+  .car-container {
+    width: 400px; /* Reduced from 450px to match compressed layout */
+  }
+  
+  .car-container-container {
+    padding: 5px;
+  }
+  
+  /* Smaller wheels on mobile to reduce width */
+  .wheel-front-left {
+    top: 135px;
+    left: 5px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
+  
+  .wheel-front-right {
+    top: 135px;
+    left: 355px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
+  
+  .wheel-rear-left {
+    top: 535px;
+    left: 5px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
+  
+  .wheel-rear-right {
+    top: 535px;
+    left: 355px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
+  
+  /* Compress left column - fenders and doors closer to center */
+  .front-fender-left {
+    left: 45px;
+    width: 80px;
+  }
+  
+  .rear-fender-left {
+    left: 45px;
+    width: 80px;
+  }
+  
+  .front-door-left {
+    left: 45px;
+    width: 60px;
+  }
+  
+  .rear-door-left {
+    left: 45px;
+    width: 60px;
+  }
+  
+  /* Adjust side panels to close gaps */
+  .side-panel-left {
+    left: 105px;
+    width: 20px;
+  }
+  
+  .side-panel-right {
+    left: 275px;
+    width: 20px;
+  }
+  
+  /* Compress right column - move closer to center */
+  .front-fender-right {
+    left: 275px;
+    width: 80px;
+  }
+  
+  .rear-fender-right {
+    left: 275px;
+    width: 80px;
+  }
+  
+  .front-door-right {
+    left: 295px;
+    width: 60px;
+  }
+  
+  .rear-door-right {
+    left: 295px;
+    width: 60px;
+  }
+  
+  /* Keep main body centered in the 400px container */
+  .front-bumper {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .hood {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .windshield {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .roof {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .rear-glass {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .trunk {
+    left: 125px;
+    width: 150px;
+  }
+  
+  .rear-bumper {
+    left: 125px;
+    width: 150px;
+  }
+  
+  /* Adjust headlights and taillights */
+  .headlight-left {
+    left: 85px;
+  }
+  
+  .headlight-right {
+    left: 275px;
+  }
+  
+  .taillight-left {
+    left: 85px;
+  }
+  
+  .taillight-right {
+    left: 275px;
+  }
+  
+  .context-menu {
+    min-width: 150px;
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .context-menu-header {
+    font-size: 14px;
+  }
+  
+  .context-menu-item {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --car-scale: 1.25;
+    --car-font-size: 9px;
+  }
+  
+  .car-container-container {
+    padding: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --car-scale: 1.15;
+    --car-font-size: 11pt;
+  }
+  
+  .car-container-container {
+    padding: 5px;
+  }
+  
+  .context-menu {
+    min-width: 120px;
+    padding: 6px;
+    font-size: 12px;
+  }
+  
+  .context-menu-header {
+    font-size: 13px;
+  }
+  
+  .context-menu-item {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+}
+
+/* Animation */
+.fade-in-simple-fast {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

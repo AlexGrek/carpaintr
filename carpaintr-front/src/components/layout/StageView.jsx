@@ -27,7 +27,7 @@ export const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '10px 0',
+    padding: '3px 0',
     marginBottom: '20px',
     borderBottom: `1px solid ${rsuiteColors.border}`,
     gap: '8px',
@@ -41,11 +41,12 @@ export const styles = {
     width: '100%',
   },
   sampleStage: {
-    padding: '10px',
+    // padding: '10px',
     textAlign: 'center',
     // border: `1px dashed ${rsuiteColors.border}`,
     // borderRadius: '8px',
     margin: '0 3px',
+    width: '100%',
   },
   sampleStageInner: {
     transition: 'opacity 200ms ease-in-out',

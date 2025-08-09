@@ -63,7 +63,8 @@
 
 .vscroll {
   max-height: 80vh;
-  padding: 4pt;
+  padding: 4pt 0;
+  width: 100%;
   overflow-y: auto;
 }
 
