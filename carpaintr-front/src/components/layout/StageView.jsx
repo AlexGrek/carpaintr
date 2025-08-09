@@ -70,7 +70,7 @@ export const styles = {
  * @param {number} [props.animationDelay=200] - The fade-out animation delay in ms.
  * @param {object} [props.initialState={}] - The initial shared state for all stages.
  */
-function StageView({ stages, initialState = {}, animationDelay = 200 }) {
+function StageView({ stages, initialState = {}, animationDelay = 100 }) {
   const [activeStageIndex, setActiveStageIndex] = useState(0);
   const [previousStageIndex, setPreviousStageIndex] = useState(null);
   const [isFadingOut, setIsFadingOut] = useState(false);

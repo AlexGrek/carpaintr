@@ -10,6 +10,7 @@ import './CarBodyPartsSelector.css';
 import { stripExt } from "../../utils/utils";
 import { evaluate_processor, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import CarBodyPartDrawer from "./CarBodyPartDrawer";
+import CarDiagram from "./diagram/CarDiagram";
 
 const menuItems = [
     {
@@ -344,6 +345,8 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                     )}
                 </div>
             </div>
+
+            <CarDiagram/>
 
             <CarBodyPartDrawer
                 isDrawerOpen={isDrawerOpen}
