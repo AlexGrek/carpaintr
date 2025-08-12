@@ -1,0 +1,29 @@
+{
+    "identifier": "PAY-2025-00123",
+    "client_info": {
+        "name": "John Doe",
+        "address": "123 Main Street, Springfield, USA",
+        "phone": "+1 (555) 123-4567"
+    },
+    "date": "2025-08-13",
+    "time": "14:35",
+    "items": [
+        {
+            "group_name": "Consulting Services",
+            "items": [
+                { "description": "Initial Consultation", "amount": "$200" },
+                { "description": "Follow-up Session", "amount": "$150" }
+            ],
+            "group_sum": "$350"
+        },
+        {
+            "group_name": "Software Development",
+            "items": [
+                { "description": "Backend API Implementation", "amount": "$1200" },
+                { "description": "Frontend Integration", "amount": "$800" }
+            ],
+            "group_sum": "$2000"
+        }
+    ],
+    "total_sum": "$2350"
+}

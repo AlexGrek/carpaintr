@@ -8,6 +8,7 @@ import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import PagePreviousIcon from '@rsuite/icons/PagePrevious';
 import FunnelIcon from '@rsuite/icons/Funnel'; // Added for Generate Preview button
 import Trans from '../localization/Trans';
+import ObjectBrowser from './utility/ObjectBrowser';
 
 // Calculation Summary Preview Component (renamed from PrintPreview)
 const CalculationSummaryPreview = React.memo(({ calculationData }) => {
@@ -256,7 +257,7 @@ const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData }) =
                 <Tabs activeKey={activeTab} onSelect={setActiveTab} vertical={!isMobile} appearance="subtle">
                     <Tabs.Tab eventKey="summary" title={str('Calculation Summary')}>
                         <React.Suspense fallback={<Placeholder.Paragraph rows={10} />}>
-                            <CalculationSummaryPreview calculationData={calculationData} />
+                            <ObjectBrowser jsonObject={calculationData} />
                         </React.Suspense>
                     </Tabs.Tab>
                     <Tabs.Tab eventKey="document" title={str('Document Generation')}>

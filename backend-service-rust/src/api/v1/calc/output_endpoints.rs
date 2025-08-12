@@ -13,13 +13,13 @@ use std::sync::Arc;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Metadata {
     order_number: Option<String>,
-    order_notes: Option<String>
+    order_notes: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GeneratePdfRequest {
     pub custom_template_content: Option<String>,
-    pub calculation: CalculationData,
+    pub calculation: serde_json::Value,
     pub metadata: Metadata,
 }
 
@@ -27,7 +27,7 @@ pub struct GeneratePdfRequest {
 pub struct GeneratePdfInternalRequest {
     pub custom_template_content: Option<String>,
     pub company_info: CompanyInfo,
-    pub calculation: CalculationData,
+    pub calculation: serde_json::Value,
     pub metadata: Metadata,
 }
 
@@ -40,7 +40,7 @@ pub async fn gen_pdf(
 
     log_event(
         LogLevel::Info,
-        format!("PDF generation {:?}", &request.calculation.digest()),
+        format!("PDF generation {:?}", request.metadata),
         Some(&user_email),
     );
 
@@ -57,9 +57,13 @@ pub async fn gen_pdf(
         .send()
         .await
         .map_err(|err| {
-            log_event(LogLevel::Error, format!("Document generation request failure: {:?}", err), Some(user_email));
-            AppError::InternalServerError(err.to_string())}
-        )?;
+            log_event(
+                LogLevel::Error,
+                format!("Document generation request failure: {:?}", err),
+                Some(user_email),
+            );
+            AppError::InternalServerError(err.to_string())
+        })?;
 
     // Stream body directly
     let stream = res.bytes_stream();
@@ -85,7 +89,7 @@ pub async fn gen_html(
 
     log_event(
         LogLevel::Info,
-        format!("HTML table generation {:?}", &request.calculation.digest()),
+        format!("HTML table generation {:?}", &request.metadata),
         Some(&user_email),
     );
 
