@@ -8,6 +8,7 @@ import ErrorMessage from "../layout/ErrorMessage";
 import { SelectPicker, Tabs } from "rsuite";
 import SelectionInput from "../SelectionInput";
 import { capitalizeFirstLetter } from "../../utils/utils";
+import MenuPickerV2 from "../layout/MenuPickerV2";
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
 const CAR_CLASS_OPTIONS = [
@@ -141,24 +142,24 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                     {selectedModel !== null && <SelectionInput name={str("Body Type")} labelFunction={str} selectedValue={selectedBodyType} values={labels(bodyTypes)} onChange={setBodyType} placeholder={str("Select Body Type")} />}
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="2" title={str("Type/Class")}>
-                    <SelectPicker
-                        data={CAR_CLASS_OPTIONS}
+                    <MenuPickerV2
+                        items={CAR_CLASS_OPTIONS}
                         onSelect={setCarClass}
                         value={carclass}
-                        placeholder={str("CLASS")}
+                        label={str("CLASS")}
                     />
                     <br />
-                    <SelectPicker
-                        data={carBodyTypesOptions}
+                    {carclass && <MenuPickerV2
+                        items={carBodyTypesOptions}
                         onSelect={setBodyType}
                         value={selectedBodyType}
-                        placeholder={str("BODY TYPE")}
-                    />
+                        label={str("BODY TYPE")}
+                    />}
                 </Tabs.Tab>
             </Tabs>
-            <SelectPicker
+            {(selectedModel !== null || (carclass !== null && selectedBodyType !== null)) && <SelectPicker
                 disabled={!(selectedModel !== null || (carclass !== null && selectedBodyType !== null))}
-                data={[...Array(30)].map((_, i) => {
+                data={[...Array(40)].map((_, i) => {
                     let y = `${2024 - i}`;
                     return { label: y, value: y };
                 })}
@@ -166,7 +167,7 @@ const VehicleSelect = React.memo(({ selectedBodyType, setBodyType, selectedMake,
                 value={year}
                 placeholder={str("Year of manufacture")}
                 searchable={false}
-            />
+            />}
         </div>
     );
 });
