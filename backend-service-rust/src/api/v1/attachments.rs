@@ -1,14 +1,13 @@
 use crate::{
     auth::admin_check::is_admin_async,
     db::attachment::{
-        self, handle_attachment, list_all_attachments_for_all_users, list_all_attachments_for_user,
-        try_get_by_id, try_get_by_id_checked, try_get_by_id_checked_or_public, AttachmentHandle,
+        handle_attachment, list_all_attachments_for_all_users, list_all_attachments_for_user, try_get_by_id_checked_or_public,
     },
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
     utils::{
-        get_file_bytes_no_cache, random::generate_random_id, safe_read,
+        get_file_bytes_no_cache, random::generate_random_id,
         user_personal_directory_from_email, ATTACHMENTS,
     }, // Import the new CompanyInfo struct
 };
@@ -18,7 +17,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 fn rename_file(original: &str, id: &str) -> String {
     // Find the last dot to separate filename and extension

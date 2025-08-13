@@ -10,9 +10,6 @@ use axum::{
 
 use crate::{auth::admin_check::is_admin_async, cache::license_cache::get_license_cache, errors::AppError, state::AppState};
 
-use std::collections::HashSet;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::sync::Arc;
 // Removed: use async_trait::async_trait; // Not needed for native async traits
 

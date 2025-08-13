@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use chrono::{DateTime, Duration, TimeDelta, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sled::Tree;
 use tokio::fs;

@@ -1,7 +1,6 @@
 use crate::api::v1::user::find_or_create_company_info;
 use crate::exlogging::{log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
-use crate::models::calculations::CalculationData;
 use crate::models::CompanyInfo;
 use crate::{errors::AppError, state::AppState};
 use axum::http::{HeaderMap, HeaderValue};

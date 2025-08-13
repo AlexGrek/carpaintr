@@ -11,7 +11,6 @@ use axum::{
     response::IntoResponse,
 };
 use chrono::Utc;
-use env_logger::Logger;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

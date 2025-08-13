@@ -1,7 +1,6 @@
 pub mod random;
 
 use chrono::{DateTime, Duration, Utc};
-use csv_async::AsyncReader;
 use csv_async::AsyncReaderBuilder;
 use lexiclean::Lexiclean;
 use lru::LruCache;
@@ -17,7 +16,6 @@ use thiserror::Error;
 use tokio::fs;
 use tokio::fs::read_dir;
 use tokio::io;
-use tokio::io::AsyncBufRead;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncReadExt;
 use tokio::sync::RwLock;

@@ -5,7 +5,7 @@ use std::{
 use axum::{
     extract::State,
     http::{HeaderMap, HeaderValue},
-    response::{AppendHeaders, IntoResponse},
+    response::IntoResponse,
 };
 use futures_util::future::try_join_all;
 use tokio::fs;
