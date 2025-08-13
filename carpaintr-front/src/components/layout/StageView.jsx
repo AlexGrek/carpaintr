@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button, Loader } from 'rsuite';
-import 'rsuite/dist/rsuite.min.css'; // Using pre-compiled CSS for simplicity
 import { ChevronLeft, Home, User, Settings, CheckCircle } from 'lucide-react';
 import { useLocale } from '../../localization/LocaleContext';
 
@@ -61,6 +60,33 @@ export const styles = {
 };
 
 /**
+ * Utility functions for URL parameter management
+ */
+const getUrlParams = () => {
+  return new URLSearchParams(window.location.search);
+};
+
+const updateUrlParam = (key, value) => {
+  const url = new URL(window.location);
+  if (value === null || value === undefined) {
+    url.searchParams.delete(key);
+  } else {
+    url.searchParams.set(key, value);
+  }
+  window.history.pushState({}, '', url);
+};
+
+const replaceUrlParam = (key, value) => {
+  const url = new URL(window.location);
+  if (value === null || value === undefined) {
+    url.searchParams.delete(key);
+  } else {
+    url.searchParams.set(key, value);
+  }
+  window.history.replaceState({}, '', url);
+};
+
+/**
  * StageView Component
  * * Manages a multi-stage process with a navigation bar and content switching.
  * @param {object} props
@@ -73,36 +99,64 @@ export const styles = {
  * @param {object} [props.initialState={}] - The initial shared state for all stages.
  */
 function StageView({ stages, initialState = {}, animationDelay = 100 }) {
-  const [activeStageIndex, setActiveStageIndex] = useState(0);
-  const [previousStageIndex, setPreviousStageIndex] = useState(null);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [stageData, setStageDataState] = useState(initialState);
   const { str } = useLocale();
-  
-  // Initialize state for each stage, enabling the first one by default.
+
+  // Get initial stage from URL or default to 0
+  const getStageFromUrl = () => {
+    const params = getUrlParams();
+    const stageParam = params.get('stage');
+    
+    if (stageParam) {
+      // Try to find by name first
+      const stageByName = stages.findIndex(s => s.name === stageParam);
+      if (stageByName !== -1) {
+        return stageByName;
+      }
+      
+      // Try to parse as index
+      const stageIndex = parseInt(stageParam, 10);
+      if (!isNaN(stageIndex) && stageIndex >= 0 && stageIndex < stages.length) {
+        return stageIndex;
+      }
+    }
+    
+    return 0;
+  };
+
+  const [activeStageIndex, setActiveStageIndex] = useState(getStageFromUrl);
+  const [previousStageIndex, setPreviousStageIndex] = useState(null);
+
+  // Initialize state for each stage, enabling stages up to the current one
   const [stagesState, setStagesState] = useState(() =>
     stages.map((stage, index) => ({
       ...stage,
-      enabled: index === 0,
+      enabled: index <= activeStageIndex,
     }))
   );
 
-  // Effect to handle browser history (back/forward buttons)
+  // Effect to handle URL changes (including back/forward buttons)
   useEffect(() => {
-    const handlePopState = (event) => {
-      const targetIndex = event.state?.stageIndex;
-      if (typeof targetIndex === 'number' && targetIndex !== activeStageIndex) {
-        handleMoveTo(targetIndex, { isFromPopState: true });
+    const handlePopState = () => {
+      const newStageIndex = getStageFromUrl();
+      if (newStageIndex !== activeStageIndex) {
+        handleMoveToInternal(newStageIndex, { skipUrlUpdate: true });
       }
     };
 
-    window.history.replaceState({ stageIndex: 0 }, '');
+    // Set initial URL if no stage parameter exists
+    const params = getUrlParams();
+    if (!params.has('stage')) {
+      replaceUrlParam('stage', stages[0].name);
+    }
+
     window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [stages, animationDelay]); // Rerun if stages change
+  }, [stages, activeStageIndex]);
 
   /**
    * Updates the shared state. Merges new data with existing data.
@@ -114,48 +168,61 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
     setStageDataState(prevData => ({ ...prevData, ...newData }));
   };
 
-  const handleMoveTo = (targetIndex, { isFromPopState = false, isMovingForward = false } = {}) => {
-    if (isFadingOut || targetIndex === activeStageIndex || !stagesState[targetIndex]?.enabled) {
+  const handleMoveToInternal = (targetIndex, { skipUrlUpdate = false, isMovingForward = false } = {}) => {
+    if (isFadingOut || targetIndex === activeStageIndex || targetIndex < 0 || targetIndex >= stages.length) {
       return;
     }
-    
+
+    // Check if target stage is enabled (allow moving to any previous stage or the next stage)
+    if (!stagesState[targetIndex]?.enabled && targetIndex > activeStageIndex + 1) {
+      return;
+    }
+
     setIsFadingOut(true);
 
     setTimeout(() => {
       setPreviousStageIndex(activeStageIndex);
       setActiveStageIndex(targetIndex);
 
-      if (isMovingForward && stagesState[targetIndex]) {
+      // Enable stages up to the target if moving forward
+      if (isMovingForward || targetIndex > activeStageIndex) {
         setStagesState(prev => {
           const newState = [...prev];
-          newState[targetIndex].enabled = true;
+          for (let i = 0; i <= targetIndex; i++) {
+            if (newState[i]) {
+              newState[i].enabled = true;
+            }
+          }
           return newState;
         });
       }
 
-      if (!isFromPopState) {
-        window.history.pushState({ stageIndex: targetIndex }, '', window.location.pathname);
+      // Update URL with stage name
+      if (!skipUrlUpdate) {
+        updateUrlParam('stage', stages[targetIndex].name);
       }
-      
+
       setIsFadingOut(false);
     }, animationDelay);
+  };
+
+  const handleMoveTo = (targetIndex) => {
+    if (!stagesState[targetIndex]?.enabled) {
+      return;
+    }
+    handleMoveToInternal(targetIndex);
   };
 
   const handleMoveForward = () => {
     const nextIndex = activeStageIndex + 1;
     if (nextIndex < stages.length) {
-      setStagesState(prev => {
-        const newState = [...prev];
-        if(newState[nextIndex]) newState[nextIndex].enabled = true;
-        return newState;
-      });
-      handleMoveTo(nextIndex, { isMovingForward: true });
+      handleMoveToInternal(nextIndex, { isMovingForward: true });
     }
   };
 
   const handleMoveBack = () => {
     if (activeStageIndex > 0) {
-      handleMoveTo(activeStageIndex - 1);
+      handleMoveToInternal(activeStageIndex - 1);
     }
   };
 
@@ -170,15 +237,15 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
   };
 
   const { component: ActiveComponent, ...activeStageProps } = useMemo(
-    () => stages[activeStageIndex],
+    () => stages[activeStageIndex] || stages[0],
     [activeStageIndex, stages]
   );
 
   return (
     <div style={styles.stageViewContainer}>
       <nav style={styles.navBar}>
-        <Button 
-          onClick={handleMoveBack} 
+        <Button
+          onClick={handleMoveBack}
           disabled={activeStageIndex === 0 || isFadingOut}
           appearance="subtle"
         >
@@ -208,10 +275,10 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
           <ActiveComponent
             {...activeStageProps}
             index={activeStageIndex}
-            enabled={stagesState[activeStageIndex].enabled}
+            enabled={stagesState[activeStageIndex]?.enabled || false}
             fadeOutStarted={isFadingOut}
             previousStageIndex={previousStageIndex}
-            previousStageName={previousStageIndex !== null ? stages[previousStageIndex].name : null}
+            previousStageName={previousStageIndex !== null ? stages[previousStageIndex]?.name : null}
             onMoveForward={handleMoveForward}
             onMoveBack={handleMoveBack}
             onMoveTo={handleMoveToByNameOrIndex}
