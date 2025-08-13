@@ -9,7 +9,7 @@ const CalcMainMenuStage = ({ onNext }) => {
         <div style={styles.sampleStage}>
             <div>
                 <div style={styles.buttonGroup}>
-                    <Button appearance="primary" onClick={onNext}><Trans>New calculation</Trans></Button>
+                    <Button size="lg" onClick={onNext}><Trans>New calculation</Trans></Button>
                 </div>
                 <LoadCalculationMenu />
             </div>
