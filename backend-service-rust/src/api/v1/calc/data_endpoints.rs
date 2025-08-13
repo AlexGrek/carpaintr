@@ -116,7 +116,7 @@ pub struct LookupPartNoTypeClassQuery {
 }
 
 pub async fn lookup_all_tables(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     Query(q): Query<LookupPartQuery>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -133,7 +133,7 @@ pub async fn lookup_all_tables(
 }
 
 pub async fn lookup_all_tables_all_types(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     Query(q): Query<LookupPartNoTypeClassQuery>,
 ) -> Result<impl IntoResponse, AppError> {

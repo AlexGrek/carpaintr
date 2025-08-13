@@ -315,6 +315,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::editor_endpoints::get_user_file_list),
                 )
                 .route(
+                            "/all_tables_headers",
+                            get(api::v1::editor_endpoints::get_all_tables_headers),
+                        )
+                .route(
                     "/list_common_files",
                     get(api::v1::editor_endpoints::get_common_file_list),
                 )

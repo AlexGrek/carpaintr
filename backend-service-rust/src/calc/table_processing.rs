@@ -3,11 +3,14 @@ use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::sync::LazyLock;
+use tokio::fs::File;
+use tokio::io::BufReader;
 
 use crate::calc::constants::*;
 use crate::errors::AppError;
 use crate::exlogging::log_event;
 use crate::utils::{self, parse_csv_file_async_safe, DataStorageCache};
+use tokio::io::AsyncBufReadExt;
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
 
@@ -75,6 +78,58 @@ pub async fn lookup_no_type_class(
         })
         .collect();
     Ok(collected)
+}
+
+pub async fn get_csv_header(table: PathBuf) -> Result<Vec<String>, AppError> {
+    let file = File::open(table).await?;
+    let reader = BufReader::new(file);
+    let mut lines = reader.lines();
+
+    if let Some(first_line) = lines.next_line().await? {
+        let headers: Vec<String> = first_line
+            .split(',')
+            .map(|s| s.trim().trim_matches('"').to_string())
+            .collect();
+        Ok(headers)
+    } else {
+        Err(AppError::InvalidData(
+            "Empty file or unable to read first line".into(),
+        ))
+    }
+}
+
+pub async fn all_tables_headers(
+    data_dir: &PathBuf,
+    email: &str,
+) -> Result<HashMap<String, Vec<String>>, AppError> {
+    let all_tables = all_tables_list(data_dir, email).await?;
+
+    // Create futures that also capture the table name/path for the HashMap key
+    let futures: Vec<_> = all_tables
+        .into_iter()
+        .map(|table| {
+            let table_name = table
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+            async move {
+                let headers = get_csv_header(table).await?;
+                Ok::<(String, Vec<String>), AppError>((table_name, headers))
+            }
+        })
+        .collect();
+
+    let results = join_all(futures).await;
+
+    // Convert Vec<Result<(String, Vec<String>), AppError>> to Result<HashMap<String, Vec<String>>, AppError>
+    let mut header_map = HashMap::new();
+    for result in results {
+        let (table_name, headers) = result.unwrap_or(("ERROR".to_string(), vec![]));
+        header_map.insert(table_name, headers);
+    }
+
+    Ok(header_map)
 }
 
 pub async fn lookup_part_in_tables(

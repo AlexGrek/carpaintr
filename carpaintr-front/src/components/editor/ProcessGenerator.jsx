@@ -1,6 +1,6 @@
 // components/ProcessorGenerator.jsx
 
-import React, { useState, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useCallback, Suspense, lazy, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
     Form,
@@ -22,11 +22,12 @@ import {
     Content,
     Schema,
     Divider,
-    Dropdown,
     HStack,
+    InputPicker,
+    TreePicker,
 } from 'rsuite';
-import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud, Trash, CopyPlus, Table } from 'lucide-react';
-import { authFetch } from '../../utils/authFetch';
+import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud, Trash, CopyPlus } from 'lucide-react';
+import { authFetch, authFetchJson } from '../../utils/authFetch';
 import Trans from '../../localization/Trans';
 import { registerTranslations, useLocale } from '../../localization/LocaleContext';
 import SearchIcon from '@rsuite/icons/Search';
@@ -77,8 +78,9 @@ const Variables = () => {
 // ==================================
 //      String List Editor
 // ==================================
-const StringListEditor = ({ value = [], onChange, label }) => {
+const StringListEditor = ({ value = [], onChange, label, autocomplete = [] }) => {
     const handleAdd = () => onChange([...value, '']);
+    const { str } = useLocale();
     const handleRemove = (index) => onChange(value.filter((_, i) => i !== index));
     const handleDuplicate = (index) => {
         const newValue = [...value];
@@ -91,12 +93,26 @@ const StringListEditor = ({ value = [], onChange, label }) => {
         onChange(newValue);
     };
 
+    // Convert autocomplete array to InputPicker data format
+    const pickerData = autocomplete.map(item => ({
+        label: item,
+        value: item
+    }));
+
     return (
         <Form.Group>
             <Form.ControlLabel>{label}</Form.ControlLabel>
             {value.map((item, index) => (
                 <Stack className='fade-in-expand-simple' key={index} spacing={6} style={{ marginBottom: '5px' }}>
-                    <Input value={item} onChange={(val) => handleChange(val, index)} />
+                    <InputPicker
+                        data={pickerData}
+                        value={item}
+                        onChange={(val) => handleChange(val, index)}
+                        creatable
+                        searchable
+                        placeholder={str("Select or type...")}
+                        style={{ width: '100%' }}
+                    />
                     <Whisper placement="top" speaker={<Tooltip><Trans>Duplicate</Trans></Tooltip>}>
                         <IconButton icon={<Copy size={16} />} onClick={() => handleDuplicate(index)} />
                     </Whisper>
@@ -117,12 +133,13 @@ StringListEditor.propTypes = {
     value: PropTypes.arrayOf(PropTypes.string).isRequired,
     onChange: PropTypes.func.isRequired,
     label: PropTypes.string.isRequired,
+    autocomplete: PropTypes.arrayOf(PropTypes.string),
 };
 
 // ==================================
 //      Row Clause Editor
 // ==================================
-const ClauseListEditor = ({ value = [], onChange, tables = [] }) => {
+const ClauseListEditor = ({ value = [], onChange, tables = [], allTablesData }) => {
     const { str } = useLocale();
     const handleAddClause = () => {
         const newClause = {
@@ -168,11 +185,13 @@ const ClauseListEditor = ({ value = [], onChange, tables = [] }) => {
                         <Form.Group>
                             <Form.ControlLabel><Trans>Evaluate</Trans></Form.ControlLabel>
                             <Form.Control name="evaluate" value={clause.evaluate} onChange={(val) => handleClauseChange(clause.id, 'evaluate', val)} />
-                            <Dropdown title={<Table />}>
-                                {tables.map(tableName => {
-                                    return <Dropdown.Item key={tableName} onClick={() => handleClauseChange(clause.id, 'evaluate', `tableData["${tableName}"][""]`)}>{tableName}</Dropdown.Item>
-                                })}
-                            </Dropdown>
+                            <TreePicker
+                                searchable={false}
+                                data={allTablesData.filter(item => tables.includes(item.label))}
+                                value={clause.evaluate}
+                                onChange={(val) => handleClauseChange(clause.id, 'evaluate', val)}
+                                defaultExpandAll />
+                            {console.log(allTablesData)}
                             <Form.HelpText><Trans>JS expression for the value. E.g., `tableData["t1"]["field1"]`</Trans></Form.HelpText>
 
                         </Form.Group>
@@ -227,6 +246,15 @@ const ProcessorGenerator = () => {
         ],
     });
     const [generatedCode, setGeneratedCode] = useState('');
+    const [allTablesData, setAllTablesData] = useState({});
+
+    useEffect(() => {
+        const fetchAllTablesData = async () => {
+            const data = await authFetchJson('/api/v1/editor/all_tables_headers');
+            setAllTablesData(data);
+        }
+        fetchAllTablesData();
+    }, [])
 
     const repairTypeOptions = [
         'paint_two_sides', 'paint_one_side', 'polish',
@@ -320,13 +348,13 @@ ${renderClauses()}
 
     const renderStage1 = () => (
         <HStack alignItems='flex-start' justifyContent='center' spacing='50'>
-            {catalogOpen && <Suspense fallback={<Loader/>}>
-                <Panel bordered style={{marginRight: '18pt', minWidth: '230px'}}>
-                    <PartsCatalog/>
+            {catalogOpen && <Suspense fallback={<Loader />}>
+                <Panel bordered style={{ marginRight: '18pt', minWidth: '230px' }}>
+                    <PartsCatalog />
                 </Panel>
             </Suspense>}
-            <Content style={{maxWidth: "600px"}}>
-                <IconButton icon={<SearchIcon/>} appearance={catalogOpen ? "primary" : "default"} onClick={() => setCatalogOpen(!catalogOpen)}><Trans>Catalog</Trans></IconButton>
+            <Content style={{ maxWidth: "600px" }}>
+                <IconButton icon={<SearchIcon />} appearance={catalogOpen ? "primary" : "default"} onClick={() => setCatalogOpen(!catalogOpen)}><Trans>Catalog</Trans></IconButton>
                 <Header><h2><Trans>Processor Generator</Trans></h2></Header>
                 <Form fluid model={formModel} formValue={formData} onChange={setFormData}>
                     <Form.Group>
@@ -369,6 +397,7 @@ ${renderClauses()}
 
                     <StringListEditor
                         label={str("Required Tables")}
+                        autocomplete={allTablesData ? Object.keys(allTablesData) : []}
                         value={formData.requiredTables}
                         onChange={(value) => setFormData({ ...formData, requiredTables: value })}
                     />
@@ -383,6 +412,11 @@ ${renderClauses()}
                         value={formData.clauses}
                         onChange={(value) => setFormData({ ...formData, clauses: value })}
                         tables={formData.requiredTables}
+                        allTablesData={Object.keys(allTablesData).map(item => {
+                            let value = allTablesData[item];
+                            console.log("value", value);
+                            return { label: item, children: value.map(inner => { return { value: `tableData["${item}"]["${inner}"]`, label: inner, children: [] } }), value: `tableData["${item}"]` }
+                        })}
                     />
 
                     <Form.Group>

@@ -1,5 +1,4 @@
-use crate::{
-    errors::AppError, exlogging, middleware::AuthenticatedUser, state::AppState, transactionalfs::{GitTransactionalFs, TransactionalFs}, utils::{
+use crate::{ calc::table_processing::all_tables_headers, errors::AppError, exlogging, middleware::AuthenticatedUser, state::AppState, transactionalfs::{GitTransactionalFs, TransactionalFs}, utils::{
         get_file_as_string_by_path, user_catalog_directory_from_email, COMMON
     } // Import the new CompanyInfo struct
 };
@@ -18,6 +17,14 @@ pub async fn get_common_file_list(
     let fs_manager =
         GitTransactionalFs::new(app_state.data_dir_path.join(&COMMON), user_email, &app_state.cache).await?;
     let data = fs_manager.list_files().await?;
+    Ok(Json(data))
+}
+
+pub async fn get_all_tables_headers(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let data = all_tables_headers(&app_state.data_dir_path, &user_email).await?;
     Ok(Json(data))
 }
 
