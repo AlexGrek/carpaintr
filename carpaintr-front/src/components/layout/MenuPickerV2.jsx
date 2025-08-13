@@ -150,7 +150,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
   };
 
   return (
-    <div style={styles.container}>
+    <div className='pop-in-simple' style={styles.container}>
       {label && <div style={styles.label}>{label}</div>}
       <div style={styles.menuWrapper}>
         <div style={styles.menuContainer}>

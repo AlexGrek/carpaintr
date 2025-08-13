@@ -77,10 +77,12 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
             year={year}
             isFromLoading={isFromLoading}
           />
-          <Divider><Trans>Additional info</Trans></Divider>
-          <Input value={licensePlate} onChange={setLicensePlate} placeholder={str('License plate (optional)')}></Input>
-          <Input value={VIN} onChange={setVIN} placeholder={str('VIN (optional)')}></Input>
-          <Input as='textarea' value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
+          {year != null && <div className="pop-in-simple">
+            <Divider><Trans>Additional info</Trans></Divider>
+            <Input value={licensePlate} onChange={setLicensePlate} placeholder={str('License plate (optional)')}></Input>
+            <Input value={VIN} onChange={setVIN} placeholder={str('VIN (optional)')}></Input>
+            <Input as='textarea' value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
+          </div>}
         </BottomStickyLayout>
       </div>
     </div>
