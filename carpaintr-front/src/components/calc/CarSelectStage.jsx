@@ -19,6 +19,7 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
   const [notes, setNotes] = useState("");
   const [isFromLoading, setIsFromLoading] = useState(false);
   const [storeFileName, setStoreFileName] = useState(null);
+  const [selectModelMode, setSelectModelMode] = useState(false);
 
   const [searchParams] = useSearchParams();
 
@@ -36,6 +37,11 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
       setNotes(car.notes ?? "");
       setStoreFileName(car.storeFileName ?? null);
       setIsFromLoading(true);
+      if (car.make) {
+        setSelectModelMode(true)
+      } else {
+        setSelectModelMode(false)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -62,8 +68,10 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
   return (
     <div style={styles.sampleStage}>
       <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
-        <BottomStickyLayout bottomPanel={<Button onClick={handleClose} disabled={carClass === null || bodyType === null || year === null} color='green' appearance='primary'><Trans>Accept</Trans></Button>}>
-          <Text size='sm'>{year === null ? str("Car") : `${make || ''} ${model || ''} ${year || ''} / ${carClass || ''} ${bodyType || ''}`}</Text>
+        <BottomStickyLayout
+          bottomPanel={<Button onClick={handleClose} disabled={carClass === null || bodyType === null || year === null} color='green' appearance='primary'>
+            <Trans>Accept</Trans>
+          </Button>}>
           <VehicleSelect
             selectedBodyType={bodyType}
             carclass={carClass}
@@ -74,7 +82,11 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
             setBodyType={setBodyType}
             setModel={setModel}
             setYear={setYear}
+            selectModelMode={selectModelMode}
+            setSelectModelMode={setSelectModelMode}
             year={year}
+            vin={VIN}
+            setVin={setVIN}
             isFromLoading={isFromLoading}
           />
           {year != null && <div className="pop-in-simple">

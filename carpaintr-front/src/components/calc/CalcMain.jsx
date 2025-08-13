@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React from 'react';
+import React, { useState } from 'react';
 import './CarPaintEstimator.css';
 import './calc_translations';
 import StageView from '../layout/StageView';
@@ -7,12 +7,6 @@ import { AppWindowMac, Car, CarFront, Paintbrush, Table2 } from 'lucide-react';
 import CalcMainMenuStage from './CalcMainMenuStage';
 
 const stages = [
-    {
-        name: 'mainMenu',
-        title: 'Menu',
-        icon: AppWindowMac,
-        component: CalcMainMenuStage,
-    },
     {
         name: 'carSelectStage',
         title: 'Car select',
@@ -41,7 +35,8 @@ const stages = [
 
 // Main Parent component
 const CalcMain = ({ setChanges }) => {
-    return <StageView initialState={{}} stages={stages} />
+    const [isMainMenuStage, setIsMainMenuStage] = useState(true);
+    return isMainMenuStage ? <CalcMainMenuStage onNext={() => setIsMainMenuStage(false)}/> : <StageView initialState={{}} stages={stages} />
 };
 
 export default CalcMain;

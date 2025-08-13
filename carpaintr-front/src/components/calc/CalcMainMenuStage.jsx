@@ -3,13 +3,13 @@ import { styles } from "../layout/StageView";
 import LoadCalculationMenu from "./LoadCalculationMenu";
 import Trans from "../../localization/Trans";
 
-const CalcMainMenuStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData }) => {
+const CalcMainMenuStage = ({ onNext }) => {
 
     return (
         <div style={styles.sampleStage}>
-            <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
+            <div>
                 <div style={styles.buttonGroup}>
-                    <Button appearance="primary" onClick={onMoveForward}><Trans>New calculation</Trans></Button>
+                    <Button appearance="primary" onClick={onNext}><Trans>New calculation</Trans></Button>
                 </div>
                 <LoadCalculationMenu />
             </div>
