@@ -156,7 +156,7 @@
             </tbody>
         </table>
 
-        {% set total = work_group.total %}
+        {% set total = section_data.total %}
         <div class="total-row">
             Всього: {{ "%.2f"|format(total) }} {{ data.company_info.pricing_preferences.preferred_currency }}
         </div>
