@@ -162,7 +162,7 @@ const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, c
     }, [buildRequestPayload, showMessage, str]);
 
     return (
-        <div style={{ margin: "auto", maxWidth: "560px", paddingTop: "2em" }} className='fade-in-simple'>
+        <div style={{ margin: "auto", maxWidth: "560px", paddingTop: "5pt" }} className='fade-in-simple'>
             <h4>{name}</h4>
             <Form fluid className="w-full">
                 <Form.Group>
@@ -252,7 +252,7 @@ const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
         }
     };
 
-    return <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignContent: 'center', width: '300pt', margin: 'auto' }}>
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignContent: 'center', maxWidth: '300pt', margin: 'auto' }}>
         <h4>Оберіть тип документа</h4>
         {DOCUMENTS.map((doc) => (
             <Checkbox
@@ -264,6 +264,7 @@ const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
                 {doc.label}
             </Checkbox>
         ))}
+        <Divider />
     </div>
 }
 
