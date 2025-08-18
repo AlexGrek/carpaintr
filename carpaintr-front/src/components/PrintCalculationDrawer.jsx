@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton, Panel, Loader } from 'rsuite';
+import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton, Panel, Loader, Checkbox } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { useLocale } from '../localization/LocaleContext';
 import { authFetch } from '../utils/authFetch';
@@ -9,6 +9,8 @@ import PagePreviousIcon from '@rsuite/icons/PagePrevious';
 import FunnelIcon from '@rsuite/icons/Funnel'; // Added for Generate Preview button
 import Trans from '../localization/Trans';
 import ObjectBrowser from './utility/ObjectBrowser';
+import { isArrayLike } from 'lodash';
+import { File, FileDown } from 'lucide-react';
 
 // Calculation Summary Preview Component (renamed from PrintPreview)
 const CalculationSummaryPreview = React.memo(({ calculationData }) => {
@@ -52,7 +54,7 @@ const CalculationSummaryPreview = React.memo(({ calculationData }) => {
 });
 
 // Print Document Generator Component
-const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData, orderData, paintData }) => {
+const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, carData, orderData, paintData }) => {
     const { str } = useLocale();
     const toaster = useToaster();
     const [customTemplateContent, setCustomTemplateContent] = useState('');
@@ -60,6 +62,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
     const [orderNotes, setOrderNotes] = useState('');
     const [htmlPreview, setHtmlPreview] = useState('');
     const [loadingPreview, setLoadingPreview] = useState(false);
+    const [clickedPreview, setClickedPreview] = useState(false);
     const [loadingDownload, setLoadingDownload] = useState(false);
 
     const showMessage = useCallback((type, message) => {
@@ -89,6 +92,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
 
     const handleGeneratePreview = useCallback(async () => {
         setLoadingPreview(true);
+        setClickedPreview(true);
         setHtmlPreview(''); // Clear previous preview
         try {
             const payload = buildRequestPayload();
@@ -158,7 +162,8 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
     }, [buildRequestPayload, showMessage, str]);
 
     return (
-        <Stack direction="column" alignItems="flex-start" spacing={20} className="p-4 w-full">
+        <div style={{ margin: "auto", maxWidth: "560px", paddingTop: "2em" }} className='fade-in-simple'>
+            <h4>{name}</h4>
             <Form fluid className="w-full">
                 <Form.Group>
                     <Form.ControlLabel><Trans>Order Number</Trans></Form.ControlLabel>
@@ -179,7 +184,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
                     />
                 </Form.Group>
                 <Form.Group>
-                    <Panel header={str("Custom Template Content (Jinja2)")} collapsible bordered>
+                    {name === "custom" && <Panel header={str("Custom Template Content (Jinja2)")} collapsible bordered>
                         <Input
                             as="textarea"
                             rows={8}
@@ -187,50 +192,86 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
                             onChange={setCustomTemplateContent}
                             placeholder={str('Enter custom template content here (e.g., HTML with placeholders)')}
                         />
-                    </Panel>
+                    </Panel>}
                 </Form.Group>
-                <Stack spacing={10} justifyContent="flex-end" className="w-full" wrap>
+                <Stack spacing={10} wrap alignItems='center' justifyContent='center' style={{ "width": "100%" }}>
                     <Button
                         appearance="primary"
                         onClick={handleGeneratePreview}
                         loading={loadingPreview}
                         disabled={loadingDownload}
-                        startIcon={<FunnelIcon />}
+                        startIcon={<File />}
                     >
-                        <Trans>Generate Preview (HTML)</Trans>
+                        <Trans>Generate Preview</Trans>
                     </Button>
                     <Button
                         appearance="green"
                         onClick={handleDownloadPdf}
                         loading={loadingDownload}
                         disabled={loadingPreview}
-                        startIcon={<FileDownloadIcon />}
+                        startIcon={<FileDown />}
                     >
                         <Trans>Download PDF</Trans>
                     </Button>
                 </Stack>
             </Form>
-            <Divider><Trans>Preview</Trans></Divider>
-            {loadingPreview && <Loader />}
-            {!loadingPreview && htmlPreview && (
-                <iframe
-                    title="Document Preview"
-                    style={{ width: '100%', minHeight: '500px', border: '1px solid #ddd' }}
-                    srcDoc={htmlPreview}
-                />
-            )}
-            {!loadingPreview && !htmlPreview && (
-                <Message type="info" showIcon className="w-full"><Trans>Generate a preview to see it here.</Trans></Message>
-            )}
-        </Stack>
+            {clickedPreview && <>
+                <Divider><Trans>Preview</Trans></Divider>
+                {loadingPreview && <Loader />}
+                {!loadingPreview && htmlPreview && (
+                    <iframe
+                        title="Document Preview"
+                        className='pop-in-simple'
+                        style={{ width: '100%', minHeight: '500px', border: '1px solid #ddd', backgroundColor: "white" }}
+                        srcDoc={htmlPreview}
+                    />
+                )}
+                {!loadingPreview && !htmlPreview && (
+                    <Message type="info" showIcon className="w-full"><Trans>Generate a preview to see it here.</Trans></Message>
+                )}
+            </>}
+        </div>
     );
 });
 
+const DOCUMENTS = [{
+    "label": "Калькуляція",
+    "value": "calculation"
+},
+{
+    "label": "Свій шаблон",
+    "value": "custom"
+}]
+
+const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
+    const handleCheckboxChange = (value, checked) => {
+        if (checked) {
+            setSelectedDocuments(prev => [...prev, value]);
+        } else {
+            setSelectedDocuments(prev => prev.filter(item => item !== value));
+        }
+    };
+
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignContent: 'center', width: '300pt', margin: 'auto' }}>
+        <h4>Оберіть тип документа</h4>
+        {DOCUMENTS.map((doc) => (
+            <Checkbox
+                key={doc.value}
+                value={doc.value}
+                checked={isArrayLike(selectedDocuments) && selectedDocuments.includes(doc.value)}
+                onChange={(value, checked) => handleCheckboxChange(doc.value, checked)}
+            >
+                {doc.label}
+            </Checkbox>
+        ))}
+    </div>
+}
 
 // Main Print Calculation Drawer Component
 const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, partsData, carData, orderData, paintData }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
+    const [selectedDocuments, setSelectedDocuments] = useState([]);
 
     return (
         <Drawer
@@ -243,11 +284,16 @@ const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, par
             <Drawer.Header>
                 <Drawer.Title><Trans>Print and Document Generation</Trans></Drawer.Title>
                 <Drawer.Actions>
-                    <Button onClick={onClose} appearance="subtle" startIcon={<PagePreviousIcon />}><Trans>Close</Trans></Button>
+
                 </Drawer.Actions>
             </Drawer.Header>
             <Drawer.Body>
-                <PrintDocumentGenerator paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
+                <div>
+                    <DocumentSelector selectedDocuments={selectedDocuments} setSelectedDocuments={setSelectedDocuments} />
+                    {selectedDocuments.map((doc) => {
+                        return <PrintDocumentGenerator key={doc} name={doc} paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
+                    })}
+                </div>
             </Drawer.Body>
         </Drawer>
     );
