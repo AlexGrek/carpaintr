@@ -32,7 +32,7 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
             if (!data.every(table => table.result.every((result) => result != undefined && result.sum != undefined))) {
                 // need to pre-calculate everything
                 let copy = cloneDeep(data);
-                copy.map((table) => {
+                let upd = copy.map((table) => {
                     let acc = 0;
                     let updated_result = table.result.map((item) => {
                         if (item.sum == undefined) {
@@ -49,7 +49,7 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
                     })
                     return { ...table, result: updated_result, total: acc }
                 })
-                setData(copy)
+                setData(upd)
             }
         }
     }, [data, getPrice, setData]);
