@@ -3,7 +3,7 @@ import { Message, InlineEdit, Panel, Stack } from 'rsuite';
 import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
-import { cloneDeep, result } from 'lodash';
+import { cloneDeep, isArrayLike, result } from 'lodash';
 
 registerTranslations("ua", {
     "Name": "Найменування",
@@ -28,7 +28,7 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
     }, [basePrice, priceState]);
 
     const updateSums = useCallback(() => {
-        if (setData) {
+        if (setData && isArrayLike(data)) {
             if (!data.every(table => table.result.every((result) => result != undefined && result.sum != undefined))) {
                 // need to pre-calculate everything
                 let copy = cloneDeep(data);
