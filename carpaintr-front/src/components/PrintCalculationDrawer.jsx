@@ -52,11 +52,11 @@ const CalculationSummaryPreview = React.memo(({ calculationData }) => {
 });
 
 // Print Document Generator Component
-const PrintDocumentGenerator = React.memo(({ calculationData }) => {
+const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData, orderData, paintData }) => {
     const { str } = useLocale();
     const toaster = useToaster();
     const [customTemplateContent, setCustomTemplateContent] = useState('');
-    const [orderNumber, setOrderNumber] = useState('');
+    const [orderNumber, setOrderNumber] = useState(orderData.orderNumber);
     const [orderNotes, setOrderNotes] = useState('');
     const [htmlPreview, setHtmlPreview] = useState('');
     const [loadingPreview, setLoadingPreview] = useState(false);
@@ -74,16 +74,10 @@ const PrintDocumentGenerator = React.memo(({ calculationData }) => {
     const buildRequestPayload = useCallback(() => {
         return {
             calculation: {
-                model: (calculationData.make && calculationData.model) ? { brand: calculationData.make, model: calculationData.model } : null,
-                year: calculationData.year ? String(calculationData.year) : "",
-                body_type: calculationData.bodyType || "",
-                car_class: calculationData.carClass || "",
-                color: calculationData.color || "",
-                paint_type: calculationData.paintType || "",
-                body_parts: calculationData.selectedParts.length > 0 ? calculationData.selectedParts.map(part => ({ brand: calculationData.make || "", model: part })) : null,
-                vin: calculationData.VIN || "",
-                notes: calculationData.notes || "",
-                license_plate: calculationData.licensePlate === '' ? null : calculationData.licensePlate
+                car: carData,
+                paint: paintData,
+                order: orderData,
+                calc: calculationData
             },
             metadata: {
                 order_number: orderNumber || null,
@@ -91,7 +85,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData }) => {
             },
             custom_template_content: customTemplateContent || null,
         };
-    }, [calculationData, customTemplateContent, orderNumber, orderNotes]);
+    }, [carData, paintData, orderData, partsData, calculationData, orderNumber, orderNotes, customTemplateContent]);
 
     const handleGeneratePreview = useCallback(async () => {
         setLoadingPreview(true);
@@ -234,7 +228,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData }) => {
 
 
 // Main Print Calculation Drawer Component
-const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData }) => {
+const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, partsData, carData, orderData, paintData }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
     const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'document'
@@ -260,8 +254,13 @@ const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData }) =
                             <ObjectBrowser jsonObject={calculationData} />
                         </React.Suspense>
                     </Tabs.Tab>
+                    <Tabs.Tab eventKey="summary" title={str('Parts Summary')}>
+                        <React.Suspense fallback={<Placeholder.Paragraph rows={10} />}>
+                            <ObjectBrowser jsonObject={partsData} />
+                        </React.Suspense>
+                    </Tabs.Tab>
                     <Tabs.Tab eventKey="document" title={str('Document Generation')}>
-                        <PrintDocumentGenerator calculationData={calculationData} />
+                        <PrintDocumentGenerator paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
                     </Tabs.Tab>
                 </Tabs>
             </Drawer.Body>

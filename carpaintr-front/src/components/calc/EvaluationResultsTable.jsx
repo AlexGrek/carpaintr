@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Message, InlineEdit, Panel, Stack } from 'rsuite';
 import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
+import { cloneDeep } from 'lodash';
 
 registerTranslations("ua", {
     "Name": "Найменування",
@@ -13,12 +14,52 @@ registerTranslations("ua", {
 });
 
 
-export const EvaluationResultsTable = ({ data, prices = {}, currency = "", basePrice = 1 }) => {
+export const EvaluationResultsTable = ({ data, setData = null, prices = {}, currency = "", basePrice = 1 }) => {
     const [priceState, setPriceState] = useState({ ...prices });
+
+    const getPrice = useCallback((name) => {
+        let priceFromPrices = priceState[name];
+        if (priceFromPrices == undefined) {
+            return basePrice
+        }
+        else {
+            return priceFromPrices
+        }
+    }, [basePrice, priceState]);
+
+    useEffect(() => {
+        if (setData) {
+            if (!data.every(table => table.result.every((result) => result != undefined && result.sum != undefined))) {
+                // need to pre-calculate everything
+                let copy = cloneDeep(data);
+                copy.map((table) => {
+                    return table.result.map((item) => {
+                        if (item.sum == undefined) {
+                            console.log("-------------------------", item.name)
+                            console.log(item)
+                            item.price = getPrice(item.name)
+                            console.log(item.price)
+                            item.sum = (item.estimation * item.price).toFixed(2)
+                            console.log(item.sum)
+                        }
+                        return item
+                    })
+                })
+                setData(copy)
+            }
+        }
+    }, [data, getPrice, setData])
 
     const handlePriceChange = (name, value) => {
         setPriceState((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
-    };
+        if (setData) {
+            let copy = cloneDeep(data)
+            let item = copy.find(obj => obj.name === name);
+            if (item) {
+                item.price = value;
+            }
+        }
+    }
 
     if (!Array.isArray(data)) {
         return (
