@@ -3,7 +3,7 @@ import { Message, InlineEdit, Panel, Stack } from 'rsuite';
 import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, result } from 'lodash';
 
 registerTranslations("ua", {
     "Name": "Найменування",
@@ -27,28 +27,36 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
         }
     }, [basePrice, priceState]);
 
-    useEffect(() => {
+    const updateSums = useCallback(() => {
         if (setData) {
             if (!data.every(table => table.result.every((result) => result != undefined && result.sum != undefined))) {
                 // need to pre-calculate everything
                 let copy = cloneDeep(data);
                 copy.map((table) => {
-                    return table.result.map((item) => {
+                    let acc = 0;
+                    let updated_result = table.result.map((item) => {
                         if (item.sum == undefined) {
                             console.log("-------------------------", item.name)
                             console.log(item)
                             item.price = getPrice(item.name)
                             console.log(item.price)
-                            item.sum = (item.estimation * item.price).toFixed(2)
+                            const sum = item.estimation * item.price;
+                            acc += sum;
+                            item.sum = (sum).toFixed(2)
                             console.log(item.sum)
                         }
                         return item
                     })
+                    return { ...table, result: updated_result, total: acc }
                 })
                 setData(copy)
             }
         }
-    }, [data, getPrice, setData])
+    }, [data, getPrice, setData]);
+
+    useEffect(() => {
+        updateSums();
+    }, [data, getPrice, setData, updateSums])
 
     const handlePriceChange = (name, value) => {
         setPriceState((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));

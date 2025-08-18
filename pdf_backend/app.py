@@ -31,7 +31,7 @@ def render_template_from_data(data, default_template="paycheck.html"):
             template = template_env.get_template(default_template)
 
         with app.app_context():
-            return template.render(data), None
+            return template.render({"data": data}), None
     except Exception as e:
         app.logger.error(f"Template rendering error: {e}")
         return None, (f"Template error: {e}", 404)
@@ -47,7 +47,7 @@ def html_to_pdf_bytes(html_content):
 def generate_paycheck_pdf():
     try:
         data = request.get_json()
-        rendered_html, error = render_template_from_data({"data": data})
+        rendered_html, error = render_template_from_data(data)
         if error:
             return {"error": error[0]}, error[1]
 
@@ -67,7 +67,7 @@ def generate_paycheck_pdf():
 def generate_paycheck_html():
     try:
         data = request.get_json()
-        rendered_html, error = render_template_from_data({"data": data})
+        rendered_html, error = render_template_from_data(data)
         if error:
             return {"error": error[0]}, error[1]
 
