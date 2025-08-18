@@ -36,14 +36,14 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
                     let acc = 0;
                     let updated_result = table.result.map((item) => {
                         if (item.sum == undefined) {
-                            console.log("-------------------------", item.name)
-                            console.log(item)
+                            // console.log("-------------------------", item.name)
+                            // console.log(item)
                             item.price = getPrice(item.name)
-                            console.log(item.price)
+                            // console.log(item.price)
                             const sum = item.estimation * item.price;
                             acc += sum;
                             item.sum = (sum).toFixed(2)
-                            console.log(item.sum)
+                            // console.log(item.sum)
                         }
                         return item
                     })
