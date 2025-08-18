@@ -101,13 +101,13 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
                 }
 
                 return (
-                    <div key={index} style={{ width: "100%", marginBottom: "12px" }}>
+                    <div key={index} style={{ width: "100%", marginBottom: "10px" }}>
                         <h4>{entry.name}</h4>
                         <table className="evaluation-table modern">
                             <thead>
                                 <tr>
-                                    <th style={{ width: '35px' }}>#</th>
-                                    <th style={{ width: '90%' }}><Trans>Name</Trans></th>
+                                    <th style={{ width: '25px' }}>#</th>
+                                    <th style={{ width: '88%' }}><Trans>Name</Trans></th>
                                     <th><Trans>Estimation</Trans></th>
                                     <th><Trans>Price</Trans> {currency && `(${currency})`}</th>
                                     <th><Trans>Sum</Trans> {currency && `(${currency})`}</th>
