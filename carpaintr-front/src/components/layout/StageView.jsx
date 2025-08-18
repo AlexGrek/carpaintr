@@ -1,6 +1,6 @@
-import React, { useState, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { Button, Loader } from 'rsuite';
-import { ChevronLeft, Home, User, Settings, CheckCircle } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useLocale } from '../../localization/LocaleContext';
 
 // --- RSuite Color Palette (for inline styles) ---
@@ -107,21 +107,21 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
   const getStageFromUrl = () => {
     const params = getUrlParams();
     const stageParam = params.get('stage');
-    
+
     if (stageParam) {
       // Try to find by name first
       const stageByName = stages.findIndex(s => s.name === stageParam);
       if (stageByName !== -1) {
         return stageByName;
       }
-      
+
       // Try to parse as index
       const stageIndex = parseInt(stageParam, 10);
       if (!isNaN(stageIndex) && stageIndex >= 0 && stageIndex < stages.length) {
         return stageIndex;
       }
     }
-    
+
     return 0;
   };
 
@@ -168,7 +168,7 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
     setStageDataState(prevData => ({ ...prevData, ...newData }));
   };
 
-  const handleMoveToInternal = (targetIndex, { skipUrlUpdate = false, isMovingForward = false } = {}) => {
+  const handleMoveToInternal = useCallback((targetIndex, { skipUrlUpdate = false, isMovingForward = false } = {}) => {
     if (isFadingOut || targetIndex === activeStageIndex || targetIndex < 0 || targetIndex >= stages.length) {
       return;
     }
@@ -204,7 +204,7 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
 
       setIsFadingOut(false);
     }, animationDelay);
-  };
+  }, [activeStageIndex, animationDelay, isFadingOut, stages, stagesState]);
 
   const handleMoveTo = (targetIndex) => {
     if (!stagesState[targetIndex]?.enabled) {

@@ -1,5 +1,5 @@
 use crate::api::v1::user::find_or_create_company_info;
-use crate::exlogging::{log_event, LogLevel};
+use crate::exlogging::{self, log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
 use crate::models::CompanyInfo;
 use crate::{errors::AppError, state::AppState};
@@ -50,6 +50,15 @@ pub async fn gen_pdf(
         metadata: request.metadata.clone(),
     };
 
+    log_event(
+        exlogging::LogLevel::Info,
+        format!(
+            "Request for document generation: {}",
+            serde_json::to_string_pretty(&internal_request)?
+        ),
+        Some(user_email.clone()),
+    );
+
     let res = client
         .post(format!("{}/pdf", app_state.pdf_gen_api_url_post))
         .json(&internal_request)
@@ -98,6 +107,15 @@ pub async fn gen_html(
         custom_template_content: request.custom_template_content,
         metadata: request.metadata.clone(),
     };
+
+    log_event(
+        exlogging::LogLevel::Info,
+        format!(
+            "Request for document generation: {}",
+            serde_json::to_string_pretty(&internal_request)?
+        ),
+        Some(user_email.clone()),
+    );
 
     let res = client
         .post(format!("{}/html", app_state.pdf_gen_api_url_post))
