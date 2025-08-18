@@ -47,7 +47,7 @@ def html_to_pdf_bytes(html_content):
 def generate_paycheck_pdf():
     try:
         data = request.get_json()
-        rendered_html, error = render_template_from_data(data)
+        rendered_html, error = render_template_from_data({"data": data})
         if error:
             return {"error": error[0]}, error[1]
 
@@ -67,7 +67,7 @@ def generate_paycheck_pdf():
 def generate_paycheck_html():
     try:
         data = request.get_json()
-        rendered_html, error = render_template_from_data(data)
+        rendered_html, error = render_template_from_data({"data": data})
         if error:
             return {"error": error[0]}, error[1]
 
