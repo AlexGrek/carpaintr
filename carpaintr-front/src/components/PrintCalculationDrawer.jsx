@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton, Panel } from 'rsuite';
+import { Drawer, Button, Tabs, Placeholder, Message, Input, Form, Stack, Divider, useToaster, IconButton, Panel, Loader } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { useLocale } from '../localization/LocaleContext';
 import { authFetch } from '../utils/authFetch';
@@ -189,7 +189,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
                         />
                     </Panel>
                 </Form.Group>
-                <Stack spacing={10} justifyContent="flex-end" className="w-full">
+                <Stack spacing={10} justifyContent="flex-end" className="w-full" wrap>
                     <Button
                         appearance="primary"
                         onClick={handleGeneratePreview}
@@ -211,7 +211,7 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
                 </Stack>
             </Form>
             <Divider><Trans>Preview</Trans></Divider>
-            {loadingPreview && <Placeholder.Paragraph rows={5} />}
+            {loadingPreview && <Loader />}
             {!loadingPreview && htmlPreview && (
                 <iframe
                     title="Document Preview"
@@ -231,12 +231,11 @@ const PrintDocumentGenerator = React.memo(({ calculationData, partsData, carData
 const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, partsData, carData, orderData, paintData }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
-    const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'document'
 
     return (
         <Drawer
             size={isMobile ? 'full' : 'lg'}
-            placement="top"
+            placement={isMobile ? 'top' : 'right'}
             open={show}
             onClose={onClose}
             style={{ overflowY: 'auto' }} // Make drawer content scrollable
@@ -248,21 +247,7 @@ const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, par
                 </Drawer.Actions>
             </Drawer.Header>
             <Drawer.Body>
-                <Tabs activeKey={activeTab} onSelect={setActiveTab} vertical={!isMobile} appearance="subtle">
-                    <Tabs.Tab eventKey="summary" title={str('Calculation Summary')}>
-                        <React.Suspense fallback={<Placeholder.Paragraph rows={10} />}>
-                            <ObjectBrowser jsonObject={calculationData} />
-                        </React.Suspense>
-                    </Tabs.Tab>
-                    <Tabs.Tab eventKey="summary" title={str('Parts Summary')}>
-                        <React.Suspense fallback={<Placeholder.Paragraph rows={10} />}>
-                            <ObjectBrowser jsonObject={partsData} />
-                        </React.Suspense>
-                    </Tabs.Tab>
-                    <Tabs.Tab eventKey="document" title={str('Document Generation')}>
-                        <PrintDocumentGenerator paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
-                    </Tabs.Tab>
-                </Tabs>
+                <PrintDocumentGenerator paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
             </Drawer.Body>
         </Drawer>
     );
