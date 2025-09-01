@@ -63,6 +63,8 @@ registerTranslations('ua', {
     "Model": "Модель",
     "Body Type": "Тип кузова",
     "Recents": "Збережені",
+    "Previous calculation": "Попередній розрахунок",
+    "Continue": "Продовжити",
 
     "sedan": "Седан",
     "hatchback 3 doors": "Хетчбек 3-дверний",

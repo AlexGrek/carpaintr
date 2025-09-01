@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import './CarPaintEstimator.css';
 import './calc_translations';
 import StageView from '../layout/StageView';
@@ -36,7 +36,18 @@ const stages = [
 // Main Parent component
 const CalcMain = ({ setChanges }) => {
     const [isMainMenuStage, setIsMainMenuStage] = useState(true);
-    return isMainMenuStage ? <CalcMainMenuStage onNext={() => setIsMainMenuStage(false)}/> : <StageView initialState={{}} stages={stages} />
+    const [initialState, setInitialState] = useState({});
+
+    const handleOnSave = useCallback((data) => {
+        localStorage.setItem('unsaved_calculation', JSON.stringify(data))
+    }, [])
+
+    const handleLoadData = useCallback((data) => {
+        setInitialState(data);
+        setTimeout(() => setIsMainMenuStage(false), 100)
+    }, [])
+
+    return isMainMenuStage ? <CalcMainMenuStage onNext={() => setIsMainMenuStage(false)} onLoad={handleLoadData}/> : <StageView onSave={handleOnSave} initialState={initialState} stages={stages} />
 };
 
 export default CalcMain;

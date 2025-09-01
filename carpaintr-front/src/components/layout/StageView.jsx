@@ -98,7 +98,7 @@ const replaceUrlParam = (key, value) => {
  * @param {number} [props.animationDelay=200] - The fade-out animation delay in ms.
  * @param {object} [props.initialState={}] - The initial shared state for all stages.
  */
-function StageView({ stages, initialState = {}, animationDelay = 100 }) {
+function StageView({ stages, initialState = {}, animationDelay = 100, onSave = null }) {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [stageData, setStageDataState] = useState(initialState);
   const { str } = useLocale();
@@ -163,9 +163,14 @@ function StageView({ stages, initialState = {}, animationDelay = 100 }) {
    * @param {object} newData - The new data to merge into the state.
    */
   const handleSetStageData = (newData) => {
-    console.log("State update registered")
-    console.log(newData);
-    setStageDataState(prevData => ({ ...prevData, ...newData }));
+
+    setStageDataState(prevData => {
+      const updated = ({ ...prevData, ...newData })
+      if (onSave != null) {
+        onSave(updated);
+      }
+      return updated;
+    })
   };
 
   const handleMoveToInternal = useCallback((targetIndex, { skipUrlUpdate = false, isMovingForward = false } = {}) => {
