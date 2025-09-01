@@ -4,17 +4,17 @@
 }
 
 .gradient-box {
-    height: 250pt;
+    height: 230pt;
     width: 100%;
-    padding-top: 40pt;
+    padding-top: 60pt;
     background: radial-gradient(
             /* Sets the gradient's center high up and not visible,
     creating a bright glow effect at the top. */
             at top,
             /* The gradient starts with a light orange color. */
-            rgb(255, 200, 150),
+            rgb(253, 180, 131),
             /* It fades out to an almost white color at the edge. */
-            rgb(255, 255, 250));
+            rgb(255, 254, 250));
 }
 
 .dashboard-content-container {
@@ -55,8 +55,8 @@
 
 .app-card {
     background: white;
-    padding: 2rem;
-    border-radius: 12px;
+    padding: 1.3rem;
+    border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     text-align: center;
     transition: all 0.3s ease;
@@ -64,7 +64,7 @@
 }
 
 .app-card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-3px);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     border-color: #ea580c;
 }

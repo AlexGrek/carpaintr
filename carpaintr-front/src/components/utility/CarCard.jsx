@@ -1,3 +1,4 @@
+import { Car } from "lucide-react";
 import React from "react";
 
 /**
@@ -98,23 +99,11 @@ export function CarCard({ data, className, style }) {
   return (
     <div className={className} style={{ ...styles.card, ...style }}>
       <div style={styles.header}>
-        <h3 style={styles.title}>{hasMakeModel ? makeModel : "Vehicle"}</h3>
+        <h3 style={styles.title}>{hasMakeModel ? makeModel : "Автомобіль"}</h3>
         {carClass && (
           <div style={{ ...styles.badge, background: "#eef2ff", borderColor: "#c7d2fe" }}>
-            Class {carClass}
+            Клас {carClass}
           </div>
-        )}
-      </div>
-
-      <div style={styles.badgeRow}>
-        {bodyType && (
-          <span style={{ ...styles.badge, background: "#ecfeff", borderColor: "#a5f3fc" }}>{bodyType}</span>
-        )}
-        {hasMakeModel && (
-          <span style={{ ...styles.badge, background: "#fef3c7", borderColor: "#fde68a" }}>Make/Model</span>
-        )}
-        {colorName && (
-          <span style={{ ...styles.badge, background: "#f0fdf4", borderColor: "#bbf7d0" }}>Color</span>
         )}
       </div>
 
@@ -122,15 +111,17 @@ export function CarCard({ data, className, style }) {
 
       <div style={styles.body}>
         {hasMakeModel && (
-          <Field label="Make / Model">{makeModel}</Field>
+          <Field label="Модель">{makeModel}</Field>
         )}
 
+        <Field label="Тип">{bodyType}</Field>
+
         {colorName && (
-          <Field label="Color">{colorName}</Field>
+          <Field label="Колір">{colorName}</Field>
         )}
 
         <Field label="VIN">{vin || <span style={styles.subtle}>—</span>}</Field>
-        <Field label="License Plate">{license || <span style={styles.subtle}>—</span>}</Field>
+        <Field label="Номер">{license || <span style={styles.subtle}>—</span>}</Field>
       </div>
     </div>
   );

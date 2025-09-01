@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Button, DatePicker, HStack, IconButton, Input, Panel, VStack } from "rsuite";
+import { Button, DatePicker, Divider, HStack, IconButton, Input, Panel, VStack } from "rsuite";
 import ArrowBackIcon from '@rsuite/icons/ArrowBack';
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
@@ -75,23 +75,26 @@ const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStart
           <div>
             <NotifyMessage text={n} />
             <section>
-              <p>Order date</p>
+              <p><Trans>Order date</Trans></p>
               <DatePicker
+                format="dd.MM.yyyy"
                 oneTap
                 value={orderDate}
                 onChange={setOrderDate}
-                placeholder="Select date"
+                placeholder={str("Select date")}
               />
-              <p>Order number</p>
+              <p><Trans>Order number</Trans></p>
               <Input onChange={setOrderNumber} value={orderNumber} />
             </section>
-            <Panel header={"Tables"}>
+            <Panel header={str("Tables")}>
               {stageData.calculations && Object.keys(stageData.calculations).map((key) => {
                 return <div key={key}>
+                  <Divider/>
                   <HStack><Shapes /><h4>{key}</h4></HStack>
                   <EvaluationResultsTable data={stageData.calculations[key]} setData={(value) => {
                     setStageData({ ...stageData, calculations: { ...stageData.calculations, [key]: value } })
                   }} />
+                  
                 </div>
               })}
             </Panel>

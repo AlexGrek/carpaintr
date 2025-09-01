@@ -64,6 +64,7 @@ registerTranslations('ua', {
     "Body Type": "Тип кузова",
     "Recents": "Збережені",
     "Previous calculation": "Попередній розрахунок",
+    "calculation": "Калькуляція",
     "Continue": "Продовжити",
 
     "sedan": "Седан",
@@ -102,5 +103,10 @@ registerTranslations('ua', {
     "Body parts": "Деталі",
     "Paint select": "Колір",
     "Car select": "Автомобіль",
-    "Menu": "Розрахунок"
+    "Menu": "Розрахунок",
+
+    "Order date": "Дата",
+    "Order number": "Номер замовлення",
+    "Tables": "Таблиці",
+
 });

@@ -6,7 +6,7 @@ import { useMediaQuery } from "react-responsive";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import { HStack, VStack, Text, Message, Stack, Placeholder, Panel, useToaster } from "rsuite";
-import { DownloadCloud } from "lucide-react";
+import { Car, DownloadCloud, File } from "lucide-react";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import Trans from "../../localization/Trans";
 import ErrorMessage from "../layout/ErrorMessage";
@@ -103,7 +103,7 @@ const LoadCalculationMenu = React.memo(({ show = true, onClose, onDataLoaded = n
                 { placement: 'topEnd' }
             );
         }
-    }, [onDataLoaded]);
+    }, [onDataLoaded, toaster]);
 
 
     const handleFileSelect = useCallback((filename) => {
@@ -116,9 +116,8 @@ const LoadCalculationMenu = React.memo(({ show = true, onClose, onDataLoaded = n
         }
     }, [loadById, navigate, onClose, onDataLoaded]);
 
-    const renderFileList = useCallback((files, groupTitle) => (
+    const renderFileList = useCallback((files) => (
         <VStack spacing={10} alignItems="flex-start" className="w-full">
-            <h5 className="font-semibold text-lg mb-2">{groupTitle}</h5>
             {files.length > 0 ? (
                 <VStack spacing={5} alignItems="flex-start" className="calc-file-load-stack">
                     {files.map((file, index) => (
@@ -128,16 +127,14 @@ const LoadCalculationMenu = React.memo(({ show = true, onClose, onDataLoaded = n
                             style={{ justifyContent: 'space-between', padding: '8px 12px' }}
                         >
                             <HStack width="100%" justifyContent='space-between'>
-                                <p className="calc-file-load-entry-name"><DownloadCloud />{capitalizeFirstLetter(file.name.split('_').slice(0, -1).join(' '))}</p>
+                                <p className="calc-file-load-entry-name"><Car size={18} />{capitalizeFirstLetter(file.name.split('_').slice(0, -1).join(' '))}</p>
                                 <p className="calc-file-load-entry-date"><Text as="sub">{formatTimeAgo(file.modified, str)}</Text></p>
                             </HStack>
                         </div>
                     ))}
                 </VStack>
             ) : (
-                <Message type="info" showIcon className="w-full">
-                    <Trans>No files in this category.</Trans>
-                </Message>
+                <p/>
             )}
         </VStack>
     ), [handleFileSelect, str]);

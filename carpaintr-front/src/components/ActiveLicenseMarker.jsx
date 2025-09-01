@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Loader, Tag } from 'rsuite';
+import { Loader, Message, Tag, useToaster } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import './ActiveLicenseMarker.css'
-import { ShieldCheck } from 'lucide-react';
+import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import { useLocale } from '../localization/LocaleContext';
 
 const ActiveLicenseMarker = () => {
     const [licenseStatus, setLicenseStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const toaster = useToaster();
+    const { str } = useLocale();
 
     useEffect(() => {
         const fetchLicenses = async () => {
@@ -29,15 +32,16 @@ const ActiveLicenseMarker = () => {
     }, []);
 
     if (loading) {
-        return <Tag color="grey">Завантаження ліцензії...</Tag>
+        return <div className='license-tag'><Loader /></div>
     }
 
     if (error) {
         console.log(error)
+        toaster.push(<Message type="error" closable>{`${str("Error")}: ${error}`}</Message>);
     }
 
     if (licenseStatus == null) {
-        return <Tag color="grey">Завантаження ліцензії...</Tag>
+        return <div className='license-tag'><ShieldAlert size={16} style={{ display: 'inline-block', marginRight: '4pt', transform: 'translateY(-2px)' }} /></div>
     }
 
     return (
