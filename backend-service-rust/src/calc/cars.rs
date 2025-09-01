@@ -13,12 +13,12 @@ use crate::calc::constants::*;
 // while ignoring other fields
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CarData {
-    body: Vec<String>,
+    pub body: Vec<String>,
     #[serde(default)]
-    is_suv: bool,
-    estimated_price: u32,
-    euro_class: String,
-    euro_body_types: Vec<String>
+    pub is_suv: bool,
+    pub estimated_price: u32,
+    pub euro_class: String,
+    pub euro_body_types: Vec<String>
 }
 
 

@@ -29,7 +29,7 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
 
     const updateSums = useCallback(() => {
         if (setData && isArrayLike(data)) {
-            if (!data.every(table => table.result.every((result) => result != undefined && result.sum != undefined))) {
+            if (!data.every(table => (table.result || []).every((result) => result != undefined && result.sum != undefined))) {
                 // need to pre-calculate everything
                 let copy = cloneDeep(data);
                 let upd = copy.map((table) => {

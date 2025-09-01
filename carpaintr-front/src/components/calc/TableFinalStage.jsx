@@ -22,9 +22,14 @@ const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStart
             <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'>
               <Trans>Back</Trans>
             </IconButton>
-            <Button onClick={() => setPrintDrawerOpen(true)} color='green' appearance='primary'>
-              <Trans>Print</Trans>
-            </Button>
+            <div>
+              <Button onClick={() => setPrintDrawerOpen(true)} color='blue' appearance='primary'>
+                <Trans>Save</Trans>
+              </Button>
+              <Button onClick={() => setPrintDrawerOpen(true)} color='green' appearance='primary' style={{marginLeft: '6pt'}}>
+                <Trans>Print</Trans>
+              </Button>
+            </div>
           </HStack>
         }>
           <div>
