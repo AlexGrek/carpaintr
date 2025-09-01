@@ -1,11 +1,11 @@
 // UsersDashboard.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Content, Panel, Text, Message, Dropdown, Button } from 'rsuite';
+import { Panel, Text, Message, Dropdown, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
-import { getCompanyInfo, fetchCompanyInfo, getOrFetchCompanyInfo } from '../../utils/authFetch';
+import { fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
 import { BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
@@ -98,18 +98,6 @@ const DashboardNavigationButtons = () => {
             link: "/calc2"
         },
         {
-            icon: <FileCheck />,
-            title: str("Task Tracking"),
-            description: "🚧 " + str("Under construction") + " 🚧",
-            link: "/wip"
-        },
-        {
-            icon: <BrainCircuit />,
-            title: str("AI Analytics"),
-            description: "🚧 " + str("Under construction") + " 🚧",
-            link: "/wip"
-        },
-        {
             icon: <FileCode />,
             title: str("Customization"),
             description: str("Customize everything"),
@@ -126,6 +114,18 @@ const DashboardNavigationButtons = () => {
             title: str("Your organization"),
             description: str("Manage access and licensing"),
             link: "/cabinet"
+        },
+        {
+            icon: <FileCheck />,
+            title: str("Task Tracking"),
+            description: "🚧 " + str("Under construction") + " 🚧",
+            link: "/wip"
+        },
+        {
+            icon: <BrainCircuit />,
+            title: str("AI Analytics"),
+            description: "🚧 " + str("Under construction") + " 🚧",
+            link: "/wip"
         },
     ];
 

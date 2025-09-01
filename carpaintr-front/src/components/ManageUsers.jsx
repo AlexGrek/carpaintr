@@ -30,47 +30,6 @@ registerTranslations('ua', {
   "Impersonate": "Увійти як"
 });
 
-const DisplayUserData = ({ data }) => {
-  const { str } = useLocale();
-  const formatDate = (dateString) => {
-    if (!dateString) return str('Not set');
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  return (
-    <div className="p-4 fade-in-simple">
-      <table className="w-full">
-        <tbody>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>ID:</Trans></td>
-            <td>{data.ID}</td>
-          </tr>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>Created At:</Trans></td>
-            <td>{formatDate(data.CreatedAt)}</td>
-          </tr>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>Updated At:</Trans></td>
-            <td>{formatDate(data.UpdatedAt)}</td>
-          </tr>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>Deleted At:</Trans></td>
-            <td>{data.DeletedAt ? formatDate(data.DeletedAt) : str('Never')}</td>
-          </tr>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>Email:</Trans></td>
-            <td>{data.Email}</td>
-          </tr>
-          <tr>
-            <td className="font-bold pr-4 py-2"><Trans>Password:</Trans></td>
-            <td>{data.Password ? '********' : str('Not set')}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-};
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([])
