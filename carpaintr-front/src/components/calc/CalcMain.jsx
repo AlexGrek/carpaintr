@@ -1,10 +1,13 @@
 /* eslint-disable react/display-name */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import './CarPaintEstimator.css';
 import './calc_translations';
 import StageView from '../layout/StageView';
-import { AppWindowMac, Car, CarFront, Paintbrush, Table2 } from 'lucide-react';
+import { Car, CarFront, Paintbrush, Table2 } from 'lucide-react';
 import CalcMainMenuStage from './CalcMainMenuStage';
+import { toaster, Message } from 'rsuite'; // adjust path if different
+import { authFetch } from '../../utils/authFetch';
+import { useLocation } from 'react-router-dom';
 
 const stages = [
     {
@@ -33,8 +36,7 @@ const stages = [
     },
 ]
 
-// Main Parent component
-const CalcMain = ({ setChanges }) => {
+const CalcMain = () => {
     const [isMainMenuStage, setIsMainMenuStage] = useState(true);
     const [initialState, setInitialState] = useState({});
 
@@ -44,10 +46,12 @@ const CalcMain = ({ setChanges }) => {
 
     const handleLoadData = useCallback((data) => {
         setInitialState(data);
-        setTimeout(() => setIsMainMenuStage(false), 100)
+        setIsMainMenuStage(false);
     }, [])
 
-    return isMainMenuStage ? <CalcMainMenuStage onNext={() => setIsMainMenuStage(false)} onLoad={handleLoadData}/> : <StageView onSave={handleOnSave} initialState={initialState} stages={stages} />
+    return isMainMenuStage
+        ? <CalcMainMenuStage onNext={() => setIsMainMenuStage(false)} onLoad={handleLoadData} />
+        : <StageView onSave={handleOnSave} initialState={initialState} stages={stages} />
 };
 
 export default CalcMain;

@@ -188,7 +188,10 @@ pub enum SafeFsError {
     Io(#[from] std::io::Error),
 }
 
-pub fn safety_check_only<P: AsRef<Path>, P2: AsRef<Path>>(base: P, target: P2) -> Result<P2, SafeFsError> {
+pub fn safety_check_only<P: AsRef<Path>, P2: AsRef<Path>>(
+    base: P,
+    target: P2,
+) -> Result<P2, SafeFsError> {
     let base_clean = base.as_ref().lexiclean();
     let full_target = target.as_ref().lexiclean();
     let target_clean = full_target.lexiclean();
@@ -237,6 +240,36 @@ pub async fn safe_write<P: AsRef<Path>>(
     Ok(safe_path)
 }
 
+pub async fn safe_write_overwrite<P: AsRef<Path>>(
+    base: P,
+    target_relative: P,
+    content: impl AsRef<[u8]>,
+    cache: &DataStorageCache,
+) -> Result<PathBuf, SafeFsError> {
+    let safe_path = safe_join(&base, &target_relative)?;
+    log::debug!("Safely writing file {:?}", safe_path);
+    if let Some(parent) = safe_path.parent() {
+        fs::create_dir_all(parent).await?;
+    }
+    cache.invalidate(&safe_path.as_ref()).await;
+    // Check if file exists and log it
+    if safe_path.exists() {
+        log::debug!("File {:?} exists, will overwrite", safe_path);
+    }
+
+    match fs::write(&safe_path, content).await {
+        Ok(()) => {
+            log::debug!("Successfully wrote file {:?}", safe_path);
+            cache.invalidate(&safe_path.as_ref()).await;
+            Ok(safe_path)
+        }
+        Err(e) => {
+            log::error!("Failed to write file {:?}: {}", safe_path, e);
+            Err(e.into())
+        }
+    }
+}
+
 pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Result<(), SafeFsError> {
     let safe_path = safe_join(&base, &target)?;
     log::debug!("Safely ensuring directory {:?}", safe_path);
@@ -246,10 +279,10 @@ pub fn safe_ensure_directory_exists<P: AsRef<Path>>(base: P, target: P) -> Resul
 
 pub async fn safe_read<P: AsRef<Path>>(
     base: P,
-    target: P,
+    target_relative: P,
     cache: &DataStorageCache,
 ) -> Result<Vec<u8>, SafeFsError> {
-    let safe_path = safe_join(&base, &target)?;
+    let safe_path = safe_join(&base, &target_relative)?;
     let path_buf = safe_path.to_path_buf();
 
     if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {

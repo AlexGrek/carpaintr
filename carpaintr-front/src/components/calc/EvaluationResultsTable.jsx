@@ -3,7 +3,7 @@ import { Message, InlineEdit, Panel, Stack } from 'rsuite';
 import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
-import { cloneDeep, isArrayLike, result } from 'lodash';
+import { cloneDeep, isArrayLike } from 'lodash';
 
 registerTranslations("ua", {
     "Name": "Найменування",

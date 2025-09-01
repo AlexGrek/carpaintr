@@ -7,12 +7,52 @@ import BottomStickyLayout from "../layout/BottomStickyLayout";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import PrintCalculationDrawer from "../PrintCalculationDrawer";
 import { Shapes } from "lucide-react";
+import { cloneDeep } from "lodash";
+import { authFetch } from "../../utils/authFetch";
+import { useLocale } from "../../localization/LocaleContext";
+import { capitalizeFirstLetter } from "../../utils/utils";
+import NotifyMessage from "../layout/NotifyMessage";
 
 const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
   const [printDrawerOpen, setPrintDrawerOpen] = useState(false);
+  const { str } = useLocale();
   const [orderNumber, setOrderNumber] = useState('0');
   // Default orderDate = Today
   const [orderDate, setOrderDate] = useState(new Date());
+  const showMessage = useCallback((type, message) => {
+    setN(`${str(capitalizeFirstLetter(type))} ${message}`);
+  }, [str]);
+
+  const [n, setN] = useState(null);
+
+
+  const handleSave = useCallback(async () => {
+
+    const dataToSave = cloneDeep(stageData)
+
+    try {
+      const response = await authFetch('/api/v1/user/calculationstore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSave),
+      });
+      if (response.ok) {
+        showMessage('success', str('Calculation saved successfully!'));
+        const data = await response.json();
+        console.log("Got data: " + JSON.stringify(data));
+        setStageData({ ...dataToSave, car: { ...dataToSave.car, storeFileName: data.saved_file_path } })
+      } else {
+        const errorData = await response.json();
+        showMessage('error', `${str('Failed to save calculation:')} ${errorData.message || response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error saving calculation:", error);
+      showMessage('error', `${str('Error saving calculation:')} ${error.message}`);
+    }
+  }, [setStageData, showMessage, stageData, str]);
+
 
   return (
     <div style={styles.sampleStage}>
@@ -23,16 +63,17 @@ const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStart
               <Trans>Back</Trans>
             </IconButton>
             <div>
-              <Button onClick={() => setPrintDrawerOpen(true)} color='blue' appearance='primary'>
+              <Button onClick={() => handleSave()} color='blue' appearance='primary'>
                 <Trans>Save</Trans>
               </Button>
-              <Button onClick={() => setPrintDrawerOpen(true)} color='green' appearance='primary' style={{marginLeft: '6pt'}}>
+              <Button onClick={() => setPrintDrawerOpen(true)} color='green' appearance='primary' style={{ marginLeft: '6pt' }}>
                 <Trans>Print</Trans>
               </Button>
             </div>
           </HStack>
         }>
           <div>
+            <NotifyMessage text={n} />
             <section>
               <p>Order date</p>
               <DatePicker

@@ -2,7 +2,7 @@ use crate::exlogging::{log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
 use crate::models::calculations::CarCalcData;
 use crate::utils::{
-    get_file_summary, safe_ensure_directory_exists, safe_read, safe_write,
+    get_file_summary, safe_ensure_directory_exists, safe_read, safe_write, safe_write_overwrite,
     sanitize_alphanumeric_and_dashes, user_personal_directory_from_email,
 };
 use crate::{errors::AppError, state::AppState};
@@ -10,8 +10,9 @@ use axum::extract::Query;
 use axum::http::header::CONTENT_TYPE;
 use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use std::sync::Arc;
-const CALCULATIONS: &'static str = "calculations";
+const CALCULATIONS: &'static str = "stored_calculations";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SaveSuccessResponse {
@@ -54,9 +55,7 @@ pub async fn save_calculation(
     // Update timestamp on each save
     let file_name = apply_and_return_file_name(&mut req);
     let user_path = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let calcs_path = user_path.join(&CALCULATIONS);
-    safe_ensure_directory_exists(&user_path, &calcs_path)?;
-    let file_path = calcs_path.join(&file_name);
+    let file_path = PathBuf::from(&CALCULATIONS).join(&file_name);
 
     let json = serde_json::to_string_pretty(&req)?; // or `to_vec` for bytes
 
@@ -66,7 +65,7 @@ pub async fn save_calculation(
         format!("Save calculation {:?} as {:?}", req.car.vin, &file_name),
         Some(user_email),
     );
-    safe_write(user_path, file_path, json, &app_state.cache).await?;
+    safe_write_overwrite(user_path, file_path, json, &app_state.cache).await?;
 
     Ok(Json(SaveSuccessResponse {
         saved_file_path: file_name,
@@ -80,7 +79,7 @@ pub async fn get_calculation_file(
 ) -> Result<impl IntoResponse, AppError> {
     let filename = q.filename;
     let user_path = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let file_path = user_path.join(&CALCULATIONS).join(filename);
+    let file_path = PathBuf::from(&CALCULATIONS).join(filename);
 
     let content = safe_read(&user_path, &file_path, &app_state.cache).await?;
 

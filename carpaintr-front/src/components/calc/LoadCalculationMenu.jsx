@@ -5,7 +5,7 @@ import { useLocale } from "../../localization/LocaleContext";
 import { useMediaQuery } from "react-responsive";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
-import { HStack, VStack, Text, Message, Stack, Placeholder, Panel } from "rsuite";
+import { HStack, VStack, Text, Message, Stack, Placeholder, Panel, useToaster } from "rsuite";
 import { DownloadCloud } from "lucide-react";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import Trans from "../../localization/Trans";
@@ -34,7 +34,7 @@ const formatTimeAgo = (dateString, str) => {
 };
 
 // Load Calculation Drawer Component
-const LoadCalculationMenu = React.memo(({ show, onClose }) => {
+const LoadCalculationMenu = React.memo(({ show = true, onClose, onDataLoaded = null }) => {
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
     const [files24h, setFiles24h] = useState([]);
@@ -43,6 +43,7 @@ const LoadCalculationMenu = React.memo(({ show, onClose }) => {
     const [loading, setLoading] = useState(false);
     const [e, setE] = useState(null);
     const navigate = useNavigate();
+    const toaster = useToaster();
 
     const fetchFiles = useCallback(async () => {
         setLoading(true);
@@ -70,7 +71,7 @@ const LoadCalculationMenu = React.memo(({ show, onClose }) => {
         } finally {
             setLoading(false);
         }
-    }, [str]);
+    }, []);
 
     useEffect(() => {
         if (show) {
@@ -78,10 +79,42 @@ const LoadCalculationMenu = React.memo(({ show, onClose }) => {
         }
     }, [show, fetchFiles]);
 
+    const loadById = useCallback(async (id) => {
+        if (!id) return;
+        const filename = `${id}.json`;
+        try {
+            const res = await authFetch(`/api/v1/user/calculationstore?filename=${encodeURIComponent(filename)}`);
+
+            if (!res.ok) {
+                const txt = await res.text().catch(() => null);
+                throw new Error(txt || `${res.status} ${res.statusText}`);
+            }
+
+            const data = await res.json();
+            onDataLoaded(data)
+        } catch (err) {
+            // ignore abort-like cases (if you use AbortController elsewhere)
+            if (err && err.name === 'AbortError') return;
+
+            toaster.push(
+                <Message type="error" showIcon closable>
+                    {`Error loading calculation: ${err.message || String(err)}`}
+                </Message>,
+                { placement: 'topEnd' }
+            );
+        }
+    }, [onDataLoaded]);
+
+
     const handleFileSelect = useCallback((filename) => {
-        navigate(`/calc?id=${filename}`); // Navigate to /calc?id={filename}
-        onClose();
-    }, [navigate, onClose]);
+        if (!onDataLoaded) {
+            navigate(`/calc2?id=${filename}`); // Navigate to /calc?id={filename}
+            onClose();
+        }
+        else {
+            loadById(filename)
+        }
+    }, [loadById, navigate, onClose, onDataLoaded]);
 
     const renderFileList = useCallback((files, groupTitle) => (
         <VStack spacing={10} alignItems="flex-start" className="w-full">

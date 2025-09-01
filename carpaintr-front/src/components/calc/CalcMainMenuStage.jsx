@@ -36,7 +36,7 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
                 <Divider/>
                 {unsaved && <RenderUnsaved dataString={unsaved} onLoadData={onLoad} />}
                 <Panel bordered collapsible header={"Попередні розрахунки"} style={{ opacity: "0.9", fontSize: "smaller" }}>
-                    <LoadCalculationMenu />
+                    <LoadCalculationMenu onDataLoaded={onLoad} />
                 </Panel>
             </div>
         </div>
