@@ -600,12 +600,19 @@ pub struct FileEntry {
     pub modified: DateTime<Utc>,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Default)]
 pub struct FileSummary {
     pub all_files: Vec<FileEntry>,
     pub modified_last_24h: Vec<FileEntry>,
     pub modified_1w_excl_24h: Vec<FileEntry>,
     pub older_than_1w: Vec<FileEntry>,
+}
+
+async fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
+    match fs::metadata(path).await {
+        Ok(metadata) => metadata.is_dir(),
+        Err(_) => false,
+    }
 }
 
 pub async fn get_file_summary<P: AsRef<Path>>(dir: P) -> io::Result<FileSummary> {
@@ -618,6 +625,9 @@ pub async fn get_file_summary<P: AsRef<Path>>(dir: P) -> io::Result<FileSummary>
     let one_day_ago = now - Duration::days(1);
     let seven_days_ago = now - Duration::days(7);
 
+    if !directory_exists(&dir).await {
+        return Ok(FileSummary::default());
+    }
     let mut entries = read_dir(dir).await?;
 
     while let Some(entry) = entries.next_entry().await? {
