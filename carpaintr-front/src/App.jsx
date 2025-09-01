@@ -47,7 +47,6 @@ function App() {
                 <Route path="/admin/*" element={<AdminPage />} />
                 <Route path="/company" element={<CompanyInfoPage />} />
                 <Route path="/catalog" element={<CatalogPage />} />
-                <Route path="/company" element={<CompanyInfoPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/aboutus" element={<AboutUsPage />} />
                 <Route path="/cabinet" element={<CabinetPage />} />

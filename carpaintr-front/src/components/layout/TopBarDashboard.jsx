@@ -3,11 +3,11 @@ import { Navbar, Dropdown, Nav } from 'rsuite';
 import { useNavigate } from "react-router-dom";
 import OffRoundIcon from '@rsuite/icons/OffRound';
 import { logout } from '../../utils/authFetch';
-import './TopBarUser.css';
+import './TopBarDashboard.css';
 import { handleOpenNewTab } from '../../utils/utils';
 import { Menu } from 'lucide-react';
 
-const TopBarUser = () => {
+const TopBarDashboard = () => {
   const navigate = useNavigate();
 
   // Use useCallback to memoize handleSelect, preventing unnecessary re-renders of Dropdown.Item components.
@@ -34,7 +34,7 @@ const TopBarUser = () => {
   }, [navigate]); // navigate is a dependency, though it's stable from useNavigate
 
   return (
-    <Navbar appearance="inverse" className="top-bar-user" style={{ marginBottom: "18pt" }}>
+    <Navbar className="top-bar-dashboard blurred-background">
       <Navbar.Brand
         style={{ margin: '0', padding: 0, paddingLeft: '8pt' }}
         onClick={() => navigate('/dashboard')} // Directly use onClick for navigation
@@ -53,4 +53,4 @@ const TopBarUser = () => {
   );
 };
 
-export default TopBarUser;
+export default TopBarDashboard;

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, Tag } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
+import './ActiveLicenseMarker.css'
+import { ShieldCheck } from 'lucide-react';
 
 const ActiveLicenseMarker = () => {
     const [licenseStatus, setLicenseStatus] = useState(null);
@@ -39,7 +41,7 @@ const ActiveLicenseMarker = () => {
     }
 
     return (
-        <Tag color={licenseStatus["has_active_license"] ? "green" : "red"}>{licenseStatus["has_active_license"] ? `Ліцензія активна (Залишок днів: ${licenseStatus.license.days_left + 1})` : "Ліцензія неактивна"}</Tag>
+        <div className='license-tag' color={licenseStatus["has_active_license"] ? "green" : "red"}><ShieldCheck size={16} style={{ display: 'inline-block', marginRight: '4pt', transform: 'translateY(-2px)' }} />{licenseStatus["has_active_license"] ? `Ліцензія активна (днів: ${licenseStatus.license.days_left + 1})` : "Ліцензія неактивна"}</div>
     );
 };
 

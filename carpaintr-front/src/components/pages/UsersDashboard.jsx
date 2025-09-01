@@ -1,6 +1,5 @@
 // UsersDashboard.jsx
 import { useEffect, useState } from 'react';
-import TopBarUser from '../layout/TopBarUser';
 import { useNavigate } from 'react-router-dom';
 import { Content, Panel, Text, Message, Dropdown, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
@@ -10,6 +9,7 @@ import { getCompanyInfo, fetchCompanyInfo, getOrFetchCompanyInfo } from '../../u
 import './UsersDashboard.css'
 import { BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
+import TopBarDashboard from '../layout/TopBarDashboard';
 
 registerTranslations('ua', {
     "Calculation": "Розрахунок",
@@ -31,9 +31,17 @@ registerTranslations('ua', {
 });
 
 const UsersDashboard = () => {
-    return <div><TopBarUser /><div style={{ maxWidth: '800px', margin: '0 auto', padding: '1em' }}>
+    return <div><TopBarDashboard /><div style={{ margin: '0', padding: '0' }}>
         <Dashboard /></div>
     </div>
+}
+
+const ShowCompanyCard = ({ company }) => {
+    const { str } = useLocale();
+    return <Panel header={str("Your company")} className='fade-in-simple'>
+        <h2 className='dashboard-company-card-name'>{company && company.company_name}</h2>
+        <Text className='dashboard-company-card-email' muted>{company && company.email}</Text>
+    </Panel>
 }
 
 const Dashboard = () => {
@@ -61,19 +69,17 @@ const Dashboard = () => {
         fetchAsync();
     }, [str, setLang])
 
-    return <Content className='fade-in-simple'>
-        <Panel>
+    return <div>
+        <div className='gradient-box'>
             {message && <Message showIcon type={message.type} header={message.title}>{message.message}</Message>}
             <ActiveLicenseMarker />
-            <br />
-            <Panel header={str("Your company")} shaded className='fade-in-simple'>
-                <h2>{company && company.company_name}</h2>
-                <Text muted>{company && company.email}</Text>
-            </Panel>
+            {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
+        </div>
+        <main className='fade-in-simple dashboard-content-container'>
             <DashboardNavigationButtons />
-        </Panel>
-        <AppVersionBadge />
-    </Content>
+            <AppVersionBadge />
+        </main>
+    </div>
 }
 
 const DashboardNavigationButtons = () => {

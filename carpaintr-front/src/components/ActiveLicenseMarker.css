@@ -1,0 +1,10 @@
+.license-tag {
+    background-color: rgba(253, 234, 201, 0.355);
+    border-radius: 2rem;
+    width: fit-content;
+    margin: auto;
+    padding: 4pt 14pt;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadePopIn 0.2s ease-out forwards;
+}

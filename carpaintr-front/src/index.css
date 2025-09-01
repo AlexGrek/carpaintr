@@ -29,3 +29,77 @@ h1 {
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/OpenSans/OpenSans-Light.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/OpenSans/OpenSans-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/fonts/OpenSans/OpenSans-Semibold.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/OpenSans/OpenSans-Bold.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Serif';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/PT-serif/PTF55F.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Serif';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/PT-serif/PTF75F.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PT Serif';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/PT-serif/PTF76F.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Basis33';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/basis33/basis33.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Web Serveroff';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/web-serveroff/Web Serveroff.ttf') format('truetype');
+  font-display: swap;
+}
+
+
