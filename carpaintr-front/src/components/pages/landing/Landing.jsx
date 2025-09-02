@@ -8,37 +8,34 @@ import { useLocale, registerTranslations } from '../../../localization/LocaleCon
 
 registerTranslations('ua', {
     "Features": "Можливості",
-    "Benefits": "Вигода",
+    "Benefits": "Переваги",
     "Contact": "Контакти",
     "Log In": "Увійти",
     "Join": "Приєднатися",
-    "Smart Pricing & Task Management for Auto Body Shops": "Розумне ціноутворення та управління завданнями для автомайстерень",
-    "AI-powered pricing calculator with advanced task tracking. Calculate accurate estimates instantly while managing your entire workflow efficiently from estimate to completion.": "Калькулятор цін на базі штучного інтелекту з розширеним відстеженням завдань. Миттєво розраховуйте точні кошториси, ефективно керуючи всім робочим процесом від оцінки до завершення.",
+    "Automotive Business in Your Phone": "Автомобільний бізнес у вашому телефоні",
+    "Accurate repair estimation, task tracking, and workflow management — everything you need to run your workshop on the go.": "Точні оцінки ремонту, відстеження завдань та управління процесами — все необхідне для вашої майстерні у телефоні.",
     "Request Evaluation": "Замовити оцінку",
-    "Watch Demo": "Дивитись демо",
+    "Watch Demo": "Переглянути демо",
     "Logged in as": "Ви увійшли як",
     "Open dashboard": "Відкрити панель управління",
-    "Precision Pricing & Smart Task Management": "Точне ціноутворення та розумне управління завданнями",
-    "Complete business management solution combining AI-powered pricing with intelligent task tracking": "Комплексне рішення для управління бізнесом, що поєднує ціноутворення на базі ШІ з інтелектуальним відстеженням завдань",
-    "AI-Powered Pricing": "Ціноутворення на базі ШІ",
-    "Advanced algorithms analyze vehicle type, damage extent, paint requirements, and labor complexity to deliver precise pricing estimates in seconds.": "Передові алгоритми аналізують тип транспортного засобу, ступінь пошкодження, вимоги до фарбування та складність робіт, щоб надати точні кошториси за лічені секунди.",
-    "Smart Task Tracking": "Розумне відстеження завдань",
-    "Track every paint job from estimate to completion. Real-time progress monitoring, automated notifications, and intelligent workflow management.": "Відстежуйте кожну роботу з фарбування від кошторису до завершення. Моніторинг прогресу в реальному часі, автоматичні сповіщення та інтелектуальне управління робочим процесом.",
-    "AI Suggestions & Knowledge Base": "Пропозиції ШІ та база знань",
-    "Get intelligent recommendations for materials, techniques, and scheduling. Built-in database of costs, labor rates, and industry standards.": "Отримуйте інтелектуальні рекомендації щодо матеріалів, технік та планування. Вбудована база даних витрат, розцінок на роботу та галузевих стандартів.",
-    "Boost Profitability & Streamline Operations": "Збільште прибутковість та оптимізуйте операції",
-    "Increase pricing accuracy by 95% with AI-driven calculations": "Збільште точність ціноутворення на 95% за допомогою розрахунків на основі ШІ",
-    "Save 3+ hours daily on estimates and task management": "Економте 3+ години щодня на кошторисах та управлінні завданнями",
-    "Win 40% more jobs with competitive, precise pricing": "Вигравайте на 40% більше замовлень завдяки конкурентоспроможним, точним цінам",
-    "Reduce task completion time by 45% with smart tracking": "Скоротіть час виконання завдань на 45% завдяки розумному відстеженню",
-    "Eliminate missed deadlines and pricing errors": "Усуньте пропущені терміни та помилки в ціноутворенні",
-    "Scale operations with consistent standards and automation": "Масштабуйте операції за допомогою єдиних стандартів та автоматизації",
-    "Accurate pricing & real-time tracking": "Точне ціноутворення та відстеження в реальному часі",
-    "in one comprehensive solution": "в одному комплексному рішенні",
-    "Ready to Transform Your Business?": "Готові трансформувати свій бізнес?",
-    "Join 500+ auto body shops already using AutoLab for intelligent pricing and efficient task management": "Приєднуйтесь до 500+ автомайстерень, які вже використовують AutoLab для інтелектуального ціноутворення та ефективного управління завданнями",
-    "Request Evaluation License": "Запит на оціночну ліцензію",
-    "Schedule Demo": "Запланувати демонстрацію",
+    "Accurate Repair Estimation & Workflow Management": "Точні оцінки та управління процесами",
+    "Complete business management solution combining realistic pricing with smart task tracking": "Комплексне рішення для управління бізнесом, що поєднує реалістичні оцінки з розумним відстеженням завдань",
+    "Accurate Repair Estimation": "Точні оцінки ремонту",
+    "Use proven methods to calculate fair and transparent repair costs in minutes.": "Використовуйте перевірені методи для швидкого та прозорого розрахунку вартості ремонту.",
+    "Task Tracking & Workflow": "Відстеження завдань та робочих процесів",
+    "Follow each job from estimate to completion with clear progress tracking and notifications.": "Відстежуйте кожне завдання від кошторису до завершення з чітким контролем прогресу та сповіщеннями.",
+    "Built-in Knowledge & Standards": "Вбудовані знання та стандарти",
+    "Reference database of costs, labor times, and best practices to support your daily work.": "База витрат, трудовитрат та кращих практик для підтримки щоденної роботи.",
+    "Boost Profitability & Streamline Operations": "Збільшіть прибутковість та оптимізуйте роботу",
+    "Increase pricing accuracy with proven calculation methods": "Підвищуйте точність оцінок за допомогою перевірених методів",
+    "Save 3+ hours daily with streamlined estimates and management": "Економте понад 3 години щодня завдяки швидким оцінкам і управлінню",
+    "Win more jobs with transparent, consistent pricing": "Отримуйте більше замовлень завдяки прозорим і стабільним цінам",
+    "Reduce task completion time with smart tracking": "Скорочуйте час виконання завдань завдяки зручному відстеженню",
+    "Eliminate missed deadlines and pricing errors": "Позбавляйтесь прострочених термінів і помилок у кошторисах",
+    "Scale operations with consistent standards and automation": "Масштабуйте роботу завдяки стандартам і автоматизації",
+    "Ready to Transform Your Business?": "Готові змінити свій бізнес?",
+    "Get Started Today": "Почніть сьогодні",
+    "Schedule a Demo": "Заплануйте демо",
     "Product": "Продукт",
     "Demo": "Демо",
     "Integrations": "Інтеграції",
@@ -76,48 +73,42 @@ const Header = () => {
 };
 
 const Hero = () => {
-      const [loading, setLoading] = useState(true);
-      const [companyName, setCompanyName] = useState('');
-      const [isLoggedIn, setIsLoggedIn] = useState(false);
-      const { setLocale } = useLocale();
-      const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [companyName, setCompanyName] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { setLocale } = useLocale();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const doFetchCompanyInfo = async () => {
-          try {
-            const response = await fetchCompanyInfo();
-            if (response.ok) {
-              const data = await response.json();
-              if (data["lang_ui"]) {
-                console.log("Setting locale based on company info: " + data["lang_ui"])
-                setLocale(data["lang_ui"])
-              }
-              setCompanyName(data.company_name);
-              setIsLoggedIn(true);
+            try {
+                const response = await fetchCompanyInfo();
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data["lang_ui"]) {
+                        setLocale(data["lang_ui"])
+                    }
+                    setCompanyName(data.company_name);
+                    setIsLoggedIn(true);
+                }
+            } catch (error) {
+                console.error('Not logged in:', error);
+            } finally {
+                setLoading(false);
             }
-          } catch (error) {
-            console.error('Not logged in:', error);
-          } finally {
-            setLoading(false);
-          }
         };
 
         doFetchCompanyInfo();
-      }, []);
+    }, []);
 
-      const handleLogout = () => {
-        localStorage.removeItem('authToken'); // Remove the token
-        setIsLoggedIn(false);
-        navigate('/');
-      };
     return (
         <section className="hero">
             <div className="container">
-                {isLoggedIn && <LoggedInMiniPanel companyName={companyName}/>}
+                {isLoggedIn && <LoggedInMiniPanel companyName={companyName} />}
                 {loading && <p>Loading...</p>}
                 <div className="hero-content">
-                    <h1><Trans>Smart Pricing & Task Management for Auto Body Shops</Trans></h1>
-                    <p><Trans>AI-powered pricing calculator with advanced task tracking. Calculate accurate estimates instantly while managing your entire workflow efficiently from estimate to completion.</Trans></p>
+                    <h1><Trans>Automotive Business in Your Phone</Trans></h1>
+                    <p><Trans>Accurate repair estimation, task tracking, and workflow management — everything you need to run your workshop on the go.</Trans></p>
                     <div className="hero-cta">
                         <a href="#demo" className="btn-primary"><Trans>Request Evaluation</Trans></a>
                         <a href="#demo" className="btn-secondary"><Trans>Watch Demo</Trans></a>
@@ -128,7 +119,7 @@ const Hero = () => {
     );
 };
 
-const LoggedInMiniPanel = ({companyName}) => {
+const LoggedInMiniPanel = ({ companyName }) => {
     const navigate = useNavigate();
     const { str } = useLocale();
     return <Message type="info">
@@ -152,19 +143,19 @@ const Features = () => {
     const { str } = useLocale();
     const features = [
         {
-            icon: "🎯",
-            title: "AI-Powered Pricing",
-            description: "Advanced algorithms analyze vehicle type, damage extent, paint requirements, and labor complexity to deliver precise pricing estimates in seconds."
+            icon: "📐",
+            title: "Accurate Repair Estimation",
+            description: "Use proven methods to calculate fair and transparent repair costs in minutes."
         },
         {
             icon: "📋",
-            title: "Smart Task Tracking",
-            description: "Track every paint job from estimate to completion. Real-time progress monitoring, automated notifications, and intelligent workflow management."
+            title: "Task Tracking & Workflow",
+            description: "Follow each job from estimate to completion with clear progress tracking and notifications."
         },
         {
-            icon: "🤖",
-            title: "AI Suggestions & Knowledge Base",
-            description: "Get intelligent recommendations for materials, techniques, and scheduling. Built-in database of costs, labor rates, and industry standards."
+            icon: "📚",
+            title: "Built-in Knowledge & Standards",
+            description: "Reference database of costs, labor times, and best practices to support your daily work."
         }
     ];
 
@@ -172,8 +163,8 @@ const Features = () => {
         <section className="features" id="features">
             <div className="container">
                 <div className="section-header">
-                    <h2><Trans>Precision Pricing & Smart Task Management</Trans></h2>
-                    <p><Trans>Complete business management solution combining AI-powered pricing with intelligent task tracking</Trans></p>
+                    <h2><Trans>Accurate Repair Estimation & Workflow Management</Trans></h2>
+                    <p><Trans>Complete business management solution combining realistic pricing with smart task tracking</Trans></p>
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (
@@ -193,10 +184,10 @@ const Features = () => {
 const Benefits = () => {
     const { str } = useLocale();
     const benefits = [
-        "Increase pricing accuracy by 95% with AI-driven calculations",
-        "Save 3+ hours daily on estimates and task management",
-        "Win 40% more jobs with competitive, precise pricing",
-        "Reduce task completion time by 45% with smart tracking",
+        "Increase pricing accuracy with proven calculation methods",
+        "Save 3+ hours daily with streamlined estimates and management",
+        "Win more jobs with transparent, consistent pricing",
+        "Reduce task completion time with smart tracking",
         "Eliminate missed deadlines and pricing errors",
         "Scale operations with consistent standards and automation"
     ];
@@ -213,17 +204,6 @@ const Benefits = () => {
                             ))}
                         </ul>
                     </div>
-                    <div className="benefits-visual">
-                        <div className="pricing-demo">
-                            <div className="demo-title">2018 Honda Civic - Full Panel Repair</div>
-                            <div className="demo-price">$1,247</div>
-                            <div className="demo-details">
-                                Materials: $423 • Labor: $680 • Overhead: $144<br />
-                                Status: 85% Complete • Next: Clear coat
-                            </div>
-                        </div>
-                        <p><strong><Trans>Accurate pricing & real-time tracking</Trans></strong> <Trans>in one comprehensive solution</Trans></p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -235,10 +215,9 @@ const FinalCTA = () => {
         <section className="final-cta">
             <div className="container">
                 <h2><Trans>Ready to Transform Your Business?</Trans></h2>
-                <p><Trans>Join 500+ auto body shops already using AutoLab for intelligent pricing and efficient task management</Trans></p>
                 <div className="hero-cta">
-                    <a href="#demo" className="btn-primary"><Trans>Request Evaluation License</Trans></a>
-                    <a href="#contact" className="btn-secondary"><Trans>Schedule Demo</Trans></a>
+                    <a href="#demo" className="btn-primary"><Trans>Get Started Today</Trans></a>
+                    <a href="#contact" className="btn-secondary"><Trans>Schedule a Demo</Trans></a>
                 </div>
             </div>
         </section>
@@ -328,33 +307,9 @@ const AutoLabLanding = () => {
 
         window.addEventListener('scroll', handleScroll);
 
-        // Animate elements on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Observe feature cards for animation
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
-            observer.observe(card);
-        });
-
         return () => {
             document.removeEventListener('click', handleClick);
             window.removeEventListener('scroll', handleScroll);
-            observer.disconnect();
         };
     }, []);
 
