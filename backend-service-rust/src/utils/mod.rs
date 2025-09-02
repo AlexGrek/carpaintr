@@ -6,8 +6,6 @@ use csv_async::AsyncReaderBuilder;
 use lexiclean::Lexiclean;
 use lru::LruCache;
 use serde::Serialize;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -18,8 +16,10 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::fs;
 use tokio::fs::read_dir;
+use tokio::fs::File;
 use tokio::io;
 use tokio::io::AsyncBufReadExt;
+use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 
@@ -61,6 +61,12 @@ impl DataStorageCache {
         self.as_string.write().await.pop(path);
         self.as_vec_u8.write().await.pop(path);
         self.as_csv.write().await.pop(path);
+    }
+
+    pub async fn invalidate_all(&self) {
+        self.as_string.write().await.clear();
+        self.as_vec_u8.write().await.clear();
+        self.as_csv.write().await.clear();
     }
 
     pub async fn get_caches_size(&self) -> Vec<(String, usize, usize)> {
@@ -131,7 +137,7 @@ pub async fn parse_csv_delimiter_header_async<P: AsRef<Path>>(
     let sample = format!("{}{}", first_line, second_line);
     let delimiter = detect_separator_from_string(&sample);
 
-    return Ok((String::from(delimiter as char), Vec::new()))
+    return Ok((String::from(delimiter as char), Vec::new()));
 }
 
 async fn parse_csv_file_async<P: AsRef<Path>>(
@@ -207,7 +213,9 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
 }
 
 /// Serialize Vec<HashMap<String, String>> to CSV string using csv crate
-async fn serialize_to_csv_with_crate(data: &Vec<HashMap<String, String>>) -> Result<String, Box<dyn std::error::Error>> {
+async fn serialize_to_csv_with_crate(
+    data: &Vec<HashMap<String, String>>,
+) -> Result<String, Box<dyn std::error::Error>> {
     if data.is_empty() {
         return Ok(String::new());
     }
@@ -217,23 +225,24 @@ async fn serialize_to_csv_with_crate(data: &Vec<HashMap<String, String>>) -> Res
     for record in data {
         all_keys.extend(record.keys().cloned());
     }
-    
+
     let mut headers: Vec<String> = all_keys.into_iter().collect();
     headers.sort();
-    
+
     let mut wtr = WriterBuilder::new().from_writer(vec![]);
-    
+
     // Write header
     wtr.write_record(&headers)?;
-    
+
     // Write data rows
     for record in data {
-        let row: Vec<String> = headers.iter()
+        let row: Vec<String> = headers
+            .iter()
             .map(|key| record.get(key).unwrap_or(&String::new()).clone())
             .collect();
         wtr.write_record(&row)?;
     }
-    
+
     let csv_bytes = wtr.into_inner()?;
     Ok(String::from_utf8(csv_bytes)?)
 }
@@ -248,11 +257,12 @@ async fn write_csv_to_file(csv_content: &str, filename: &PathBuf) -> Result<(), 
 
 // Combined function: serialize and write to file in one step
 pub async fn serialize_and_write_csv(
-    data: &Vec<HashMap<String, String>>, 
-    filename: &PathBuf
+    data: &Vec<HashMap<String, String>>,
+    filename: &PathBuf,
 ) -> Result<(), AppError> {
-    let csv_content = serialize_to_csv_with_crate(data).await
-        .map_err(|err|AppError::InternalServerError(err.to_string()))?;
+    let csv_content = serialize_to_csv_with_crate(data)
+        .await
+        .map_err(|err| AppError::InternalServerError(err.to_string()))?;
     write_csv_to_file(&csv_content, filename).await?;
     Ok(())
 }

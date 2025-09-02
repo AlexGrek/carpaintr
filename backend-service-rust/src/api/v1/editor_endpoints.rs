@@ -132,6 +132,7 @@ pub async fn revert_commit(
     } else {
         fs_manager.revert_commit(&revert.commit_hash).await?;
     }
+    app_state.cache.invalidate_all().await;
     Ok(Json(revert))
 }
 
@@ -151,6 +152,7 @@ pub async fn delete_user_file(
     fs_manager
         .delete_file(&PathBuf::from(&path), &format!("File {} deleted.", &path))
         .await?;
+    app_state.cache.invalidate_all().await;
     Ok("File deleted")
 }
 
