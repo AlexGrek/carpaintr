@@ -60,6 +60,8 @@ pub trait TransactionalFs {
         git_message: &str,
     ) -> Result<(), TransactionalFsError>;
 
+    async fn commit_all_if_changed(&self, message: &str) -> Result<(), TransactionalFsError>;
+
     /// Deletes a file and commits the deletion.
     ///
     /// # Arguments
@@ -127,6 +129,36 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
         })
     }
 
+    /// Commits all changes if there are any staged or unstaged changes.
+    /// Does nothing if there are no changes to commit.
+    ///
+    /// # Arguments
+    /// * `message` - The Git commit message.
+    async fn commit_all_if_changed(&self, message: &str) -> Result<(), TransactionalFsError> {
+        // Check if .git directory exists
+        if !self.root_path.join(".git").exists() {
+            return Ok(()); // No Git repo, nothing to commit
+        }
+
+        // Check if there are any changes (staged or unstaged)
+        let status_output =
+            Self::run_git_command_with_output_fallible(&self.root_path, &["status", "--porcelain"])
+                .await?;
+
+        let has_changes = match status_output {
+            Some(output) => !output.trim().is_empty(),
+            None => false,
+        };
+
+        if !has_changes {
+            return Ok(()); // No changes to commit
+        }
+
+        // There are changes, so perform the commit
+        self.perform_git_commit(message).await?;
+        Ok(())
+    }
+
     async fn write_file(
         &self,
         new_file_content: Vec<u8>,
@@ -135,11 +167,13 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
     ) -> Result<(), TransactionalFsError> {
         log_event(
             LogLevel::Info,
-            format!("Update file {:?}, root: {:?}", new_file_path_relative_to_root, self.root_path),
+            format!(
+                "Update file {:?}, root: {:?}",
+                new_file_path_relative_to_root, self.root_path
+            ),
             Some(self.author_email.as_str()),
         );
-        
-        
+
         safe_write(
             &self.root_path,
             new_file_path_relative_to_root,

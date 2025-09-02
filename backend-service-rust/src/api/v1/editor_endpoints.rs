@@ -1,5 +1,7 @@
 use crate::{
-    calc::table_processing::{all_tables_headers, find_issues_with_csv_async, fix_issues_with_csv_async},
+    calc::table_processing::{
+        all_tables_headers, find_issues_with_csv_async, fix_issues_with_csv_async,
+    },
     errors::AppError,
     exlogging,
     middleware::AuthenticatedUser,
@@ -72,7 +74,9 @@ pub async fn check_user_file(
             .await?;
         Ok(Json(data))
     } else {
-        Err(AppError::BadRequest("Unsupported for this file type".to_string()))
+        Err(AppError::BadRequest(
+            "Unsupported for this file type".to_string(),
+        ))
     }
 }
 
@@ -83,11 +87,18 @@ pub async fn fix_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     if path.ends_with(".csv") {
         let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-        let data = fix_issues_with_csv_async(&user_path, &user_path.join(&path), &app_state.cache)
+        let data =
+            fix_issues_with_csv_async(&user_path, &user_path.join(&path), &app_state.cache).await?;
+        let fs_manager =
+            GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
+        fs_manager
+            .commit_all_if_changed(&format!("Automatic fix for file {path}"))
             .await?;
         Ok(Json(data))
     } else {
-        Err(AppError::BadRequest("Unsupported for this file type".to_string()))
+        Err(AppError::BadRequest(
+            "Unsupported for this file type".to_string(),
+        ))
     }
 }
 
