@@ -1,6 +1,7 @@
 pub mod calculations;
 pub mod requests;
 pub mod invite;
+pub mod table_validation;
 
 use crate::{
     license_manager::{GenerateLicenseByDateRequest, GenerateLicenseByDaysRequest},

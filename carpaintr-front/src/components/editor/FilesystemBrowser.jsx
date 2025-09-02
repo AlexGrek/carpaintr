@@ -514,6 +514,8 @@ const FilesystemBrowser = ({ filesystems }) => {
                                             readEndpoint={currentFsConfig.readEndpoint}
                                             uploadEndpoint={currentFsConfig.uploadEndpoint}
                                             deleteEndpoint={currentFsConfig.deleteEndpoint}
+                                            validateEndpoint={currentFsConfig.validateEndpoint || null}
+                                            fixEndpoint={currentFsConfig.fixEndpoint || null}
                                         />
                                     )}
                                 </AnimationContainer>

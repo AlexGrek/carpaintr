@@ -12,7 +12,14 @@ use axum::{
 use exlogging::{configure_log_event, log_event, LogLevel, LoggerConfig};
 
 use crate::{
-    api::v1::admin::{generate_invite_handler, list_archived_invite_handler, list_invite_handler}, auth::Auth, cache::license_cache::LicenseCache, cleanup::cleanup_task, db::users::AppDb, middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware}, state::AppState, utils::DataStorageCache
+    api::v1::admin::{generate_invite_handler, list_archived_invite_handler, list_invite_handler},
+    auth::Auth,
+    cache::license_cache::LicenseCache,
+    cleanup::cleanup_task,
+    db::users::AppDb,
+    middleware::{admin_check_middleware, jwt_auth_middleware, license_expiry_middleware},
+    state::AppState,
+    utils::DataStorageCache,
 };
 use dotenv::dotenv;
 use std::{env, path::PathBuf, sync::Arc};
@@ -325,6 +332,14 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/read_user_file/{path}",
                     get(api::v1::editor_endpoints::read_user_file),
+                )
+                .route(
+                    "/validate_user_file/{path}",
+                    get(api::v1::editor_endpoints::check_user_file),
+                )
+                .route(
+                    "/fix_user_file/{path}",
+                    get(api::v1::editor_endpoints::fix_user_file),
                 )
                 .route(
                     "/delete_user_file/{path}",

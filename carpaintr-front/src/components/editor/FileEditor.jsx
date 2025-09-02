@@ -1,7 +1,7 @@
 // FileEditor.jsx
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table } from 'rsuite';
-import { Edit, Save, X, Trash2, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload } from 'lucide-react';
+import { Edit, Save, X, Trash2, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload, CheckCheck } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
 import * as yaml from 'js-yaml';
@@ -10,6 +10,7 @@ import { useLocale, registerTranslations } from '../../localization/LocaleContex
 import Trans from '../../localization/Trans';
 import TableEditorChatGPT from './TableEditorChatGPT';
 import YamlItemsEditorDrawer from './YamlItemsEditorDrawer';
+import { isArrayLike } from 'lodash';
 
 // Register translations for FileEditor
 registerTranslations("ua", {
@@ -43,7 +44,10 @@ registerTranslations("ua", {
   "Network Error": "Помилка мережі",
   "No file path": "Немає шляху до файлу",
   "More rows...": "Більше рядків...",
-  "Upload File": "Завантажити файл"
+  "Upload File": "Завантажити файл",
+  "Validate": "Перевірити",
+  "Validation result:": "Результат перевірки",
+  "Validation successful, no issues detected": "Проблем не знайдено"
 });
 
 
@@ -185,6 +189,8 @@ const FileEditor = ({
   onSaveSuccess,
   onDeleteSuccess,
   readEndpoint,
+  validateEndpoint = null,
+  fixEndpoint = null,
   uploadEndpoint,
   deleteEndpoint
 }) => {
@@ -254,6 +260,70 @@ const FileEditor = ({
     };
   }, [csvData]);
 
+  const handleFix = useCallback(() => {
+    const fetchFileContent = async () => {
+      setMsg(null);
+      setLoadingContent(true);
+      try {
+        const response = await authFetch(`/api/v1/${fixEndpoint}/${encodeURIComponent(filePath)}`);
+        if (!response.ok) {
+          throw new Error(str(`Bad response: ${response.statusText}`));
+        }
+        const content = await response.json();
+        if (isArrayLike(content) && content.length > 0) {
+          const distinct = [...new Set(content)];
+          setMsg(<Notification type='warning' header={str("Validation result:") + ` ${content.length} errors, ${distinct.length} unique`}>
+            <div style={{ maxHeight: '3em', overflowY: 'auto', display: 'block' }}>{distinct.join(';\n')}</div>
+            <br />
+            <Button appearance='primary' onClick={handleFix}>Try to fix on server</Button>
+          </Notification>)
+        } else {
+          setMsg(<Notification type="success" header={str("Validation result:")}>{str("Validation successful, no issues detected")}</Notification>, { placement: 'topEnd' });
+        }
+      } catch (err) {
+        setMsg(<Notification type="error" header={str("Error")}>{str("Failed to load file validation result:")} {err.message}</Notification>, { placement: 'topEnd' });
+      } finally {
+        setLoadingContent(false);
+      }
+    };
+
+    if (filePath && fixEndpoint) {
+      fetchFileContent();
+    }
+  }, [filePath, str, fixEndpoint]);
+
+  const handleValidate = useCallback(() => {
+    const fetchFileContent = async () => {
+      setMsg(null);
+      setLoadingContent(true);
+      try {
+        const response = await authFetch(`/api/v1/${validateEndpoint}/${encodeURIComponent(filePath)}`);
+        if (!response.ok) {
+          throw new Error(str(`Bad response: ${response.statusText}`));
+        }
+        const content = await response.json();
+        if (isArrayLike(content) && content.length > 0) {
+          const distinct = [...new Set(content)];
+          setMsg(<Notification type='warning' header={str("Validation result:") + ` ${content.length} errors, ${distinct.length} unique`}>
+            <div style={{ maxHeight: '6em', overflowY: 'auto' }}>{distinct.join(';\n')}</div>
+            <br />
+            <Button appearance='primary' onClick={handleFix}>Try to fix on server</Button>
+          </Notification>)
+        } else {
+          setMsg(<Notification type="success" header={str("Validation result:")}>{str("Validation successful, no issues detected")}</Notification>, { placement: 'topEnd' });
+        }
+      } catch (err) {
+        setMsg(<Notification type="error" header={str("Error")}>{str("Failed to load file validation result:")} {err.message}</Notification>, { placement: 'topEnd' });
+      } finally {
+        setLoadingContent(false);
+      }
+    };
+
+    if (filePath && validateEndpoint) {
+      fetchFileContent();
+    }
+  }, [filePath, handleFix, str, validateEndpoint]);
+
   useEffect(() => {
     const fetchFileContent = async () => {
       setMsg(null);
@@ -298,7 +368,7 @@ const FileEditor = ({
       }
     }
     return null; // No validation needed if no filePath or it's a generic text file
-  }, [filePath, fileContent, str]);
+  }, [filePath, fileContent]);
 
   const handleSave = useCallback(async (saveValue) => {
     setMsg(null);
@@ -622,6 +692,9 @@ const FileEditor = ({
                   <Button appearance="subtle" onClick={handleOpenTableEditor} disabled={isEditing}>
                     <ScrollText style={{ marginRight: 5 }} /> <Trans>Open table editor</Trans>
                   </Button>
+                  {validateEndpoint && <Button appearance="subtle" onClick={handleValidate} disabled={isEditing}>
+                    <CheckCheck style={{ marginRight: 5 }} /> <Trans>Validate</Trans>
+                  </Button>}
                   <TableEditorChatGPT open={tableEditorOpen} onClose={() => setTableEditorOpen(false)} onSave={async (value) => {
                     setFileContent(value);
                     await handleSave(value);

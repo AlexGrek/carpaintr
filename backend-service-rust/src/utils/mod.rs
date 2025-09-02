@@ -1,10 +1,13 @@
 pub mod random;
 
 use chrono::{DateTime, Duration, Utc};
+use csv::WriterBuilder;
 use csv_async::AsyncReaderBuilder;
 use lexiclean::Lexiclean;
 use lru::LruCache;
 use serde::Serialize;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -17,7 +20,6 @@ use tokio::fs;
 use tokio::fs::read_dir;
 use tokio::io;
 use tokio::io::AsyncBufReadExt;
-use tokio::io::AsyncReadExt;
 use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 
@@ -107,6 +109,31 @@ fn detect_separator_from_string(content: &str) -> u8 {
     best_sep
 }
 
+pub async fn parse_csv_delimiter_header_async<P: AsRef<Path>>(
+    path: P,
+) -> Result<(String, Vec<String>), AppError> {
+    // First pass: detect delimiter by reading only first two lines
+    let file = tokio::fs::File::open(&path).await?;
+    let mut buf_reader = tokio::io::BufReader::new(file);
+
+    let mut first_line = String::new();
+    let mut second_line = String::new();
+
+    // Read first line
+    if buf_reader.read_line(&mut first_line).await? == 0 {
+        return Err(AppError::InvalidData("Empty file".to_string()));
+    }
+
+    // Read second line
+    buf_reader.read_line(&mut second_line).await?;
+
+    // Detect delimiter from first two lines
+    let sample = format!("{}{}", first_line, second_line);
+    let delimiter = detect_separator_from_string(&sample);
+
+    return Ok((String::from(delimiter as char), Vec::new()))
+}
+
 async fn parse_csv_file_async<P: AsRef<Path>>(
     path: P,
     cache: &DataStorageCache,
@@ -177,6 +204,57 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
     let safe_path = safety_check_only(&base, &target)?;
     let parsed = parse_csv_file_async(&safe_path, cache).await?;
     return Ok(parsed);
+}
+
+/// Serialize Vec<HashMap<String, String>> to CSV string using csv crate
+async fn serialize_to_csv_with_crate(data: &Vec<HashMap<String, String>>) -> Result<String, Box<dyn std::error::Error>> {
+    if data.is_empty() {
+        return Ok(String::new());
+    }
+
+    // Collect all unique keys
+    let mut all_keys: HashSet<String> = HashSet::new();
+    for record in data {
+        all_keys.extend(record.keys().cloned());
+    }
+    
+    let mut headers: Vec<String> = all_keys.into_iter().collect();
+    headers.sort();
+    
+    let mut wtr = WriterBuilder::new().from_writer(vec![]);
+    
+    // Write header
+    wtr.write_record(&headers)?;
+    
+    // Write data rows
+    for record in data {
+        let row: Vec<String> = headers.iter()
+            .map(|key| record.get(key).unwrap_or(&String::new()).clone())
+            .collect();
+        wtr.write_record(&row)?;
+    }
+    
+    let csv_bytes = wtr.into_inner()?;
+    Ok(String::from_utf8(csv_bytes)?)
+}
+
+// Write CSV string to file using async tokio I/O
+async fn write_csv_to_file(csv_content: &str, filename: &PathBuf) -> Result<(), AppError> {
+    let mut file = File::create(filename).await?;
+    file.write_all(csv_content.as_bytes()).await?;
+    file.flush().await?;
+    Ok(())
+}
+
+// Combined function: serialize and write to file in one step
+pub async fn serialize_and_write_csv(
+    data: &Vec<HashMap<String, String>>, 
+    filename: &PathBuf
+) -> Result<(), AppError> {
+    let csv_content = serialize_to_csv_with_crate(data).await
+        .map_err(|err|AppError::InternalServerError(err.to_string()))?;
+    write_csv_to_file(&csv_content, filename).await?;
+    Ok(())
 }
 
 #[derive(Debug, Error)]

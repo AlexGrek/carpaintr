@@ -1,15 +1,19 @@
 use futures_util::future::join_all;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use tokio::fs::File;
 use tokio::io::BufReader;
 
-use crate::calc::constants::*;
+use crate::calc::constants::{self, *};
 use crate::errors::AppError;
-use crate::exlogging::log_event;
-use crate::utils::{self, parse_csv_file_async_safe, DataStorageCache};
+use crate::exlogging::{self, log_event};
+use crate::models::table_validation::{make_basic_validation_rules, ValidationRule};
+use crate::utils::{
+    self, parse_csv_delimiter_header_async, parse_csv_file_async_safe, serialize_and_write_csv,
+    DataStorageCache,
+};
 use tokio::io::AsyncBufReadExt;
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
@@ -51,6 +55,102 @@ pub async fn lookup(
         })
         .collect();
     Ok(collected)
+}
+
+fn has_leading_or_trailing_whitespace(s: &str) -> bool {
+    s != s.trim()
+}
+
+fn validate_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> Vec<String> {
+    let mut issues = vec![];
+    for validator in validators {
+        if validator.does_apply(value, key) {
+            issues.push(validator.report());
+        }
+    }
+    if has_leading_or_trailing_whitespace(value) {
+        issues.push(format!(
+            "E: Has leading or trailing whitespaces in {}",
+            value
+        ));
+    }
+    issues
+}
+
+fn fix_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> Option<String> {
+    for validator in validators {
+        if validator.does_apply(value, key) {
+            return Some(validator.apply(value).trim().to_string());
+        }
+    }
+    if has_leading_or_trailing_whitespace(value) {
+        return Some(value.trim().to_string());
+    }
+    None
+}
+
+pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
+    base: P,
+    path: P,
+    cache: &DataStorageCache,
+) -> Result<Vec<String>, AppError> {
+    let path_buf = path.as_ref().to_path_buf();
+    let validators = make_basic_validation_rules();
+    let mut issues = vec![];
+    let mut parsed = parse_csv_file_async_safe(base, path, cache).await?;
+    let (delimiter, _) = parse_csv_delimiter_header_async(&path_buf).await?;
+    if delimiter != "," {
+        issues.push(format!("W: Incorrect delimiter, got: {}", delimiter));
+    }
+    for line in parsed.iter_mut() {
+        for (key, value) in line.iter_mut() {
+            if let Some(upd) = fix_table_value(&validators, &value, &key) {
+                *value = upd;
+                issues.push(format!("FIXED: {}", &value));
+            }
+        }
+    }
+    if issues.len() > 0 {
+        // write file back
+        exlogging::log_event(
+            exlogging::LogLevel::Info,
+            format!("Fixed file {path_buf:?}"),
+            None::<String>,
+        );
+        serialize_and_write_csv(&parsed, &path_buf).await?;
+    }
+    cache.invalidate(&path_buf).await;
+    return Ok(issues);
+}
+
+pub async fn find_issues_with_csv_async<P: AsRef<std::path::Path>>(
+    base: P,
+    path: P,
+    cache: &DataStorageCache,
+) -> Result<Vec<String>, AppError> {
+    let path_buf = path.as_ref().to_path_buf();
+    let validators = make_basic_validation_rules();
+    let mut issues = vec![];
+    let mut keys = HashSet::new();
+    let parsed = parse_csv_file_async_safe(base, path, cache).await?;
+    let (delimiter, _) = parse_csv_delimiter_header_async(path_buf).await?;
+    if delimiter != "," {
+        issues.push(format!("W: Incorrect delimiter, got: {}", delimiter));
+    }
+    for line in parsed.into_iter() {
+        for (key, value) in line.into_iter() {
+            issues.extend_from_slice(&validate_table_value(&validators, &value, &key));
+            keys.insert(key);
+        }
+    }
+    if !keys.contains(constants::CAR_PART_DETAIL_UKR_FIELD) {
+        issues.push(format!(
+            "E: Column {} not found in {} keys",
+            constants::CAR_PART_DETAIL_UKR_FIELD,
+            keys.len()
+        ));
+    }
+    return Ok(issues);
 }
 
 pub async fn lookup_no_type_class(

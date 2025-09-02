@@ -1,6 +1,11 @@
-use crate::{ calc::table_processing::all_tables_headers, errors::AppError, exlogging, middleware::AuthenticatedUser, state::AppState, transactionalfs::{GitTransactionalFs, TransactionalFs}, utils::{
-        get_file_as_string_by_path, user_catalog_directory_from_email, COMMON
-    } // Import the new CompanyInfo struct
+use crate::{
+    calc::table_processing::{all_tables_headers, find_issues_with_csv_async, fix_issues_with_csv_async},
+    errors::AppError,
+    exlogging,
+    middleware::AuthenticatedUser,
+    state::AppState,
+    transactionalfs::{GitTransactionalFs, TransactionalFs},
+    utils::{get_file_as_string_by_path, user_catalog_directory_from_email, COMMON}, // Import the new CompanyInfo struct
 };
 use axum::{
     extract::{Multipart, State},
@@ -14,8 +19,12 @@ pub async fn get_common_file_list(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let fs_manager =
-        GitTransactionalFs::new(app_state.data_dir_path.join(&COMMON), user_email, &app_state.cache).await?;
+    let fs_manager = GitTransactionalFs::new(
+        app_state.data_dir_path.join(&COMMON),
+        user_email,
+        &app_state.cache,
+    )
+    .await?;
     let data = fs_manager.list_files().await?;
     Ok(Json(data))
 }
@@ -52,6 +61,36 @@ pub async fn read_user_file(
     Ok(data)
 }
 
+pub async fn check_user_file(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path(path): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    if path.ends_with(".csv") {
+        let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
+        let data = find_issues_with_csv_async(&user_path, &user_path.join(&path), &app_state.cache)
+            .await?;
+        Ok(Json(data))
+    } else {
+        Err(AppError::BadRequest("Unsupported for this file type".to_string()))
+    }
+}
+
+pub async fn fix_user_file(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path(path): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    if path.ends_with(".csv") {
+        let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
+        let data = fix_issues_with_csv_async(&user_path, &user_path.join(&path), &app_state.cache)
+            .await?;
+        Ok(Json(data))
+    } else {
+        Err(AppError::BadRequest("Unsupported for this file type".to_string()))
+    }
+}
+
 pub async fn list_commits(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
@@ -65,14 +104,14 @@ pub async fn list_commits(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RevertCommit {
-    pub commit_hash: String
+    pub commit_hash: String,
 }
 
 // If commit_hash is "last" - revert last commit, otherwise revert the hash
 pub async fn revert_commit(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
-    Json(revert): Json<RevertCommit>
+    Json(revert): Json<RevertCommit>,
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
@@ -90,14 +129,16 @@ pub async fn delete_user_file(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file request: {:?}", &path.to_string()), Some(user_email.as_str()));
+    exlogging::log_event(
+        exlogging::LogLevel::Info,
+        format!("Delete file request: {:?}", &path.to_string()),
+        Some(user_email.as_str()),
+    );
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
+    let fs_manager =
+        GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
     fs_manager
-        .delete_file(
-            &PathBuf::from(&path),
-            &format!("File {} deleted.", &path),
-        )
+        .delete_file(&PathBuf::from(&path), &format!("File {} deleted.", &path))
         .await?;
     Ok("File deleted")
 }
@@ -109,8 +150,8 @@ pub async fn read_common_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
-    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
-        .await?;
+    let data =
+        get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache).await?;
     Ok(data)
 }
 
@@ -123,7 +164,8 @@ pub async fn upload_user_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Expecting a single file field
     let user_path = user_catalog_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let fs_manager = GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
+    let fs_manager =
+        GitTransactionalFs::new(user_path, user_email.clone(), &app_state.cache).await?;
     let field = multipart
         .next_field()
         .await
