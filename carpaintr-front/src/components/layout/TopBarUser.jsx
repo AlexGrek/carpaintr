@@ -34,7 +34,7 @@ const TopBarUser = () => {
   }, [navigate]); // navigate is a dependency, though it's stable from useNavigate
 
   return (
-    <Navbar appearance="inverse" className="top-bar-user" style={{ marginBottom: "18pt" }}>
+    <Navbar appearance="inverse" className="top-bar-user fade-in-simple" style={{ marginBottom: "18pt" }}>
       <Navbar.Brand
         style={{ margin: '0', padding: 0, paddingLeft: '8pt' }}
         onClick={() => navigate('/dashboard')} // Directly use onClick for navigation
@@ -45,7 +45,7 @@ const TopBarUser = () => {
         <Dropdown title="" icon={<Menu />} placement="bottomEnd" trigger={['click', 'hover']}>
           <Dropdown.Item eventKey="logout" onSelect={handleSelect}>Вийти</Dropdown.Item>
           <Dropdown.Item eventKey="manage" onSelect={handleSelect}>Налаштування</Dropdown.Item>
-          <Dropdown.Separator/>
+          <Dropdown.Separator />
           <Dropdown.Item eventKey="report" onSelect={handleSelect}>Надіслати відгук</Dropdown.Item>
         </Dropdown>
       </Nav>

@@ -89,6 +89,24 @@ fn fix_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> 
     None
 }
 
+fn swap_keys(vec_maps: &mut Vec<HashMap<String, String>>, replacements: &HashMap<String, String>) {
+    for map in vec_maps.iter_mut() {
+        // Collect entries that need key replacement
+        let mut entries_to_update = Vec::new();
+
+        for (old_key, new_key) in replacements {
+            if let Some(value) = map.remove(old_key) {
+                entries_to_update.push((new_key.clone(), value));
+            }
+        }
+
+        // Insert the entries with new keys
+        for (new_key, value) in entries_to_update {
+            map.insert(new_key, value);
+        }
+    }
+}
+
 pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
     base: P,
     path: P,
@@ -97,6 +115,8 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
     let path_buf = path.as_ref().to_path_buf();
     let validators = make_basic_validation_rules();
     let mut issues = vec![];
+    let mut replacements = HashMap::new();
+    let mut keys = HashSet::new();
     let mut parsed = parse_csv_file_async_safe(base, path, cache).await?;
     let (delimiter, _) = parse_csv_delimiter_header_async(&path_buf).await?;
     if delimiter != "," {
@@ -108,7 +128,50 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
                 *value = upd;
                 issues.push(format!("FIXED: {}", &value));
             }
+            keys.insert(key.to_string());
         }
+    }
+    if !keys.contains(constants::CAR_PART_DETAIL_UKR_FIELD) {
+        issues.push(format!(
+            "E: Column {} not found in {} keys",
+            constants::CAR_PART_DETAIL_UKR_FIELD,
+            keys.len()
+        ));
+        if keys.contains("Деталь") {
+            replacements.insert(
+                "Деталь".to_string(),
+                constants::CAR_PART_DETAIL_UKR_FIELD.to_string(),
+            );
+        }
+    }
+    if !keys.contains(constants::CAR_PART_TYPE_FIELD) {
+        issues.push(format!(
+            "E: Column {} not found in {} keys",
+            constants::CAR_PART_TYPE_FIELD,
+            keys.len()
+        ));
+        if keys.contains("ТИП") {
+            replacements.insert(
+                "ТИП".to_string(),
+                constants::CAR_PART_TYPE_FIELD.to_string(),
+            );
+        }
+    }
+    if !keys.contains(constants::CAR_PART_CLASS_FIELD) {
+        issues.push(format!(
+            "E: Column {} not found in {} keys",
+            constants::CAR_PART_CLASS_FIELD,
+            keys.len()
+        ));
+        if keys.contains("класс") {
+            replacements.insert(
+                "класс".to_string(),
+                constants::CAR_PART_CLASS_FIELD.to_string(),
+            );
+        }
+    }
+    if replacements.len() > 0 {
+        swap_keys(&mut parsed, &replacements);
     }
     if issues.len() > 0 {
         // write file back
