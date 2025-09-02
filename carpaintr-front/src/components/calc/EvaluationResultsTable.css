@@ -4,6 +4,7 @@
   overflow-x: auto;
   border-collapse: collapse;
   margin-top: 10px;
+  font-size: 14px; /* default size */
 }
 
 .evaluation-table th {
@@ -67,7 +68,7 @@
 
 @media (max-width: 600px) {
   .evaluation-table {
-    font-size: 12px; /* smaller font */
+    font-size: 11px; /* smaller font */
   }
 
   .evaluation-table th,
