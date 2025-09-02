@@ -75,7 +75,7 @@ const Dashboard = () => {
             <ActiveLicenseMarker />
             {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
         </div>
-        <main className='fade-in-simple dashboard-content-container'>
+        <main className='fade-in-expand-simple dashboard-content-container'>
             <DashboardNavigationButtons />
             <AppVersionBadge />
         </main>

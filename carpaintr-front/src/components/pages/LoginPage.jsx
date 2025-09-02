@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsuite';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { resetCompanyInfo } from '../../utils/authFetch';
 import './LoginPage.css';
 
@@ -46,7 +46,7 @@ const LoginPage = () => {
 
   return (
     <Container className="auth-page">
-      <Panel className="auth-panel fade-in-simple" bordered>
+      <Panel className="auth-panel pop-in-simple" bordered>
         <img className="auth-logo" src="/autolab_large_bw.png" alt="CarPaintr Logo" />
         <Form fluid>
           <Form.Group>
@@ -63,6 +63,7 @@ const LoginPage = () => {
             </Button>
           </Form.Group>
         </Form>
+        <Link style={{margin: '12pt', display: 'block'}} to='/register'>Реєстрація</Link>
       </Panel>
     </Container>
   );

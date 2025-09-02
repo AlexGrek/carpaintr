@@ -10,8 +10,8 @@ const RenderUnsaved = ({ dataString, onLoadData }) => {
         if (data) {
             return <Panel bordered>
                 <h4><Trans>Previous calculation</Trans></h4>
-                <CarCard data={data} style={{margin: 'auto'}}/>
-                <br/>
+                <CarCard data={data} style={{ margin: 'auto' }} />
+                <br />
                 <Button appearance="primary" onClick={() => onLoadData(data)}><Trans>Continue</Trans></Button>
             </Panel>
         }
@@ -26,14 +26,13 @@ const RenderUnsaved = ({ dataString, onLoadData }) => {
 const CalcMainMenuStage = ({ onNext, onLoad }) => {
     const unsaved = localStorage.getItem('unsaved_calculation');
 
-
     return (
         <div style={styles.sampleStage}>
-            <div>
+            <div className="fade-in-simple">
                 <div style={styles.buttonGroup}>
                     <Button size="lg" onClick={onNext} appearance="ghost" style={{ margin: "30pt 0" }}><Trans>New calculation</Trans></Button>
                 </div>
-                <Divider/>
+                <Divider />
                 {unsaved && <RenderUnsaved dataString={unsaved} onLoadData={onLoad} />}
                 <Panel bordered collapsible header={"Завантажити розрахунок"} style={{ opacity: "0.9", fontSize: "smaller" }}>
                     <LoadCalculationMenu onDataLoaded={onLoad} />

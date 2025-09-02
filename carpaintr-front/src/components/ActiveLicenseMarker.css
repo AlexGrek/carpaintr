@@ -3,7 +3,9 @@
     border-radius: 2rem;
     width: fit-content;
     margin: auto;
-    padding: 4pt 14pt;
+    font-size: small;
+    padding: 3pt 12pt;
+    color: rgba(0, 0, 0, 0.73);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     animation: fadePopIn 0.2s ease-out forwards;
