@@ -64,3 +64,18 @@
   background: #f0f0f0;
   border-top: 2px solid #ccc;
 }
+
+@media (max-width: 600px) {
+  .evaluation-table {
+    font-size: 12px; /* smaller font */
+  }
+
+  .evaluation-table th,
+  .evaluation-table td {
+    padding: 6px; /* reduce padding */
+  }
+
+  .evaluation-table td:nth-child(3) {
+    min-width: 60px; /* shrink numeric column */
+  }
+}
