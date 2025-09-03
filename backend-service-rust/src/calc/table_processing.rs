@@ -103,7 +103,7 @@ fn swap_keys(vec_maps: &mut Vec<IndexMap<String, String>>, replacements: &HashMa
 
         // Insert the entries with new keys
         for (new_key, (value, index)) in entries_to_update {
-            map.insert_before(index, new_key, value);
+            map.shift_insert(index, new_key, value);
         }
     }
 }
