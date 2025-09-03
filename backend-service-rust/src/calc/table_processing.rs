@@ -1,4 +1,5 @@
 use futures_util::future::join_all;
+use indexmap::IndexMap;
 use std::collections::{HashMap, HashSet};
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -34,7 +35,7 @@ pub async fn lookup(
     data_dir: &PathBuf,
     email: &str,
     cache: &DataStorageCache,
-) -> Result<Vec<(String, Option<HashMap<String, String>>)>, AppError> {
+) -> Result<Vec<(String, Option<IndexMap<String, String>>)>, AppError> {
     let all_tables = all_tables_list(data_dir, email).await?;
     let in_tables =
         lookup_part_in_tables(car_type, car_class, part, all_tables, data_dir, cache).await;
@@ -89,20 +90,20 @@ fn fix_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> 
     None
 }
 
-fn swap_keys(vec_maps: &mut Vec<HashMap<String, String>>, replacements: &HashMap<String, String>) {
+fn swap_keys(vec_maps: &mut Vec<IndexMap<String, String>>, replacements: &HashMap<String, String>) {
     for map in vec_maps.iter_mut() {
         // Collect entries that need key replacement
         let mut entries_to_update = Vec::new();
 
         for (old_key, new_key) in replacements {
-            if let Some(value) = map.remove(old_key) {
-                entries_to_update.push((new_key.clone(), value));
+            if let Some((index, _k, value)) = map.shift_remove_full(old_key) {
+                entries_to_update.push((new_key.clone(), (value, index)));
             }
         }
 
         // Insert the entries with new keys
-        for (new_key, value) in entries_to_update {
-            map.insert(new_key, value);
+        for (new_key, (value, index)) in entries_to_update {
+            map.insert_before(index, new_key, value);
         }
     }
 }
@@ -221,7 +222,7 @@ pub async fn lookup_no_type_class(
     data_dir: &PathBuf,
     email: &str,
     cache: &DataStorageCache,
-) -> Result<Vec<(String, Vec<HashMap<String, String>>)>, AppError> {
+) -> Result<Vec<(String, Vec<IndexMap<String, String>>)>, AppError> {
     let all_tables = all_tables_list(data_dir, email).await?;
     let in_tables = lookup_part_in_tables_any_type(part, all_tables, data_dir, cache).await;
     let collected: Vec<_> = in_tables
@@ -302,7 +303,7 @@ pub async fn lookup_part_in_tables(
     tables: Vec<PathBuf>,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Vec<Result<(String, Option<HashMap<String, String>>), AppError>> {
+) -> Vec<Result<(String, Option<IndexMap<String, String>>), AppError>> {
     let futures: Vec<_> = tables
         .into_iter()
         .map(|table| lookup_part_in_table(car_type, car_class, part, table, data_dir, cache))
@@ -315,7 +316,7 @@ pub async fn lookup_part_in_tables_any_type(
     tables: Vec<PathBuf>,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Vec<Result<(String, Vec<HashMap<String, String>>), AppError>> {
+) -> Vec<Result<(String, Vec<IndexMap<String, String>>), AppError>> {
     let futures: Vec<_> = tables
         .into_iter()
         .map(|table| lookup_part_in_table_any_type(part, table, data_dir, cache))
@@ -330,10 +331,10 @@ pub async fn lookup_part_in_table(
     file: PathBuf,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Result<(String, Option<HashMap<String, String>>), AppError> {
+) -> Result<(String, Option<IndexMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found = data.into_iter().find(|row| {
-        let debug_data: Vec<&String> = row.keys().into_iter().collect();
+        // let debug_data: Vec<&String> = row.keys().into_iter().collect();
         if !row.contains_key(CAR_PART_DETAIL_UKR_FIELD) {
             return false;
         }
@@ -366,7 +367,7 @@ pub async fn lookup_part_in_table_any_type(
     file: PathBuf,
     data_dir: &PathBuf,
     cache: &DataStorageCache,
-) -> Result<(String, Vec<HashMap<String, String>>), AppError> {
+) -> Result<(String, Vec<IndexMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found: Vec<_> = data
         .into_iter()

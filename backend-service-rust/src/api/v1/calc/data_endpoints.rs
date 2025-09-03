@@ -19,9 +19,10 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use indexmap::IndexMap;
 use serde::Deserialize;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     path::PathBuf,
     sync::Arc,
 };
@@ -147,7 +148,7 @@ pub async fn lookup_all_tables_all_types(
     Ok(Json(parts_lines))
 }
 
-fn get_unique_values_iter(table: &Vec<HashMap<String, String>>, key: &str) -> Vec<String> {
+fn get_unique_values_iter(table: &Vec<IndexMap<String, String>>, key: &str) -> Vec<String> {
     table
         .iter()
         .filter_map(|row| row.get(key))

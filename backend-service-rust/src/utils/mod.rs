@@ -3,6 +3,7 @@ pub mod random;
 use chrono::{DateTime, Duration, Utc};
 use csv::WriterBuilder;
 use csv_async::AsyncReaderBuilder;
+use indexmap::IndexMap;
 use lexiclean::Lexiclean;
 use lru::LruCache;
 use serde::Serialize;
@@ -39,7 +40,7 @@ pub const ATTACHMENTS: &'static str = "attachments";
 pub struct DataStorageCache {
     as_string: Arc<RwLock<LruCache<PathBuf, String>>>,
     as_vec_u8: Arc<RwLock<LruCache<PathBuf, Vec<u8>>>>,
-    as_csv: Arc<RwLock<LruCache<PathBuf, Vec<HashMap<String, String>>>>>,
+    as_csv: Arc<RwLock<LruCache<PathBuf, Vec<IndexMap<String, String>>>>>,
 }
 
 impl DataStorageCache {
@@ -143,7 +144,7 @@ pub async fn parse_csv_delimiter_header_async<P: AsRef<Path>>(
 async fn parse_csv_file_async<P: AsRef<Path>>(
     path: P,
     cache: &DataStorageCache,
-) -> Result<Vec<HashMap<String, String>>, AppError> {
+) -> Result<Vec<IndexMap<String, String>>, AppError> {
     let path_buf = path.as_ref().to_path_buf();
     if let Some(cached_data) = cache.as_csv.write().await.get(&path_buf) {
         return Ok(cached_data.clone());
@@ -183,7 +184,7 @@ async fn parse_csv_file_async<P: AsRef<Path>>(
 
     while let Some(result) = record_stream.next().await {
         let record = result?;
-        let mut row_map = HashMap::new();
+        let mut row_map = IndexMap::new();
 
         for (i, field) in record.iter().enumerate() {
             let header = headers.get(i);
@@ -206,7 +207,7 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
     base: P,
     target: P,
     cache: &DataStorageCache,
-) -> Result<Vec<HashMap<String, String>>, AppError> {
+) -> Result<Vec<IndexMap<String, String>>, AppError> {
     let safe_path = safety_check_only(&base, &target)?;
     let parsed = parse_csv_file_async(&safe_path, cache).await?;
     return Ok(parsed);
@@ -214,7 +215,7 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
 
 /// Serialize Vec<HashMap<String, String>> to CSV string using csv crate
 async fn serialize_to_csv_with_crate(
-    data: &Vec<HashMap<String, String>>,
+    data: &Vec<IndexMap<String, String>>,
 ) -> Result<String, Box<dyn std::error::Error>> {
     if data.is_empty() {
         return Ok(String::new());
@@ -257,7 +258,7 @@ async fn write_csv_to_file(csv_content: &str, filename: &PathBuf) -> Result<(), 
 
 // Combined function: serialize and write to file in one step
 pub async fn serialize_and_write_csv(
-    data: &Vec<HashMap<String, String>>,
+    data: &Vec<IndexMap<String, String>>,
     filename: &PathBuf,
 ) -> Result<(), AppError> {
     let csv_content = serialize_to_csv_with_crate(data)

@@ -2,7 +2,7 @@ use crate::exlogging::{log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
 use crate::models::calculations::CarCalcData;
 use crate::utils::{
-    get_file_summary, safe_ensure_directory_exists, safe_read, safe_write, safe_write_overwrite,
+    get_file_summary, safe_read, safe_write_overwrite,
     sanitize_alphanumeric_and_dashes, user_personal_directory_from_email,
 };
 use crate::{errors::AppError, state::AppState};
