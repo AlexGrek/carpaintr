@@ -4,6 +4,7 @@ use chrono::{DateTime, Duration, Utc};
 use csv::WriterBuilder;
 use csv_async::AsyncReaderBuilder;
 use indexmap::IndexMap;
+use indexmap::IndexSet;
 use lexiclean::Lexiclean;
 use lru::LruCache;
 use serde::Serialize;
@@ -222,14 +223,12 @@ async fn serialize_to_csv_with_crate(
     }
 
     // Collect all unique keys
-    let mut all_keys: HashSet<String> = HashSet::new();
+    let mut all_keys: IndexSet<String> = IndexSet::new();
     for record in data {
         all_keys.extend(record.keys().cloned());
     }
 
-    let mut headers: Vec<String> = all_keys.into_iter().collect();
-    headers.sort();
-
+    let headers: Vec<String> = all_keys.into_iter().collect();
     let mut wtr = WriterBuilder::new().from_writer(vec![]);
 
     // Write header

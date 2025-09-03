@@ -92,26 +92,10 @@ fn fix_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> 
 
 fn swap_keys(vec_maps: &mut Vec<IndexMap<String, String>>, replacements: &HashMap<String, String>) {
     for map in vec_maps.iter_mut() {
-        // Collect entries that need key replacement
-        let mut entries_to_update = Vec::new();
-
         for (old_key, new_key) in replacements {
             if let Some((index, _k, value)) = map.shift_remove_full(old_key) {
-                entries_to_update.push((new_key.clone(), (value, index)));
+                map.shift_insert(index, new_key.to_string(), value);
             }
-        }
-
-        // Insert the entries with new keys
-        for (new_key, (value, index)) in entries_to_update {
-            exlogging::log_event(
-                exlogging::LogLevel::Info,
-                format!(
-                    "Replacing key [deleted] with {} at index {}",
-                    &new_key, &index
-                ),
-                None::<String>,
-            );
-            map.shift_insert(index, new_key, value);
         }
     }
 }

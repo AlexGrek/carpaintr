@@ -75,7 +75,7 @@ const Dashboard = () => {
             <ActiveLicenseMarker />
             {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
         </div>
-        <main className='fade-in-expand-simple dashboard-content-container'>
+        <main className='dashboard-content-container'>
             <DashboardNavigationButtons />
             <AppVersionBadge />
         </main>
@@ -141,7 +141,7 @@ const DashboardNavigationButtons = () => {
     };
 
     return (
-        <section className="apps-list">
+        <section className="apps-list slide-in-simple">
             <div className="apps-list-container">
                 <div className="apps-list-section-header">
                     <p><Trans>Available apps</Trans></p>

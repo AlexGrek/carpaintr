@@ -103,8 +103,24 @@
 @keyframes fadeInExpand {
   to {
     opacity: 1;
-    max-height: 100vh;
+    max-height: 500vh;
     /* Or any other large value that's guaranteed to be greater than the content's height */
+  }
+}
+
+.slide-in-simple {
+  animation: slideFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

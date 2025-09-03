@@ -46,7 +46,7 @@ const LoginPage = () => {
 
   return (
     <Container className="auth-page">
-      <Panel className="auth-panel pop-in-simple" bordered>
+      <Panel className="auth-panel fade-in-expand-simple" bordered>
         <img className="auth-logo" src="/autolab_large_bw.png" alt="CarPaintr Logo" />
         <Form fluid>
           <Form.Group>

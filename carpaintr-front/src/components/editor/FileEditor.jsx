@@ -1,6 +1,6 @@
 // FileEditor.jsx
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table } from 'rsuite';
+import { Button, Input, IconButton, Notification, ButtonToolbar, Drawer, Table, Tag } from 'rsuite';
 import { Edit, Save, X, Trash2, ScrollText, Pencil, Download, AlertTriangle, ChevronDown, Upload, CheckCheck } from 'lucide-react';
 import styled from 'styled-components';
 import { authFetch } from '../../utils/authFetch';
@@ -47,7 +47,10 @@ registerTranslations("ua", {
   "Upload File": "Завантажити файл",
   "Validate": "Перевірити",
   "Validation result:": "Результат перевірки",
-  "Validation successful, no issues detected": "Проблем не знайдено"
+  "Validation successful, no issues detected": "Проблем не знайдено",
+  "Fix complete, now refresh the page! Done:": "Виконано, тепер оновіть сторінку! Знайдено:",
+  "Refresh": "Оновити сторінку",
+  "Try to fix on server": "Застосувати автоматичні виправлення"
 });
 
 
@@ -272,10 +275,10 @@ const FileEditor = ({
         const content = await response.json();
         if (isArrayLike(content) && content.length > 0) {
           const distinct = [...new Set(content)];
-          setMsg(<Notification type='warning' header={str("Validation result:") + ` ${content.length} errors, ${distinct.length} unique`}>
-            <div style={{ maxHeight: '3em', overflowY: 'auto', display: 'block' }}>{distinct.join(';\n')}</div>
+          setMsg(<Notification type='warning' header={str("Fix complete, now refresh the page! Done:") + ` ${content.length} errors, ${distinct.length} unique`}>
+            <div style={{ maxHeight: '3em', overflowY: 'auto', display: 'block' }}>{distinct.map(item => <Tag key={item}>{item}</Tag>)}</div>
             <br />
-            <Button appearance='primary' onClick={handleFix}>Try to fix on server</Button>
+            <Button appearance='primary' color='green' onClick={() => window.location.reload()}><Trans>Refresh</Trans></Button>
           </Notification>)
         } else {
           setMsg(<Notification type="success" header={str("Validation result:")}>{str("Validation successful, no issues detected")}</Notification>, { placement: 'topEnd' });
@@ -305,9 +308,9 @@ const FileEditor = ({
         if (isArrayLike(content) && content.length > 0) {
           const distinct = [...new Set(content)];
           setMsg(<Notification type='warning' header={str("Validation result:") + ` ${content.length} errors, ${distinct.length} unique`}>
-            <div style={{ maxHeight: '6em', overflowY: 'auto' }}>{distinct.join(';\n')}</div>
+            <div style={{ maxHeight: '6em', overflowY: 'auto' }}>{distinct.map(item => <Tag key={item}>{item}</Tag>)}</div>
             <br />
-            <Button appearance='primary' onClick={handleFix}>Try to fix on server</Button>
+            <Button appearance='ghost' onClick={handleFix}><Trans>Try to fix on server</Trans></Button>
           </Notification>)
         } else {
           setMsg(<Notification type="success" header={str("Validation result:")}>{str("Validation successful, no issues detected")}</Notification>, { placement: 'topEnd' });
