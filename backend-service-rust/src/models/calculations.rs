@@ -28,16 +28,6 @@ pub struct Car {
     pub store_file_name: Option<String>,
 }
 
-impl CarCalcData {
-    pub fn new(car: Car) -> Self {
-        Self {
-            car,
-            calculations: None,
-            additional_fields: HashMap::new(),
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CarModel {
     pub brand: String,
@@ -70,24 +60,4 @@ pub struct CalculationData {
     pub saved_file_name: Option<String>,
     pub vin: Option<String>,
     pub license_plate: Option<String>
-}
-
-impl CalculationData {
-    pub fn digest(&self) -> String {
-        let mut parts = Vec::new();
-        
-        if let Some(ref model) = self.model {
-            parts.push(format!("{:?}", model));
-        }
-        
-        parts.push(self.year.clone());
-        
-        if let Some(ref license_plate) = self.license_plate {
-            parts.push(license_plate.clone());
-        }
-        
-        parts.push(self.color.clone());
-        
-        parts.join(" | ")
-    }
 }
