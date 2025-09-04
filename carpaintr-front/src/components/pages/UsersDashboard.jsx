@@ -5,9 +5,9 @@ import { Panel, Text, Message, Dropdown, Button } from 'rsuite';
 import ActiveLicenseMarker from '../ActiveLicenseMarker';
 import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
-import { fetchCompanyInfo } from '../../utils/authFetch';
+import { authFetch, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
-import { BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
+import { Biohazard, BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
 import TopBarDashboard from '../layout/TopBarDashboard';
 
@@ -28,6 +28,7 @@ registerTranslations('ua', {
     "As list": "У вигляді списку",
     "As grid": "У вигляді сітки", // New translation
     "As blocks": "У вигляді блоків", // New translation
+    "Admin Area": "Адміністрування"
 });
 
 const UsersDashboard = () => {
@@ -48,6 +49,24 @@ const Dashboard = () => {
     const [company, setCompany] = useState(null);
     const [message, setMessage] = useState(null);
     const { str, setLang } = useLocale();
+    const [admin, setAdmin] = useState(false);
+
+    useEffect(() => {
+        const fetchAdminStatus = async () => {
+            try {
+                const response = await authFetch("/api/v1/admin/check_admin_status");
+                if (response.ok) {
+                    let data = await response.json()
+                    if (data.is_admin) {
+                        setAdmin(true);
+                    }
+                }
+            } catch {
+                setAdmin(false);
+            }
+        }
+        fetchAdminStatus();
+    })
 
     useEffect(() => {
         const reportError = (err) => {
@@ -76,13 +95,13 @@ const Dashboard = () => {
             {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
         </div>
         <main className='dashboard-content-container'>
-            <DashboardNavigationButtons />
+            <DashboardNavigationButtons admin={admin} />
             <AppVersionBadge />
         </main>
     </div>
 }
 
-const DashboardNavigationButtons = () => {
+const DashboardNavigationButtons = ({ admin }) => {
     const { str } = useLocale();
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('appViewMode') || 'list');
 
@@ -127,6 +146,13 @@ const DashboardNavigationButtons = () => {
             description: "🚧 " + str("Under construction") + " 🚧",
             link: "/wip"
         },
+        {
+            icon: <Biohazard />,
+            title: str("Admin Area"),
+            description: "Control everything",
+            link: "/admin",
+            hidden: !admin,
+        },
     ];
 
 
@@ -160,6 +186,7 @@ const DashboardNavigationButtons = () => {
                                     icon={feature.icon}
                                     title={feature.title}
                                     link={feature.link}
+                                    isHidden={feature.hidden || false}
                                 />
                             );
                         } else {
@@ -170,6 +197,7 @@ const DashboardNavigationButtons = () => {
                                     title={feature.title}
                                     description={feature.description}
                                     link={feature.link}
+                                    isHidden={feature.hidden || false}
                                 />
                             );
                         }
@@ -180,8 +208,11 @@ const DashboardNavigationButtons = () => {
     );
 };
 
-const AppCard = ({ icon, title, description, link }) => {
+const AppCard = ({ icon, title, description, link, isHidden }) => {
     const nav = useNavigate();
+    if (isHidden) {
+        return <></>
+    }
     return (
         <div className="app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="app-feature-icon">{icon}</div>
@@ -192,8 +223,11 @@ const AppCard = ({ icon, title, description, link }) => {
     );
 };
 
-const AppCardCompact = ({ icon, title, link }) => {
+const AppCardCompact = ({ icon, title, link, isHidden }) => {
     const nav = useNavigate();
+    if (isHidden) {
+        return <></>
+    }
     return (
         <div className="app-card compact-app-card" style={{ cursor: 'pointer' }} onClick={() => nav(link)}>
             <div className="app-feature-icon">{icon}</div>
