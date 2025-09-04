@@ -12,31 +12,6 @@ import { evaluate_processor, make_sandbox_extensions, should_evaluate_processor,
 import CarBodyPartDrawer from "./CarBodyPartDrawer";
 import CarDiagram from "./diagram/CarDiagram";
 
-const menuItems = [
-    {
-        label: 'Ремонт',
-        subitems: [
-            { label: 'З фарбуванням обох сторін', value: 'paint_two_sides' },
-            { label: 'З фарбуванням зовнішньої сторони', value: 'paint_one_side' },
-            {
-                label: 'Без фарбування',
-                value: 'repair_no_paint'
-            },
-        ],
-    },
-    { label: 'Тільки полірування', value: 'polish' },
-    {
-        label: 'Заміна з фарбуванням',
-        subitems: [
-            { label: 'Оригінальна деталь', value: 'replace_and_paint_original' },
-            { label: 'Неоригінальна деталь', value: 'replace_and_paint_3rdparty' },
-            { label: 'Б/У деталь', value: 'replace_and_paint_used' },
-        ],
-    },
-    { label: 'Заміна без фарбування', value: 'replace_no_paint' },
-    { label: 'Розтонування', value: 'toning' },
-];
-
 // Translations for car parts
 const carPartsTranslations = {
     "Hood": "Капот",
@@ -362,7 +337,6 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 isMobile={isMobile}
                 mapVisual={mapVisual}
                 outsideRepairZoneOptions={outsideRepairZoneOptions}
-                menuItems={menuItems}
                 setCalculations={setCalculations}
                 processors={processors}
                 carClass={carClass}

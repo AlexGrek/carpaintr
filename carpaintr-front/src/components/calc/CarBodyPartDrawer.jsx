@@ -9,6 +9,7 @@ import SelectionInput from '../SelectionInput';
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import ObjectBrowser from "../utility/ObjectBrowser";
+import MenuPickerV2 from "../layout/MenuPickerV2";
 
 const CarBodyPartDrawer = ({
     isDrawerOpen,
@@ -21,7 +22,6 @@ const CarBodyPartDrawer = ({
     isMobile,
     mapVisual,
     outsideRepairZoneOptions,
-    menuItems,
     setCalculations, // Pass this down
     processors, // Pass this down
     carClass, // Pass this down
@@ -43,6 +43,14 @@ const CarBodyPartDrawer = ({
             onSetIsCalculating(false);
         }
     }, [drawerTab, onSetIsCalculating])
+
+    const menuitems = React.useMemo(() => {
+        try {
+            return (drawerCurrentPart?.tableData?.find(table => table.name == "repair_types")?.data["Ремонти"].split("/").map(s => s.trim()) ?? ["Невідома дія"]).map((i) => ({ label: i, value: i }));
+        } catch {
+            return ["Невідома дія (помилка)"].map((i) => ({ label: i, value: i })), [drawerCurrentPart]
+        }
+    }, [drawerCurrentPart])
 
     if (!drawerCurrentPart) {
         return null;
@@ -74,7 +82,8 @@ const CarBodyPartDrawer = ({
                             </Button>}>
                                 <div className="some-padding-sides carousel-page fade-in-expand-simple">
                                     <h4 className="body-parts-tab-header">Оберіть дію</h4>
-                                    <MenuTree items={menuItems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} />
+                                    <MenuPickerV2 items={menuitems} value={drawerCurrentPart.action} onSelect={(value) => updateDrawerCurrentPart({ action: value })} />
+                                    {/* <MenuTree items={menuitems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} /> */}
                                     <Divider />
                                     {/* <p style={{ opacity: '0.4', fontSize: 'x-small' }}><pre>{jsyaml.dump(drawerCurrentPart)}</pre></p> */}
                                 </div>
