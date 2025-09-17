@@ -8,13 +8,17 @@ import ArrowBackIcon from '@rsuite/icons/ArrowBack';
 import CarBodyPartsSelector from "./CarBodyPartsSelector";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
+import MenuPickerV2 from "../layout/MenuPickerV2";
 
+const REPAIR_QUALITY_OPTIONS = ["normal", "premium", "economy", "perfect"]
 
 const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
   const [partsVisual, setPartsVisual] = useState({});
   const [selectedParts, setSelectedParts] = useState([]);
+  const [repairQuality, setRepairQuality] = useState("normal");
   const [calculations, setCalculations] = useState({});
   const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
+  const { str } = useLocale();
 
 
   useEffect(() => {
@@ -35,6 +39,7 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
     if (parts) {
       setSelectedParts(parts.selectedParts);
       setCalculations(parts.calculations);
+      setRepairQuality(parts.repairQuality || "normal");
     }
   }, [stageData])
 
@@ -57,14 +62,22 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
             <Button onClick={handleClose} disabled={selectedParts === null || selectedParts.length === 0} color='green' appearance='primary'><Trans>Accept</Trans></Button>
           </HStack>
         }>
-          <CarBodyPartsSelector
-            partsVisual={partsVisual}
-            selectedParts={selectedParts}
-            onChange={handleSetSelectedParts}
-            carClass={stageData['car'].carClass ?? null}
-            body={stageData['car'].bodyType ?? null}
-            calculations={calculations}
-            setCalculations={setCalculations} />
+          <VStack spacing={3} style={{minWidth: "12em"}}>
+            <MenuPickerV2
+              items={REPAIR_QUALITY_OPTIONS}
+              onSelect={setRepairQuality}
+              value={repairQuality}
+              label={str("Repair quality")}
+            />
+            <CarBodyPartsSelector
+              partsVisual={partsVisual}
+              selectedParts={selectedParts}
+              onChange={handleSetSelectedParts}
+              carClass={stageData['car'].carClass ?? null}
+              body={stageData['car'].bodyType ?? null}
+              calculations={calculations}
+              setCalculations={setCalculations} />
+          </VStack>
         </BottomStickyLayout>
       </div>
     </div>

@@ -91,9 +91,13 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
           />
           {year != null && <div className="pop-in-simple">
             <Divider><Trans>Additional info</Trans></Divider>
+            <Input value={make} onChange={setMake} placeholder={str('Car brand')}></Input>
+            <Input value={model} onChange={setModel} placeholder={str('Car model')}></Input>
+            <br/>
             <Input value={licensePlate} onChange={setLicensePlate} placeholder={str('License plate (optional)')}></Input>
             <Input value={VIN} onChange={setVIN} placeholder={str('VIN (optional)')}></Input>
-            <Input as='textarea' value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
+            <br/>
+            <Input as='textarea' rows={3} value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
           </div>}
         </BottomStickyLayout>
       </div>

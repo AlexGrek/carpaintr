@@ -49,6 +49,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
     container: {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       maxWidth: '400px',
+      minWidth: '12em',
       margin: '4px auto',
       padding: '2px'
     },

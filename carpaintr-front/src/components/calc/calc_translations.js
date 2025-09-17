@@ -109,4 +109,5 @@ registerTranslations('ua', {
     "Order number": "Номер замовлення",
     "Tables": "Таблиці",
 
+    "Repair quality": "Очікувана якість ремонту",
 });
