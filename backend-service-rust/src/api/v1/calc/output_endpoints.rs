@@ -1,31 +1,16 @@
 use crate::api::v1::user::find_or_create_company_info;
+use crate::calc::templating::{send_gen_doc_request, GeneratePdfInternalRequest, Metadata};
 use crate::exlogging::{self, log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
-use crate::models::CompanyInfo;
 use crate::{errors::AppError, state::AppState};
 use axum::http::{HeaderMap, HeaderValue};
 use axum::{extract::State, response::IntoResponse, Json};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Metadata {
-    order_number: Option<String>,
-    order_notes: Option<String>,
-}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GeneratePdfRequest {
     pub custom_template_content: Option<String>,
-    pub calculation: serde_json::Value,
-    pub metadata: Metadata,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct GeneratePdfInternalRequest {
-    pub custom_template_content: Option<String>,
-    pub company_info: CompanyInfo,
     pub calculation: serde_json::Value,
     pub metadata: Metadata,
 }
@@ -35,8 +20,6 @@ pub async fn gen_pdf(
     State(app_state): State<Arc<AppState>>,
     Json(request): Json<GeneratePdfRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let client = Client::new();
-
     log_event(
         LogLevel::Info,
         format!("PDF generation {:?}", request.metadata),
@@ -51,7 +34,7 @@ pub async fn gen_pdf(
     };
 
     log_event(
-        exlogging::LogLevel::Info,
+        exlogging::LogLevel::Debug,
         format!(
             "Request for document generation: {}",
             serde_json::to_string_pretty(&internal_request)?
@@ -59,22 +42,14 @@ pub async fn gen_pdf(
         Some(user_email.clone()),
     );
 
-    let res = client
-        .post(format!("{}/pdf", app_state.pdf_gen_api_url_post))
-        .json(&internal_request)
-        .send()
-        .await
-        .map_err(|err| {
-            log_event(
-                LogLevel::Error,
-                format!("Document generation request failure: {:?}", err),
-                Some(user_email),
-            );
-            AppError::InternalServerError(err.to_string())
-        })?;
-
-    // Stream body directly
-    let stream = res.bytes_stream();
+    let stream = send_gen_doc_request(
+        internal_request,
+        &app_state.pdf_gen_api_url_post,
+        &user_email,
+        "pdf",
+    )
+    .await?
+    .bytes_stream();
 
     let mut headers = HeaderMap::new();
     headers.insert("Content-Type", HeaderValue::from_static("application/pdf"));
@@ -93,8 +68,6 @@ pub async fn gen_html(
     State(app_state): State<Arc<AppState>>,
     Json(request): Json<GeneratePdfRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let client = Client::new();
-
     log_event(
         LogLevel::Info,
         format!("HTML table generation {:?}", &request.metadata),
@@ -117,15 +90,14 @@ pub async fn gen_html(
         Some(user_email.clone()),
     );
 
-    let res = client
-        .post(format!("{}/html", app_state.pdf_gen_api_url_post))
-        .json(&internal_request)
-        .send()
-        .await
-        .map_err(|err| AppError::InternalServerError(err.to_string()))?;
-
-    // Stream body directly
-    let stream = res.bytes_stream();
+    let stream = send_gen_doc_request(
+        internal_request,
+        &app_state.pdf_gen_api_url_post,
+        &user_email,
+        "html",
+    )
+    .await?
+    .bytes_stream();
 
     let mut headers = HeaderMap::new();
     headers.insert("Content-Type", HeaderValue::from_static("text/plain"));

@@ -287,6 +287,12 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/generate_html_table",
                     post(api::v1::calc::output_endpoints::gen_html),
+                ).route(
+                    "/list_templates",
+                    get(api::v1::templating_endpoints::list_templates),
+                ).route(
+                    "/list_samples",
+                    get(api::v1::templating_endpoints::list_samples),
                 )
                 .route(
                     "/carmakes",

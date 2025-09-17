@@ -10,3 +10,7 @@ export const stripExt = (filename) => {
     const lastDotIndex = filename.lastIndexOf('.');
     return lastDotIndex === -1 ? filename : filename.substring(0, lastDotIndex);
 };
+
+export const toRsuiteList = (items) => {
+  return items.map(item => {return {label: item, value: item}});
+}

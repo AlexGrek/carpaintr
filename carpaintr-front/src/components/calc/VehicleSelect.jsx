@@ -25,11 +25,12 @@ const VehicleSelect = React.memo(({ selectModelMode, setSelectModelMode, selecte
     const [bodyTypes, setBodyTypes] = useState([]);
     const { str, labels } = useLocale();
     const navigate = useNavigate();
-    const [errorText, setErrorText] = useState(null);
+    
     const [vinDecoderOpen, setVinDecoderOpen] = useState(false);
     const [vinDecoderLoading, setVinDecoderLoading] = useState(false);
     const [vinDecoded, setVinDecoded] = useState(null);
     const [errorTitle, setErrorTitle] = useState("");
+    const [errorText, setErrorText] = useState(null);
 
     const handleError = useCallback((reason) => {
         console.error(reason);

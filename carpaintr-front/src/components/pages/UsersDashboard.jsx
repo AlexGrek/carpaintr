@@ -7,7 +7,7 @@ import Trans from '../../localization/Trans';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, fetchCompanyInfo } from '../../utils/authFetch';
 import './UsersDashboard.css'
-import { Biohazard, BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
+import { Biohazard, BrainCircuit, Cog, DraftingCompass, FileCheck, FileCode, FileText, Grid2X2, Grip, LayoutGrid, Rows3, ScanBarcode } from 'lucide-react';
 import AppVersionBadge from '../AppVersionBadge';
 import TopBarDashboard from '../layout/TopBarDashboard';
 
@@ -28,7 +28,9 @@ registerTranslations('ua', {
     "As list": "У вигляді списку",
     "As grid": "У вигляді сітки", // New translation
     "As blocks": "У вигляді блоків", // New translation
-    "Admin Area": "Адміністрування"
+    "Admin Area": "Адміністрування",
+    "Templates": "Шаблони документів",
+    "Customize templates": "Налаштування вигляду документів",
 });
 
 const UsersDashboard = () => {
@@ -127,6 +129,12 @@ const DashboardNavigationButtons = ({ admin }) => {
             title: str("Catalog"),
             description: str("All data"),
             link: "/catalog"
+        },
+        {
+            icon: <FileText />,
+            title: str("Templates"),
+            description: str("Customize templates"),
+            link: "/templates"
         },
         {
             icon: <Cog />,

@@ -24,6 +24,7 @@ const FileEditorPage = lazy(() => import('./components/pages/FileEditorPage.jsx'
 const UsersDashboard = lazy(() => import('./components/pages/UsersDashboard.jsx'));
 const WipPage = lazy(() => import('./components/pages/WipPage.jsx'));
 const ContactSupport = lazy(() => import('./components/pages/ContactSupport.jsx'));
+const TemplatesPage = lazy(() => import('./components/pages/TemplatesPage.jsx'));
 
 // Static content — no need for lazy-loading simple components
 const HistoryPage = () => <h2>History Page</h2>;
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/wip" element={<WipPage />} />
                 <Route path="/report" element={<ContactSupport />} />
                 <Route path="/create-proc" element={<CreateProcPage />} />
+                <Route path="/templates" element={<TemplatesPage />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
