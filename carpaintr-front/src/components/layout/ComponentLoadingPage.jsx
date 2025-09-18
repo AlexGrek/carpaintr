@@ -3,7 +3,7 @@ import PageLoader from "./PageLoader";
 
 export default function ComponentLoadingPage() {
     return <div>
-        <TopBarUser />
+        <div className="opacity-25"><TopBarUser /></div>
         <PageLoader />
     </div>;
 }
