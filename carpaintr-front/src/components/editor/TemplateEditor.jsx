@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PropTypes from 'prop-types';
-import { Tabs, Notification, Loader } from "rsuite";
+import { Tabs, Notification, Loader, useToaster, Message, Button } from "rsuite";
 import AceEditor from "react-ace";
 
 // Import ace editor modes/themes
@@ -8,11 +8,86 @@ import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/theme-github";
 import { authFetch } from "../../utils/authFetch";
+import { useLocale } from "../../localization/LocaleContext";
+import Trans from "../../localization/Trans";
 
 function TemplatePreview({ sampleJson, templateHtml }) {
+    const [htmlPreview, setHtmlPreview] = useState('');
+    const toaster = useToaster();
+
+    const showMessage = useCallback((type, message) => {
+        toaster.push(
+            <Message type={type} closable duration={5000}>
+                {message}
+            </Message>,
+            { placement: 'topEnd' }
+        );
+    }, [toaster]);
+
+    const buildRequestPayload = useCallback((dataAsString, templateString) => {
+        const data = JSON.parse(dataAsString);
+        return {
+            calculation: {
+                car: data.car,
+                paint: data.paint,
+                order: data.order || {
+                    orderDate: "2025-09-18T20:38:15.091Z",
+                    orderNumber: "034423"
+                },
+                calc: data.calc
+            },
+            metadata: {
+                order_number: "034423",
+                order_notes: "",
+            },
+            custom_template_content: templateString || null,
+        };
+    }, []);
+
+    const { str } = useLocale();
+
+    const handleGeneratePreview = useCallback(async () => {
+        setHtmlPreview(''); // Clear previous preview
+        try {
+            const payload = buildRequestPayload(sampleJson, templateHtml);
+            const response = await authFetch('/api/v1/user/generate_html_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/plain', // Request HTML preview
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                const html = await response.text();
+                setHtmlPreview(html);
+                showMessage('success', str('HTML preview generated successfully!'));
+            } else {
+                const errorText = await response.text();
+                console.error("Failed to generate preview:", errorText);
+                showMessage('error', `${str('Failed to generate preview:')} ${errorText}`);
+                setHtmlPreview(`<p style="color: red;">${str('Failed to generate preview:')} ${errorText}</p>`);
+            }
+        } catch (error) {
+            console.error("Error generating preview:", error);
+            showMessage('error', `${str('Error generating preview:')} ${error.message}`);
+            setHtmlPreview(`<p style="color: red;">${str('Error generating preview:')} ${error.message}</p>`);
+        }
+    }, [buildRequestPayload, sampleJson, templateHtml, showMessage, str]);
+
+
     return <div className="p-4 border rounded-md shadow-sm bg-white">
         <h3 className="font-semibold mb-2">Preview (stub)</h3>
-        <p>Preview will be implemented later.</p>
+        <Button onClick={handleGeneratePreview}><Trans>Generate preview</Trans></Button>
+        {htmlPreview && (
+            <iframe
+                title="Document Preview"
+                className='pop-in-simple'
+                style={{ width: '100%', minHeight: '500px', border: '1px solid #ddd', backgroundColor: "white" }}
+                srcDoc={htmlPreview}
+            />
+        )}
     </div>
 }
 
@@ -22,7 +97,6 @@ TemplatePreview.propTypes = {
 };
 
 export default function TemplateEditor({ sample, template }) {
-    const [customTemplateContent, setCustomTemplateContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sampleJson, setSampleJson] = useState('');
     const [templateHtml, setTemplateHtml] = useState('');
