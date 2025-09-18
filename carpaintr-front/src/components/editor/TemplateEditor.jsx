@@ -2,15 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import PropTypes from 'prop-types';
 import { Tabs, Notification, Loader, useToaster, Message, Button } from "rsuite";
 import AceEditor from "react-ace";
-
-// Import ace editor modes/themes
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-html";
 import "ace-builds/src-noconflict/theme-github";
 import { authFetch } from "../../utils/authFetch";
 import { useLocale } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
-import { useMediaQuery } from "react-responsive";
 
 function TemplatePreview({ sampleJson, templateHtml }) {
     const [htmlPreview, setHtmlPreview] = useState('');

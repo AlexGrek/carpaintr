@@ -10,6 +10,10 @@ import BottomStickyLayout from "../layout/BottomStickyLayout";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import ObjectBrowser from "../utility/ObjectBrowser";
 import MenuPickerV2 from "../layout/MenuPickerV2";
+import { useLocale } from "../../localization/LocaleContext";
+import { capitalizeFirstLetter } from "../../utils/utils";
+
+const MATERIALS = ["метал", "алюміній", "пластик"];
 
 const CarBodyPartDrawer = ({
     isDrawerOpen,
@@ -29,6 +33,7 @@ const CarBodyPartDrawer = ({
     onSetIsCalculating
 }) => {
     const [drawerTab, setDrawerTab] = useState(0);
+    const { str } = useLocale();
 
     React.useEffect(() => {
         if (drawerCurrentPart) {
@@ -81,6 +86,10 @@ const CarBodyPartDrawer = ({
                                 Далі
                             </Button>}>
                                 <div className="some-padding-sides carousel-page fade-in-expand-simple">
+                                    <MenuPickerV2 label={str("Part material")}
+                                        items={MATERIALS.map((item) => capitalizeFirstLetter(item))}
+                                        value={drawerCurrentPart.material}
+                                        onSelect={(value) => updateDrawerCurrentPart({ material: value })} />
                                     <h4 className="body-parts-tab-header">Оберіть дію</h4>
                                     <MenuPickerV2 items={menuitems} value={drawerCurrentPart.action} onSelect={(value) => updateDrawerCurrentPart({ action: value })} />
                                     {/* <MenuTree items={menuitems} value={drawerCurrentPart.action} onChange={(value) => updateDrawerCurrentPart({ action: value })} /> */}

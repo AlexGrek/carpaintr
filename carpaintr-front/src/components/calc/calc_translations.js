@@ -110,4 +110,7 @@ registerTranslations('ua', {
     "Tables": "Таблиці",
 
     "Repair quality": "Очікувана якість ремонту",
+    "Part material": "Матеріал запчастини",
+    "Car brand": "Марка",
+    "Car model": "Модель",
 });
