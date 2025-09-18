@@ -293,6 +293,12 @@ async fn main() -> tokio::io::Result<()> {
                 ).route(
                     "/list_samples",
                     get(api::v1::templating_endpoints::list_samples),
+                ).route(
+                    "/get_template/{path}",
+                    get(api::v1::templating_endpoints::get_template),
+                ).route(
+                    "/get_sample/{path}",
+                    get(api::v1::templating_endpoints::get_sample),
                 )
                 .route(
                     "/carmakes",
