@@ -34,7 +34,7 @@ function TemplatePreview({ sampleJson, templateHtml }) {
                     orderDate: "2025-09-18T20:38:15.091Z",
                     orderNumber: "034423"
                 },
-                calc: data.calc
+                calc: data.calculations
             },
             metadata: {
                 order_number: "034423",
