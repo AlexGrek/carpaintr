@@ -15,7 +15,6 @@ import { File, FileDown } from 'lucide-react';
 // Calculation Summary Preview Component (renamed from PrintPreview)
 const CalculationSummaryPreview = React.memo(({ calculationData }) => {
     const { str } = useLocale();
-    const isMobile = useMediaQuery({ maxWidth: 767 });
 
     if (!calculationData) {
         return <Message type="info" showIcon><Trans>No data to preview.</Trans></Message>;

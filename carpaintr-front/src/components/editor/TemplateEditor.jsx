@@ -10,6 +10,7 @@ import "ace-builds/src-noconflict/theme-github";
 import { authFetch } from "../../utils/authFetch";
 import { useLocale } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
+import { useMediaQuery } from "react-responsive";
 
 function TemplatePreview({ sampleJson, templateHtml }) {
     const [htmlPreview, setHtmlPreview] = useState('');
@@ -17,7 +18,7 @@ function TemplatePreview({ sampleJson, templateHtml }) {
 
     const showMessage = useCallback((type, message) => {
         toaster.push(
-            <Message type={type} closable duration={5000}>
+            <Message type={type} closable>
                 {message}
             </Message>,
             { placement: 'topEnd' }
@@ -77,8 +78,8 @@ function TemplatePreview({ sampleJson, templateHtml }) {
     }, [buildRequestPayload, sampleJson, templateHtml, showMessage, str]);
 
 
-    return <div className="p-4 border rounded-md shadow-sm bg-white">
-        <h3 className="font-semibold mb-2">Preview (stub)</h3>
+    return <div className="p-4 rounded-md shadow-sm bg-white">
+        <h3 className="font-semibold mb-2">Preview</h3>
         <Button onClick={handleGeneratePreview}><Trans>Generate preview</Trans></Button>
         {htmlPreview && (
             <iframe
@@ -127,11 +128,11 @@ export default function TemplateEditor({ sample, template }) {
     }, [sample, template]);
 
     return (
-        <div className="flex flex-col md:flex-row gap-4 h-full">
+        <div className="flex flex-row md:flex-col h-full">
             <div className="flex-1 flex flex-col">
                 {error && <Notification type="error" header="Operation failed">{error}</Notification>}
                 {isLoading ? <Loader center content="Loading..." /> : (
-                    <Tabs activeKey={activeTab} onSelect={setActiveTab}>
+                    <Tabs appearance="pills" activeKey={activeTab} onSelect={setActiveTab}>
                         <Tabs.Tab eventKey="template" title="Template">
                             <AceEditor
                                 mode="html"
