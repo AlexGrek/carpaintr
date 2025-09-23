@@ -10,7 +10,7 @@ use crate::{
     middleware::AuthenticatedUser,
     state::AppState,
     utils::{
-        list_catalog_files_user_common, parse_csv_file_async_safe,
+        self, list_catalog_files_user_common, parse_csv_file_async_safe,
         sanitize_alphanumeric_and_dashes, sanitize_alphanumeric_and_dashes_and_dots,
     }, // Import the new CompanyInfo struct
 };
@@ -21,18 +21,13 @@ use axum::{
 };
 use indexmap::IndexMap;
 use serde::Deserialize;
-use std::{
-    collections::HashSet,
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{collections::HashSet, hash::Hash, path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
 const GLOBAL: &'static str = "global";
 pub const T1: &'static str = "tables/t1.csv";
+pub const REPAIR_TYPES_TABLE: &'static str = "tables/repair_types.csv";
 const SEASONS_YAML: &'static str = "seasons.yaml";
-// const PAINT_STYLES_YAML: &'static str = "paint_styles.yaml";
-// const COLORS_YAML: &'static str = "colors.yaml";
 
 pub async fn list_car_makes(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -116,6 +111,33 @@ pub struct LookupPartNoTypeClassQuery {
     pub part: String,
 }
 
+pub async fn list_all_repair_types(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let table_file = crate::utils::get_file_path_user_common(
+        &app_state.data_dir_path,
+        &user_email,
+        &REPAIR_TYPES_TABLE,
+    )
+    .await
+    .map_err(|e| AppError::IoError(e))?;
+    let parsed =
+        utils::parse_csv_file_async_safe(&app_state.data_dir_path, &table_file, &app_state.cache)
+            .await?;
+    let mut all = HashSet::<String>::new();
+    let empty = "".to_string();
+    for line in parsed.into_iter() {
+        let (_name, repairs) = line
+            .get_index(1)
+            .unwrap_or((&empty, &empty));
+        repairs.split('/').map(|s| s.trim()).for_each(|s| {
+            let _ = all.insert(s.to_string());
+        });
+    }
+    Ok(Json(all))
+}
+
 pub async fn lookup_all_tables(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
@@ -159,8 +181,8 @@ fn get_unique_values_iter(table: &Vec<IndexMap<String, String>>, key: &str) -> V
 }
 
 pub async fn list_all_parts(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Ensure admin is authenticated
-    State(app_state): State<Arc<AppState>>,           // Extract user email from the path
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let file_path = PathBuf::from(&T1);
     let t1 =

@@ -256,6 +256,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::calc::data_endpoints::lookup_all_tables_all_types),
                 )
                 .route(
+                    "/list_all_repair_types",
+                    get(api::v1::calc::data_endpoints::list_all_repair_types),
+                )
+                .route(
                     "/all_parts",
                     get(api::v1::calc::data_endpoints::list_all_parts),
                 )

@@ -25,12 +25,14 @@ import {
     HStack,
     InputPicker,
     TreePicker,
+    useToaster,
 } from 'rsuite';
 import { Copy, Trash2, PlusCircle, ArrowLeft, UploadCloud, Trash, CopyPlus } from 'lucide-react';
 import { authFetch, authFetchJson } from '../../utils/authFetch';
 import Trans from '../../localization/Trans';
 import { registerTranslations, useLocale } from '../../localization/LocaleContext';
 import SearchIcon from '@rsuite/icons/Search';
+import { isArrayLike } from 'lodash';
 
 const uploadEndpoint = 'editor/upload_user_file';
 
@@ -247,16 +249,28 @@ const ProcessorGenerator = () => {
     });
     const [generatedCode, setGeneratedCode] = useState('');
     const [allTablesData, setAllTablesData] = useState({});
+    const toaster = useToaster();
 
     useEffect(() => {
         const fetchAllTablesData = async () => {
             const data = await authFetchJson('/api/v1/editor/all_tables_headers');
             setAllTablesData(data);
+            await fetchRepairTypeOptionsRaw();
+        }
+        const fetchRepairTypeOptionsRaw = async () => {
+            const data = await authFetchJson('/api/v1/user/list_all_repair_types');
+            if (isArrayLike(data)) {
+                setRepairTypeOptions(data.map(item => ({ label: item, value: str(item) })));
+            } else {
+                toaster.push(<Notification>{JSON.stringify(data)}</Notification>)
+            }
         }
         fetchAllTablesData();
-    }, [])
+    }, [str, toaster])
 
-    const repairTypeOptions = [
+    const [repairTypeOptions, setRepairTypeOptions] = useState([]); 
+    
+    [
         'paint_two_sides', 'paint_one_side', 'polish',
         'replace_and_paint_original', 'replace_and_paint_3rdparty',
         'replace_and_paint_used', 'replace_no_paint', 'toning'
