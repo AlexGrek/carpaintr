@@ -8,7 +8,7 @@ import { useLocale } from "../../localization/LocaleContext";
 import ErrorMessage from "../layout/ErrorMessage";
 import './CarBodyPartsSelector.css';
 import { stripExt } from "../../utils/utils";
-import { evaluate_processor, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
+import { evaluate_processor, is_supported_repair_type, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import CarBodyPartDrawer from "./CarBodyPartDrawer";
 import CarDiagram from "./diagram/CarDiagram";
 
@@ -289,7 +289,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 .map((proc) => {
                     let missing = validate_requirements(proc, tdata);
                     if (missing == null) {
-                        if (should_evaluate_processor(proc, stuff)) {
+                        if (is_supported_repair_type(proc, stuff.repairAction) && should_evaluate_processor(proc, stuff)) {
                             return evaluate_processor(proc, stuff);
                         } else {
                             return "Condition not met to run processor " + proc.name;

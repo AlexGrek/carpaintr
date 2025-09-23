@@ -102,6 +102,11 @@ export function validate_requirements(processor, tableData) {
     return null;
 }
 
+export function is_supported_repair_type(processor, repairAction) {
+    const found = processor.requiredRepairTypes.indexOf(repairAction);
+    return found >= 0;
+}
+
 export function verify_processor(processor) {
     return { ...defaultProcessor, ...processor }
 }
