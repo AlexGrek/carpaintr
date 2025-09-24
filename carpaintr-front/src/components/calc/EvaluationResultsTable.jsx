@@ -4,6 +4,7 @@ import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
 import { cloneDeep, isArray, isArrayLike, isString } from 'lodash';
+import InlineEditWrapper from '../layout/InlineEditWrapper';
 
 registerTranslations("ua", {
     "Name": "Найменування",
@@ -181,14 +182,14 @@ export const EvaluationResultsTable = ({ data, setData = null, currency = "", ba
                                             <td className='evaluation-table-cell-numeric'>{i + 1}</td>
                                             <td title={row.tooltip || ''}>{row.name}</td>
                                             <td className='evaluation-table-cell-numeric'>
-                                                <InlineEdit
+                                                <InlineEditWrapper
                                                     value={row.estimation}
                                                     onChange={(value) => handleEstimationChange(entry.name, row.name, value)}
                                                     style={{ minWidth: 60 }}
                                                 />
                                             </td>
                                             <td className='evaluation-table-cell-numeric'>
-                                                <InlineEdit
+                                                <InlineEditWrapper
                                                     value={price}
                                                     onChange={(value) => handlePriceChange(entry.name, row.name, value)}
                                                     style={{ minWidth: 60 }}
