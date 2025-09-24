@@ -73,7 +73,7 @@ export function evaluate_processor(processor, stuff) {
                 if (!isNumber(estimation)) {
                     estimation = "[error]"
                 }
-                return {...item, estimation: estimation};
+                return { ...item, estimation: estimation, name: process_name_string(item.name, stuff) };
             };
             return item;
         })
@@ -109,4 +109,49 @@ export function is_supported_repair_type(processor, repairAction) {
 
 export function verify_processor(processor) {
     return { ...defaultProcessor, ...processor }
+}
+
+export function process_name_string(input, stuff) {
+    const redefinitions = { "деталь": stuff.carPart };
+    return applyRedefinitions(redefinitions, input);
+}
+
+/**
+ * Replaces words enclosed in «...» or "..." with their redefined values.
+ *
+ * The function scans the input string for substrings wrapped in either
+ * guillemets («…») or double quotes ("…"). For each found substring, it:
+ *   - Normalizes the inner word to lowercase.
+ *   - Looks up the word in the `redefinitions` dictionary.
+ *   - If found, replaces it with the corresponding value while keeping
+ *     the original delimiters (« or ").
+ *   - If not found, leaves the substring unchanged.
+ *
+ * Matching is case-insensitive, but the keys in `redefinitions`
+ * must always be lowercase.
+ *
+ * @param {Object.<string,string>} redefinitions - Dictionary of redefinitions,
+ *        where keys are lowercase original terms and values are their replacements.
+ * @param {string} input - The input string to process.
+ * @returns {string} - The processed string with substitutions applied.
+ *
+ * @example
+ * const redefs = { "деталь": "крило", "двигун": "мотор" };
+ * applyRedefinitions(redefs, "Зняти «Деталь» для ремонту");
+ * // → "Зняти «крило» для ремонту"
+ */
+function applyRedefinitions(redefinitions, input) {
+    // Regex matches words inside «...» or "..."
+    const regex = /[«"]([^«»"]+)[»"]/g;
+
+    return input.replace(regex, (match, inner) => {
+        const key = inner.toLowerCase().trim();
+        if (redefinitions.hasOwnProperty(key)) {
+            // Replace only the inside, keep original delimiters
+            const start = match[0];
+            const end = match[match.length - 1];
+            return start + redefinitions[key] + end;
+        }
+        return match; // leave unchanged if not found
+    });
 }

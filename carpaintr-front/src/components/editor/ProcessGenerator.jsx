@@ -268,13 +268,7 @@ const ProcessorGenerator = () => {
         fetchAllTablesData();
     }, [str, toaster])
 
-    const [repairTypeOptions, setRepairTypeOptions] = useState([]); 
-    
-    [
-        'paint_two_sides', 'paint_one_side', 'polish',
-        'replace_and_paint_original', 'replace_and_paint_3rdparty',
-        'replace_and_paint_used', 'replace_no_paint', 'toning'
-    ].map(item => ({ label: item, value: str(item) }));
+    const [repairTypeOptions, setRepairTypeOptions] = useState([]);
 
     const generateProcessorCode = useCallback(() => {
         const { name, category, orderingNum, requiredTables, requiredRepairTypes, requiredFiles, clauses, shouldRunCondition } = formData;
