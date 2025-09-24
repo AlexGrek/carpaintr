@@ -1,7 +1,10 @@
 use crate::api::v1::user::find_or_create_company_info;
-use crate::calc::templating::{send_gen_doc_request, GeneratePdfInternalRequest, Metadata};
+use crate::calc::templating::{
+    send_gen_doc_request, GeneratePdfInternalRequest, Metadata, TEMPLATES,
+};
 use crate::exlogging::{self, log_event, LogLevel};
 use crate::middleware::AuthenticatedUser;
+use crate::utils::get_catalog_file_as_string;
 use crate::{errors::AppError, state::AppState};
 use axum::http::{HeaderMap, HeaderValue};
 use axum::{extract::State, response::IntoResponse, Json};
@@ -10,7 +13,10 @@ use std::sync::Arc;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GeneratePdfRequest {
+    #[serde(default)]
     pub custom_template_content: Option<String>,
+    #[serde(default)]
+    pub template_name: Option<String>,
     pub calculation: serde_json::Value,
     pub metadata: Metadata,
 }
@@ -26,18 +32,39 @@ pub async fn gen_pdf(
         Some(&user_email),
     );
 
+    let mut tpl_content = request.custom_template_content;
+
+    if let Some(template) = request.template_name {
+        log_event(
+            LogLevel::Info,
+            format!("HTML template used: {:?}", &template),
+            Some(&user_email),
+        );
+        tpl_content = Some(
+            get_catalog_file_as_string(
+                &user_email,
+                &app_state.cache,
+                &app_state.data_dir_path,
+                TEMPLATES,
+                ".html",
+                template,
+            )
+            .await?,
+        );
+    }
+
     let internal_request = GeneratePdfInternalRequest {
         calculation: request.calculation,
         company_info: find_or_create_company_info(&app_state, &user_email).await?,
-        custom_template_content: request.custom_template_content,
+        custom_template_content: tpl_content,
         metadata: request.metadata.clone(),
     };
 
     log_event(
         exlogging::LogLevel::Debug,
         format!(
-            "Request for document generation: {}",
-            serde_json::to_string_pretty(&internal_request)?
+            "Request for document generation: {:?}",
+            &internal_request.metadata
         ),
         Some(user_email.clone()),
     );
@@ -74,18 +101,39 @@ pub async fn gen_html(
         Some(&user_email),
     );
 
+    let mut tpl_content = request.custom_template_content;
+
+    if let Some(template) = request.template_name {
+        log_event(
+            LogLevel::Info,
+            format!("HTML template used: {:?}", &template),
+            Some(&user_email),
+        );
+        tpl_content = Some(
+            get_catalog_file_as_string(
+                &user_email,
+                &app_state.cache,
+                &app_state.data_dir_path,
+                TEMPLATES,
+                ".html",
+                template,
+            )
+            .await?,
+        );
+    }
+
     let internal_request = GeneratePdfInternalRequest {
         calculation: request.calculation,
         company_info: find_or_create_company_info(&app_state, &user_email).await?,
-        custom_template_content: request.custom_template_content,
+        custom_template_content: tpl_content,
         metadata: request.metadata.clone(),
     };
 
     log_event(
         exlogging::LogLevel::Info,
         format!(
-            "Request for document generation: {}",
-            serde_json::to_string_pretty(&internal_request)?
+            "Request for document generation: {:?}",
+            &internal_request.metadata
         ),
         Some(user_email.clone()),
     );

@@ -490,6 +490,32 @@ pub async fn list_unique_file_names_two<P: AsRef<Path>>(
     list_unique_file_names(&dirs).await
 }
 
+pub async fn get_catalog_file_as_string(
+    user_email: &str,
+    cache: &DataStorageCache,
+    data_dir_path: &PathBuf,
+    kind: &str,
+    allowed_ext: &str,
+    path: String,
+) -> Result<String, AppError> {
+    if path.ends_with(allowed_ext) {
+        let file_path = get_file_path_user_common(
+            data_dir_path,
+            user_email,
+            &PathBuf::from(kind).join(&path),
+        )
+        .await?;
+        get_file_as_string_by_path(&file_path, &data_dir_path, &cache)
+            .await
+            .map_err(|_err| AppError::Forbidden)
+    } else {
+        Err(AppError::BadRequest(format!(
+            "Unsupported file type, expected {}",
+            allowed_ext
+        )))
+    }
+}
+
 pub async fn list_catalog_files_user_common<P: AsRef<Path>>(
     data_dir: &PathBuf,
     email: &str,

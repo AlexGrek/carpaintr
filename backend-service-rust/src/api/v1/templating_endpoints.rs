@@ -3,7 +3,7 @@ use crate::{
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
-    utils, // Import the new CompanyInfo struct
+    utils::{self, get_catalog_file_as_string}, // Import the new CompanyInfo struct
 };
 use axum::{extract::State, response::IntoResponse, Json};
 use std::{path::PathBuf, sync::Arc};
@@ -24,37 +24,12 @@ pub async fn list_samples(
     Ok(Json(data))
 }
 
-async fn get_user_file(
-    user_email: &str,
-    app_state: &AppState,
-    kind: &str,
-    allowed_ext: &str,
-    path: String,
-) -> Result<String, AppError> {
-    if path.ends_with(allowed_ext) {
-        let file_path = utils::get_file_path_user_common(
-            &app_state.data_dir_path,
-            user_email,
-            &PathBuf::from(kind).join(&path),
-        )
-        .await?;
-        utils::get_file_as_string_by_path(&file_path, &app_state.data_dir_path, &app_state.cache)
-            .await
-            .map_err(|_err| AppError::Forbidden)
-    } else {
-        Err(AppError::BadRequest(format!(
-            "Unsupported file type, expected {}",
-            allowed_ext
-        )))
-    }
-}
-
 pub async fn get_template(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    get_user_file(&user_email, &app_state, TEMPLATES, ".html", path).await
+    get_catalog_file_as_string(&user_email, &app_state.cache, &app_state.data_dir_path, TEMPLATES, ".html", path).await
 }
 
 pub async fn get_sample(
@@ -62,5 +37,5 @@ pub async fn get_sample(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    get_user_file(&user_email, &app_state, SAMPLES, ".json", path).await
+    get_catalog_file_as_string(&user_email, &app_state.cache, &app_state.data_dir_path, SAMPLES, ".json", path).await
 }

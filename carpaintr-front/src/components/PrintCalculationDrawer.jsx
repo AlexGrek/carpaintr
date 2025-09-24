@@ -53,7 +53,7 @@ const CalculationSummaryPreview = React.memo(({ calculationData }) => {
 });
 
 // Print Document Generator Component
-const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, carData, orderData, paintData }) => {
+const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, carData, orderData, paintData, templateName }) => {
     const { str } = useLocale();
     const toaster = useToaster();
     const [customTemplateContent, setCustomTemplateContent] = useState('');
@@ -73,6 +73,7 @@ const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, c
         );
     }, [toaster]);
 
+
     const buildRequestPayload = useCallback(() => {
         return {
             calculation: {
@@ -86,8 +87,9 @@ const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, c
                 order_notes: orderNotes || null,
             },
             custom_template_content: customTemplateContent || null,
+            template_name: templateName || null,
         };
-    }, [carData, paintData, orderData, partsData, calculationData, orderNumber, orderNotes, customTemplateContent]);
+    }, [carData, paintData, orderData, calculationData, orderNumber, orderNotes, customTemplateContent, templateName]);
 
     const handleGeneratePreview = useCallback(async () => {
         setLoadingPreview(true);
@@ -233,16 +235,7 @@ const PrintDocumentGenerator = React.memo(({ name, calculationData, partsData, c
     );
 });
 
-const DOCUMENTS = [{
-    "label": "Калькуляція",
-    "value": "calculation"
-},
-{
-    "label": "Свій шаблон",
-    "value": "custom"
-}]
-
-const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
+const DocumentSelector = ({documents, selectedDocuments, setSelectedDocuments }) => {
     const handleCheckboxChange = (value, checked) => {
         if (checked) {
             setSelectedDocuments(prev => [...prev, value]);
@@ -253,7 +246,7 @@ const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
 
     return <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignContent: 'center', maxWidth: '300pt', margin: 'auto' }}>
         <h4>Оберіть тип документа</h4>
-        {DOCUMENTS.map((doc) => (
+        {documents.map((doc) => (
             <Checkbox
                 key={doc.value}
                 value={doc.value}
@@ -269,9 +262,50 @@ const DocumentSelector = ({ selectedDocuments, setSelectedDocuments }) => {
 
 // Main Print Calculation Drawer Component
 const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, partsData, carData, orderData, paintData }) => {
+    const toaster = useToaster();
     const { str } = useLocale();
     const isMobile = useMediaQuery({ maxWidth: 767 });
     const [selectedDocuments, setSelectedDocuments] = useState([]);
+    const [templates, setTemplates] = useState([]);
+
+    const showMessage = useCallback((type, message) => {
+        toaster.push(
+            <Message type={type} closable duration={5000}>
+                {message}
+            </Message>,
+            { placement: 'topEnd' }
+        );
+    }, [toaster]);
+
+    const fetchList = useCallback(async (endpoint, setter) => {
+        try {
+            const response = await authFetch(endpoint);
+            if (response.status === 403) {
+                showMessage("error", "Unauthorized");
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            const data = await response.json();
+            setter([...data.map((item) => {
+                return {
+                    label: str(item.replace(".html", "")),
+                    value: item
+                }
+            }),
+            {
+                "label": "Свій шаблон",
+                "value": "custom"
+            }]);
+        } catch (err) {
+            showMessage("error", err.toString());
+        }
+    }, [showMessage, str]);
+
+    useEffect(() => {
+        fetchList('/api/v1/user/list_templates', setTemplates);
+    }, [fetchList]);
 
     return (
         <Drawer
@@ -289,9 +323,9 @@ const PrintCalculationDrawer = React.memo(({ show, onClose, calculationData, par
             </Drawer.Header>
             <Drawer.Body>
                 <div>
-                    <DocumentSelector selectedDocuments={selectedDocuments} setSelectedDocuments={setSelectedDocuments} />
+                    <DocumentSelector documents={templates} selectedDocuments={selectedDocuments} setSelectedDocuments={setSelectedDocuments} />
                     {selectedDocuments.map((doc) => {
-                        return <PrintDocumentGenerator key={doc} name={doc} paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} />
+                        return <PrintDocumentGenerator key={doc} name={doc} paintData={paintData} calculationData={calculationData} carData={carData} partsData={partsData} orderData={orderData} templateName={doc == "custom" ? null : doc} />
                     })}
                 </div>
             </Drawer.Body>
