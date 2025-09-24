@@ -50,7 +50,7 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
     if (onMoveForward) {
       onMoveForward();
     }
-    setStageData({ 'parts': data, 'calculations': calculations });
+    setStageData({ 'parts': data, calculations });
   }, [onMoveForward, partsVisual, selectedParts, setStageData, calculations])
 
   return (

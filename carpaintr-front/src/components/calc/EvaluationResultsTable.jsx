@@ -14,19 +14,12 @@ registerTranslations("ua", {
 });
 
 
-export const EvaluationResultsTable = ({ data, setData = null, prices = {}, currency = "", basePrice = 1, skipIncorrect = false }) => {
-    const [priceState, setPriceState] = useState({ ...prices });
+export const EvaluationResultsTable = ({ data, setData = null, currency = "", basePrice = 1, skipIncorrect = false }) => {
     const toaster = useToaster();
 
     const getPrice = useCallback((name) => {
-        let priceFromPrices = priceState[name];
-        if (priceFromPrices == undefined) {
-            return basePrice
-        }
-        else {
-            return priceFromPrices
-        }
-    }, [basePrice, priceState]);
+        return basePrice
+    }, [basePrice]);
 
     const skipIncorrectData = (entry) => {
         if (skipIncorrect) {
@@ -36,15 +29,17 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
         }
     }
 
-    const updateSums = useCallback(() => {
+    const updateSums = useCallback((isForced = false) => {
         try {
             if (setData && isArray(data)) {
-                if (!data.every(table => {
+                if (isForced || !data.map(table => {
                     if (!isString(table.result))
                         return table.result
                     return [];
-                }).every((result) => result != undefined && result.sum != undefined)) {
+                }).every((result) => result != undefined && result.every(r => r.sum != undefined))) {
                     // need to pre-calculate everything
+                    // console.log("result: ", data.map(x => x.result))
+
                     let copy = cloneDeep(data);
                     let upd = copy.map((table) => {
                         let acc = 0;
@@ -75,16 +70,52 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
         updateSums();
     }, [data, getPrice, setData, updateSums])
 
-    const handlePriceChange = (name, value) => {
+    const handlePriceChange = (tname, name, value) => {
         try {
-            setPriceState((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
+            console.log("Setting new proce value")
             if (setData) {
                 let copy = cloneDeep(data)
-                let item = copy.find(obj => obj.name === name);
-                if (item) {
-                    item.price = value;
-                    setData(copy);
+                console.log("Searching for name", name);
+                let table = copy.find(obj => obj.name === tname);
+                if (table) {
+                    let item = table.result.find(obj => obj.name === name);
+                    if (item) {
+                        item.price = parseFloat(value);
+                        setData(copy);
+                        // updateSums(true);
+                    } else {
+                        toaster.push(<Message type="error" closable>{`Name '${tname}'::'${name}' not found in: ${JSON.stringify(table)}`}</Message>);
+                    }
+                } else {
+                    toaster.push(<Message type="error" closable>{`Name '${tname}' not found in: ${JSON.stringify(copy)}`}</Message>);
                 }
+
+            }
+        } catch (e) {
+            toaster.push(<Message type="error" closable>{`Error ${e} in handlePriceChange: ${JSON.stringify(data)}`}</Message>);
+        }
+    }
+
+    const handleEstimationChange = (tname, name, value) => {
+        try {
+            console.log("Setting new est value")
+            if (setData) {
+                let copy = cloneDeep(data)
+                console.log("Searching for name", name);
+                let table = copy.find(obj => obj.name === tname);
+                if (table) {
+                    let item = table.result.find(obj => obj.name === name);
+                    if (item) {
+                        item.estimation = parseFloat(value);
+                        setData(copy);
+                        // updateSums(true);
+                    } else {
+                        toaster.push(<Message type="error" closable>{`Name '${tname}'::'${name}' not found in: ${JSON.stringify(copy)}`}</Message>);
+                    }
+                } else {
+                    toaster.push(<Message type="error" closable>{`Name '${tname}' not found in: ${JSON.stringify(copy)}`}</Message>);
+                }
+
             }
         } catch (e) {
             toaster.push(<Message type="error" closable>{`Error ${e} in handlePriceChange: ${JSON.stringify(data)}`}</Message>);
@@ -143,17 +174,23 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
                             </thead>
                             <tbody>
                                 {entry.result.map((row, i) => {
-                                    const price = priceState[row.name] ?? basePrice;
+                                    const price = row.price ?? basePrice;
                                     const sum = (row.estimation * price).toFixed(2);
                                     return (
                                         <tr key={i}>
                                             <td className='evaluation-table-cell-numeric'>{i + 1}</td>
                                             <td title={row.tooltip || ''}>{row.name}</td>
-                                            <td className='evaluation-table-cell-numeric'>{row.estimation}</td>
                                             <td className='evaluation-table-cell-numeric'>
                                                 <InlineEdit
-                                                    defaultValue={price}
-                                                    onChange={(value) => handlePriceChange(row.name, value)}
+                                                    value={row.estimation}
+                                                    onChange={(value) => handleEstimationChange(entry.name, row.name, value)}
+                                                    style={{ minWidth: 60 }}
+                                                />
+                                            </td>
+                                            <td className='evaluation-table-cell-numeric'>
+                                                <InlineEdit
+                                                    value={price}
+                                                    onChange={(value) => handlePriceChange(entry.name, row.name, value)}
                                                     style={{ minWidth: 60 }}
                                                 />
                                             </td>
@@ -166,7 +203,7 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
                                     <td><pre><b>
                                         {entry.result
                                             .reduce((acc, row) => {
-                                                const price = priceState[row.name] ?? basePrice;
+                                                const price = row.price ?? basePrice;
                                                 return acc + row.estimation * price;
                                             }, 0)
                                             .toFixed(2)}

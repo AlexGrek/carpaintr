@@ -138,6 +138,7 @@ const CarBodyPartDrawer = ({
                                         data={calculations[drawerCurrentPart.name] || []}
                                         currency={company.pricing_preferences.norm_price.currency}
                                         basePrice={company.pricing_preferences.norm_price.amount}
+                                        setData={(data) => setCalculations({ ...calculations, [drawerCurrentPart.name]: data })}
                                     />
                                     <Panel shaded collapsible header="Дані">
                                         <ObjectBrowser jsonObject={drawerCurrentPart.tableData} />

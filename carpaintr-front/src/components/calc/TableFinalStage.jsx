@@ -89,12 +89,12 @@ const TableFinalStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStart
             <Panel header={str("Tables")}>
               {stageData.calculations && Object.keys(stageData.calculations).map((key) => {
                 return <div key={key}>
-                  <Divider/>
+                  <Divider />
                   <HStack><Shapes /><h4>{key}</h4></HStack>
                   <EvaluationResultsTable data={stageData.calculations[key]} setData={(value) => {
                     setStageData({ ...stageData, calculations: { ...stageData.calculations, [key]: value } })
                   }} skipIncorrect={true} />
-                  
+
                 </div>
               })}
             </Panel>
