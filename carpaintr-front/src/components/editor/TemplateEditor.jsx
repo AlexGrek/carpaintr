@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PropTypes from 'prop-types';
-import { Tabs, Notification, Loader, useToaster, Message, Button } from "rsuite";
+import { Tabs, Notification, Loader, useToaster, Message, Button, ButtonToolbar, ButtonGroup, Drawer, Input, Modal } from "rsuite";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/mode-html";
@@ -94,12 +94,70 @@ TemplatePreview.propTypes = {
     templateHtml: PropTypes.string
 };
 
-export default function TemplateEditor({ sample, template }) {
+export default function TemplateEditor({ sample, template, onTemplateNewName }) {
     const [isLoading, setIsLoading] = useState(false);
     const [sampleJson, setSampleJson] = useState('');
     const [templateHtml, setTemplateHtml] = useState('');
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("template");
+    const [isSaveAsDrawerOpen, setIsSaveAsDrawerOpen] = useState(false);
+    const [newTemplateName, setNewTemplateName] = useState(template);
+    const toaster = useToaster();
+    const { str } = useLocale();
+
+    const handleSave = useCallback(async (saveValue, newName) => {
+        if (!templateHtml) {
+            toaster.push(<Notification type="error" header={str("Save Error")}>{str("No file path provided to save to.")}</Notification>, { placement: 'topEnd' });
+            return;
+        }
+
+        if (!saveValue) {
+            saveValue = templateHtml;
+        }
+
+        if (!newName) {
+            newName = template;
+        } else {
+            setIsLoading(true);
+        }
+
+        const formData = new FormData();
+        formData.append('file', new Blob([saveValue]), newName);
+        if (saveValue === "[object Object]") { // Check for accidental object stringification
+            toaster.push(<Notification type="error" header={str("Save Error")}>File corrupted by frontend</Notification>, { placement: 'topEnd' });
+            return;
+        }
+        try {
+            const response = await authFetch(`/api/v1/editor/upload_user_file/${encodeURIComponent(`doc_templates/${newName}`)}`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                toaster.push(<Notification type="error" header={str("Save Error")}>{str("File not saved:")} {errorData.message || JSON.stringify(errorData)}</Notification>, { placement: 'topEnd' });
+            } else {
+                toaster.push(<Notification type="success" header={str("Success")}>{str("File saved")}</Notification>, { placement: 'topEnd' });
+            }
+        } catch (error) {
+            toaster.push(<Notification type="error" header={str("Network Error")}>{str("Failed to save file:")} {error.message}</Notification>, { placement: 'topEnd' });
+        }
+        finally {
+            setIsLoading(false);
+            setIsSaveAsDrawerOpen(false)
+            if (newName != template) {
+                onTemplateNewName(newName)
+            }
+        }
+    }, [onTemplateNewName, str, template, templateHtml, toaster]);
+
+    const handleSaveWithNewName = useCallback(async () => {
+        let newName = newTemplateName;
+        if (!newName.endsWith(".html")) {
+            newName = `${newName}.html`;
+        }
+        await handleSave(templateHtml, newName)
+    }, [handleSave, newTemplateName, templateHtml])
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -122,15 +180,32 @@ export default function TemplateEditor({ sample, template }) {
         };
 
         fetchData();
+        setNewTemplateName(template);
     }, [sample, template]);
 
     return (
         <div className="flex flex-row md:flex-col h-full">
             <div className="flex-1 flex flex-col">
+                <Modal size="sm" backdrop={true} open={isSaveAsDrawerOpen} onClose={() => setIsSaveAsDrawerOpen(false)}>
+                    <Modal.Footer>
+                        <Button appearance="primary" onClick={handleSaveWithNewName} disabled={newTemplateName == template}>
+                            <Trans>Save</Trans>
+                        </Button>
+                    </Modal.Footer>
+                    <Modal.Body>
+                        <Input style={{ display: "block" }} value={newTemplateName} onChange={setNewTemplateName} />
+                    </Modal.Body>
+                </Modal>
                 {error && <Notification type="error" header="Operation failed">{error}</Notification>}
                 {isLoading ? <Loader center content="Loading..." /> : (
                     <Tabs appearance="pills" activeKey={activeTab} onSelect={setActiveTab}>
                         <Tabs.Tab eventKey="template" title="Template">
+                            <ButtonGroup>
+                                <Button onClick={() => handleSave()} appearance="primary">Save</Button>
+                                <Button onClick={() => {
+                                    setIsSaveAsDrawerOpen(true)
+                                }}>Save As...</Button>
+                            </ButtonGroup>
                             <AceEditor
                                 mode="html"
                                 theme="github"

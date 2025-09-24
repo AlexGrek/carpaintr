@@ -50,6 +50,11 @@ const TemplatesPage = () => {
         }
     }, [handleError]);
 
+    const handleTemplateNewName = useCallback(async (newName) => {
+        await fetchList('/api/v1/user/list_templates', setTemplates);
+        setSelectedTemplate(newName);
+    }, [fetchList])
+
     useEffect(() => {
         fetchList('/api/v1/user/list_templates', setTemplates);
         fetchList('/api/v1/user/list_samples', setSamples);
@@ -92,7 +97,7 @@ const TemplatesPage = () => {
 
                     {selectedSample != null && selectedTemplate != null && <div>
                         <Divider />
-                        <TemplateEditor sample={selectedSample} template={selectedTemplate} />
+                        <TemplateEditor sample={selectedSample} template={selectedTemplate} onTemplateNewName={handleTemplateNewName} />
                     </div>}
                 </div>
             </div>
