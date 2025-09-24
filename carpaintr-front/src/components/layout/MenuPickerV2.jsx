@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
+const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}}) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const isExpanded = value === null;
@@ -47,9 +47,8 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
 
   const styles = {
     container: {
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       maxWidth: '400px',
-      minWidth: '12em',
+      minWidth: '14em',
       margin: '4px auto',
       padding: '2px'
     },
@@ -72,7 +71,8 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
     },
     menuContainer: {
       position: 'relative',
-      height: '100%'
+      height: '100%',
+      backgroundColor: '#ffffff'
     },
     menuItem: {
       display: 'flex',
@@ -92,6 +92,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
     menuItemContent: {
       flex: 1,
       display: 'flex',
+      backgroundColor: '#ffffff',
       flexDirection: 'column',
       justifyContent: 'center'
     },
@@ -151,7 +152,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null }) => {
   };
 
   return (
-    <div className='pop-in-simple' style={styles.container}>
+    <div className='pop-in-simple' style={{...styles.container, ...style}}>
       {label && <div style={styles.label}>{label}</div>}
       <div style={styles.menuWrapper}>
         <div style={styles.menuContainer}>

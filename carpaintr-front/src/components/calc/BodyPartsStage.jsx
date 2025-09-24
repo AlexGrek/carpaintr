@@ -10,12 +10,11 @@ import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import MenuPickerV2 from "../layout/MenuPickerV2";
 
-const REPAIR_QUALITY_OPTIONS = ["normal", "premium", "economy", "perfect"]
-
 const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
   const [partsVisual, setPartsVisual] = useState({});
   const [selectedParts, setSelectedParts] = useState([]);
-  const [repairQuality, setRepairQuality] = useState("normal");
+  const [repairQuality, setRepairQuality] = useState("");
+  const [repairQualityIOptions, setRepairQualityOptions] = useState([]);
   const [calculations, setCalculations] = useState({});
   const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
   const { str } = useLocale();
@@ -26,8 +25,11 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
       try {
         let data = await authFetchYaml('/api/v1/user/global/parts_visual.yaml');
         setPartsVisual(data);
+        let qualityOptions = await authFetchYaml('/api/v1/user/global/quality.yaml');
+        setRepairQualityOptions(qualityOptions.options);
+        setRepairQuality(qualityOptions.default);
       } catch (error) {
-        console.error("Failed to fetch parts_visual:", error);
+        console.error("Failed to fetch parts_visual or qualityOptions:", error);
         toaster.push(<Message type="error">{error.toString()}</Message>)
       }
     };
@@ -39,13 +41,13 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
     if (parts) {
       setSelectedParts(parts.selectedParts);
       setCalculations(parts.calculations);
-      setRepairQuality(parts.repairQuality || "normal");
+      setRepairQuality(parts.repairQuality || "");
     }
   }, [stageData])
 
   const handleClose = useCallback(() => {
     const data = {
-      partsVisual, selectedParts, calculations
+      partsVisual, selectedParts, calculations, repairQuality
     };
     if (onMoveForward) {
       onMoveForward();
@@ -64,10 +66,11 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
         }>
           <VStack spacing={3} style={{minWidth: "12em"}}>
             <MenuPickerV2
-              items={REPAIR_QUALITY_OPTIONS}
+              items={repairQualityIOptions}
               onSelect={setRepairQuality}
               value={repairQuality}
               label={str("Repair quality")}
+              style={{width: "100%"}}
             />
             <CarBodyPartsSelector
               partsVisual={partsVisual}
