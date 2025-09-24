@@ -282,7 +282,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 carModel: {},
                 tableData: tdata,
                 paint: {}, // TODO: make it useful
-                pricing: company.pricing_preferences
+                pricing: company.pricing_preferences,
                 carPart: drawerCurrentPart
             };
 
