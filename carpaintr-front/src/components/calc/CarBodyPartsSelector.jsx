@@ -297,7 +297,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                     }
                     return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
                 });
-            setCalculations({ ...calculations, [drawerCurrentPart.name]: processorsEvaluated });
+            setCalculations({ ...calculations, [drawerCurrentPart.name]: processorsEvaluated.filter(item => typeof item !== 'string') });
         }
     }, [drawerCurrentPart, carClass, body, processors, isCalculating, company, setCalculations])
 

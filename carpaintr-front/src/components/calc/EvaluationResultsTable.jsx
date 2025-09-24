@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Message, InlineEdit, Panel, Stack } from 'rsuite';
+import { Message, InlineEdit, Panel, Stack, useToaster } from 'rsuite';
 import './EvaluationResultsTable.css';
 import Trans from '../../localization/Trans';
 import { registerTranslations } from '../../localization/LocaleContext';
-import { cloneDeep, isArrayLike } from 'lodash';
+import { cloneDeep, isArray, isArrayLike, isString } from 'lodash';
 
 registerTranslations("ua", {
     "Name": "Найменування",
@@ -14,8 +14,9 @@ registerTranslations("ua", {
 });
 
 
-export const EvaluationResultsTable = ({ data, setData = null, prices = {}, currency = "", basePrice = 1 }) => {
+export const EvaluationResultsTable = ({ data, setData = null, prices = {}, currency = "", basePrice = 1, skipIncorrect = false }) => {
     const [priceState, setPriceState] = useState({ ...prices });
+    const toaster = useToaster();
 
     const getPrice = useCallback((name) => {
         let priceFromPrices = priceState[name];
@@ -27,49 +28,70 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
         }
     }, [basePrice, priceState]);
 
-    const updateSums = useCallback(() => {
-        if (setData && isArrayLike(data)) {
-            if (!data.every(table => (table.result || []).every((result) => result != undefined && result.sum != undefined))) {
-                // need to pre-calculate everything
-                let copy = cloneDeep(data);
-                let upd = copy.map((table) => {
-                    let acc = 0;
-                    let updated_result = table.result.map((item) => {
-                        if (item.sum == undefined) {
-                            // console.log("-------------------------", item.name)
-                            // console.log(item)
-                            item.price = getPrice(item.name)
-                            // console.log(item.price)
-                            const sum = item.estimation * item.price;
-                            acc += sum;
-                            item.sum = (sum).toFixed(2)
-                            // console.log(item.sum)
-                        }
-                        return item
-                    })
-                    return { ...table, result: updated_result, total: acc }
-                })
-                setData(upd)
-            }
+    const skipIncorrectData = (entry) => {
+        if (skipIncorrect) {
+            return typeof entry === 'object';
+        } else {
+            return true;
         }
-    }, [data, getPrice, setData]);
+    }
+
+    const updateSums = useCallback(() => {
+        try {
+            if (setData && isArray(data)) {
+                if (!data.every(table => {
+                    if (!isString(table.result))
+                        return table.result
+                    return [];
+                }).every((result) => result != undefined && result.sum != undefined)) {
+                    // need to pre-calculate everything
+                    let copy = cloneDeep(data);
+                    let upd = copy.map((table) => {
+                        let acc = 0;
+                        let updated_result = table.result.map((item) => {
+                            if (item.sum == undefined) {
+                                // console.log("-------------------------", item.name)
+                                // console.log(item)
+                                item.price = getPrice(item.name)
+                                // console.log(item.price)
+                                const sum = item.estimation * item.price;
+                                acc += sum;
+                                item.sum = (sum).toFixed(2)
+                                // console.log(item.sum)
+                            }
+                            return item
+                        })
+                        return { ...table, result: updated_result, total: acc }
+                    })
+                    setData(upd)
+                }
+            }
+        } catch (e) {
+            toaster.push(<Message type="error" closable>{`Error ${e} in data: ${JSON.stringify(data)}`}</Message>);
+        }
+    }, [data, getPrice, setData, toaster]);
 
     useEffect(() => {
         updateSums();
     }, [data, getPrice, setData, updateSums])
 
     const handlePriceChange = (name, value) => {
-        setPriceState((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
-        if (setData) {
-            let copy = cloneDeep(data)
-            let item = copy.find(obj => obj.name === name);
-            if (item) {
-                item.price = value;
+        try {
+            setPriceState((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
+            if (setData) {
+                let copy = cloneDeep(data)
+                let item = copy.find(obj => obj.name === name);
+                if (item) {
+                    item.price = value;
+                    setData(copy);
+                }
             }
+        } catch (e) {
+            toaster.push(<Message type="error" closable>{`Error ${e} in handlePriceChange: ${JSON.stringify(data)}`}</Message>);
         }
     }
 
-    if (!Array.isArray(data)) {
+    if (!isArrayLike(data)) {
         return (
             <Message type="error" showIcon>
                 Invalid data: expected an array.
@@ -79,22 +101,28 @@ export const EvaluationResultsTable = ({ data, setData = null, prices = {}, curr
 
     return (
         <Stack direction="column" spacing={20} alignItems='stretch'>
-            {data.map((entry, index) => {
+            {data.filter(skipIncorrectData).map((entry, index) => {
                 if (!entry || typeof entry !== 'object') {
                     return (
                         <Panel key={index} header={entry.name} style={{ width: "100%" }}>
                             <Message type="error" showIcon>
                                 Invalid entry at index {index}
+                                <pre>
+                                    {JSON.stringify(entry)}
+                                </pre>
                             </Message>
                         </Panel>
                     );
                 }
 
-                if (!entry.result) {
+                if (!entry.result || !isArrayLike(entry.result)) {
                     return (
                         <Panel key={index} header={entry.name} style={{ width: "100%", padding: "0" }}>
                             <Message key={index} type="error" showIcon>
                                 {entry.text || 'Unknown error'}
+                            </Message>
+                            <Message key={index} type="error" showIcon>
+                                {JSON.stringify(entry, null, 2)}
                             </Message>
                         </Panel>
                     );

@@ -51,7 +51,7 @@ const CarBodyPartDrawer = ({
 
     const menuitems = React.useMemo(() => {
         try {
-            return (drawerCurrentPart?.tableData?.find(table => table.name == "repair_types")?.data["Ремонти"].split("/").map(s => s.trim()) ?? ["Невідома дія"]).map((i) => ({ label: i, value: i }));
+            return (drawerCurrentPart?.tableData?.find(table => table.name == "repair_types")?.data["Ремонти"].split("/").map(s => s.trim()) ?? ["Невідома дія (немає даних)"]).map((i) => ({ label: i, value: i }));
         } catch {
             return ["Невідома дія (помилка)"].map((i) => ({ label: i, value: i })), [drawerCurrentPart]
         }
@@ -108,7 +108,7 @@ const CarBodyPartDrawer = ({
                                 <Button appearance="subtle" block onClick={() => setDrawerTab(0)}>Змінити тип ремонту</Button>
                             </VStack>}>
                                 <h4 className="body-parts-tab-header">Вкажіть зону ремонту</h4>
-                                {(drawerCurrentPart.action === "paint_one_side" || drawerCurrentPart.action === "paint_two_sides") && (
+                                {(drawerCurrentPart.action.includes("арбу") || drawerCurrentPart.action === "paint_two_sides") && (
                                     <div className="some-padding-sides">
                                         <GridDraw
                                             gridData={drawerCurrentPart.grid}
