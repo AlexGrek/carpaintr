@@ -112,7 +112,7 @@ export function verify_processor(processor) {
 }
 
 export function process_name_string(input, stuff) {
-    const redefinitions = { "деталь": stuff.carPart };
+    const redefinitions = { "деталь": stuff.carPart.name };
     return applyRedefinitions(redefinitions, input);
 }
 

@@ -283,6 +283,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
                 tableData: tdata,
                 paint: {}, // TODO: make it useful
                 pricing: company.pricing_preferences
+                carPart: drawerCurrentPart
             };
 
             let processorsEvaluated = processors
