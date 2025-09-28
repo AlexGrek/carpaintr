@@ -51,10 +51,12 @@ pub async fn t2_rows_by_body_type(
     let filtered_by_class = data
         .into_iter()
         .filter(|row| {
-            if !row.contains_key(CAR_PART_TYPE_FIELD) {
-                return false;
+            for (k, v) in row.iter() {
+                if k.contains(T2_BODY) && v == car_type {
+                    return true;
+                }
             }
-            row[CAR_PART_TYPE_FIELD] == car_type
+            false
         })
         .collect();
     return Ok(filtered_by_class);
@@ -72,7 +74,6 @@ pub struct T2PartEntry {
 
 pub fn t2_parse_row(row: IndexMap<String, String>) -> Result<T2PartEntry, AppError> {
     const REQUIRED_FIELDS: &[&str] = &[
-        CAR_PART_TYPE_FIELD,
         T2_ZONE,
         T2_PART_1,
         T2_PART_2,

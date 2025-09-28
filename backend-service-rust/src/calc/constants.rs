@@ -32,6 +32,7 @@ pub const T2_ZONE: &str = "зона";
 pub const T2_PART_1: &str = "деталь 1";
 pub const T2_PART_2: &str = "деталь 2";
 pub const T2_BLUEPRINT: &str = "Схема кузова";
+pub const T2_BODY: &str = "ТИП КУЗОВА";
 pub const T2_ACTION_ASSEMBLE: &str = "розібрати/зібрати";
 pub const T2_ACTION_TWIST: &str = "усунення перекосу";
 pub const T2_ACTION_REPLACE: &str = "замінити";

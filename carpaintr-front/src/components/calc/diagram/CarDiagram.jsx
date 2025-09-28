@@ -1,9 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ContextMenu from "./ContextMenu";
 import CarPart from "./CarPart";
 import './CarDiagram.css';
 
-export const partSubComponents = {
+export function buildCarSubcomponentsFromT2(data) {
+  return data.reduce((acc, item) => {
+    const zone = item.zone?.trim();
+    const name = item.name?.trim();
+
+    if (!zone || !name || name === "(Додати)") return acc; // skip invalid or placeholder names
+
+    if (!acc[zone]) {
+      acc[zone] = [];
+    }
+
+    acc[zone].push(name);
+    return acc;
+  }, {});
+}
+
+export const PARTSUBCOMPONENTS = {
     'Капот': ['Замок капота', 'Амортизатор капота', 'Петля капота', 'Ущільнювач'],
     'Лобове скло': ['Датчик дощу', 'Кріплення дзеркала', 'Молдинг'],
     'Дах': ['Люк', 'Рейлінги', 'Антена', 'Панорамна стеля'],
@@ -27,6 +43,38 @@ export const partSubComponents = {
     'Права боковина': ['Молдинг', 'Структурний елемент'],
     'Колесо': ['Диск', 'Шина', 'Ковпак', 'Датчик тиску'],
 };
+
+// Define all car parts to be rendered
+const carParts = [
+    // Central
+    { id: 'hood', name: 'Капот' },
+    { id: 'frontBumper', name: 'Бампер передній' },
+    { id: 'windshield', name: 'Скло лобове' },
+    { id: 'roof', name: 'Дах' },
+    { id: 'rearGlass', name: 'Скло заднє' },
+    { id: 'trunk', name: 'Кришка багажника' },
+    { id: 'rearBumper', name: 'Бампер задній' },
+    { id: 'headlightLeft', name: 'Фара передня ліва' },
+    { id: 'headlightRight', name: 'Фара передня права' },
+    { id: 'taillightLeft', name: 'Ліхтар задній лівий' },
+    { id: 'taillightRight', name: 'Ліхтар задній правий' },
+    // Sides
+    { id: 'frontFenderLeft', name: 'Крило переднє ліве' },
+    { id: 'frontFenderRight', name: 'Крило переднє праве' },
+    { id: 'rearFenderLeft', name: 'Крило заднє ліве' },
+    { id: 'rearFenderRight', name: 'Крило заднє праве' },
+    { id: 'frontDoorLeft', name: 'Двері передні ліві' },
+    { id: 'frontDoorRight', name: 'Двері передні праві' },
+    { id: 'rearDoorLeft', name: 'Двері задні ліві' },
+    { id: 'rearDoorRight', name: 'Двері задні праві' },
+    { id: 'sidePanelLeft', name: 'Боковина ліва' },
+    { id: 'sidePanelRight', name: 'Боковина права' },
+    // Wheels
+    { id: 'wheelFrontLeft', name: 'Колесо переднє ліве' },
+    { id: 'wheelFrontRight', name: 'Колесо переднє праве' },
+    { id: 'wheelRearLeft', name: 'Колесо заднє ліве' },
+    { id: 'wheelRearRight', name: 'Колесо заднє праве' },
+];
 
 // Mapping from part IDs to CSS classes
 export const partClassNames = {
@@ -58,7 +106,7 @@ export const partClassNames = {
 };
 
 // --- Main CarDiagram Component ---
-const CarDiagram = () => {
+const CarDiagram = ({partSubComponents = PARTSUBCOMPONENTS}) => {
     const [menuState, setMenuState] = useState({
         visible: false,
         position: { x: 0, y: 0 },
@@ -66,11 +114,16 @@ const CarDiagram = () => {
         title: ''
     });
 
+    const menuRef = useRef(null);
+
     const handlePartClick = (event, title, items) => {
         event.stopPropagation();
         setMenuState({
             visible: true,
-            position: { x: event.clientX, y: event.clientY },
+            position: {
+                x: event.clientX - 15,   // center X of clicked element
+                y: event.clientY - 60   // center Y of clicked element
+            },
             items: items,
             title: title
         });
@@ -87,39 +140,26 @@ const CarDiagram = () => {
         };
     }, [closeMenu]);
 
-    // Define all car parts to be rendered
-    const carParts = [
-        // Central
-        { id: 'hood', name: 'Капот' },
-        { id: 'frontBumper', name: 'Передній бампер' },
-        { id: 'windshield', name: 'Лобове скло' },
-        { id: 'roof', name: 'Дах' },
-        { id: 'rearGlass', name: 'Заднє скло' },
-        { id: 'trunk', name: 'Кришка багажника' },
-        { id: 'rearBumper', name: 'Задній бампер' },
-        { id: 'headlightLeft', name: 'Передня ліва фара' },
-        { id: 'headlightRight', name: 'Передня права фара' },
-        { id: 'taillightLeft', name: 'Задній лівий ліхтар' },
-        { id: 'taillightRight', name: 'Задній правий ліхтар' },
-        // Sides
-        { id: 'frontFenderLeft', name: 'Переднє ліве крило' },
-        { id: 'frontFenderRight', name: 'Переднє праве крило' },
-        { id: 'rearFenderLeft', name: 'Заднє ліве крило' },
-        { id: 'rearFenderRight', name: 'Заднє праве крило' },
-        { id: 'frontDoorLeft', name: 'Передні ліві двері' },
-        { id: 'frontDoorRight', name: 'Передні праві двері' },
-        { id: 'rearDoorLeft', name: 'Задні ліві двері' },
-        { id: 'rearDoorRight', name: 'Задні праві двері' },
-        { id: 'sidePanelLeft', name: 'Ліва боковина' },
-        { id: 'sidePanelRight', name: 'Права боковина' },
-        // Wheels
-        { id: 'wheelFrontLeft', name: 'Колесо' },
-        { id: 'wheelFrontRight', name: 'Колесо' },
-        { id: 'wheelRearLeft', name: 'Колесо' },
-        { id: 'wheelRearRight', name: 'Колесо' },
-    ];
+    // Adjust position after menu is rendered
+    useEffect(() => {
+        if (menuState.visible && menuRef.current) {
+            const { offsetWidth: w, offsetHeight: h } = menuRef.current;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            let { x, y } = menuState.position;
+
+            if (x + w > vw) x = x - w;     // flip to left
+            if (y + h > vh) y = y - h;     // flip above
+
+            if (x !== menuState.position.x || y !== menuState.position.y) {
+                setMenuState(s => ({ ...s, position: { x, y } }));
+            }
+        }
+    }, [menuState.visible]);
 
     return (
+        <>
             <div className="car-container" onClick={closeMenu}>
                 {carParts.map(part => (
                     <CarPart
@@ -128,16 +168,19 @@ const CarDiagram = () => {
                         name={part.name}
                         className={partClassNames[part.id]}
                         onPartClick={handlePartClick}
+                        partSubComponents={partSubComponents}
                     />
                 ))}
-                {menuState.visible && (
-                    <ContextMenu
-                        position={menuState.position}
-                        items={menuState.items}
-                        title={menuState.title}
-                    />
-                )}
             </div>
+            {menuState.visible && (
+                <ContextMenu
+                    ref={menuRef}
+                    position={menuState.position}
+                    items={menuState.items}
+                    title={menuState.title}
+                />
+            )}
+        </>
     );
 };
 

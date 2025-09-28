@@ -232,8 +232,9 @@ pub async fn get_t2_parts_by_type_class(
     State(app_state): State<Arc<AppState>>,
     axum::extract::Path((_class, body_type)): axum::extract::Path<(String, String)>,
 ) -> Result<impl IntoResponse, AppError> {
+    let real_body = body_type_into_t1_entry(&body_type);
     let data = t2::t2_rows_by_body_type(
-        &body_type,
+        &real_body,
         &user_email,
         &app_state.data_dir_path,
         &app_state.cache,

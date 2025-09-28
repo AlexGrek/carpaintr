@@ -13,7 +13,7 @@ import MenuPickerV2 from "../layout/MenuPickerV2";
 import { useLocale } from "../../localization/LocaleContext";
 import { capitalizeFirstLetter } from "../../utils/utils";
 
-const MATERIALS = ["метал", "алюміній", "пластик"];
+const MATERIALS = ["метал", "алюміній", "пластик", "інше"];
 
 const CarBodyPartDrawer = ({
     isDrawerOpen,

@@ -1,7 +1,5 @@
-import { partSubComponents } from "./CarDiagram";
-
 // --- CarPart Component ---
-const CarPart = ({ id, name, className, onPartClick }) => {
+const CarPart = ({ id, name, className, onPartClick, partSubComponents }) => {
   const combinedClassName = `car-part ${className}`;
 
   return (

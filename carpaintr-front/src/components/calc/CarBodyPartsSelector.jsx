@@ -10,7 +10,7 @@ import './CarBodyPartsSelector.css';
 import { stripExt } from "../../utils/utils";
 import { evaluate_processor, is_supported_repair_type, make_sandbox_extensions, should_evaluate_processor, validate_requirements, verify_processor } from "../../calc/processor_evaluator";
 import CarBodyPartDrawer from "./CarBodyPartDrawer";
-import CarDiagram from "./diagram/CarDiagram";
+import CarDiagram, { buildCarSubcomponentsFromT2 } from "./diagram/CarDiagram";
 
 // Translations for car parts
 const carPartsTranslations = {
@@ -55,6 +55,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
 
     // State for available parts fetched from the API
     const [availableParts, setAvailableParts] = useState([]);
+    const [availablePartsT2, setAvailablePartsT2] = useState([]);
     // State for parts not yet selected by the user, derived from availableParts
     const [unselectedParts, setUnselectedParts] = useState([]);
 
@@ -131,6 +132,23 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
             })
             .then(data => {
                 if (data) setAvailableParts(data);
+            })
+            .catch((err) => {
+                console.error("Error fetching car parts:", err);
+                handleError("Error fetching car parts: " + err);
+            });
+
+        authFetch(`/api/v1/user/carparts_t2/${carClass}/${body}`)
+            .then(response => {
+                if (!response.ok) {
+                    console.error(`HTTP error ${response.status}`);
+                    // Optionally, handle specific errors or show user feedback
+                    return Promise.reject(`Failed to fetch car parts: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) setAvailablePartsT2(data);
             })
             .catch((err) => {
                 console.error("Error fetching car parts:", err);
@@ -306,7 +324,7 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
         <div className="car-body-parts-selector">
             <div className="car-container-container">
                 <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
-                <CarDiagram />
+                <CarDiagram partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)} />
                 <div>
                     <h2>Запчастини</h2>
                     <div className="pop-in-simple" style={{ maxWidth: '500pt' }}>

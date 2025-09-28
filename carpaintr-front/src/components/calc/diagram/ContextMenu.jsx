@@ -1,4 +1,4 @@
-const ContextMenu = ({ position, items, title, onClose }) => {
+const ContextMenu = ({ position, items, title, onClose }, ref) => {
     if (!items) return null;
 
     const menuStyle = {
@@ -7,8 +7,8 @@ const ContextMenu = ({ position, items, title, onClose }) => {
     };
 
     return (
-        <div className="context-menu fade-in-simple-fast" style={menuStyle}>
-            <div className="context-menu-header">{title}</div>
+        <div className="context-menu fade-in-simple-fast" style={menuStyle} ref={ref}>
+            <div className="context-menu-header">{title} <small className="opacity-30">({items.length})</small></div>
             <ul className="context-menu-list">
                 {items.map((item, index) => (
                     <li key={index} className="context-menu-item" onClick={() => alert(`Selected: ${item}`)}>
