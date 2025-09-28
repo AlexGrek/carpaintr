@@ -4,6 +4,7 @@ use crate::{
         cars::body_type_into_t1_entry,
         constants::CAR_PART_DETAIL_UKR_FIELD,
         seasons::get_current_season_info,
+        t2,
         table_processing::{lookup, lookup_no_type_class},
     },
     errors::AppError,
@@ -21,6 +22,7 @@ use axum::{
 };
 use indexmap::IndexMap;
 use serde::Deserialize;
+use serde_json::json;
 use std::{collections::HashSet, hash::Hash, path::PathBuf, sync::Arc};
 
 const CARS: &'static str = "cars";
@@ -128,9 +130,7 @@ pub async fn list_all_repair_types(
     let mut all = HashSet::<String>::new();
     let empty = "".to_string();
     for line in parsed.into_iter() {
-        let (_name, repairs) = line
-            .get_index(1)
-            .unwrap_or((&empty, &empty));
+        let (_name, repairs) = line.get_index(1).unwrap_or((&empty, &empty));
         repairs.split('/').map(|s| s.trim()).for_each(|s| {
             let _ = all.insert(s.to_string());
         });
@@ -225,4 +225,35 @@ pub async fn get_season(
     Ok(Json(get_current_season_info(&path_in_userspace).map_err(
         |e| AppError::InternalServerError(e.to_string()),
     )?))
+}
+
+pub async fn get_t2_parts_by_type_class(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+    axum::extract::Path((_class, body_type)): axum::extract::Path<(String, String)>,
+) -> Result<impl IntoResponse, AppError> {
+    let data = t2::t2_rows_by_body_type(
+        &body_type,
+        &user_email,
+        &app_state.data_dir_path,
+        &app_state.cache,
+    )
+    .await?;
+    let parsed = t2::parse_all_fail(data)?;
+    Ok(Json(parsed))
+}
+
+pub async fn get_t2_parts_all(
+    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    let data = t2::t2_rows_all(&user_email, &app_state.data_dir_path, &app_state.cache).await?;
+
+    let (parsed, errors) = t2::parse_all_nofail(data);
+
+    Ok(Json(json!({
+        "data": parsed,
+        "errors": errors.into_iter().map(|e| e.to_string()).collect::<Vec<String>>()
+    }
+    )))
 }

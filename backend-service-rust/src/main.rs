@@ -264,6 +264,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::calc::data_endpoints::list_all_parts),
                 )
                 .route(
+                    "/all_parts_t2",
+                    get(api::v1::calc::data_endpoints::get_t2_parts_all),
+                )
+                .route(
                     "/support_request",
                     get(api::v1::support::user_get),
                 )
@@ -324,6 +328,10 @@ async fn main() -> tokio::io::Result<()> {
                 .route(
                     "/carparts/{class}/{body_type}",
                     get(api::v1::calc::data_endpoints::get_car_parts_by_type_class),
+                )
+                .route(
+                    "/carparts_t2/{class}/{body_type}",
+                    get(api::v1::calc::data_endpoints::get_t2_parts_by_type_class),
                 )
                 .layer(from_fn_with_state(
                     shared_state.clone(),

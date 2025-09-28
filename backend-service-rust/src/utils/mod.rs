@@ -30,6 +30,7 @@ use crate::exlogging::log_event;
 use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 
 pub mod money;
+pub mod stringext;
 
 pub const COMMON: &'static str = "common";
 pub const USERS: &'static str = "users";

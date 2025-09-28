@@ -26,3 +26,15 @@ pub const CAR_PART_TYPE_FIELD: &str = "Список Тип";
 pub const CAR_PART_DETAIL_RUS_FIELD: &str = "Список деталь рус";
 pub const CAR_PART_DETAIL_ENG_FIELD: &str = "Список деталь eng";
 pub const CAR_PART_DETAIL_UKR_FIELD: &str = "Список деталь укр";
+
+// T2
+pub const T2_ZONE: &str = "зона";
+pub const T2_PART_1: &str = "деталь 1";
+pub const T2_PART_2: &str = "деталь 2";
+pub const T2_BLUEPRINT: &str = "Схема кузова";
+pub const T2_ACTION_ASSEMBLE: &str = "розібрати/зібрати";
+pub const T2_ACTION_TWIST: &str = "усунення перекосу";
+pub const T2_ACTION_REPLACE: &str = "замінити";
+pub const T2_ACTION_MOUNT: &str = "зняти/встановити";
+pub const T2_ACTION_REPAIR: &str = "ремонт";
+pub const T2_ACTION_PAINT: &str = "фарбування";

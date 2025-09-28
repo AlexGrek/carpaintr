@@ -2,13 +2,14 @@
 
 /* Basic container styles */
 .object-browser-container {
+  text-align: left;
   font-family: 'Inter', sans-serif; /* Ensure modern font throughout */
   border: none; /* Remove default border */
   border-radius: 12px; /* More rounded corners */
   overflow: hidden;
   background-color: #ffffff; /* Clean white background */
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Softer, more pronounced shadow */
-  margin: 20px auto; /* Center the component with some margin */
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.08); /* Softer, more pronounced shadow */
+  margin: 8px auto; /* Center the component with some margin */
   max-width: 95%; /* Responsive width */
   width: 100%; /* Ensure it takes full width within max-width */
 }
@@ -20,18 +21,18 @@
   border-bottom: 1px solid #e0e6ed;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  padding: 0 10px; /* Some padding for the navbar itself */
+  padding: 0 4px; /* Some padding for the navbar itself */
   overflow-x: auto; /* Allow horizontal scrolling on small screens if many tabs */
   -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
 }
 
 .tab-item {
   flex-shrink: 0; /* Prevent tabs from shrinking */
-  padding: 14px 22px; /* Increased padding for touch targets */
+  padding: 8px 6px; /* Increased padding for touch targets */
   cursor: pointer;
   border: none;
   background: none;
-  font-size: 16px; /* Slightly larger font */
+  font-size: 12px; /* Slightly larger font */
   font-weight: 500;
   color: #526c8a; /* Muted blue for inactive text */
   transition: background-color 0.3s ease, color 0.3s ease, border-bottom 0.3s ease;
@@ -46,8 +47,8 @@
 
 .tab-item.active {
   background-color: #ffffff; /* White background for active tab */
-  color: #007bff; /* Primary blue for active text */
-  border-bottom: 3px solid #007bff; /* Primary blue highlight */
+  color: #ff8400; /* Primary blue for active text */
+  border-bottom: 3px solid #ff6f00; /* Primary blue highlight */
   font-weight: 600;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for active tab */
   border-top-left-radius: 12px;
@@ -56,19 +57,18 @@
 
 /* Tab content styles */
 .tab-content {
-  padding: 20px; /* More generous padding */
-  min-height: 300px; /* Adjust as needed */
+  padding: 6px; /* More generous padding */
   background-color: #fff;
   overflow: auto; /* Allow scrolling if content overflows */
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 /* JSON Viewer styles (for the tree view - now a browsing menu) */
 .object-browser-view {
   font-family: 'Inter', sans-serif; /* Use Inter for the tree view as well for consistency */
-  font-size: 15px; /* Slightly larger font for better readability */
-  line-height: 1.6; /* Adjusted line height */
+  font-size: 12px; /* Slightly larger font for better readability */
+  line-height: 1.1; /* Adjusted line height */
   color: #2c3e50; /* Darker, softer text color */
   padding-left: 0px; /* No padding for root, indentation handled by json-item */
 }
@@ -94,15 +94,15 @@
 .json-node-header {
   display: flex;
   align-items: center;
-  padding: 10px 15px; /* Padding for the clickable header area */
+  padding: 6px 8px; /* Padding for the clickable header area */
   cursor: pointer;
   transition: background-color 0.2s ease;
-  border-radius: 8px; /* Slightly rounded corners for header */
+  border-radius: 4px; /* Slightly rounded corners for header */
   margin-bottom: 2px; /* Small space between header and children */
 }
 
 .json-node-header:hover {
-  background-color: #f8f9fa; /* Subtle hover effect */
+  background-color: #fdd7bb; /* Subtle hover effect */
 }
 
 .json-toggle {
@@ -113,10 +113,10 @@
   user-select: none;
   transition: transform 0.2s ease; /* Smooth rotation */
   display: inline-block;
-  width: 18px; /* Larger touch target for toggle */
-  height: 18px; /* Ensure square touch target */
+  width: 14px; /* Larger touch target for toggle */
+  height: 14px; /* Ensure square touch target */
   text-align: center;
-  line-height: 18px; /* Center the arrow vertically */
+  line-height: 14px; /* Center the arrow vertically */
 }
 
 .json-toggle.expanded {
@@ -142,8 +142,8 @@
 .json-item {
   display: flex;
   align-items: baseline; /* Align key/index and value */
-  margin-left: 35px; /* Increased indentation for nesting, accounts for toggle width */
-  padding: 6px 0; /* Vertical padding for each item */
+  margin-left: 30px; /* Increased indentation for nesting, accounts for toggle width */
+  padding: 4px 0; /* Vertical padding for each item */
   border-bottom: 1px dashed #f0f0f0; /* Subtle dashed separator */
 }
 
@@ -156,12 +156,12 @@
   color: #34495e; /* Darker blue-grey for keys */
   margin-right: 10px; /* More space between key and value */
   white-space: nowrap;
-  font-weight: 500; /* Medium weight for keys */
+  font-weight: 400; /* Medium weight for keys */
   flex-shrink: 0; /* Prevent key from shrinking */
 }
 
 .json-index {
-  color: #007bff; /* Primary blue for array index */
+  color: #ff5900; /* Primary blue for array index */
   margin-right: 10px;
   white-space: nowrap;
   font-weight: 500;
