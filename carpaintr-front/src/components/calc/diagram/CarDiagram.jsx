@@ -4,45 +4,20 @@ import CarPart from "./CarPart";
 import './CarDiagram.css';
 
 export function buildCarSubcomponentsFromT2(data) {
-  return data.reduce((acc, item) => {
-    const zone = item.zone?.trim();
-    const name = item.name?.trim();
+    return data.reduce((acc, item) => {
+        const zone = item.zone?.trim();
+        const name = item.name?.trim();
 
-    if (!zone || !name || name === "(Додати)") return acc; // skip invalid or placeholder names
+        if (!zone || !name || name === "(Додати)") return acc; // skip invalid or placeholder names
 
-    if (!acc[zone]) {
-      acc[zone] = [];
-    }
+        if (!acc[zone]) {
+            acc[zone] = [];
+        }
 
-    acc[zone].push(name);
-    return acc;
-  }, {});
+        acc[zone].push(item);
+        return acc;
+    }, {});
 }
-
-export const PARTSUBCOMPONENTS = {
-    'Капот': ['Замок капота', 'Амортизатор капота', 'Петля капота', 'Ущільнювач'],
-    'Лобове скло': ['Датчик дощу', 'Кріплення дзеркала', 'Молдинг'],
-    'Дах': ['Люк', 'Рейлінги', 'Антена', 'Панорамна стеля'],
-    'Заднє скло': ['Обігрів скла', 'Молдинг', 'Двірник'],
-    'Кришка багажника': ['Замок', 'Спойлер', 'Емблема', 'Внутрішня обшивка'],
-    'Передній бампер': ['Решітка радіатора', 'Протитуманна фара', 'Парктронік', 'Омивач фар'],
-    'Задній бампер': ['Парктронік', 'Катафот', 'Накладка'],
-    'Передня ліва фара': ['Лампа ближнього світла', 'Лампа дальнього світла', 'Денні ходові вогні', 'Коректор фари'],
-    'Передня права фара': ['Лампа ближнього світла', 'Лампа дальнього світла', 'Денні ходові вогні', 'Коректор фари'],
-    'Задній лівий ліхтар': ['Стоп-сигнал', 'Габаритний вогонь', 'Покажчик повороту'],
-    'Задній правий ліхтар': ['Стоп-сигнал', 'Габаритний вогонь', 'Покажчик повороту'],
-    'Передні ліві двері': ['Склопідіймач', 'Ручка дверей', 'Дзеркало', 'Динамік'],
-    'Передні праві двері': ['Склопідіймач', 'Ручка дверей', 'Дзеркало', 'Динамік'],
-    'Задні ліві двері': ['Склопідіймач', 'Ручка дверей', 'Динамік'],
-    'Задні праві двері': ['Склопідіймач', 'Ручка дверей', 'Динамік'],
-    'Переднє ліве крило': ['Підкрилок', 'Кріплення крила', 'Повторювач повороту'],
-    'Переднє праве крило': ['Підкрилок', 'Кріплення крила', 'Повторювач повороту'],
-    'Заднє ліве крило': ['Підкрилок', 'Кріплення крила', 'Лючок бензобака'],
-    'Заднє праве крило': ['Підкрилок', 'Кріплення крила'],
-    'Ліва боковина': ['Молдинг', 'Структурний елемент'],
-    'Права боковина': ['Молдинг', 'Структурний елемент'],
-    'Колесо': ['Диск', 'Шина', 'Ковпак', 'Датчик тиску'],
-};
 
 // Define all car parts to be rendered
 const carParts = [
@@ -106,7 +81,7 @@ export const partClassNames = {
 };
 
 // --- Main CarDiagram Component ---
-const CarDiagram = ({partSubComponents = PARTSUBCOMPONENTS}) => {
+const CarDiagram = ({ partSubComponents = PARTSUBCOMPONENTS }) => {
     const [menuState, setMenuState] = useState({
         visible: false,
         position: { x: 0, y: 0 },
@@ -156,7 +131,7 @@ const CarDiagram = ({partSubComponents = PARTSUBCOMPONENTS}) => {
                 setMenuState(s => ({ ...s, position: { x, y } }));
             }
         }
-    }, [menuState.visible]);
+    }, [menuState.position, menuState.visible]);
 
     return (
         <>
