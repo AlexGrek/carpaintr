@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Loader, Message, Tag, useToaster } from 'rsuite';
-import { authFetch } from '../utils/authFetch';
+import { Loader, Message, useToaster } from 'rsuite';
+import { authFetch, handleAuthResponse } from '../utils/authFetch';
 import './ActiveLicenseMarker.css'
 import { ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useLocale } from '../localization/LocaleContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ActiveLicenseMarker = () => {
     const [licenseStatus, setLicenseStatus] = useState(null);
@@ -11,16 +12,20 @@ const ActiveLicenseMarker = () => {
     const [error, setError] = useState(null);
     const toaster = useToaster();
     const { str } = useLocale();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         const fetchLicenses = async () => {
             try {
                 const response = await authFetch('/api/v1/getactivelicense');
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.statusText}`);
+                if (!handleAuthResponse(response, navigate, location)) {
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    setLicenseStatus(data);
                 }
-                const data = await response.json();
-                setLicenseStatus(data);
             } catch (err) {
                 setError(err.message);
             } finally {

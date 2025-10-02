@@ -1,5 +1,6 @@
 import YAML from 'yaml';
 import Papa from 'papaparse';
+import { Location, NavigateFunction } from 'react-router-dom';
 
 // Common fetch functionality
 const performAuthFetch = async (url, options = {}) => {
@@ -128,4 +129,25 @@ export const getOrFetchCompanyInfo = async () => {
 
     // have to fetch
     return await fetchCompanyInfo();
+}
+
+
+
+/**
+
+* Handle API response authentication errors.
+*
+* @param {Response} response - fetch response object
+* @param {NavigateFunction} navigate - from useNavigate()
+* @param {Location} location - from useLocation()
+* @returns {boolean} true if redirected (unauthorized), false otherwise
+  */
+export function handleAuthResponse(response, navigate, location) {
+    if (response.status === 401 || response.status === 403) {
+        // Preserve current path + query for redirect after login
+        const currentPath = location.pathname + location.search;
+        navigate(`/login?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+        return true;
+    }
+    return false;
 }
