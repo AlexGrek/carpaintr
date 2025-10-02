@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsuite';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { resetCompanyInfo } from '../../utils/authFetch';
+import { resetCompanyInfo, authFetch } from '../../utils/authFetch';
 import './LoginPage.css';
 
 const LoginPage = () => {
@@ -16,6 +16,23 @@ const LoginPage = () => {
   const params = new URLSearchParams(location.search);
   const redirect = params.get('redirect') || '/dashboard';
 
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+      try {
+        const resp = await authFetch('/api/v1/getcompanyinfo');
+        if (resp.ok) {
+          navigate(redirect, { replace: true });
+        }
+      } catch {
+        // silently ignore if not logged in
+      }
+    };
+    checkAuth();
+  }, [navigate, redirect]);
+
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -24,6 +41,7 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username, password })
       });
+
 
       if (response.status === 401 || response.status === 403) {
         throw new Error('Unauthorized: Incorrect username or password.');
@@ -42,30 +60,46 @@ const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+
+
   };
 
-  return (
-    <Container className="auth-page">
-      <Panel className="auth-panel" bordered>
-        <img className="auth-logo fade-in-expand-simple" src="/autolab_large_bw.png" alt="CarPaintr Logo" />
-        <Form fluid>
-          <Form.Group>
-            <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
-            <Input value={username} onChange={value => setUsername(value)} />
-          </Form.Group>
-          <Form.Group>
-            <Form.ControlLabel>Пароль</Form.ControlLabel>
-            <Input type="password" value={password} onChange={value => setPassword(value)} />
-          </Form.Group>
-          <Form.Group>
-            <Button appearance="primary" onClick={handleLogin} loading={loading} block>
-              Увійти
-            </Button>
-          </Form.Group>
-        </Form>
-        <Link style={{margin: '12pt', display: 'block'}} to='/register'>Реєстрація</Link>
-      </Panel>
-    </Container>
+  return (<Container className="auth-page"> <Panel className="auth-panel" bordered> <img
+    className="auth-logo fade-in-expand-simple"
+    src="/autolab_large_bw.png"
+    alt="CarPaintr Logo"
+  /> <Form fluid>
+      <Form.Group>
+        <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
+        <Input value={username} onChange={value => setUsername(value)} />
+      </Form.Group>
+      <Form.Group>
+        <Form.ControlLabel>Пароль</Form.ControlLabel>
+        <Input type="password" value={password} onChange={value => setPassword(value)} />
+      </Form.Group>
+      <Form.Group> <Button
+        appearance="primary"
+        onClick={handleLogin}
+        loading={loading}
+        block
+      >
+        Увійти </Button>
+      </Form.Group> </Form>
+
+
+    {/* Footer links */}
+    <div style={{ marginTop: '16pt', textAlign: 'center' }}>
+      <Link to="/register" style={{ marginRight: '20px' }}>
+        Реєстрація
+      </Link>
+      <Link to="/">
+        ← Назад на головну
+      </Link>
+    </div>
+  </Panel>
+  </Container>
+
+
   );
 };
 
