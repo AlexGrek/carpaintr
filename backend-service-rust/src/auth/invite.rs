@@ -28,7 +28,7 @@ pub async fn process_invite(
     invite_code: &str,
     state: &AppState,
 ) -> Result<(), AppError> {
-    let invites_dir = state.data_dir_path.join(ACTIVE);
+    let invites_dir = state.data_dir_path.join(INVITES).join(ACTIVE);
     let mut invite =
         try_find_invite_by_path(invites_dir.join(format!("{invite_code}.yaml")).as_path()).await?;
     if invite.evaluation_license_duration_days > 0 && !invite.evaluation_license_type.is_empty() {
@@ -49,6 +49,7 @@ pub async fn consume_invite(invite: &Invite, state: &AppState) -> Result<(), App
     // Path to the invite file in the active directory
     let active_path = state
         .data_dir_path
+        .join(INVITES)
         .join(ACTIVE)
         .join(format!("{}.yaml", invite.code));
 
@@ -65,9 +66,10 @@ pub async fn consume_invite(invite: &Invite, state: &AppState) -> Result<(), App
 
     if should_archive {
         // Ensure the directory exists before attempting to read from it.
-        fs::create_dir_all(state.data_dir_path.join(ARCHIVED)).await?;
+        fs::create_dir_all(state.data_dir_path.join(INVITES).join(ARCHIVED)).await?;
         let archived_path = state
             .data_dir_path
+            .join(INVITES)
             .join(ARCHIVED)
             .join(format!("{}.yaml", invite.code));
 
@@ -107,7 +109,7 @@ pub async fn create_invite(
 ) -> Result<Invite, AppError> {
     let mut new_invite = Invite::new(duration_days, issued_by.to_string());
     new_invite.usage_policy = usage_policy;
-    let invites_dir = state.data_dir_path.join(ACTIVE);
+    let invites_dir = state.data_dir_path.join(INVITES).join(ACTIVE);
 
     // Ensure the directory exists
     fs::create_dir_all(&invites_dir).await?;
@@ -123,10 +125,12 @@ pub async fn create_invite(
 pub async fn remove_invite(invite_code: &str, state: &AppState) -> Result<(), AppError> {
     let active_path = state
         .data_dir_path
+        .join(INVITES)
         .join(ACTIVE)
         .join(format!("{}.yaml", invite_code));
     let archived_path = state
         .data_dir_path
+        .join(INVITES)
         .join(ARCHIVED)
         .join(format!("{}.yaml", invite_code));
 
@@ -145,7 +149,7 @@ pub async fn remove_invite(invite_code: &str, state: &AppState) -> Result<(), Ap
 
 /// Lists all active invites, parsing the content of each file.
 pub async fn list_active_invites(state: &AppState) -> Result<Vec<Invite>, AppError> {
-    let invites_dir = state.data_dir_path.join(ACTIVE);
+    let invites_dir = state.data_dir_path.join(INVITES).join(ACTIVE);
     let mut invites = Vec::new();
 
     if !invites_dir.exists() {
@@ -166,7 +170,7 @@ pub async fn list_active_invites(state: &AppState) -> Result<Vec<Invite>, AppErr
 
 /// Lists all archived invite codes (filenames without the extension).
 pub async fn list_archived_invites(state: &AppState) -> Result<Vec<String>, AppError> {
-    let archived_dir = state.data_dir_path.join(ARCHIVED);
+    let archived_dir = state.data_dir_path.join(INVITES).join(ARCHIVED);
     let mut archived_codes = Vec::new();
 
     if !archived_dir.exists() {
