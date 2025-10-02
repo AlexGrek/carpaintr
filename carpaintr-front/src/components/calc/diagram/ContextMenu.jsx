@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useMediaQuery } from 'react-responsive';
 import { ChevronRight, ChevronDown, FileText, FolderOpen, Folder } from 'lucide-react';
 
 const ContextMenu = ({ position, items, title, onClose }, ref) => {
+    const isMobile = useMediaQuery({ maxWidth: 767 });
 
     // Separate ungrouped and grouped items
     const ungrouped = items.filter(item => !item.group);
     const grouped = items.filter(item => item.group);
-
+    
     // Group items by group name
     const groups = grouped.reduce((acc, item) => {
         if (!acc[item.group]) {
@@ -26,19 +28,25 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
         }));
     };
 
-    const menuStyle = {
+    const menuStyle = isMobile ? {} : {
         top: position.y,
         left: position.x,
     };
 
     return (
-        <div className="context-menu fade-in-simple-fast" style={menuStyle} ref={ref}>
+        <>
+            {isMobile && <div className="context-menu-overlay" onClick={onClose} />}
+            <div 
+                className={`context-menu ${isMobile ? 'context-menu-mobile' : ''} fade-in-simple-fast`} 
+                style={menuStyle} 
+                ref={ref}
+            >
             <div className="context-menu-header">{title} <small className="opacity-30">({items.length})</small></div>
             <ul className="context-menu-list">
                 {/* Ungrouped items first */}
                 {ungrouped.map((item, index) => (
-                    <li
-                        key={`ungrouped-${index}`}
+                    <li 
+                        key={`ungrouped-${index}`} 
                         className="context-menu-item"
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                         onClick={() => alert(`Selected: ${item.name}`)}
@@ -47,15 +55,15 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
                         <span>{item.name}</span>
                     </li>
                 ))}
-
+                
                 {/* Grouped items */}
                 {Object.entries(groups).map(([groupName, groupItems]) => (
                     <li key={groupName} style={{ padding: 0 }}>
-                        <div
+                        <div 
                             className="context-menu-item"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
                                 gap: '8px',
                                 fontWeight: '600'
                             }}
@@ -81,12 +89,12 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
                         {expandedGroups[groupName] && (
                             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                 {groupItems.map((item, index) => (
-                                    <li
+                                    <li 
                                         key={`${groupName}-${index}`}
                                         className="context-menu-item"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
+                                        style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
                                             gap: '8px',
                                             paddingLeft: '40px'
                                         }}
@@ -102,6 +110,7 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
                 ))}
             </ul>
         </div>
+        </>
     );
 };
 

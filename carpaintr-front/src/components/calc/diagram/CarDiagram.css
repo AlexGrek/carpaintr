@@ -506,3 +506,41 @@
         font-size: 11px;
     }
 }
+
+/* Mobile Modal Overlay */
+.context-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Mobile Modal Centered */
+.context-menu-mobile {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-height: 80vh;
+    width: 90vw;
+    max-width: 400px;
+    z-index: 1001;
+}
+
+.context-menu-mobile .context-menu-list {
+    max-height: calc(80vh - 80px);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
