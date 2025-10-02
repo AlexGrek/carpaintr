@@ -150,6 +150,7 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/support_delete", delete(api::v1::support::support_delete))
                 .route("/support_get", get(api::v1::support::support_get))
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
+                .route("/cache_clear_all", post(api::v1::admin::clear_all_cache))
                 .route("/manageuser", post(api::v1::admin::manage_user))
                 .route("/impersonate", post(api::v1::auth::impersonate))
                 .route(

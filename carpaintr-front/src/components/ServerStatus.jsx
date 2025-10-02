@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Loader, Message, Panel, useToaster, Button, Whisper, Tooltip, Table } from 'rsuite';
 import { authFetch } from '../utils/authFetch';
 import { useLocale } from '../localization/LocaleContext'; // Import useLocale and registerTranslations
@@ -39,7 +39,16 @@ const ServerStatus = () => {
         }
     }) : [];
 
-    console.log(data);
+    const handleClearCache = useCallback(async () => {
+        const response = await authFetch('/api/v1/admin/cache_clear_all', {
+            method: 'POST',
+        });
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            console.error(response);
+        }
+    }, [])
 
     return (
         <div>
@@ -61,6 +70,7 @@ const ServerStatus = () => {
                         <Table.Cell dataKey="bytes" />
                     </Table.Column>
                 </Table>
+                <Button onClick={handleClearCache}>Clear cache</Button>
             </Panel>
             <Panel shaded header='Attachments' collapsible>
                 <ResponseBrowser url={'/api/v1/admin/attachment_list'} />

@@ -25,6 +25,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::sync::Arc;
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
@@ -223,4 +224,12 @@ pub async fn get_cache_status(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     Ok(Json(app_state.cache.get_caches_size().await))
+}
+
+pub async fn clear_all_cache(
+    AuthenticatedUser(_user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, AppError> {
+    app_state.cache.invalidate_all().await;
+    Ok(Json(json! ({ "cache_invalidated": true })))
 }

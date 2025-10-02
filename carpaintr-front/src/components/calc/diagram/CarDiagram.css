@@ -516,7 +516,7 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 999;
-    animation: fadeIn 0.2s ease-in-out;
+    animation: fadeInContext 0.2s ease-out;
 }
 
 /* Mobile Modal Centered */
@@ -529,17 +529,29 @@
     width: 90vw;
     max-width: 400px;
     z-index: 1001;
+    padding: 16px;
+    font-size: 16px;
+}
+
+.context-menu-mobile .context-menu-header {
+    font-size: 18px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .context-menu-mobile .context-menu-list {
-    max-height: calc(80vh - 80px);
+    max-height: calc(80vh - 100px);
 }
 
-@keyframes fadeIn {
+.context-menu-mobile .context-menu-item {
+    padding: 12px 16px;
+    font-size: 16px;
+}
+
+@keyframes fadeInContext {
     from {
         opacity: 0;
     }
-
     to {
         opacity: 1;
     }
