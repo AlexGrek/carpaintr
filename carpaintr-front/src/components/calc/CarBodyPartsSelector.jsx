@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Button, Divider, Panel, PanelGroup } from "rsuite";
+import { Button, Divider, Panel, PanelGroup, Tabs } from "rsuite";
 import SelectionInput from '../SelectionInput'
 import { useMediaQuery } from 'react-responsive';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch'; // Assuming authFetch is used, not authFetchYaml
@@ -324,25 +324,28 @@ const CarBodyPartsSelector = ({ onChange, selectedParts, calculations, setCalcul
         <div className="car-body-parts-selector">
             <div className="car-container-container">
                 <ErrorMessage errorText={errorText} onClose={() => setErrorText(null)} title={errorTitle} />
-                <CarDiagram partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)} />
-                <div>
-                    <h2>Запчастини</h2>
-                    <div className="pop-in-simple" style={{ maxWidth: '500pt' }}>
-                        {/* Only show SelectionInput if there are unselected parts */}
-                        {unselectedParts.length > 0 && (
-                            <SelectionInput
-                                name="Додати запчастини"
-                                labels={carPartsTranslations}
-                                values={unselectedParts}
-                                selectedValue={null}
-                                onChange={handlePartSelect}
-                                autoConfirm={false}
-                            />
-                        )}
-                    </div>
-                </div>
-
-
+                <Tabs defaultActiveKey="1" appearance="pills">
+                    <Tabs.Tab eventKey="1" title={str("Car diagram")}>
+                        <CarDiagram partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)} />
+                    </Tabs.Tab>
+                    <Tabs.Tab eventKey="2" title={str("Major parts")}>
+                        <div>
+                            <div className="pop-in-simple" style={{ maxWidth: '500pt' }}>
+                                {/* Only show SelectionInput if there are unselected parts */}
+                                {unselectedParts.length > 0 && (
+                                    <SelectionInput
+                                        name="Додати запчастини"
+                                        labels={carPartsTranslations}
+                                        values={unselectedParts}
+                                        selectedValue={null}
+                                        onChange={handlePartSelect}
+                                        autoConfirm={false}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </Tabs.Tab>
+                </Tabs>
             </div>
 
             <CarBodyPartDrawer

@@ -113,4 +113,7 @@ registerTranslations('ua', {
     "Part material": "Матеріал запчастини",
     "Car brand": "Марка",
     "Car model": "Модель",
+
+    "Car diagram": "Діаграма",
+    "Major parts": "Основні деталі",
 });
