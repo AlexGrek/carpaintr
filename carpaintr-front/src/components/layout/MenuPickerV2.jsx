@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {ArrowDownRight} from 'lucide-react';
 
 const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}}) => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -38,11 +39,6 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}
     if (onSelect) {
       onSelect(null);
     }
-  };
-
-  const getSelectedItemIndex = () => {
-    if (value === null) return -1;
-    return normalizedItems.findIndex(item => item.value === value);
   };
 
   const styles = {
@@ -99,6 +95,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}
     itemLabel: {
       fontSize: '16px',
       fontWeight: '500',
+      padding: '0 3em',
       color: '#1c1c1e',
       lineHeight: '1.2',
       marginBottom: item => item.details ? '2px' : '0'
@@ -114,9 +111,10 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}
     },
     checkmark: {
       position: 'absolute',
-      right: '20px',
-      fontSize: '16px',
-      color: '#007AFF',
+      right: '16px',
+      top: '24px',
+      fontSize: '14px',
+      color: '#e23b1a',
       fontWeight: '600'
     }
   };
@@ -167,16 +165,16 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}
                   handleItemSelect(item);
                 }
               }}
-              onMouseEnter={(e) => {
-                if (isExpanded && !isAnimating) {
-                  e.target.style.backgroundColor = '#f8f9fa';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isExpanded && !isAnimating) {
-                  e.target.style.backgroundColor = '#ffffff';
-                }
-              }}
+              // onMouseEnter={(e) => {
+              //   if (isExpanded && !isAnimating) {
+              //     e.target.style.backgroundColor = '#f8f9fa';
+              //   }
+              // }}
+              // onMouseLeave={(e) => {
+              //   if (isExpanded && !isAnimating) {
+              //     e.target.style.backgroundColor = '#ffffff';
+              //   }
+              // }}
             >
               <div style={styles.menuItemContent}>
                 <div style={{
@@ -193,7 +191,7 @@ const MenuPickerV2 = ({ items = [], label = "", onSelect, value = null, style={}
                 <div style={styles.itemIcon}>{item.icon}</div>
               )}
               {value === item.value && (
-                <div style={styles.checkmark}>✓</div>
+                <div style={styles.checkmark}><ArrowDownRight size={16}/></div>
               )}
             </div>
           ))}

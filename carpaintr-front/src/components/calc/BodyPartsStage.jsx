@@ -59,10 +59,10 @@ const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
     <div style={styles.sampleStage}>
       <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
         <BottomStickyLayout bottomPanel={
-          <HStack justifyContent="space-between">
+          <div className="flex justify-between">
             <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
             <Button onClick={handleClose} disabled={selectedParts === null || selectedParts.length === 0} color='green' appearance='primary'><Trans>Accept</Trans></Button>
-          </HStack>
+          </div>
         }>
           <VStack spacing={3} style={{minWidth: "12em"}}>
             <MenuPickerV2

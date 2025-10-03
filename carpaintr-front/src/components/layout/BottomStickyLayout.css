@@ -6,7 +6,10 @@
 
 .layout-content {
     flex: 1;
-    padding-bottom: 60px;
+}
+
+.layout-content.vscroll {
+    margin-bottom: 60px;
     /* space for sticky panel */
 }
 
@@ -31,5 +34,4 @@
 /* Attached mode: stays in flow */
 .layout-bottom-panel.attached {
     position: static;
-    
 }

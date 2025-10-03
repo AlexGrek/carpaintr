@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Button, Message, useToaster, Input, Container, Panel } from 'rsuite';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { resetCompanyInfo, authFetch } from '../../utils/authFetch';

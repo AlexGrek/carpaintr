@@ -4,37 +4,13 @@ import { useMediaQuery } from 'react-responsive';
 
 export default function BottomStickyLayout({ children, bottomPanel }) {
     const containerRef = useRef(null);
-    const [isSticky, setIsSticky] = useState(false);
     const isMobile = useMediaQuery({ maxWidth: 767 });
-
-    // const checkSticky = () => {
-    //     const container = containerRef.current;
-    //     if (!container) return;
-
-    //     const fits = container.scrollHeight <= window.innerHeight;
-    //     setIsSticky(!fits);
-    // };
-
-    // useEffect(() => {
-    //     checkSticky();
-    //     window.addEventListener('resize', checkSticky);
-    //     return () => window.removeEventListener('resize', checkSticky);
-    // }, []);
-
-    // useEffect(() => {
-    //     // Recheck on content changes
-    //     const observer = new MutationObserver(checkSticky);
-    //     if (containerRef.current) {
-    //         observer.observe(containerRef.current, { childList: true, subtree: true });
-    //     }
-    //     return () => observer.disconnect();
-    // }, []);
 
     return (
         <div className="layout-container fade-in-simple" ref={containerRef}>
-            <div className={`layout-content ${isSticky || isMobile ? 'vscroll' : ''}`}>{children}</div>
+            <div className={`layout-content ${isMobile ? 'vscroll' : ''}`}>{children}</div>
 
-            <div className={`layout-bottom-panel ${isSticky || isMobile ? 'sticky' : 'attached'}`}>
+            <div className={`layout-bottom-panel ${isMobile ? 'sticky' : 'attached'}`}>
                 {bottomPanel}
             </div>
         </div>

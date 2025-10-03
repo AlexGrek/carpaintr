@@ -34,7 +34,7 @@ const ActiveLicenseMarker = () => {
         };
 
         fetchLicenses();
-    }, []);
+    }, [location, navigate]);
 
     if (loading) {
         return <div className='license-tag'><Loader /></div>

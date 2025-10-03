@@ -18,7 +18,7 @@ const CarBodyPartsSelector = React.lazy(() => import('./CarBodyPartsSelector'));
 import PrintCalculationDrawer from '../PrintCalculationDrawer';
 import NotifyMessage from '../layout/NotifyMessage';
 import LoadCalculationDrawer from './LoadCalculationDrawer';
-import ConfirmationDialog from '../layout/ConfirmationDeialog';
+import ConfirmationDialog from '../layout/ConfirmationDialog';
 import ColorPicker from './ColorPicker';
 import VehicleSelect from './VehicleSelect';
 import TopPanel from './TopPanel';
