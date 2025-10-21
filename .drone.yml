@@ -45,3 +45,18 @@ steps:
     cache: true
     cache_repo:
       from_secret: cache_image
+
+- name: deploy
+  image: alpine/helm:latest
+  environment:
+    KUBECONFIG: /root/.kube/config
+  commands:
+    - mkdir -p /root/.kube
+    - echo "$KUBECONFIG_CONTENT" > /root/.kube/config
+    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait
+  secrets:
+    - source: kubeconfig
+      target: KUBECONFIG_CONTENT
+  when:
+    status:
+      - success
