@@ -26,7 +26,6 @@ steps:
     cache: true
     cache_repo:
       from_secret: cache_image
-  detach: true
 
 - name: build-pdfgen
   image: plugins/kaniko
@@ -45,7 +44,6 @@ steps:
     cache: true
     cache_repo:
       from_secret: cache_image
-  detach: true
 
 depends_on: []
 
