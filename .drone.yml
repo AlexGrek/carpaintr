@@ -1,5 +1,5 @@
 kind: pipeline
-type: kubernetes  # <-- Correct, keep this
+type: kubernetes
 name: build
 
 trigger:
@@ -9,19 +9,10 @@ trigger:
   - push
   - custom
 
-# This 'services' block is REQUIRED for the k8s runner to build images.
-# It runs a Docker daemon in a sidecar pod.
-services:
-- name: docker-dind
-  image: docker:20.10.17-dind
-  privileged: true # <-- This is critical
-
 steps:
 - name: build-api
-  image: plugins/docker
-  # This 'environment' block tells the plugin to find the 'dind' service
+  image: plugins/kaniko
   environment:
-    DOCKER_HOST: tcp://docker-dind:2375
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
@@ -33,12 +24,14 @@ steps:
       from_secret: docker_username
     password:
       from_secret: docker_password
+    
+    # --- Add these lines ---
+    cache: true
+    cache_repo: ${DOCKER_REGISTRY}/autolab-cache # Or any repo you want
 
 - name: build-pdfgen
-  image: plugins/docker
-  # This 'environment' block is also required here
+  image: plugins/kaniko
   environment:
-    DOCKER_HOST: tcp://docker-dind:2375
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
@@ -51,39 +44,5 @@ steps:
     password:
       from_secret: docker_password
 
----
-kind: pipeline
-type: kubernetes  # <-- Correct, keep this
-name: deploy
-
-trigger:
-  branch:
-  - main
-  event:
-  - push
-  - custom
-
-depends_on:
-- build
-
-steps:
-- name: deploy-chart
-  image: plugins/helm3
-  environment:
-    DOCKER_REGISTRY:
-      from_secret: docker_registry
-  settings:
-    kubernetes_config:
-      from_secret: kubeconfig
-    mode: upgrade
-    install: true
-    chart: autolab-chart/autolab-chart/autolab
-    release: autolab
-    namespace: autolab
-    wait: true
-    atomic: true
-    set:
-      - "image.repository=${DOCKER_REGISTRY}/autolab-api"
-      - "image.tag=${DRONE_COMMIT_SHA:0:7}"
-      - "pdfgen.image.repository=${DOCKER_REGISTRY}/autolab-pdfgen"
-      - "pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7}"
+    cache: true
+    cache_repo: ${DOCKER_REGISTRY}/autolab-cache
