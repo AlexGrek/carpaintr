@@ -32,7 +32,8 @@ steps:
   settings:
     repo:
       from_secret: pdfgen_image
-    dockerfile: pdf_backend/Dockerfile
+    dockerfile: Dockerfile
+    context: pdf_backend
     tags: "${DRONE_COMMIT_SHA:0:7}"
     username:
       from_secret: docker_username
