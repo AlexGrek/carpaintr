@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "autolab-api.fullname" . }}
+  labels:
+    {{- include "autolab-api.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "autolab-api.fullname" . }}-headless
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "autolab-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "autolab-api.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 2
+      containers:
+      - name: autolab-api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 8080 # Hard-coded as it's app-specific
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secretName }}
+              key: SECRET_KEY
+        - name: LICENSE_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secretName }}
+              key: SECRET_KEY_LICENSE
+        - name: DATABASE_URL
+          value: "/app/data/sled_db"
+        - name: ADMIN_FILE_PATH
+          value: "/var/secrets/admins.txt"
+        - name: DATA_DIR_PATH
+          value: "/app/data"
+        - name: PDF_GEN_URL_POST
+          value: "http://autolab-pdfgen/generate" # Hard-coded internal service URL
+        - name: LOG_FILE_PATH
+          value: "/app/data/application.log"
+        - name: LICENSE_CACHE_SIZE
+          value: "100"
+        volumeMounts:
+        - name: autolab-api-storage
+          mountPath: /app/data
+        - name: secret-volume
+          mountPath: /var/secrets/
+          readOnly: true
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: {{ .Values.secretName }}
+          items:
+            - key: admins.txt
+              path: admins.txt
+  volumeClaimTemplates:
+  - metadata:
+      name: autolab-api-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.persistence.storageClassName }}
+      storageClassName: {{ .Values.persistence.storageClassName }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size }}

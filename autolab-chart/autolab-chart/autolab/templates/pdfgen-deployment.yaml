@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autolab-pdfgen
+  labels:
+    app: autolab-pdfgen
+spec:
+  replicas: {{ .Values.pdfgen.replicaCount }}
+  selector:
+    matchLabels:
+      app: autolab-pdfgen
+  template:
+    metadata:
+      labels:
+        app: autolab-pdfgen
+    spec:
+      terminationGracePeriodSeconds: 2
+      containers:
+      - name: autolab-pdfgen
+        image: "{{ .Values.pdfgen.image.repository }}:{{ .Values.pdfgen.image.tag }}"
+        imagePullPolicy: {{ .Values.pdfgen.image.pullPolicy }}
+        ports:
+        - containerPort: 5000
+        resources:
+          {{- toYaml .Values.pdfgen.resources | nindent 10 }}
+        env:
+        - name: ENVIRONMENT
+          value: "production"
