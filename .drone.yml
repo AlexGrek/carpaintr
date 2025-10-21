@@ -9,16 +9,13 @@ trigger:
   - push
   - custom
 
-environment:
-  DOCKER_REGISTRY:
-    from_secret: docker_registry
-
 steps:
 - name: build-api
   image: plugins/kaniko
   settings:
     insecure: true
-    repo: $$DOCKER_REGISTRY/library/autolab-api
+    repo: 
+      from_secret: api_image
     dockerfile: Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
     username:
@@ -26,15 +23,16 @@ steps:
     password:
       from_secret: docker_password
     
-    # --- Add these lines ---
     cache: true
-    cache_repo: $$DOCKER_REGISTRY/autolab-cache # Or any repo you want
+    cache_repo:
+      from_secret: cache_image
 
 - name: build-pdfgen
   image: plugins/kaniko
   settings:
     insecure: true
-    repo: $$DOCKER_REGISTRY/library/autolab-pdfgen
+    repo: 
+      from_secret: pdfgen_image
     dockerfile: pdf_backend/Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
     username:
@@ -43,4 +41,5 @@ steps:
       from_secret: docker_password
 
     cache: true
-    cache_repo: $$DOCKER_REGISTRY/library/autolab-cache
+    cache_repo:
+      from_secret: cache_image
