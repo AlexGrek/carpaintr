@@ -1,5 +1,5 @@
 kind: pipeline
-type: docker
+type: kubernetes  # <-- Correct, keep this
 name: build
 
 trigger:
@@ -9,15 +9,23 @@ trigger:
   - push
   - custom
 
+# This 'services' block is REQUIRED for the k8s runner to build images.
+# It runs a Docker daemon in a sidecar pod.
+services:
+- name: docker-dind
+  image: docker:20.10.17-dind
+  privileged: true # <-- This is critical
+
 steps:
 - name: build-api
   image: plugins/docker
+  # This 'environment' block tells the plugin to find the 'dind' service
   environment:
-    # Inject the registry from the secret
+    DOCKER_HOST: tcp://docker-dind:2375
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
-    insecure: true # Keep if your registry is 'localhost:5000'
+    insecure: true
     repo: ${DOCKER_REGISTRY}/autolab-api
     dockerfile: autolab-api.Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -28,12 +36,13 @@ steps:
 
 - name: build-pdfgen
   image: plugins/docker
+  # This 'environment' block is also required here
   environment:
-    # Inject the registry from the secret
+    DOCKER_HOST: tcp://docker-dind:2375
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
-    insecure: true # Keep if your registry is 'localhost:5000'
+    insecure: true
     repo: ${DOCKER_REGISTRY}/autolab-pdfgen
     dockerfile: autolab-pdfgen.Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -44,7 +53,7 @@ steps:
 
 ---
 kind: pipeline
-type: docker
+type: kubernetes  # <-- Correct, keep this
 name: deploy
 
 trigger:
@@ -54,8 +63,6 @@ trigger:
   - push
   - custom
 
-# This 'depends_on' makes this entire pipeline (stage)
-# wait for the 'build' pipeline to finish.
 depends_on:
 - build
 
@@ -63,7 +70,6 @@ steps:
 - name: deploy-chart
   image: plugins/helm3
   environment:
-    # Inject the registry here as well
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
