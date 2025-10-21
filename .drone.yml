@@ -17,7 +17,7 @@ steps:
       from_secret: docker_registry
   settings:
     insecure: true
-    repo: ${DOCKER_REGISTRY}/library/autolab-api
+    repo: $$DOCKER_REGISTRY/library/autolab-api
     dockerfile: Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
     username:
@@ -36,7 +36,7 @@ steps:
       from_secret: docker_registry
   settings:
     insecure: true
-    repo: ${DOCKER_REGISTRY}/library/autolab-pdfgen
+    repo: $$DOCKER_REGISTRY/library/autolab-pdfgen
     dockerfile: pdf_backend/Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
     username:
