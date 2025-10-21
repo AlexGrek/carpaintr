@@ -9,12 +9,13 @@ trigger:
   - push
   - custom
 
+environment:
+  DOCKER_REGISTRY:
+    from_secret: docker_registry
+
 steps:
 - name: build-api
   image: plugins/kaniko
-  environment:
-    DOCKER_REGISTRY:
-      from_secret: docker_registry
   settings:
     insecure: true
     repo: $$DOCKER_REGISTRY/library/autolab-api
@@ -31,9 +32,6 @@ steps:
 
 - name: build-pdfgen
   image: plugins/kaniko
-  environment:
-    DOCKER_REGISTRY:
-      from_secret: docker_registry
   settings:
     insecure: true
     repo: $$DOCKER_REGISTRY/library/autolab-pdfgen
