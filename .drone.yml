@@ -73,11 +73,8 @@ trigger:
 steps:
 - name: deploy
   image: alpine/helm:latest
-  environment:
-    KUBECONFIG: /tmp/kubeconfig
   commands:
-    - echo "$KUBECONFIG_CONTENT" > /tmp/kubeconfig
-    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait --kubeconfig=/tmp/kubeconfig
+    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait
   secrets:
     - source: kubeconfig
       target: KUBECONFIG_CONTENT
