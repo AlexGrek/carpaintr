@@ -1,49 +1,49 @@
-# Default values for autolab-chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
+# -- Number of replicas for the StatefulSet.
+# For an app with an embedded DB like Sled, this should almost always be 1.
 replicaCount: 1
 
-autolabApi:
-  replicaCount: 1
-  image:
-    repository: localhost:5000/autolab-api
-    tag: latest
-    pullPolicy: IfNotPresent
-  terminationGracePeriodSeconds: 2
-  service:
-    type: ClusterIP
-    port: 80
-    targetPort: 8080
-  secretName: autolab-api-secret
-  resources:
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-  env:
-    environment: "production"
-    databaseUrl: "/app/data/sled_db"
-    adminFilePath: "/var/secrets/admins.txt"
-    dataDirPath: "/app/data"
-    logFilePath: "/app/data/application.log"
-    licenseCacheSize: "100"
-  persistence:
-    hostPath: "/etc/autolab-data"
+image:
+  # -- The container image repository
+  repository: localhost:5000/autolab-api
+  # -- The container image tag
+  tag: "latest"
+  # -- The image pull policy
+  pullPolicy: IfNotPresent
 
-autolabPdfgen:
+# -- The name of the Kubernetes secret holding keys (SECRET_KEY, SECRET_KEY_LICENSE, admins.txt)
+secretName: autolab-api-secret
+
+# -- Resource limits and requests for the container
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+
+# -- Persistence configuration for the Volume Claim Template
+persistence:
+  # -- The size of the PersistentVolumeClaim
+  size: 1Gi
+  # -- (Optional) The StorageClass to use.
+  # If empty or "", the cluster's default StorageClass will be used.
+  storageClassName: ""
+
+# -----------------------------------------------------------------
+# New section for the PDF Generator service
+# -----------------------------------------------------------------
+pdfgen:
+  # -- Number of replicas for the pdfgen Deployment
   replicaCount: 1
   image:
+    # -- The container image repository
     repository: localhost:5000/autolab-pdfgen
-    tag: latest
+    # -- The container image tag
+    tag: "latest"
+    # -- The image pull policy
     pullPolicy: IfNotPresent
-  terminationGracePeriodSeconds: 2
-  service:
-    type: ClusterIP
-    port: 80
-    targetPort: 5000
+  # -- Resource limits and requests for the pdfgen container
   resources:
     limits:
       cpu: "500m"
@@ -51,28 +51,22 @@ autolabPdfgen:
     requests:
       cpu: "100m"
       memory: "256Mi"
-  env:
-    environment: "production"
 
 ingress:
+  # -- Enable or disable the Ingress resource
   enabled: true
-  className: ""
+  # -- The IngressClass to use
+  className: "traefik"
+  # -- Annotations for the Ingress controller (e.g., cert-manager)
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: le
-  hosts:
-    - host: autolab.dcommunity.space
-      paths:
-        - path: /
-          pathType: Prefix
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  # -- The hostname for the Ingress
+  host: autolab.dcommunity.space
+  # -- TLS configuration
   tls:
-    - secretName: autolab-dcommunity-space-tls
-      hosts:
-        - autolab.dcommunity.space
-
-nameOverride: ""
-fullnameOverride: ""
-
-# Common labels
-labels: {}
+    # -- Enable TLS for the Ingress
+    enabled: true
+    # -- The name of the secret to store the certificate.
+    # cert-manager will create this secret.
+    secretName: autolab-cert
