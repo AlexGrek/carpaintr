@@ -14,7 +14,7 @@ WORKDIR /app/backend-service-rust
 # Create dummy static to prevent cargo build issues before copying frontend
 RUN mkdir -p static
 # Copy backend source for dependencies only
-COPY backend-service-rust/Cargo.toml backend-service-rust/Cargo.lock ./
+COPY backend-service-rust/Cargo.toml ./
 # Build a dummy with only dependencies to cache them
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
 # Remove dummy source
