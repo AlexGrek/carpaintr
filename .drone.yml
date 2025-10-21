@@ -13,7 +13,6 @@ steps:
 - name: build-api
   image: plugins/kaniko
   settings:
-    insecure: true
     repo: 
       from_secret: api_image
     dockerfile: Dockerfile
@@ -30,7 +29,6 @@ steps:
 - name: build-pdfgen
   image: plugins/kaniko
   settings:
-    insecure: true
     repo: 
       from_secret: pdfgen_image
     dockerfile: pdf_backend/Dockerfile
