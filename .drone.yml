@@ -1,6 +1,6 @@
 kind: pipeline
 type: kubernetes
-name: build-and-deploy-autolab
+name: build
 
 trigger:
   branch:
@@ -8,24 +8,15 @@ trigger:
   event:
   - push
 
-services:
-- name: docker-dind
-  image: docker:20.10.17-dind
-  privileged: true
-
 steps:
 - name: build-api
   image: plugins/docker
   environment:
-    DOCKER_HOST: tcp://docker-dind:2375
-    # Inject the registry from the new secret
+    # Inject the registry from the secret
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
-    # 'insecure: true' is needed if your registry doesn't use valid HTTPS
-    # (like localhost:5000). Remove if your $REGISTRY is e.g., Docker Hub.
-    insecure: true
-    # Use the variable to construct the repo name
+    insecure: true # Keep if your registry is 'localhost:5000'
     repo: ${DOCKER_REGISTRY}/autolab-api
     dockerfile: autolab-api.Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -37,13 +28,11 @@ steps:
 - name: build-pdfgen
   image: plugins/docker
   environment:
-    DOCKER_HOST: tcp://docker-dind:2375
-    # Inject the registry from the new secret
+    # Inject the registry from the secret
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
-    insecure: true
-    # Use the variable to construct the repo name
+    insecure: true # Keep if your registry is 'localhost:5000'
     repo: ${DOCKER_REGISTRY}/autolab-pdfgen
     dockerfile: autolab-pdfgen.Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -52,10 +41,27 @@ steps:
     password:
       from_secret: docker_password
 
+---
+kind: pipeline
+type: kubernetes
+name: deploy
+
+trigger:
+  branch:
+  - main
+  event:
+  - push
+
+# This 'depends_on' makes this entire pipeline (stage)
+# wait for the 'build' pipeline to finish.
+depends_on:
+- build
+
+steps:
 - name: deploy-chart
   image: plugins/helm3
-  # Inject the registry here as well for the 'set' command
   environment:
+    # Inject the registry here as well
     DOCKER_REGISTRY:
       from_secret: docker_registry
   settings:
@@ -69,11 +75,7 @@ steps:
     wait: true
     atomic: true
     set:
-      # We now set the full repository path and the tag
       - "image.repository=${DOCKER_REGISTRY}/autolab-api"
       - "image.tag=${DRONE_COMMIT_SHA:0:7}"
       - "pdfgen.image.repository=${DOCKER_REGISTRY}/autolab-pdfgen"
       - "pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7}"
-  depends_on:
-  - build-api
-  - build-pdfgen
