@@ -4,16 +4,16 @@ name: build
 
 trigger:
   branch:
-  - main
+    - main
   event:
-  - push
-  - custom
+    - push
+    - custom
 
 steps:
 - name: build-api
   image: plugins/kaniko
   settings:
-    repo: 
+    repo:
       from_secret: api_image
     dockerfile: Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -23,7 +23,6 @@ steps:
       from_secret: docker_password
     registry:
       from_secret: registry
-    
     cache: true
     cache_repo:
       from_secret: cache_image
@@ -31,7 +30,7 @@ steps:
 - name: build-pdfgen
   image: plugins/kaniko
   settings:
-    repo: 
+    repo:
       from_secret: pdfgen_image
     dockerfile: pdf_backend/Dockerfile
     tags: "${DRONE_COMMIT_SHA:0:7}"
@@ -41,11 +40,25 @@ steps:
       from_secret: docker_password
     registry:
       from_secret: registry
-
     cache: true
     cache_repo:
       from_secret: cache_image
 
+depends_on: []
+
+---
+kind: pipeline
+type: kubernetes
+name: deploy
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+    - custom
+
+steps:
 - name: deploy
   image: alpine/helm:latest
   environment:
@@ -57,6 +70,6 @@ steps:
   secrets:
     - source: kubeconfig
       target: KUBECONFIG_CONTENT
-  when:
-    status:
-      - success
+
+depends_on:
+- build
