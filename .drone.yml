@@ -62,7 +62,6 @@ steps:
 kind: pipeline
 type: kubernetes
 name: deploy
-service_account_name: drone/drone-deploy
 
 trigger:
   branch:
