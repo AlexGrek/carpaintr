@@ -27,6 +27,12 @@ steps:
     cache_repo:
       from_secret: cache_image
 
+- name: debug-kube
+  image: bitnami/kubectl
+  commands:
+    - kubectl config view --minify
+    - kubectl auth whoami
+
 ---
 kind: pipeline
 type: kubernetes
