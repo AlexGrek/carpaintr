@@ -1,14 +1,17 @@
 # Autolab
 
+[![Build Status](https://drone.dcommunity.space/api/badges/AlexGrek/carpaintr/status.svg?ref=refs/heads/main)](https://drone.dcommunity.space/AlexGrek/carpaintr)
+
 ## Development
 
 ### backend
 
 Run backend:
 
-`cd backend-service-rust`
-
-`cargo run`
+```sh
+cd backend-service-rust`
+cargo run
+```
 
 Build binary:
 
@@ -26,13 +29,3 @@ npm run dev
 ```
 
 Frontend server uses proxy for API requests, so backend should be running and listening on port `8080`
-
-# Build
-
-`make all` or `make redeploy`
-
-# Deploy
-
-Create secret as described in the makefile and then run
-`make deploy-service`
-
