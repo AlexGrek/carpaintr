@@ -74,13 +74,12 @@ steps:
 - name: deploy
   image: alpine/helm:latest
   commands:
-    - mkdir -p /tmp
-    - echo "$KUBECONFIG_CONTENT" > /tmp/kubeconfig
-    - chmod 600 /tmp/kubeconfig
-    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait --kubeconfig=/tmp/kubeconfig
-  secrets:
-    - source: kubeconfig
-      target: KUBECONFIG_CONTENT
+    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.repository=${API_IMAGE} --set pdfgen.image.repository=${PDFGEN_IMAGE} --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait
+  environment:
+    API_IMAGE:
+      from_secret: api_image
+    PDFGEN_IMAGE:
+      from_secret: pdfgen_image
 
 depends_on:
 - build-api
