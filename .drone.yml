@@ -73,13 +73,20 @@ trigger:
 steps:
 - name: deploy
   image: alpine/helm:latest
-  commands:
-    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab --namespace=autolab --create-namespace --set api.image.repository=${API_IMAGE} --set pdfgen.image.repository=${PDFGEN_IMAGE} --set api.image.tag=${DRONE_COMMIT_SHA:0:7} --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} --wait
   environment:
     API_IMAGE:
       from_secret: api_image
     PDFGEN_IMAGE:
       from_secret: pdfgen_image
+  commands:
+    - echo "Using API_IMAGE=$API_IMAGE and PDFGEN_IMAGE=$PDFGEN_IMAGE"
+    - helm upgrade --install autolab ./autolab-chart/autolab-chart/autolab \
+        --namespace=autolab --create-namespace \
+        --set image.repository=$API_IMAGE \
+        --set pdfgen.image.repository=$PDFGEN_IMAGE \
+        --set image.tag=${DRONE_COMMIT_SHA:0:7} \
+        --set pdfgen.image.tag=${DRONE_COMMIT_SHA:0:7} \
+        --wait
 
 depends_on:
 - build-api
