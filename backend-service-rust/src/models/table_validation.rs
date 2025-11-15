@@ -30,7 +30,7 @@ impl ValidationRule {
     pub fn apply(&self, other: &str) -> String {
         match &self.fix_action {
             FixAction::Replace { replacement } => {
-                other.replace(&self.matcher, &replacement).to_string()
+                other.replace(&self.matcher, replacement).to_string()
             }
             FixAction::NoAction => other.to_string(),
         }

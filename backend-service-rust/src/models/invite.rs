@@ -5,17 +5,14 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum UsagePolicy {
+    #[default]
     UseOnce,
     UseForever,
     UseUpToCertainLimit(usize),
 }
 
-impl Default for UsagePolicy {
-    fn default() -> Self {
-        UsagePolicy::UseOnce
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

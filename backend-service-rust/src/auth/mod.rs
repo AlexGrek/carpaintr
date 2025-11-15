@@ -30,13 +30,13 @@ impl Auth {
     /// Hashes a plain text password using bcrypt.
     pub fn hash_password(&self, password: &str) -> Result<String, AppError> {
         // bcrypt::hash is a synchronous operation
-        hash(password, DEFAULT_COST).map_err(|e| AppError::BcryptError(e))
+        hash(password, DEFAULT_COST).map_err(AppError::BcryptError)
     }
 
     /// Verifies a plain text password against a bcrypt hash.
     pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool, AppError> {
         // bcrypt::verify is a synchronous operation
-        verify(password, hash).map_err(|e| AppError::BcryptError(e))
+        verify(password, hash).map_err(AppError::BcryptError)
     }
 
     /// Creates a new JWT token for the given user email.
@@ -53,7 +53,7 @@ impl Auth {
         };
 
         // Encode the claims into a JWT
-        encode(&Header::default(), &claims, &self.encoding_key).map_err(|e| AppError::JwtError(e))
+        encode(&Header::default(), &claims, &self.encoding_key).map_err(AppError::JwtError)
     }
 
     /// Decodes and validates a JWT token, returning the claims if valid.
@@ -61,6 +61,6 @@ impl Auth {
         // Decode the token and validate it (signature, expiration)
         decode::<Claims>(token, &self.decoding_key, &Validation::default())
             .map(|data| data.claims) // Extract the claims from the token data
-            .map_err(|e| AppError::JwtError(e)) // Convert jsonwebtoken error to AppError
+            .map_err(AppError::JwtError) // Convert jsonwebtoken error to AppError
     }
 }

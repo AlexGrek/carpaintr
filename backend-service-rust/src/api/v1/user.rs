@@ -101,7 +101,7 @@ pub async fn find_or_create_company_info(
     user: &str,
 ) -> Result<CompanyInfo, AppError> {
     // Get the user's data directory path
-    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user)
+    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, user)
         .map_err(|e| {
             AppError::InternalServerError(format!("Failed to get user directory: {}", e))
         })?;
@@ -143,7 +143,7 @@ pub async fn find_or_create_company_info(
         AppError::InternalServerError(format!("Failed to parse company.json: {}", e))
     })?;
 
-    return Ok(company_info);
+    Ok(company_info)
 }
 
 // Handler to get company information from company.json

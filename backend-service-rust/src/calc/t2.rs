@@ -1,28 +1,21 @@
-use futures_util::future::join_all;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::sync::LazyLock;
-use tokio::fs::File;
-use tokio::io::BufReader;
-use utils::stringext;
 
-use crate::calc::constants::{self, *};
+use crate::calc::constants::*;
 use crate::errors::AppError;
-use crate::exlogging::{self, log_event};
-use crate::models::table_validation::{make_basic_validation_rules, ValidationRule};
 use crate::utils::stringext::StringExt;
 use crate::utils::{
-    self, parse_csv_delimiter_header_async, parse_csv_file_async_safe, serialize_and_write_csv,
+    self, parse_csv_file_async_safe,
     DataStorageCache,
 };
-use tokio::io::AsyncBufReadExt;
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
 
-pub const TABLE_T2: &'static str = "tables/t2.csv";
+pub const TABLE_T2: &str = "tables/t2.csv";
 
 pub async fn t2_rows_all(
     user_email: &str,
@@ -30,11 +23,11 @@ pub async fn t2_rows_all(
     cache: &DataStorageCache,
 ) -> Result<Vec<IndexMap<String, String>>, AppError> {
     let path_in_userspace =
-        crate::utils::get_file_path_user_common(&data_dir, &user_email, &TABLE_T2.to_string())
+        crate::utils::get_file_path_user_common(data_dir, user_email, &TABLE_T2.to_string())
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let data = parse_csv_file_async_safe(data_dir, &path_in_userspace, cache).await?;
-    return Ok(data);
+    Ok(data)
 }
 
 pub async fn t2_rows_by_body_type(
@@ -44,9 +37,9 @@ pub async fn t2_rows_by_body_type(
     cache: &DataStorageCache,
 ) -> Result<Vec<IndexMap<String, String>>, AppError> {
     let path_in_userspace =
-        crate::utils::get_file_path_user_common(&data_dir, &user_email, &TABLE_T2.to_string())
+        crate::utils::get_file_path_user_common(data_dir, user_email, &TABLE_T2.to_string())
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let data = parse_csv_file_async_safe(data_dir, &path_in_userspace, cache).await?;
     let filtered_by_class = data
         .into_iter()
@@ -59,7 +52,7 @@ pub async fn t2_rows_by_body_type(
             false
         })
         .collect();
-    return Ok(filtered_by_class);
+    Ok(filtered_by_class)
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -115,14 +108,14 @@ pub fn t2_parse_row(row: IndexMap<String, String>) -> Result<T2PartEntry, AppErr
         row[T2_PART_2].clone()
     };
 
-    return Ok(T2PartEntry {
+    Ok(T2PartEntry {
         group,
         name,
         zone: row[T2_ZONE].clone(),
         car_blueprint: row[T2_BLUEPRINT].clone(),
         // TODO: add actions parsing
         ..T2PartEntry::default()
-    });
+    })
 }
 
 pub fn parse_all_nofail(rows: Vec<IndexMap<String, String>>) -> (Vec<T2PartEntry>, Vec<AppError>) {

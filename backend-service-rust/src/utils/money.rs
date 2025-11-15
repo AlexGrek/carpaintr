@@ -44,7 +44,7 @@ impl FromStr for Money {
         if s.is_empty() {
             exlogging::log_event(
                 exlogging::LogLevel::Error,
-                &format!("Currency parsing error: '{}'", s),
+                format!("Currency parsing error: '{}'", s),
                 None::<String>,
             );
             return Ok(Self::default());
@@ -66,7 +66,7 @@ impl FromStr for Money {
         if parts.len() != 2 {
             exlogging::log_event(
                 exlogging::LogLevel::Error,
-                &format!("Currency parsing error: '{}'", s),
+                format!("Currency parsing error: '{}'", s),
                 None::<String>,
             );
             return Ok(Self::default());
@@ -75,7 +75,7 @@ impl FromStr for Money {
         let major: i64 = parts[0].parse().unwrap_or_else(|_| {
             exlogging::log_event(
                 exlogging::LogLevel::Error,
-                &format!("Currency parsing error: '{}'", s),
+                format!("Currency parsing error: '{}'", s),
                 None::<String>,
             );
             0
@@ -90,7 +90,7 @@ impl FromStr for Money {
         let minor: i64 = frac_str.parse().unwrap_or_else(|_| {
             exlogging::log_event(
                 exlogging::LogLevel::Error,
-                &format!("Currency parsing error: '{}'", s),
+                format!("Currency parsing error: '{}'", s),
                 None::<String>,
             );
             0

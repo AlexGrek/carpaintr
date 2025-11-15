@@ -18,7 +18,7 @@ use crate::{
 };
 
 static JS_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("js"));
-pub const PROCS: &'static str = "procs";
+pub const PROCS: &str = "procs";
 
 pub async fn bundle_plugins_as_array<I, P>(paths: I) -> Result<String, AppError>
 where
@@ -58,7 +58,7 @@ async fn bundle_plugins_for_user(
     _cache: &DataStorageCache, // TODO: use cache
 ) -> Result<String, AppError> {
     let all_js_files = utils::all_files_with_extension(data_dir, user_email, PROCS, &JS_EXT).await?;
-    Ok(bundle_plugins_as_array(all_js_files).await?)
+    bundle_plugins_as_array(all_js_files).await
 }
 
 pub async fn get_all_plugins(

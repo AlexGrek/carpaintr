@@ -12,7 +12,7 @@ use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-const CALCULATIONS: &'static str = "stored_calculations";
+const CALCULATIONS: &str = "stored_calculations";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SaveSuccessResponse {
@@ -27,10 +27,10 @@ pub struct FileQuery {
 pub fn apply_and_return_file_name(data: &mut CarCalcData) -> String {
     let file_name_existing = &data.car.store_file_name.clone();
     if file_name_existing.is_some() {
-        return file_name_existing.as_deref().unwrap().into();
+        file_name_existing.as_deref().unwrap().into()
     } else {
         data.car.store_file_name = Some(create_new_saved_file_path(data));
-        return data.car.store_file_name.as_deref().unwrap().into();
+        data.car.store_file_name.as_deref().unwrap().into()
     }
 }
 
@@ -43,7 +43,7 @@ pub fn create_new_saved_file_path(data: &CarCalcData) -> String {
         format!("{}_{}", data.car.body_type, data.car.car_class)
     };
     let file_name = format!("{}_{}_{:?}", header, data.car.year, chrono::Utc::now());
-    return format!("{}.json", sanitize_alphanumeric_and_dashes(&file_name));
+    format!("{}.json", sanitize_alphanumeric_and_dashes(&file_name))
 }
 
 // Handler for uploading user files
@@ -91,7 +91,7 @@ pub async fn get_calculations_list(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let user_path = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
-    let file_path = user_path.join(&CALCULATIONS);
+    let file_path = user_path.join(CALCULATIONS);
 
     let calcs = get_file_summary(file_path).await?;
 

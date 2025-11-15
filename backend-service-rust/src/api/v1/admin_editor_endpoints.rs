@@ -34,7 +34,7 @@ pub async fn run_list_class_body_types_rebuild(data_dir: &PathBuf, user: Option<
     let t1_path = common_path.join(T1);
     log_event(exlogging::LogLevel::Info, "Class body type rebuild triggered by admin or rebuild", user.clone());
     let exist_t1 = tokio::fs::try_exists(&t1_path).await;
-    if exist_t1.is_err() || exist_t1.unwrap() == false {
+    if exist_t1.is_err() || !exist_t1.unwrap() {
         log_event(exlogging::LogLevel::Error, format!("File {:?} not found", &t1_path.as_os_str()), user.clone());
     }
     let mapping = car_class_to_body_type::read_csv_and_map(&t1_path, &common_path).map_err(|e| AppError::InternalServerError(e.to_string()))?;
@@ -53,7 +53,7 @@ pub async fn read_file(
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
     let user_path = &app_state.data_dir_path;
-    let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
+    let data = get_file_as_string_by_path(&user_path.join(&path), user_path, &app_state.cache)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(data)
@@ -96,7 +96,7 @@ pub async fn upload_file(
         .bytes()
         .await
         .map_err(|_| AppError::InternalServerError("Failed to read file data".to_string()))?;
-    let end_path = user_path.join(&PathBuf::from(&path));
+    let end_path = user_path.join(PathBuf::from(&path));
     app_state.cache.invalidate(&end_path).await;
     tokio::fs::write(end_path, data).await?;
     Ok(Json("File uploaded and validated successfully"))

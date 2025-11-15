@@ -22,7 +22,7 @@ pub async fn get_common_file_list(
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let fs_manager = GitTransactionalFs::new(
-        app_state.data_dir_path.join(&COMMON),
+        app_state.data_dir_path.join(COMMON),
         user_email,
         &app_state.cache,
     )
@@ -162,7 +162,7 @@ pub async fn read_common_file(
     axum::extract::Path(path): axum::extract::Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     // Read the file content
-    let user_path = PathBuf::new().join(&app_state.data_dir_path).join(&COMMON);
+    let user_path = PathBuf::new().join(&app_state.data_dir_path).join(COMMON);
     let data =
         get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache).await?;
     Ok(data)

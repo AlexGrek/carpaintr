@@ -32,11 +32,11 @@ use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 pub mod money;
 pub mod stringext;
 
-pub const COMMON: &'static str = "common";
-pub const USERS: &'static str = "users";
-pub const USERS_DELETED: &'static str = "deleted_users";
-pub const CATALOG: &'static str = "catalog";
-pub const ATTACHMENTS: &'static str = "attachments";
+pub const COMMON: &str = "common";
+pub const USERS: &str = "users";
+pub const USERS_DELETED: &str = "deleted_users";
+pub const CATALOG: &str = "catalog";
+pub const ATTACHMENTS: &str = "attachments";
 
 #[derive(Debug)]
 pub struct DataStorageCache {
@@ -76,7 +76,7 @@ impl DataStorageCache {
         let mut sizes = Vec::new();
 
         let string_cache = self.as_string.read().await;
-        let string_size: usize = string_cache.iter().map(|(_, v)| v.as_bytes().len()).sum();
+        let string_size: usize = string_cache.iter().map(|(_, v)| v.len()).sum();
         sizes.push(("String".to_string(), string_cache.len(), string_size));
 
         let vec_u8_cache = self.as_vec_u8.read().await;
@@ -140,7 +140,7 @@ pub async fn parse_csv_delimiter_header_async<P: AsRef<Path>>(
     let sample = format!("{}{}", first_line, second_line);
     let delimiter = detect_separator_from_string(&sample);
 
-    return Ok((String::from(delimiter as char), Vec::new()));
+    Ok((String::from(delimiter as char), Vec::new()))
 }
 
 async fn parse_csv_file_async<P: AsRef<Path>>(
@@ -212,7 +212,7 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
 ) -> Result<Vec<IndexMap<String, String>>, AppError> {
     let safe_path = safety_check_only(&base, &target)?;
     let parsed = parse_csv_file_async(&safe_path, cache).await?;
-    return Ok(parsed);
+    Ok(parsed)
 }
 
 /// Serialize Vec<HashMap<String, String>> to CSV string using csv crate
@@ -325,7 +325,7 @@ pub async fn safe_write<P: AsRef<Path>>(
         fs::create_dir_all(parent).await?;
     }
     fs::write(&safe_path, content).await?;
-    cache.invalidate(&safe_path.as_ref()).await;
+    cache.invalidate(safe_path.as_ref()).await;
     Ok(safe_path)
 }
 
@@ -340,7 +340,7 @@ pub async fn safe_write_overwrite<P: AsRef<Path>>(
     if let Some(parent) = safe_path.parent() {
         fs::create_dir_all(parent).await?;
     }
-    cache.invalidate(&safe_path.as_ref()).await;
+    cache.invalidate(safe_path.as_ref()).await;
     // Check if file exists and log it
     if safe_path.exists() {
         log::debug!("File {:?} exists, will overwrite", safe_path);
@@ -349,7 +349,7 @@ pub async fn safe_write_overwrite<P: AsRef<Path>>(
     match fs::write(&safe_path, content).await {
         Ok(()) => {
             log::debug!("Successfully wrote file {:?}", safe_path);
-            cache.invalidate(&safe_path.as_ref()).await;
+            cache.invalidate(safe_path.as_ref()).await;
             Ok(safe_path)
         }
         Err(e) => {
@@ -436,7 +436,7 @@ pub fn user_deleted_directory_from_email(
     email: &str,
 ) -> Result<PathBuf, std::io::Error> {
     let full_path = data_dir
-        .join(&USERS_DELETED)
+        .join(USERS_DELETED)
         .join(sanitize_email_for_path(email));
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
@@ -446,7 +446,7 @@ pub fn user_personal_directory_from_email(
     data_dir: &PathBuf,
     email: &str,
 ) -> Result<PathBuf, std::io::Error> {
-    let full_path = data_dir.join(&USERS).join(sanitize_email_for_path(email));
+    let full_path = data_dir.join(USERS).join(sanitize_email_for_path(email));
     std::fs::create_dir_all(&full_path)?;
     Ok(full_path)
 }
@@ -506,7 +506,7 @@ pub async fn get_catalog_file_as_string(
             &PathBuf::from(kind).join(&path),
         )
         .await?;
-        get_file_as_string_by_path(&file_path, &data_dir_path, &cache)
+        get_file_as_string_by_path(&file_path, data_dir_path, cache)
             .await
             .map_err(|_err| AppError::Forbidden)
     } else {
@@ -543,7 +543,7 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     if fs::metadata(&path_buf).await.is_ok() {
         let content = fs::read_to_string(&path_buf).await?;
         cache.as_string.write().await.put(path_buf, content.clone());
-        return Ok(content);
+        Ok(content)
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path").into())
     }

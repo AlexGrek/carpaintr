@@ -12,13 +12,13 @@ use std::path::PathBuf;
 ///
 /// This constant is used when looking up user-specific
 /// or shared document templates inside the data directory.
-pub const TEMPLATES: &'static str = "doc_templates";
+pub const TEMPLATES: &str = "doc_templates";
 
 /// Directory name for document samples.
 ///
 /// This constant is used when looking up user-specific
 /// or shared sample documents inside the data directory.
-pub const SAMPLES: &'static str = "samples";
+pub const SAMPLES: &str = "samples";
 
 /// List all available templates for a given user.
 ///
@@ -39,7 +39,7 @@ pub async fn list_templates(
 ) -> Result<Vec<String>, AppError> {
     let data = list_catalog_files_user_common(data_dir_path, user_email, &TEMPLATES)
         .await
-        .map_err(|e| AppError::IoError(e))?;
+        .map_err(AppError::IoError)?;
     Ok(data)
 }
 
@@ -62,7 +62,7 @@ pub async fn list_samples(
 ) -> Result<Vec<String>, AppError> {
     let data = list_catalog_files_user_common(data_dir_path, user_email, &SAMPLES)
         .await
-        .map_err(|e| AppError::IoError(e))?;
+        .map_err(AppError::IoError)?;
     Ok(data)
 }
 
@@ -121,7 +121,7 @@ pub async fn send_gen_doc_request(
     format: &str
 ) -> Result<Response, AppError> {
     let client = Client::new();
-    Ok(client
+    client
         .post(format!("{}/{}", pdf_gen_api_url_post, format))
         .json(&internal_request)
         .send()
@@ -133,5 +133,5 @@ pub async fn send_gen_doc_request(
                 Some(user_email),
             );
             AppError::InternalServerError(err.to_string())
-        })?)
+        })
 }

@@ -1,5 +1,4 @@
 use chrono::Utc;
-use log;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs::OpenOptions;

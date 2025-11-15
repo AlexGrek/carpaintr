@@ -81,7 +81,7 @@ impl AppDb {
     ) -> Result<(), AppError> {
         let key = email.as_bytes();
 
-        log_event(LogLevel::Info, format!("Change password"), Some(email));
+        log_event(LogLevel::Info, "Change password".to_string(), Some(email));
         // Retrieve the user to update
         let mut user = self
             .find_user_by_email(email)?

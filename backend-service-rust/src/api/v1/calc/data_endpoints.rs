@@ -23,13 +23,13 @@ use axum::{
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::json;
-use std::{collections::HashSet, hash::Hash, path::PathBuf, sync::Arc};
+use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
-const CARS: &'static str = "cars";
-const GLOBAL: &'static str = "global";
-pub const T1: &'static str = "tables/t1.csv";
-pub const REPAIR_TYPES_TABLE: &'static str = "tables/repair_types.csv";
-const SEASONS_YAML: &'static str = "seasons.yaml";
+const CARS: &str = "cars";
+const GLOBAL: &str = "global";
+pub const T1: &str = "tables/t1.csv";
+pub const REPAIR_TYPES_TABLE: &str = "tables/repair_types.csv";
+const SEASONS_YAML: &str = "seasons.yaml";
 
 pub async fn list_car_makes(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -37,7 +37,7 @@ pub async fn list_car_makes(
 ) -> Result<impl IntoResponse, AppError> {
     let data = list_catalog_files_user_common(&app_state.data_dir_path, &user_email, &CARS)
         .await
-        .map_err(|e| AppError::IoError(e))?;
+        .map_err(AppError::IoError)?;
     let car_makes: Vec<String> = data.iter().map(|s| s.replace(".yaml", "")).collect();
     Ok(Json(car_makes))
 }
@@ -51,7 +51,7 @@ pub async fn list_class_body_types(
     let path_in_userspace =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let string = tokio::fs::read_to_string(path_in_userspace)
         .await
         .map_err(|_e| AppError::FileNotFound)?;
@@ -67,7 +67,7 @@ pub async fn get_cars_by(
     let cars_path =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let cars_data = crate::calc::cars::parse_car_yaml(&cars_path)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     Ok(Json(cars_data))
@@ -82,7 +82,7 @@ pub async fn get_car_parts_by_type_class(
     let cars_path =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let cars_data = crate::calc::cars::parse_csv_t1(&cars_path)
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
     let real_body = body_type_into_t1_entry(&body_type);
@@ -90,7 +90,7 @@ pub async fn get_car_parts_by_type_class(
         .into_iter()
         .filter(|fld| fld.class == class && fld.type_field == real_body)
         .collect();
-    if parts_lines.len() < 1 {
+    if parts_lines.is_empty() {
         return Err(AppError::InvalidData(format!(
             "Data for class {} and body type {} found: {}",
             &class,
@@ -123,7 +123,7 @@ pub async fn list_all_repair_types(
         &REPAIR_TYPES_TABLE,
     )
     .await
-    .map_err(|e| AppError::IoError(e))?;
+    .map_err(AppError::IoError)?;
     let parsed =
         utils::parse_csv_file_async_safe(&app_state.data_dir_path, &table_file, &app_state.cache)
             .await?;
@@ -188,7 +188,7 @@ pub async fn list_all_parts(
     let t1 =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let parsed = parse_csv_file_async_safe(&app_state.data_dir_path, &t1, &app_state.cache).await?;
     Ok(Json(get_unique_values_iter(
         &parsed,
@@ -206,7 +206,7 @@ pub async fn get_global_file(
     let path_in_userspace =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     let string = tokio::fs::read_to_string(path_in_userspace)
         .await
         .map_err(|_e| AppError::FileNotFound)?;
@@ -217,11 +217,11 @@ pub async fn get_season(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let file_path = PathBuf::from(&GLOBAL).join(&SEASONS_YAML);
+    let file_path = PathBuf::from(&GLOBAL).join(SEASONS_YAML);
     let path_in_userspace =
         crate::utils::get_file_path_user_common(&app_state.data_dir_path, &user_email, &file_path)
             .await
-            .map_err(|e| AppError::IoError(e))?;
+            .map_err(AppError::IoError)?;
     Ok(Json(get_current_season_info(&path_in_userspace).map_err(
         |e| AppError::InternalServerError(e.to_string()),
     )?))

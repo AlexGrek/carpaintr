@@ -14,7 +14,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-pub const DELETED_SUPPORT_REQUESTS: &'static str = "deleted_support_requests";
+pub const DELETED_SUPPORT_REQUESTS: &str = "deleted_support_requests";
 
 pub async fn support_get_all_requests(
     AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -61,10 +61,10 @@ pub async fn support_delete(
             )
             .await?;
             requests::remove_request(&app_state.db.requests_tree, &q.email, &q.id)?;
-            return Ok(());
+            Ok(())
         }
         _ => {
-            return Err(AppError::BadRequest(format!(
+            Err(AppError::BadRequest(format!(
                 "Support ticket not found for email={}, id={}",
                 q.email, q.id
             )))
@@ -80,10 +80,10 @@ pub async fn support_get(
     let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
     match r {
         Some(request) => {
-            return Ok(Json(request));
+            Ok(Json(request))
         }
         _ => {
-            return Err(AppError::BadRequest(format!(
+            Err(AppError::BadRequest(format!(
                 "Support ticket not found for email={}, id={}",
                 q.email, q.id
             )))
@@ -116,10 +116,10 @@ pub async fn user_get(
     let r = requests::get_request(&app_state.db.requests_tree, &q.email, &q.id)?;
     match r {
         Some(request) => {
-            return Ok(Json(request));
+            Ok(Json(request))
         }
         _ => {
-            return Err(AppError::BadRequest(format!(
+            Err(AppError::BadRequest(format!(
                 "Support ticket not found for email={}, id={}",
                 q.email, q.id
             )))

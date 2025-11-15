@@ -103,7 +103,7 @@ pub async fn list_files_raw(path: &PathBuf) -> Result<FsEntry, TransactionalFsEr
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_else(|| "/".to_string()); // Fallback for root if no name
 
-    let children = GitTransactionalFs::walk_dir_recursive(&path).await?;
+    let children = GitTransactionalFs::walk_dir_recursive(path).await?;
 
     Ok(FsEntry::Directory {
         name: root_name,
@@ -289,7 +289,7 @@ impl<'a> TransactionalFs for GitTransactionalFs<'a> {
             })?;
 
             // Skip empty line after message
-            if lines.peek().map_or(false, |l| l.is_empty()) {
+            if lines.peek().is_some_and(|l| l.is_empty()) {
                 lines.next();
             }
 

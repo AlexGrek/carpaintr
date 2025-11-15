@@ -9,7 +9,7 @@ use crate::calc::cars::t1_entry_into_body_type;
 use crate::errors::AppError;
 use crate::exlogging::log_event;
 
-pub const CLASS_TYPE_MAPPING_FILE: &'static str = "tables/class_body_mapping.yaml";
+pub const CLASS_TYPE_MAPPING_FILE: &str = "tables/class_body_mapping.yaml";
 
 
 /// Reads a CSV file and creates a mapping from carClass to a list of unique bodyTypes.

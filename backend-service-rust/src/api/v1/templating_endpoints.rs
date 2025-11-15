@@ -3,10 +3,10 @@ use crate::{
     errors::AppError,
     middleware::AuthenticatedUser,
     state::AppState,
-    utils::{self, get_catalog_file_as_string}, // Import the new CompanyInfo struct
+    utils::get_catalog_file_as_string, // Import the new CompanyInfo struct
 };
 use axum::{extract::State, response::IntoResponse, Json};
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 pub async fn list_templates(
     AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user

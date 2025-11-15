@@ -10,9 +10,9 @@ use crate::{
     state::AppState,
 };
 
-pub const INVITES: &'static str = "invites";
-pub const ARCHIVED: &'static str = "archived";
-pub const ACTIVE: &'static str = "active";
+pub const INVITES: &str = "invites";
+pub const ARCHIVED: &str = "archived";
+pub const ACTIVE: &str = "active";
 
 async fn try_find_invite_by_path(path: &Path) -> Result<Invite, AppError> {
     if !path.exists() {
@@ -59,7 +59,7 @@ pub async fn consume_invite(invite: &Invite, state: &AppState) -> Result<(), App
 
     // Check if the usage policy has been met.
     let should_archive = match invite.usage_policy {
-        UsagePolicy::UseOnce => invite.used_by.len() >= 1,
+        UsagePolicy::UseOnce => !invite.used_by.is_empty(),
         UsagePolicy::UseUpToCertainLimit(limit) => invite.used_by.len() >= limit,
         UsagePolicy::UseForever => false, // Never archive a "UseForever" invite
     };
@@ -89,14 +89,14 @@ async fn generate_license_by_invite(
     let expiry_date = Utc::now() + Duration::days(days as i64);
     // Generate the JWT token
     let token = generate_license_token(
-        &user_email,
+        user_email,
         expiry_date,
         Some(license_type.to_string()),
         state.jwt_license_secret.as_bytes(),
     )?;
 
     // Save the license file
-    save_license_file(&user_email, &token, &state.data_dir_path).await?;
+    save_license_file(user_email, &token, &state.data_dir_path).await?;
     Ok(())
 }
 

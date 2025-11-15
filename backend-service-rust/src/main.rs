@@ -110,14 +110,14 @@ async fn main() -> tokio::io::Result<()> {
     match init_result {
         Ok(_) => log_event(
             LogLevel::Debug,
-            format!("Created body type class mapping at application startup."),
+            "Created body type class mapping at application startup.".to_string(),
             None::<String>,
         ),
         Err(e) => log_event(
             LogLevel::Error,
             format!(
                 "Failed to initialize body type class mapping at application startup: {}",
-                e.to_string()
+                e
             ),
             None::<String>,
         ),

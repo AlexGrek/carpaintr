@@ -32,7 +32,7 @@ impl LicenseCache {
     // This function is async because it uses tokio::fs
     async fn load_license_from_disk(&self, email: &str) -> Result<LicenseData, AppError> {
         let token = crate::license_manager::read_latest_license_file(email, &self.data_dir).await?;
-        let data = crate::license_manager::decode_license_token(&token, &self.jwt_license_secret.as_bytes())?;
+        let data = crate::license_manager::decode_license_token(&token, self.jwt_license_secret.as_bytes())?;
         let license_data = LicenseData::new(data);
         log_event(crate::exlogging::LogLevel::Trace, format!("License read from disk: {}", license_data.to_json_pretty()?), Some(email));
         Ok(license_data)

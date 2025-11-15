@@ -93,7 +93,7 @@ pub fn set_attachment_lifecycle_checked(
             Ok(data)
         }
         _ => {
-            return Err(AppError::BadRequest(format!(
+            Err(AppError::BadRequest(format!(
                 "Attachment not found by id={}",
                 attachment_id
             )))
@@ -234,7 +234,7 @@ pub fn try_get_by_id(
 ) -> Result<Option<AttachmentHandle>, AppError> {
     let key = id;
 
-    match attachments_tree.get(&key)? {
+    match attachments_tree.get(key)? {
         Some(ivec) => {
             let req: AttachmentHandle = serde_json::from_slice(&ivec)?;
             Ok(Some(req))
@@ -257,7 +257,7 @@ pub fn handle_attachment(
         size,
     );
     insert_attachment(&db.attachments_tree, &handle)?;
-    return Ok(handle);
+    Ok(handle)
 }
 
 fn insert_attachment(requests_tree: &Tree, a: &AttachmentHandle) -> Result<(), AppError> {

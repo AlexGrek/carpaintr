@@ -19,7 +19,7 @@ use tokio::io::AsyncBufReadExt;
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
 
-pub const TABLES: &'static str = "tables";
+pub const TABLES: &str = "tables";
 
 pub async fn all_tables_list(
     data_dir: &PathBuf,
@@ -47,7 +47,7 @@ pub async fn lookup(
                 Err(e) => {
                     log_event(
                         crate::exlogging::LogLevel::Error,
-                        format!("Error while parsing tables: {}", e.to_string()),
+                        format!("Error while parsing tables: {}", e),
                         Some(email),
                     );
                     None
@@ -117,7 +117,7 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
     }
     for line in parsed.iter_mut() {
         for (key, value) in line.iter_mut() {
-            if let Some(upd) = fix_table_value(&validators, &value, &key) {
+            if let Some(upd) = fix_table_value(&validators, value, key) {
                 *value = upd;
                 issues.push(format!("FIXED: {}", &value));
             }
@@ -163,10 +163,10 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
             );
         }
     }
-    if replacements.len() > 0 {
+    if !replacements.is_empty() {
         swap_keys(&mut parsed, &replacements);
     }
-    if issues.len() > 0 {
+    if !issues.is_empty() {
         // write file back
         exlogging::log_event(
             exlogging::LogLevel::Info,
@@ -176,7 +176,7 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
         serialize_and_write_csv(&parsed, &path_buf).await?;
     }
     cache.invalidate(&path_buf).await;
-    return Ok(issues);
+    Ok(issues)
 }
 
 pub async fn find_issues_with_csv_async<P: AsRef<std::path::Path>>(
@@ -206,7 +206,7 @@ pub async fn find_issues_with_csv_async<P: AsRef<std::path::Path>>(
             keys.len()
         ));
     }
-    return Ok(issues);
+    Ok(issues)
 }
 
 pub async fn lookup_no_type_class(
@@ -225,7 +225,7 @@ pub async fn lookup_no_type_class(
                 Err(e) => {
                     log_event(
                         crate::exlogging::LogLevel::Error,
-                        format!("Error while parsing tables: {}", e.to_string()),
+                        format!("Error while parsing tables: {}", e),
                         Some(email),
                     );
                     None
@@ -343,7 +343,7 @@ pub async fn lookup_part_in_table(
                 return false;
             }
         }
-        return true;
+        true
     });
     let table_file_name = file
         .as_path()
@@ -370,7 +370,7 @@ pub async fn lookup_part_in_table_any_type(
             if row[CAR_PART_DETAIL_UKR_FIELD] != part {
                 return false;
             }
-            return true;
+            true
         })
         .collect();
     let table_file_name = file

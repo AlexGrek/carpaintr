@@ -192,7 +192,7 @@ pub fn decode_license_token_no_validation(token: &str) -> Result<LicenseClaims, 
 
     // Decode the base64 payload
     let decoded_payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&payload)
+        .decode(payload)
         .map_err(|err| AppError::InvalidData(err.to_string()))?;
 
     // Parse the JSON claims
@@ -270,7 +270,7 @@ pub async fn read_license_file(license_path: &PathBuf) -> Result<String, AppErro
     // Read the license file content
     fs::read_to_string(license_path)
         .await
-        .map_err(|e| AppError::IoError(e))
+        .map_err(AppError::IoError)
 }
 
 pub async fn read_license_file_by_name(
@@ -294,7 +294,7 @@ pub async fn read_license_file_by_name(
     // Read the license file content
     let content = fs::read_to_string(&license_path)
         .await
-        .map_err(|e| AppError::IoError(e))?;
+        .map_err(AppError::IoError)?;
 
     Ok(content)
 }
@@ -325,7 +325,7 @@ pub fn ensure_license_path(user_email: &str, data_dir: &PathBuf) -> Result<PathB
     let user_data_dir = user_personal_directory_from_email(data_dir, user_email)?;
     let licenses_dir = user_data_dir.join("licenses");
     std::fs::create_dir_all(&licenses_dir)?;
-    return Ok(licenses_dir);
+    Ok(licenses_dir)
 }
 
 pub async fn list_license_files(
