@@ -1,22 +1,22 @@
 .carBodyParts-drawer .rs-drawer-body {
-    padding: 2em;
+  padding: 2em;
 }
 
 .drawer-tabs-container {
-    padding-top: 2em;
+  padding-top: 2em;
 }
 
 .body-parts-tab-header {
-    width: 100%;
-    margin-bottom: 14pt;
-    text-align: center;
+  width: 100%;
+  margin-bottom: 14pt;
+  text-align: center;
 }
 
 .car-body-parts-selector {
-    width: 100%;
-    margin: auto;
+  width: 100%;
+  margin: auto;
 }
 
 .car-container-container {
-    width: 100%;
+  width: 100%;
 }

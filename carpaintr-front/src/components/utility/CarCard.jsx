@@ -15,7 +15,8 @@ const styles = {
     border: "1px solid rgba(0,0,0,0.08)",
     boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
     padding: 16,
-    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    fontFamily:
+      "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
     background: "linear-gradient(180deg, #ffffff, #fafbfc)",
   },
   header: {
@@ -74,7 +75,8 @@ const styles = {
 };
 
 function Field({ label, children }) {
-  if (children === undefined || children === null || children === "") return null;
+  if (children === undefined || children === null || children === "")
+    return null;
   return (
     <>
       <div style={styles.label}>{label}</div>
@@ -101,7 +103,13 @@ export function CarCard({ data, className, style }) {
       <div style={styles.header}>
         <h3 style={styles.title}>{hasMakeModel ? makeModel : "Автомобіль"}</h3>
         {carClass && (
-          <div style={{ ...styles.badge, background: "#eef2ff", borderColor: "#c7d2fe" }}>
+          <div
+            style={{
+              ...styles.badge,
+              background: "#eef2ff",
+              borderColor: "#c7d2fe",
+            }}
+          >
             Клас {carClass}
           </div>
         )}
@@ -110,18 +118,16 @@ export function CarCard({ data, className, style }) {
       <hr style={styles.divider} />
 
       <div style={styles.body}>
-        {hasMakeModel && (
-          <Field label="Модель">{makeModel}</Field>
-        )}
+        {hasMakeModel && <Field label="Модель">{makeModel}</Field>}
 
         <Field label="Тип">{bodyType}</Field>
 
-        {colorName && (
-          <Field label="Колір">{colorName}</Field>
-        )}
+        {colorName && <Field label="Колір">{colorName}</Field>}
 
         <Field label="VIN">{vin || <span style={styles.subtle}>—</span>}</Field>
-        <Field label="Номер">{license || <span style={styles.subtle}>—</span>}</Field>
+        <Field label="Номер">
+          {license || <span style={styles.subtle}>—</span>}
+        </Field>
       </div>
     </div>
   );

@@ -1,25 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { Navbar, Nav, Loader, Stack } from 'rsuite';
-import { useNavigate } from 'react-router-dom';
-import { authFetch } from '../../utils/authFetch';
+import React, { useEffect, useState } from "react";
+import { Navbar, Nav, Loader, Stack } from "rsuite";
+import { useNavigate } from "react-router-dom";
+import { authFetch } from "../../utils/authFetch";
 
 const TopBar = () => {
   const [loading, setLoading] = useState(true);
-  const [companyName, setCompanyName] = useState('');
+  const [companyName, setCompanyName] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCompanyInfo = async () => {
       try {
-        const response = await authFetch('/api/v1/getcompanyinfo');
+        const response = await authFetch("/api/v1/getcompanyinfo");
         if (response.ok) {
           const data = await response.json();
           setCompanyName(data.company_name);
           setIsLoggedIn(true);
         }
       } catch (error) {
-        console.error('Not logged in:', error);
+        console.error("Not logged in:", error);
       } finally {
         setLoading(false);
       }
@@ -29,9 +29,9 @@ const TopBar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken'); // Remove the token
+    localStorage.removeItem("authToken"); // Remove the token
     setIsLoggedIn(false);
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -46,11 +46,18 @@ const TopBar = () => {
           ) : (
             <>
               {isLoggedIn ? (
-                <Stack><Nav.Item onClick={() => navigate('/calc')}>Calculate</Nav.Item><Nav.Item onClick={handleLogout}>Logout</Nav.Item></Stack>
+                <Stack>
+                  <Nav.Item onClick={() => navigate("/calc")}>
+                    Calculate
+                  </Nav.Item>
+                  <Nav.Item onClick={handleLogout}>Logout</Nav.Item>
+                </Stack>
               ) : (
                 <span>
-                  <Nav.Item onClick={() => navigate('/login')}>Увійти</Nav.Item>
-                  <Nav.Item onClick={() => navigate('/register')}>Зареєструватися</Nav.Item>
+                  <Nav.Item onClick={() => navigate("/login")}>Увійти</Nav.Item>
+                  <Nav.Item onClick={() => navigate("/register")}>
+                    Зареєструватися
+                  </Nav.Item>
                 </span>
               )}
             </>
@@ -58,7 +65,7 @@ const TopBar = () => {
         </Nav>
       </Navbar.Body>
       {isLoggedIn && (
-        <div style={{ textAlign: 'center', marginTop: '10px' }}>
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
           <h4>{companyName}</h4>
         </div>
       )}

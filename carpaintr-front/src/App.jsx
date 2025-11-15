@@ -1,30 +1,42 @@
-import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 
-import { GlobalCallbacksProvider } from './components/GlobalCallbacksContext.jsx';
-import { LocaleProvider } from './localization/LocaleContext.jsx';
-import ScrollToTop from './components/ScrollToTop.jsx';
-import ComponentLoadingPage from './components/layout/ComponentLoadingPage.jsx';
-import CatalogPage from './components/pages/CatalogPage.jsx';
-import { useVersionCheck } from './version';
-import ErrorBoundary from './ErrorBoundary.jsx';
-import CreateProcPage from './components/pages/CreateProcPage.jsx';
+import { GlobalCallbacksProvider } from "./components/GlobalCallbacksContext.jsx";
+import { LocaleProvider } from "./localization/LocaleContext.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
+import ComponentLoadingPage from "./components/layout/ComponentLoadingPage.jsx";
+import CatalogPage from "./components/pages/CatalogPage.jsx";
+import { useVersionCheck } from "./version";
+import ErrorBoundary from "./ErrorBoundary.jsx";
+import CreateProcPage from "./components/pages/CreateProcPage.jsx";
 
 // Lazy-loaded pages
-const LandingPage = lazy(() => import('./components/pages/LandingPage.jsx'));
-const LoginPage = lazy(() => import('./components/pages/LoginPage.jsx'));
-const RegistrationPage = lazy(() => import('./components/pages/RegistrationPage.jsx'));
-const CalcPage = lazy(() => import('./components/pages/CalcPage.jsx'));
-const CalcPageV2 = lazy(() => import('./components/pages/CalcPageV2.jsx'));
-const AdminPage = lazy(() => import('./components/pages/AdminPage.jsx'));
-const CompanyInfoPage = lazy(() => import('./components/pages/CompanyInfoPage.jsx'));
-const CabinetPage = lazy(() => import('./components/pages/CabinetPage.jsx'));
-const FileEditorPage = lazy(() => import('./components/pages/FileEditorPage.jsx'));
-const UsersDashboard = lazy(() => import('./components/pages/UsersDashboard.jsx'));
-const WipPage = lazy(() => import('./components/pages/WipPage.jsx'));
-const ContactSupport = lazy(() => import('./components/pages/ContactSupport.jsx'));
-const TemplatesPage = lazy(() => import('./components/pages/TemplatesPage.jsx'));
+const LandingPage = lazy(() => import("./components/pages/LandingPage.jsx"));
+const LoginPage = lazy(() => import("./components/pages/LoginPage.jsx"));
+const RegistrationPage = lazy(
+  () => import("./components/pages/RegistrationPage.jsx"),
+);
+const CalcPage = lazy(() => import("./components/pages/CalcPage.jsx"));
+const CalcPageV2 = lazy(() => import("./components/pages/CalcPageV2.jsx"));
+const AdminPage = lazy(() => import("./components/pages/AdminPage.jsx"));
+const CompanyInfoPage = lazy(
+  () => import("./components/pages/CompanyInfoPage.jsx"),
+);
+const CabinetPage = lazy(() => import("./components/pages/CabinetPage.jsx"));
+const FileEditorPage = lazy(
+  () => import("./components/pages/FileEditorPage.jsx"),
+);
+const UsersDashboard = lazy(
+  () => import("./components/pages/UsersDashboard.jsx"),
+);
+const WipPage = lazy(() => import("./components/pages/WipPage.jsx"));
+const ContactSupport = lazy(
+  () => import("./components/pages/ContactSupport.jsx"),
+);
+const TemplatesPage = lazy(
+  () => import("./components/pages/TemplatesPage.jsx"),
+);
 
 // Static content — no need for lazy-loading simple components
 const HistoryPage = () => <h2>History Page</h2>;

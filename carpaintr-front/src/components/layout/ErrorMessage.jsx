@@ -1,16 +1,16 @@
-import React from 'react';
-import { Message, Divider, HStack, Button } from 'rsuite';
-import { useNavigate } from 'react-router-dom';
-import Trans from '../../localization/Trans';
-import { isString } from 'lodash';
+import React from "react";
+import { Message, Divider, HStack, Button } from "rsuite";
+import { useNavigate } from "react-router-dom";
+import Trans from "../../localization/Trans";
+import { isString } from "lodash";
 
 const ErrorMessage = ({
   errorText,
   errorTitle = "Error",
   onClose = null,
   showSettingsButton = true,
-  settingsPath = '/cabinet',
-  className = 'pop-in-simple'
+  settingsPath = "/cabinet",
+  className = "pop-in-simple",
 }) => {
   const navigate = useNavigate();
 
@@ -32,11 +32,10 @@ const ErrorMessage = ({
   const decodeErrorIfObject = (err) => {
     if (isString(err)) {
       return err; // do nothing
-    }
-    else {
+    } else {
       return JSON.stringify(err);
     }
-  }
+  };
 
   return (
     <Message
@@ -48,21 +47,13 @@ const ErrorMessage = ({
     >
       {decodeErrorIfObject(errorText)}
       <Divider />
-      <HStack justifyContent='flex-end' style={{ width: "100%" }}>
+      <HStack justifyContent="flex-end" style={{ width: "100%" }}>
         {showSettingsButton && (
-          <Button
-            size="sm"
-            appearance="link"
-            onClick={handleSettingsClick}
-          >
+          <Button size="sm" appearance="link" onClick={handleSettingsClick}>
             <Trans>Settings</Trans>
           </Button>
         )}
-        <Button
-          size="sm"
-          appearance="primary"
-          onClick={handleClose}
-        >
+        <Button size="sm" appearance="primary" onClick={handleClose}>
           <Trans>Close</Trans>
         </Button>
       </HStack>

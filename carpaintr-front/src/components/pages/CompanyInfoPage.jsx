@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { authFetch, getCompanyInfo } from '../../utils/authFetch';
-import LicenseInfoTable from '../LicenseInfoTable';
- import { dump } from 'js-yaml';
+import React, { useEffect, useState } from "react";
+import { authFetch, getCompanyInfo } from "../../utils/authFetch";
+import LicenseInfoTable from "../LicenseInfoTable";
+import { dump } from "js-yaml";
 
 const CompanyInfoPage = () => {
   const [companyInfo, setCompanyInfo] = useState(null);

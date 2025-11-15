@@ -12,11 +12,13 @@
   /* Full viewport width */
   height: 50px;
   /* Adjust the height as needed */
-  background: repeating-linear-gradient(45deg,
-      yellow 0,
-      yellow 25px,
-      black 25px,
-      black 50px);
+  background: repeating-linear-gradient(
+    45deg,
+    yellow 0,
+    yellow 25px,
+    black 25px,
+    black 50px
+  );
   border-radius: 8pt;
 }
 
@@ -38,7 +40,6 @@
   opacity: 0;
   animation: fadeIn 150ms ease-out forwards;
 }
-
 
 @keyframes fadeIn {
   to {

@@ -1,12 +1,12 @@
 .cell-placeholder {
-    opacity: .3;
-    font-style: italic;
+  opacity: 0.3;
+  font-style: italic;
 }
 
 .cell-placeholder:hover {
-    opacity: .8;
+  opacity: 0.8;
 }
 
 .cell-selected {
-    outline: 1px solid orangered;
+  outline: 1px solid orangered;
 }

@@ -1,7 +1,7 @@
 import SupportTicketListAdmin from "../support/SupportTicketListAdmin";
 
 const AdminPanelRequests = () => {
-    return <SupportTicketListAdmin/>
-}
+  return <SupportTicketListAdmin />;
+};
 
 export default AdminPanelRequests;

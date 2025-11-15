@@ -53,7 +53,7 @@ export const GlobalCallbacksProvider = ({ children }) => {
             <div>
               <p>Describe the Issue</p>
               <Input
-                as='textarea'
+                as="textarea"
                 name="issue"
                 rows={5}
                 value={formData.issue}

@@ -94,12 +94,12 @@ MenuPicker.propTypes = {
         label: PropTypes.string.isRequired,
         value: PropTypes.string,
         description: PropTypes.string,
-        icon: PropTypes.node
-      })
-    ])
+        icon: PropTypes.node,
+      }),
+    ]),
   ).isRequired,
   value: PropTypes.string,
-  onSelect: PropTypes.func.isRequired
+  onSelect: PropTypes.func.isRequired,
 };
 
 const styles = {

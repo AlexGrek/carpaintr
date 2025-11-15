@@ -1,5 +1,5 @@
-import React from 'react';
-import { Table, Button, Container } from 'rsuite';
+import React from "react";
+import { Table, Button, Container } from "rsuite";
 
 const LicenseInfoTable = ({ companyInfo }) => {
   if (!companyInfo) {
@@ -7,22 +7,22 @@ const LicenseInfoTable = ({ companyInfo }) => {
   }
 
   const { email, license, companyName, currentTime } = companyInfo;
-  
+
   const licenseData = [
     {
-      label: 'Is Active',
-      value: license.IsActive ? 'Yes' : 'No',
+      label: "Is Active",
+      value: license.IsActive ? "Yes" : "No",
     },
     {
-      label: 'Ends Date',
+      label: "Ends Date",
       value: license.EndsDate,
     },
     {
-      label: 'Licensed To',
+      label: "Licensed To",
       value: license.LicensedTo,
     },
     {
-      label: 'Level',
+      label: "Level",
       value: license.Level,
     },
   ];
@@ -41,11 +41,17 @@ const LicenseInfoTable = ({ companyInfo }) => {
         </Table.Column>
       </Table>
 
-      <div style={{ marginTop: '20px' }}>
+      <div style={{ marginTop: "20px" }}>
         <h4>Additional Company Info</h4>
-        <p><strong>Email:</strong> {email}</p>
-        <p><strong>Company Name:</strong> {companyName}</p>
-        <p><strong>Current Time:</strong> {currentTime}</p>
+        <p>
+          <strong>Email:</strong> {email}
+        </p>
+        <p>
+          <strong>Company Name:</strong> {companyName}
+        </p>
+        <p>
+          <strong>Current Time:</strong> {currentTime}
+        </p>
       </div>
     </Container>
   );

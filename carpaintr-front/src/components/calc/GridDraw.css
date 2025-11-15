@@ -1,55 +1,55 @@
 .grid-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .grid-controls {
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
-    margin-bottom: 10pt;
-    margin-top: 8pt;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  margin-bottom: 10pt;
+  margin-top: 8pt;
 }
 
 .grid-controls > * {
-    margin: auto;
+  margin: auto;
 }
 
 .grid {
-    display: grid;
-    cursor: pointer;
-    margin: auto;
-    position: relative; /* Needed for ::before positioning */
-    overflow: hidden; /* Hide overflow from mirrored image if it extends */
-    width: 100%; /* Make the grid take the whole available width */
+  display: grid;
+  cursor: pointer;
+  margin: auto;
+  position: relative; /* Needed for ::before positioning */
+  overflow: hidden; /* Hide overflow from mirrored image if it extends */
+  width: 100%; /* Make the grid take the whole available width */
 }
 
 /* Pseudo-element for the background image */
 .grid::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: var(--grid-background-image); /* Use CSS variable from JS */
-    background-size: cover;
-    background-position: center;
-    transform: scaleX(1); /* Default, no mirroring */
-    transition: transform 0.3s ease-in-out; /* Smooth transition for mirroring */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--grid-background-image); /* Use CSS variable from JS */
+  background-size: cover;
+  background-position: center;
+  transform: scaleX(1); /* Default, no mirroring */
+  transition: transform 0.3s ease-in-out; /* Smooth transition for mirroring */
 }
 
 /* Rule for mirroring the background */
 .grid.mirrored::before {
-    transform: scaleX(-1); /* Mirror horizontally */
+  transform: scaleX(-1); /* Mirror horizontally */
 }
 
 .grid-cell {
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    /* Ensure cells are clickable by being above the ::before element */
-    position: relative;
-    z-index: 0;
-    /* Make cells strictly square */
-    aspect-ratio: 1 / 1;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  /* Ensure cells are clickable by being above the ::before element */
+  position: relative;
+  z-index: 0;
+  /* Make cells strictly square */
+  aspect-ratio: 1 / 1;
 }

@@ -1,85 +1,130 @@
-import { Button, HStack, IconButton, Message, Panel, Placeholder, toaster, VStack } from "rsuite";
+import {
+  Button,
+  HStack,
+  IconButton,
+  Message,
+  Panel,
+  Placeholder,
+  toaster,
+  VStack,
+} from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
 import React, { useCallback, useEffect, useState } from "react";
 import SelectionInput from "../SelectionInput";
-import ArrowBackIcon from '@rsuite/icons/ArrowBack';
+import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import CarBodyPartsSelector from "./CarBodyPartsSelector";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import MenuPickerV2 from "../layout/MenuPickerV2";
 
-const BodyPartsStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
+const BodyPartsStage = ({
+  title,
+  index,
+  onMoveForward,
+  onMoveBack,
+  fadeOutStarted,
+  children,
+  onMoveTo,
+  stageData,
+  setStageData,
+}) => {
   const [partsVisual, setPartsVisual] = useState({});
   const [selectedParts, setSelectedParts] = useState([]);
   const [repairQuality, setRepairQuality] = useState("");
   const [repairQualityIOptions, setRepairQualityOptions] = useState([]);
   const [calculations, setCalculations] = useState({});
-  const handleSetSelectedParts = useCallback((val) => setSelectedParts(val), []);
+  const handleSetSelectedParts = useCallback(
+    (val) => setSelectedParts(val),
+    [],
+  );
   const { str } = useLocale();
-
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let data = await authFetchYaml('/api/v1/user/global/parts_visual.yaml');
+        let data = await authFetchYaml("/api/v1/user/global/parts_visual.yaml");
         setPartsVisual(data);
-        let qualityOptions = await authFetchYaml('/api/v1/user/global/quality.yaml');
+        let qualityOptions = await authFetchYaml(
+          "/api/v1/user/global/quality.yaml",
+        );
         setRepairQualityOptions(qualityOptions.options);
         setRepairQuality(qualityOptions.default);
       } catch (error) {
         console.error("Failed to fetch parts_visual or qualityOptions:", error);
-        toaster.push(<Message type="error">{error.toString()}</Message>)
+        toaster.push(<Message type="error">{error.toString()}</Message>);
       }
     };
     fetchData();
   }, []);
 
   useEffect(() => {
-    const parts = stageData['parts'];
+    const parts = stageData["parts"];
     if (parts) {
       setSelectedParts(parts.selectedParts);
       setCalculations(parts.calculations);
       setRepairQuality(parts.repairQuality || "");
     }
-  }, [stageData])
+  }, [stageData]);
 
   const handleClose = useCallback(() => {
     const data = {
-      partsVisual, selectedParts, calculations, repairQuality
+      partsVisual,
+      selectedParts,
+      calculations,
+      repairQuality,
     };
     if (onMoveForward) {
       onMoveForward();
     }
-    setStageData({ 'parts': data, calculations });
-  }, [onMoveForward, partsVisual, selectedParts, setStageData, calculations])
+    setStageData({ parts: data, calculations });
+  }, [onMoveForward, partsVisual, selectedParts, setStageData, calculations]);
 
   return (
     <div style={styles.sampleStage}>
-      <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
-        <BottomStickyLayout bottomPanel={
-          <div className="flex justify-between">
-            <IconButton icon={<ArrowBackIcon />} onClick={onMoveBack} color='red' appearance='ghost'><Trans>Back</Trans></IconButton>
-            <Button onClick={handleClose} disabled={selectedParts === null || selectedParts.length === 0} color='green' appearance='primary'><Trans>Accept</Trans></Button>
-          </div>
-        }>
-          <VStack spacing={3} style={{minWidth: "12em"}}>
+      <div
+        style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}
+      >
+        <BottomStickyLayout
+          bottomPanel={
+            <div className="flex justify-between">
+              <IconButton
+                icon={<ArrowBackIcon />}
+                onClick={onMoveBack}
+                color="red"
+                appearance="ghost"
+              >
+                <Trans>Back</Trans>
+              </IconButton>
+              <Button
+                onClick={handleClose}
+                disabled={selectedParts === null || selectedParts.length === 0}
+                color="green"
+                appearance="primary"
+              >
+                <Trans>Accept</Trans>
+              </Button>
+            </div>
+          }
+        >
+          <VStack spacing={3} style={{ minWidth: "12em" }}>
             <MenuPickerV2
               items={repairQualityIOptions}
               onSelect={setRepairQuality}
               value={repairQuality}
               label={str("Repair quality")}
-              style={{width: "100%"}}
+              style={{ width: "100%" }}
             />
             <CarBodyPartsSelector
               partsVisual={partsVisual}
               selectedParts={selectedParts}
               onChange={handleSetSelectedParts}
-              carClass={stageData['car'].carClass ?? null}
-              body={stageData['car'].bodyType ?? null}
+              carClass={stageData["car"].carClass ?? null}
+              body={stageData["car"].bodyType ?? null}
               calculations={calculations}
-              setCalculations={setCalculations} />
+              setCalculations={setCalculations}
+            />
           </VStack>
         </BottomStickyLayout>
       </div>

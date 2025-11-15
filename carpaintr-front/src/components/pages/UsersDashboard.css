@@ -1,235 +1,232 @@
 /* UsersDashboard.css */
 .feature-card.app-card {
-    animation: fadeInUpApp 0.5s ease-out;
+  animation: fadeInUpApp 0.5s ease-out;
 }
 
 .gradient-box {
-    height: 220pt;
-    width: 100%;
-    padding-top: 60pt;
-    background: radial-gradient(
-            /* Sets the gradient's center high up and not visible,
+  height: 220pt;
+  width: 100%;
+  padding-top: 60pt;
+  background: radial-gradient(
+    /* Sets the gradient's center high up and not visible,
     creating a bright glow effect at the top. */
-            at top,
-            /* The gradient starts with a light orange color. */
-            rgb(253, 180, 131),
-            /* It fades out to an almost white color at the edge. */
-            rgb(255, 254, 250));
+      at top,
+    /* The gradient starts with a light orange color. */ rgb(253, 180, 131),
+    /* It fades out to an almost white color at the edge. */ rgb(255, 254, 250)
+  );
 }
 
 .dashboard-content-container {
-    border-radius: 2rem;
-    box-shadow:
-        0 -8px 16px -4px rgb(0 0 0 / 0.1),
-        /* Shadow pointing upwards (negative Y-offset) */
-        0 4px 6px -1px rgb(0 0 0 / 0.1),
-        0 2px 4px -2px rgb(0 0 0 / 0.1);
-    padding: 1.5rem;
-    transform: translateY(-20px);
-    z-index: 2;
-    background-color: #fbfbfb;
+  border-radius: 2rem;
+  box-shadow:
+    0 -8px 16px -4px rgb(0 0 0 / 0.1),
+    /* Shadow pointing upwards (negative Y-offset) */ 0 4px 6px -1px
+      rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  padding: 1.5rem;
+  transform: translateY(-20px);
+  z-index: 2;
+  background-color: #fbfbfb;
 }
 
 .dashboard-company-card-name {
-    font-family: 'PT Serif', sans-serif;
-    font-style: normal;
-    font-weight: lighter;
+  font-family: "PT Serif", sans-serif;
+  font-style: normal;
+  font-weight: lighter;
 }
 
 .dashboard-company-card-email {
-    font-family: 'nunito', sans-serif;
-    font-style: normal;
+  font-family: "nunito", sans-serif;
+  font-style: normal;
 }
 
 @keyframes fadeInUpApp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .app-card {
-    background: white;
-    padding: 1.3rem;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: all 0.3s ease;
-    border: 1px solid #e5e7eb;
+  background: white;
+  padding: 1.3rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
 }
 
 .app-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    border-color: #ea580c;
+  transform: translateY(-3px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  border-color: #ea580c;
 }
 
 .app-feature-icon svg {
-    font-size: 22pt;
-    margin: auto;
-    text-align: center;
-    display: block;
+  font-size: 22pt;
+  margin: auto;
+  text-align: center;
+  display: block;
 }
 
 .apps-list {
-    max-width: 800px;
-    margin: auto;
+  max-width: 800px;
+  margin: auto;
 }
 
 .apps-list-section-header {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-    font-size: x-large;
-    margin: 8pt;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+  font-size: x-large;
+  margin: 8pt;
 }
 
 .app-list-view-mode {
-    display: flex;
-    font-size: small;
-    margin: 0 8pt;
-    justify-content: space-between;
-    align-content: baseline;
-    width: 110pt;
+  display: flex;
+  font-size: small;
+  margin: 0 8pt;
+  justify-content: space-between;
+  align-content: baseline;
+  width: 110pt;
 }
 
 /* Styles for list view (default, already largely covered by .app-card) */
 .features-grid.list-view {
-    display: flex;
-    flex-direction: column;
-    /* Stacks items vertically */
-    gap: 1rem;
-    /* Space between list items */
+  display: flex;
+  flex-direction: column;
+  /* Stacks items vertically */
+  gap: 1rem;
+  /* Space between list items */
 }
 
 .features-grid.list-view .app-card {
-    width: 100%;
-    /* Full width for list items */
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    text-align: left;
-    padding: 1rem 2rem;
-    /* Adjust padding for list view */
+  width: 100%;
+  /* Full width for list items */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  padding: 1rem 2rem;
+  /* Adjust padding for list view */
 }
 
 .features-grid.list-view .app-card .app-feature-icon {
-    margin-right: 1.5rem;
-    /* Space between icon and text */
+  margin-right: 1.5rem;
+  /* Space between icon and text */
 }
 
 .features-grid.list-view .app-card h3 {
-    margin-bottom: 0.5rem;
-    /* Space between title and description */
+  margin-bottom: 0.5rem;
+  /* Space between title and description */
 }
 
 .features-grid.list-view .app-card p {
-    margin-top: 0;
-    margin-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
-
 
 /* Styles for grid view (smartphone menu style) */
 .features-grid.grid-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    /* Max 4 per row, responsive */
-    gap: 1rem;
-    /* Space between grid items */
-    justify-items: center;
-    /* Center items in their grid cells */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  /* Max 4 per row, responsive */
+  gap: 1rem;
+  /* Space between grid items */
+  justify-items: center;
+  /* Center items in their grid cells */
 }
 
 .features-grid.grid-view .app-card.compact-app-card {
-    padding: 1rem;
-    box-shadow: none;
-    /* Remove shadow for a lighter feel */
-    border: none;
-    /* Remove border */
-    background: transparent;
-    /* Transparent background */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100px;
-    /* Fixed height for consistent sizing */
-    width: 150px;
-    /* Fixed width */
+  padding: 1rem;
+  box-shadow: none;
+  /* Remove shadow for a lighter feel */
+  border: none;
+  /* Remove border */
+  background: transparent;
+  /* Transparent background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  /* Fixed height for consistent sizing */
+  width: 150px;
+  /* Fixed width */
 }
 
 .features-grid.grid-view .app-card.compact-app-card:hover {
-    transform: translateY(-5px);
-    /* Smaller hover effect */
-    background: #f0f0f0;
-    /* Slight background on hover */
-    border-radius: 8px;
-    /* Rounded corners on hover */
+  transform: translateY(-5px);
+  /* Smaller hover effect */
+  background: #f0f0f0;
+  /* Slight background on hover */
+  border-radius: 8px;
+  /* Rounded corners on hover */
 }
 
 .features-grid.grid-view .app-card.compact-app-card .app-feature-icon {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .features-grid.grid-view .app-card.compact-app-card h3 {
-    font-size: 0.7em;
-    /* Smaller font size for titles */
-    text-align: center;
-    word-break: break-word;
-    /* Break long words */
-    margin-top: 0;
+  font-size: 0.7em;
+  /* Smaller font size for titles */
+  text-align: center;
+  word-break: break-word;
+  /* Break long words */
+  margin-top: 0;
 }
 
 .features-grid.grid-view .app-card.compact-app-card p {
-    display: none;
-    /* Hide descriptions in compact view */
+  display: none;
+  /* Hide descriptions in compact view */
 }
-
 
 /* Styles for blocks view (hybrid grid) */
 .features-grid.blocks-view {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    /* Responsive grid, minimum 200px */
-    gap: 2pt;
-    /* 2pt margin between blocks */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  /* Responsive grid, minimum 200px */
+  gap: 2pt;
+  /* 2pt margin between blocks */
 }
 
 .features-grid.blocks-view .app-card {
-    padding: 1.5rem;
-    border-radius: 8px;
-    /* Rounded corners for blocks */
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    /* Lighter shadow */
-    border: 1px solid #e0e0e0;
-    /* Subtle border */
-    height: auto;
-    /* Allow height to adjust */
+  padding: 1.5rem;
+  border-radius: 8px;
+  /* Rounded corners for blocks */
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  /* Lighter shadow */
+  border: 1px solid #e0e0e0;
+  /* Subtle border */
+  height: auto;
+  /* Allow height to adjust */
 }
 
 .features-grid.blocks-view .app-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    border-color: #ea580c;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: #ea580c;
 }
 
 .features-grid.blocks-view .app-card .app-feature-icon {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .features-grid.blocks-view .app-card h3 {
-    font-size: 1.1em;
-    margin-bottom: 0.5rem;
+  font-size: 1.1em;
+  margin-bottom: 0.5rem;
 }
 
 .features-grid.blocks-view .app-card p {
-    font-size: 0.9em;
-    color: #666;
+  font-size: 0.9em;
+  color: #666;
 }

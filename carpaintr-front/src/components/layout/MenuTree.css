@@ -58,7 +58,9 @@
 .submenu {
   overflow: hidden;
   background-color: #fafafa;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease;
   max-height: 0;
   opacity: 0;
 }
@@ -110,15 +112,15 @@
   .menu-item {
     padding: 14px 16px;
   }
-  
+
   .menu-item-label {
     font-size: 15px;
   }
-  
+
   .submenu-item {
     padding: 10px 16px 10px 32px;
   }
-  
+
   .submenu-item-label {
     font-size: 13px;
   }

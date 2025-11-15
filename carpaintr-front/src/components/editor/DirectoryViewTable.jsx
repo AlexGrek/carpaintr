@@ -1,4 +1,4 @@
-import { Table } from 'rsuite';
+import { Table } from "rsuite";
 import {
   File as FileIcon,
   Folder as FolderIcon,
@@ -6,64 +6,63 @@ import {
   FileText,
   FileSignature,
   FileSpreadsheet,
-  ScrollText
-} from 'lucide-react';
-import { useLocale, registerTranslations } from '../../localization/LocaleContext';
-import Trans from '../../localization/Trans';
+  ScrollText,
+} from "lucide-react";
+import {
+  useLocale,
+  registerTranslations,
+} from "../../localization/LocaleContext";
+import Trans from "../../localization/Trans";
 
 const { Column, HeaderCell, Cell } = Table;
 
-
-registerTranslations("ua",
-    {
-        "Data Source": "Джерело даних",
-        "Table": "Таблиця",
-        "Text File": "Текстовий файл",
-        "License": "Ліцензія",
-        "Log File": "Файл журналу",
-        "File": "Файл",
-        "Directory": "Папка",
-    }
-);
-
+registerTranslations("ua", {
+  "Data Source": "Джерело даних",
+  Table: "Таблиця",
+  "Text File": "Текстовий файл",
+  License: "Ліцензія",
+  "Log File": "Файл журналу",
+  File: "Файл",
+  Directory: "Папка",
+});
 
 function getFileType(filename) {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
   switch (ext) {
-    case 'json':
-    case 'yaml':
-    case 'yml':
-      return 'Data Source';
-    case 'csv':
-      return 'Table';
-    case 'txt':
-    case 'md':
-      return 'Text File';
-    case 'jwt':
-      return 'License';
-    case 'log':
-      return 'Log File';
+    case "json":
+    case "yaml":
+    case "yml":
+      return "Data Source";
+    case "csv":
+      return "Table";
+    case "txt":
+    case "md":
+      return "Text File";
+    case "jwt":
+      return "License";
+    case "log":
+      return "Log File";
     default:
-      return 'File';
+      return "File";
   }
 }
 
 function getIcon(node) {
   if (!node.isFile) return <FolderIcon size={18} />;
-  const ext = node.label.split('.').pop()?.toLowerCase();
+  const ext = node.label.split(".").pop()?.toLowerCase();
   switch (ext) {
-    case 'json':
-    case 'yaml':
-    case 'yml':
+    case "json":
+    case "yaml":
+    case "yml":
       return <FileJson size={18} />;
-    case 'csv':
+    case "csv":
       return <FileSpreadsheet size={18} />;
-    case 'txt':
-    case 'md':
+    case "txt":
+    case "md":
       return <FileText size={18} />;
-    case 'jwt':
+    case "jwt":
       return <FileSignature size={18} />;
-    case 'log':
+    case "log":
       return <ScrollText size={18} />;
     default:
       return <FileIcon size={18} />;
@@ -71,7 +70,7 @@ function getIcon(node) {
 }
 
 function renderNameWithExtension(label) {
-  const dotIndex = label.lastIndexOf('.');
+  const dotIndex = label.lastIndexOf(".");
   if (dotIndex <= 0 || dotIndex === label.length - 1) return label;
 
   const name = label.slice(0, dotIndex);
@@ -80,12 +79,16 @@ function renderNameWithExtension(label) {
   return (
     <span>
       {name}
-      <span style={{ color: '#999', fontSize: '0.85em' }}>{ext}</span>
+      <span style={{ color: "#999", fontSize: "0.85em" }}>{ext}</span>
     </span>
   );
 }
 
-export default function DirectoryViewTable({ value, onFileClick, onDirectoryClick }) {
+export default function DirectoryViewTable({
+  value,
+  onFileClick,
+  onDirectoryClick,
+}) {
   const data = value;
   const { str } = useLocale();
 
@@ -95,12 +98,12 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
       autoHeight
       bordered
       cellBordered
-      style={{ width: '100%' }}
+      style={{ width: "100%" }}
       rowHeight={50}
       hover
       onRowClick={(rowData) => {
         if (rowData.isFile) {
-            console.log(rowData);
+          console.log(rowData);
           onFileClick?.(rowData.value);
         } else {
           onDirectoryClick?.(rowData);
@@ -108,10 +111,15 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
       }}
     >
       <Column flexGrow={2} align="left" fixed>
-        <HeaderCell><Trans>Name</Trans></HeaderCell>
-        <Cell style={{'cursor': 'pointer', }}>
+        <HeaderCell>
+          <Trans>Name</Trans>
+        </HeaderCell>
+        <Cell style={{ cursor: "pointer" }}>
           {(rowData) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} key={rowData.label}>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+              key={rowData.label}
+            >
               {getIcon(rowData)}
               {renderNameWithExtension(rowData.label)}
             </div>
@@ -120,10 +128,12 @@ export default function DirectoryViewTable({ value, onFileClick, onDirectoryClic
       </Column>
 
       <Column flexGrow={1} align="left">
-        <HeaderCell><Trans>Type</Trans></HeaderCell>
+        <HeaderCell>
+          <Trans>Type</Trans>
+        </HeaderCell>
         <Cell>
           {(rowData) =>
-            str(rowData.isFile ? getFileType(rowData.label) : 'Directory')
+            str(rowData.isFile ? getFileType(rowData.label) : "Directory")
           }
         </Cell>
       </Column>

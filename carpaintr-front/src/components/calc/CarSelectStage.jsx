@@ -7,8 +7,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 
-const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarted, children, onMoveTo, stageData, setStageData }) => {
-
+const CarSelectStage = ({
+  title,
+  index,
+  onMoveForward,
+  onMoveBack,
+  fadeOutStarted,
+  children,
+  onMoveTo,
+  stageData,
+  setStageData,
+}) => {
   const [make, setMake] = useState(null);
   const [model, setModel] = useState(null);
   const [year, setYear] = useState(null);
@@ -23,9 +32,8 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
 
   const [searchParams] = useSearchParams();
 
-
   useEffect(() => {
-    const car = stageData['car'];
+    const car = stageData["car"];
     if (car) {
       setMake(car.make ?? null);
       setModel(car.model ?? null);
@@ -38,26 +46,46 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
       setStoreFileName(car.storeFileName ?? null);
       setIsFromLoading(true);
       if (car.make) {
-        setSelectModelMode(true)
+        setSelectModelMode(true);
       } else {
-        setSelectModelMode(false)
+        setSelectModelMode(false);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   const handleClose = useCallback(() => {
     const data = {
-      make, model, year, carClass, bodyType, licensePlate, VIN, notes, storeFileName
+      make,
+      model,
+      year,
+      carClass,
+      bodyType,
+      licensePlate,
+      VIN,
+      notes,
+      storeFileName,
     };
     if (onMoveForward) {
       onMoveForward();
     }
-    setStageData({ 'car': data });
-  }, [VIN, bodyType, carClass, licensePlate, make, model, notes, onMoveForward, setStageData, storeFileName, year])
+    setStageData({ car: data });
+  }, [
+    VIN,
+    bodyType,
+    carClass,
+    licensePlate,
+    make,
+    model,
+    notes,
+    onMoveForward,
+    setStageData,
+    storeFileName,
+    year,
+  ]);
 
   useEffect(() => {
-    const idFromUrl = searchParams.get('id');
+    const idFromUrl = searchParams.get("id");
     if (idFromUrl) {
       //handleLoad(idFromUrl);
     }
@@ -67,11 +95,21 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
 
   return (
     <div style={styles.sampleStage}>
-      <div style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}>
+      <div
+        style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}
+      >
         <BottomStickyLayout
-          bottomPanel={<Button onClick={handleClose} disabled={carClass === null || bodyType === null || year === null} color='green' appearance='primary'>
-            <Trans>Accept</Trans>
-          </Button>}>
+          bottomPanel={
+            <Button
+              onClick={handleClose}
+              disabled={carClass === null || bodyType === null || year === null}
+              color="green"
+              appearance="primary"
+            >
+              <Trans>Accept</Trans>
+            </Button>
+          }
+        >
           <VehicleSelect
             selectedBodyType={bodyType}
             carclass={carClass}
@@ -89,16 +127,42 @@ const CarSelectStage = ({ title, index, onMoveForward, onMoveBack, fadeOutStarte
             setVin={setVIN}
             isFromLoading={isFromLoading}
           />
-          {year != null && <div className="pop-in-simple">
-            <Divider><Trans>Additional info</Trans></Divider>
-            <Input value={make} onChange={setMake} placeholder={str('Car brand')}></Input>
-            <Input value={model} onChange={setModel} placeholder={str('Car model')}></Input>
-            <br/>
-            <Input value={licensePlate} onChange={setLicensePlate} placeholder={str('License plate (optional)')}></Input>
-            <Input value={VIN} onChange={setVIN} placeholder={str('VIN (optional)')}></Input>
-            <br/>
-            <Input as='textarea' rows={3} value={notes} onChange={setNotes} placeholder={str('Notes')}></Input>
-          </div>}
+          {year != null && (
+            <div className="pop-in-simple">
+              <Divider>
+                <Trans>Additional info</Trans>
+              </Divider>
+              <Input
+                value={make}
+                onChange={setMake}
+                placeholder={str("Car brand")}
+              ></Input>
+              <Input
+                value={model}
+                onChange={setModel}
+                placeholder={str("Car model")}
+              ></Input>
+              <br />
+              <Input
+                value={licensePlate}
+                onChange={setLicensePlate}
+                placeholder={str("License plate (optional)")}
+              ></Input>
+              <Input
+                value={VIN}
+                onChange={setVIN}
+                placeholder={str("VIN (optional)")}
+              ></Input>
+              <br />
+              <Input
+                as="textarea"
+                rows={3}
+                value={notes}
+                onChange={setNotes}
+                placeholder={str("Notes")}
+              ></Input>
+            </div>
+          )}
         </BottomStickyLayout>
       </div>
     </div>

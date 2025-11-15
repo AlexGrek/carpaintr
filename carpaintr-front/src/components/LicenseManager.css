@@ -1,126 +1,133 @@
 /* LicenseManager.css */
 
 .license-manager-container {
-    margin-left: auto;
-    margin-right: auto;
-    padding: 1rem;
-    max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem;
+  max-width: 700px;
 }
 
 .license-manager-loading,
 .license-manager-error,
 .license-manager-message {
-    /* These styles depend on the RSuite components used for display */
+  /* These styles depend on the RSuite components used for display */
 }
 
 .license-manager-error {
-    color: #ef4444; /* text-red-500 */
+  color: #ef4444; /* text-red-500 */
 }
 
 .license-manager-message {
-    color: #22c55e; /* text-green-500 */
+  color: #22c55e; /* text-green-500 */
 }
 
 .license-manager-form-container h3 {
-    font-size: 1.25rem; /* text-xl */
-    font-weight: 600; /* font-semibold */
-    margin-bottom: 0.5rem; /* mb-2 */
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 600; /* font-semibold */
+  margin-bottom: 0.5rem; /* mb-2 */
 }
 
 .license-manager-form {
-    background-color: #ffffff; /* bg-white */
-    padding: 1rem; /* p-4 */
-    border-radius: 0.375rem; /* rounded-md */
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
+  background-color: #ffffff; /* bg-white */
+  padding: 1rem; /* p-4 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
 }
 
 .license-manager-form-group {
-    margin-bottom: 1rem; /* mb-4 */
+  margin-bottom: 1rem; /* mb-4 */
 }
 
 .license-manager-label {
-    display: block;
-    color: #374151; /* text-gray-700 */
-    font-size: 0.875rem; /* text-sm */
-    font-weight: 700; /* font-bold */
-    margin-bottom: 0.5rem; /* mb-2 */
+  display: block;
+  color: #374151; /* text-gray-700 */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 700; /* font-bold */
+  margin-bottom: 0.5rem; /* mb-2 */
 }
 
 .license-manager-input-disabled {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
-    appearance: none;
-    border-width: 1px; /* border */
-    border-radius: 0.25rem; /* rounded */
-    width: 100%; /* w-full */
-    padding-top: 0.5rem; /* py-2 */
-    padding-bottom: 0.5rem; /* py-2 */
-    padding-left: 0.75rem; /* px-3 */
-    padding-right: 0.75rem; /* px-3 */
-    color: #374151; /* text-gray-700 */
-    line-height: 1.25; /* leading-tight */
-    outline: 2px solid transparent; /* focus:outline-none */
-    outline-offset: 2px; /* focus:outline-none */
-    background-color: #e5e7eb; /* bg-gray-200 */
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
+  appearance: none;
+  border-width: 1px; /* border */
+  border-radius: 0.25rem; /* rounded */
+  width: 100%; /* w-full */
+  padding-top: 0.5rem; /* py-2 */
+  padding-bottom: 0.5rem; /* py-2 */
+  padding-left: 0.75rem; /* px-3 */
+  padding-right: 0.75rem; /* px-3 */
+  color: #374151; /* text-gray-700 */
+  line-height: 1.25; /* leading-tight */
+  outline: 2px solid transparent; /* focus:outline-none */
+  outline-offset: 2px; /* focus:outline-none */
+  background-color: #e5e7eb; /* bg-gray-200 */
 }
 
 .license-manager-input {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
-    appearance: none;
-    border-width: 1px; /* border */
-    border-radius: 0.25rem; /* rounded */
-    width: 100%; /* w-full */
-    padding-top: 0.5rem; /* py-2 */
-    padding-bottom: 0.5rem; /* py-2 */
-    padding-left: 0.75rem; /* px-3 */
-    padding-right: 0.75rem; /* px-3 */
-    color: #374151; /* text-gray-700 */
-    line-height: 1.25; /* leading-tight */
-    outline: 2px solid transparent; /* focus:outline-none */
-    outline-offset: 2px; /* focus:outline-none */
-    /* focus:shadow-outline is a utility class for outline, handled by focus:outline-none already */
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
+  appearance: none;
+  border-width: 1px; /* border */
+  border-radius: 0.25rem; /* rounded */
+  width: 100%; /* w-full */
+  padding-top: 0.5rem; /* py-2 */
+  padding-bottom: 0.5rem; /* py-2 */
+  padding-left: 0.75rem; /* px-3 */
+  padding-right: 0.75rem; /* px-3 */
+  color: #374151; /* text-gray-700 */
+  line-height: 1.25; /* leading-tight */
+  outline: 2px solid transparent; /* focus:outline-none */
+  outline-offset: 2px; /* focus:outline-none */
+  /* focus:shadow-outline is a utility class for outline, handled by focus:outline-none already */
 }
 
-
 .license-manager-radio-group {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .license-manager-radio-label {
-    margin-right: 1rem; /* mr-4 */
+  margin-right: 1rem; /* mr-4 */
 }
 
 .license-manager-radio-input {
-    margin-right: 0.5rem; /* mr-2 */
+  margin-right: 0.5rem; /* mr-2 */
 }
 
 .license-manager-help-text {
-    font-size: 0.75rem; /* text-xs */
-    color: #6b7280; /* text-gray-500 */
-    margin-top: 0.25rem; /* mt-1 */
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+  margin-top: 0.25rem; /* mt-1 */
 }
 
 .license-manager-form-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .license-manager-licenses-section {
-    margin-bottom: 2rem; /* mb-8 */
+  margin-bottom: 2rem; /* mb-8 */
 }
 
 .license-manager-no-licenses {
-    /* Styles for the "No licenses found" text if needed */
+  /* Styles for the "No licenses found" text if needed */
 }
 
 .license-manager-license-item {
-    background-color: #f3f4f6; /* bg-gray-100 */
-    padding: 0.75rem; /* p-3 */
-    border-radius: 0.375rem; /* rounded-md */
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
-    /* display: flex;
+  background-color: #f3f4f6; /* bg-gray-100 */
+  padding: 0.75rem; /* p-3 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow */
+  /* display: flex;
     justify-content: space-between;
     align-items: center; */
 }

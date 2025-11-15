@@ -1,23 +1,23 @@
-import React, { Suspense, lazy } from 'react';
-import { Nav, Container, Dropdown, Loader, Placeholder } from 'rsuite';
-import { Menu } from 'lucide-react';
-import { useMediaQuery } from 'react-responsive';
+import React, { Suspense, lazy } from "react";
+import { Nav, Container, Dropdown, Loader, Placeholder } from "rsuite";
+import { Menu } from "lucide-react";
+import { useMediaQuery } from "react-responsive";
 import {
   Routes,
   Route,
   Link,
   useMatch,
-  useResolvedPath
-} from 'react-router-dom';
+  useResolvedPath,
+} from "react-router-dom";
 
 // Lazy load the components
-const CreateUser = lazy(() => import('./CreateUser'));
-const ManageUsers = lazy(() => import('./ManageUsers'));
-const ServerLogs = lazy(() => import('./ServerLogs'));
-const InvitesPanel = lazy(() => import('./license/InvitesPanel'));
-const AdminPanelRequests = lazy(() => import('./admreq/AdminPanelRequests'));
-const FilesystemBrowser = lazy(() => import('./editor/FilesystemBrowser'));
-const ServerStatus = lazy(() => import('./ServerStatus'));
+const CreateUser = lazy(() => import("./CreateUser"));
+const ManageUsers = lazy(() => import("./ManageUsers"));
+const ServerLogs = lazy(() => import("./ServerLogs"));
+const InvitesPanel = lazy(() => import("./license/InvitesPanel"));
+const AdminPanelRequests = lazy(() => import("./admreq/AdminPanelRequests"));
+const FilesystemBrowser = lazy(() => import("./editor/FilesystemBrowser"));
+const ServerStatus = lazy(() => import("./ServerStatus"));
 
 // Custom Nav.Item component wrapped in React.memo for performance
 const NavLink = React.memo(({ children, to, ...props }) => {
@@ -50,8 +50,8 @@ const adminFilesystemConfig = [
     listEndpoint: "admin/editor/list_files",
     readEndpoint: "admin/editor/read_file",
     uploadEndpoint: "admin/editor/upload_file",
-    deleteEndpoint: "admin/editor/delete_file"
-  }
+    deleteEndpoint: "admin/editor/delete_file",
+  },
 ];
 
 const AdminTools = () => {
@@ -60,40 +60,40 @@ const AdminTools = () => {
   // sections array can be memoized with useMemo if it were more complex, but it's fine here.
   const sections = [
     {
-      path: 'home',
-      title: 'Меню',
-      component: <Placeholder.Paragraph />
+      path: "home",
+      title: "Меню",
+      component: <Placeholder.Paragraph />,
     },
     {
-      path: 'manage-users',
-      title: 'Керування користувачами',
-      component: <ManageUsers />
+      path: "manage-users",
+      title: "Керування користувачами",
+      component: <ManageUsers />,
     },
     {
-      path: 'invites',
-      title: 'Запрошення',
-      component: <InvitesPanel />
+      path: "invites",
+      title: "Запрошення",
+      component: <InvitesPanel />,
     },
     {
-      path: 'logs',
-      title: 'Логи',
-      component: <ServerLogs />
+      path: "logs",
+      title: "Логи",
+      component: <ServerLogs />,
     },
     {
-      path: 'data',
-      title: 'Стан сервера',
-      component: <ServerStatus />
+      path: "data",
+      title: "Стан сервера",
+      component: <ServerStatus />,
     },
     {
-      path: 'requests',
-      title: 'Запити',
-      component: <AdminPanelRequests />
+      path: "requests",
+      title: "Запити",
+      component: <AdminPanelRequests />,
     },
     {
-      path: 'files',
-      title: 'Файли',
-      component: <FilesystemBrowser filesystems={adminFilesystemConfig} />
-    }
+      path: "files",
+      title: "Файли",
+      component: <FilesystemBrowser filesystems={adminFilesystemConfig} />,
+    },
   ];
 
   const renderNav = () => {
@@ -103,9 +103,9 @@ const AdminTools = () => {
           title={<Menu />}
           trigger="click"
           placement="bottomStart"
-          style={{ marginBottom: '20px' }}
+          style={{ marginBottom: "20px" }}
         >
-          {sections.map(section => (
+          {sections.map((section) => (
             <DropdownNavLink to={section.path} key={section.path}>
               {section.title}
             </DropdownNavLink>
@@ -115,8 +115,8 @@ const AdminTools = () => {
     }
 
     return (
-      <Nav appearance="subtle" style={{ marginBottom: '20px' }}>
-        {sections.map(section => (
+      <Nav appearance="subtle" style={{ marginBottom: "20px" }}>
+        {sections.map((section) => (
           <NavLink to={section.path} key={section.path}>
             {section.title}
           </NavLink>
@@ -126,14 +126,14 @@ const AdminTools = () => {
   };
 
   return (
-    <div style={{ marginTop: '20px', width: "100%" }}>
+    <div style={{ marginTop: "20px", width: "100%" }}>
       {renderNav()}
 
       <Container>
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route index element={<CreateUser />} />
-            {sections.map(section => (
+            {sections.map((section) => (
               <Route
                 key={section.path}
                 path={section.path}

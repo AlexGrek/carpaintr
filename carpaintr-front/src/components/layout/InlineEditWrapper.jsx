@@ -25,9 +25,9 @@ export default function InlineEditWrapper({ value, onChange, ...props }) {
     <InlineEdit
       {...props}
       value={localValue}
-      onChange={setLocalValue}   // only update local state
-      onSave={handleSave}        // commit value on save
-      stateOnBlur="save"        // also commit on blur
+      onChange={setLocalValue} // only update local state
+      onSave={handleSave} // commit value on save
+      stateOnBlur="save" // also commit on blur
     />
   );
 }

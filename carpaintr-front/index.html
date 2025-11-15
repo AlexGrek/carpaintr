@@ -1,63 +1,64 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Autolab" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap"
-    rel="stylesheet">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="Autolab" />
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e23c1a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Autolab</title>
+    <style>
+      body {
+        margin: 0;
+        background-color: #f3edec;
+      }
 
-  <meta name="theme-color" content="#e23c1a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Autolab</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #f3edec;
-    }
+      #fallback-refresh {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f6f4f4;
+        z-index: 9999;
+      }
 
-    #fallback-refresh {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f6f4f4;
-      z-index: 9999;
-    }
+      #fallback-refresh button {
+        background: rgba(255, 255, 255, 0.125);
+        border: none;
+        padding: 0.3em 0.2em;
+        font-size: 1em;
+        border-radius: 5px;
+        cursor: pointer;
+      }
 
-    #fallback-refresh button {
-      background: rgba(255, 255, 255, 0.125);
-      border: none;
-      padding: 0.3em 0.2em;
-      font-size: 1em;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+      #fallback-refresh button:hover {
+        background-color: #f2f2f246;
+      }
+    </style>
+  </head>
 
-    #fallback-refresh button:hover {
-      background-color: #f2f2f246;
-    }
-  </style>
-</head>
+  <body>
+    <div id="fallback-refresh">
+      <button onclick="location.reload()">
+        Refresh Page | Оновити сторінку
+      </button>
+    </div>
 
-<body>
-  <div id="fallback-refresh">
-    <button onclick="location.reload()">Refresh Page | Оновити сторінку</button>
-  </div>
-
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
-
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

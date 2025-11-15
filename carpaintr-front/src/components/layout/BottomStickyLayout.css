@@ -1,35 +1,39 @@
 .layout-container {
-    width: 100%;
+  width: 100%;
 }
 
 .layout-content {
-    width: 100%;
+  width: 100%;
 }
 
 .layout-content.vscroll {
-    margin-bottom: 60px;
-    /* space for sticky panel */
+  margin-bottom: 60px;
+  /* space for sticky panel */
 }
 
 .layout-bottom-panel {
-    padding: 1rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(12px);
-    /* Blur the background behind the element */
-    -webkit-backdrop-filter: blur(8px);
+  padding: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+  /* Blur the background behind the element */
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Sticky mode: fixed at bottom */
 .layout-bottom-panel.sticky {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    border-top: 1px solid #cccccc81;
-    background-image: linear-gradient(to bottom, #f8f8f8, rgba(248, 248, 248, 0.8));
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-top: 1px solid #cccccc81;
+  background-image: linear-gradient(
+    to bottom,
+    #f8f8f8,
+    rgba(248, 248, 248, 0.8)
+  );
 }
 
 /* Attached mode: stays in flow */
 .layout-bottom-panel.attached {
-    position: static;
+  position: static;
 }

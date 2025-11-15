@@ -1,7 +1,8 @@
 @primary-color: #e23b1a;
 
-@font-family-base: 'Lucida Grande', 'Avenir Next', 'Helvetica Neue', Helvetica, Arial,
-  'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', STXihei, sans-serif;
+@font-family-base: "Lucida Grande", "Avenir Next", "Helvetica Neue", Helvetica,
+  Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", STXihei,
+  sans-serif;
 @font-size-base: 14px;
 @enable-ripple-effect: false;
 @primary-color-dark: #8a3f26;
@@ -26,7 +27,12 @@
 
 .rs-drawer-content {
   // Use a very subtle translucent background
-  background-color: rgba(255, 255, 255, 0.84); /* Very light, almost transparent background */
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.84
+  ); /* Very light, almost transparent background */
   border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); /* Deeper shadow for depth */
   border-radius: @border-radius; /* Use the custom border-radius */
@@ -38,7 +44,7 @@
   // backdrop-filter: blur(2px);
 
   // Smooth entry/exit animation for the drawer itself - now sharper
-  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0); // Sharper ease animation
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); // Sharper ease animation
 }
 
 .rs-drawer-body {

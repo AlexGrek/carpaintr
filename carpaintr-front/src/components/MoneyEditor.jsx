@@ -1,8 +1,8 @@
-import React from 'react';
-import { Input, InputPicker } from 'rsuite';
+import React from "react";
+import { Input, InputPicker } from "rsuite";
 
 export default function MoneyEditor({ value, onChange, preferredCurrency }) {
-  const { amount, currency } = value || { amount: '', currency: '' };
+  const { amount, currency } = value || { amount: "", currency: "" };
 
   // Prepare currency list
   let currencyOptions = ["UAH", "грн", "USD", "у.о."];
@@ -11,11 +11,11 @@ export default function MoneyEditor({ value, onChange, preferredCurrency }) {
   }
   currencyOptions = [...new Set(currencyOptions)]; // remove duplicates
 
-  const pickerData = currencyOptions.map(c => ({ label: c, value: c }));
+  const pickerData = currencyOptions.map((c) => ({ label: c, value: c }));
 
   // Regex: optional sign, digits, optional . or , with up to 2 decimals
   const moneyRegex = /^-?\d+(?:[.,]\d{0,2})?$/;
-  const isAmountValid = amount === '' || moneyRegex.test(amount);
+  const isAmountValid = amount === "" || moneyRegex.test(amount);
 
   const handleAmountChange = (newAmount) => {
     onChange({ ...value, amount: newAmount });
@@ -23,19 +23,19 @@ export default function MoneyEditor({ value, onChange, preferredCurrency }) {
 
   const handleCurrencyChange = (newCurrency) => {
     // newCurrency can be string or null
-    onChange({ ...value, currency: newCurrency || '' });
+    onChange({ ...value, currency: newCurrency || "" });
   };
 
   return (
-    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
       <Input
         value={amount}
         onChange={handleAmountChange}
         placeholder="0.00"
         style={{
-          borderColor: isAmountValid ? undefined : 'red',
-          color: isAmountValid ? undefined : 'red',
-          textAlign: 'right'
+          borderColor: isAmountValid ? undefined : "red",
+          color: isAmountValid ? undefined : "red",
+          textAlign: "right",
         }}
       />
       <InputPicker

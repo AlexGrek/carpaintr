@@ -15,14 +15,18 @@ const MenuPickerGemini = ({ label, items = [], onSelect, value }) => {
   const isExpanded = value == null;
 
   // Normalize items to a consistent object structure for easier processing.
-  const normalizedItems = useMemo(() => items.map(item =>
-    typeof item === 'string' ? { label: item, value: item } : item
-  ), [items]);
+  const normalizedItems = useMemo(
+    () =>
+      items.map((item) =>
+        typeof item === "string" ? { label: item, value: item } : item,
+      ),
+    [items],
+  );
 
   // Find the index of the selected item based on the `value` prop.
   const selectedIndex = useMemo(() => {
     if (isExpanded) return null;
-    return normalizedItems.findIndex(item => item.value === value);
+    return normalizedItems.findIndex((item) => item.value === value);
   }, [value, isExpanded, normalizedItems]);
 
   // --- Dynamic Height Calculation ---
@@ -59,55 +63,73 @@ const MenuPickerGemini = ({ label, items = [], onSelect, value }) => {
   // --- Styles (memoized for performance) ---
   const styles = {
     mainContainer: {
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      maxWidth: '380px',
-      margin: '40px auto',
-      padding: '0 20px',
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      maxWidth: "380px",
+      margin: "40px auto",
+      padding: "0 20px",
     },
     mainLabel: {
-      fontSize: '15px',
-      fontWeight: '600',
-      color: 'rgba(0, 0, 0, 0.6)',
-      paddingLeft: '16px',
-      marginBottom: '8px',
+      fontSize: "15px",
+      fontWeight: "600",
+      color: "rgba(0, 0, 0, 0.6)",
+      paddingLeft: "16px",
+      marginBottom: "8px",
     },
-    pickerContainer: useMemo(() => ({
-      borderRadius: '12px',
-      backgroundColor: '#f0f0f0',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
-      overflow: 'hidden',
-      transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-      height: isExpanded ? itemHeight * normalizedItems.length : itemHeight,
-      cursor: isExpanded ? 'default' : 'pointer',
-    }), [isExpanded, itemHeight, normalizedItems.length]),
-    listWrapper: useMemo(() => ({
-      transform: !isExpanded && selectedIndex !== null && selectedIndex !== -1
-        ? `translateY(-${selectedIndex * itemHeight}px)`
-        : 'translateY(0px)',
-      transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-    }), [isExpanded, selectedIndex, itemHeight]),
+    pickerContainer: useMemo(
+      () => ({
+        borderRadius: "12px",
+        backgroundColor: "#f0f0f0",
+        boxShadow:
+          "0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
+        overflow: "hidden",
+        transition: "height 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+        height: isExpanded ? itemHeight * normalizedItems.length : itemHeight,
+        cursor: isExpanded ? "default" : "pointer",
+      }),
+      [isExpanded, itemHeight, normalizedItems.length],
+    ),
+    listWrapper: useMemo(
+      () => ({
+        transform:
+          !isExpanded && selectedIndex !== null && selectedIndex !== -1
+            ? `translateY(-${selectedIndex * itemHeight}px)`
+            : "translateY(0px)",
+        transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+      }),
+      [isExpanded, selectedIndex, itemHeight],
+    ),
     item: {
-      display: 'flex',
-      alignItems: 'center',
-      padding: '12px 16px',
-      backgroundColor: '#ffffff',
-      userSelect: 'none',
-      boxSizing: 'border-box',
-      minHeight: '58px', // Ensure a minimum height
+      display: "flex",
+      alignItems: "center",
+      padding: "12px 16px",
+      backgroundColor: "#ffffff",
+      userSelect: "none",
+      boxSizing: "border-box",
+      minHeight: "58px", // Ensure a minimum height
     },
     itemContent: { flexGrow: 1 },
-    itemLabel: { fontSize: '17px', fontWeight: '500', color: '#000', lineHeight: '1.2' },
-    itemDetails: { fontSize: '13px', color: 'rgba(0, 0, 0, 0.55)', marginTop: '2px' },
-    iconWrapper: { display: 'flex', alignItems: 'center', marginLeft: '16px' },
+    itemLabel: {
+      fontSize: "17px",
+      fontWeight: "500",
+      color: "#000",
+      lineHeight: "1.2",
+    },
+    itemDetails: {
+      fontSize: "13px",
+      color: "rgba(0, 0, 0, 0.55)",
+      marginTop: "2px",
+    },
+    iconWrapper: { display: "flex", alignItems: "center", marginLeft: "16px" },
   };
 
   const getItemStyle = (index) => {
     const style = { ...styles.item };
     if (isExpanded && index < normalizedItems.length - 1) {
-      style.borderBottom = '1px solid #e5e5e5';
+      style.borderBottom = "1px solid #e5e5e5";
     }
     if (isExpanded) {
-      style.cursor = 'pointer';
+      style.cursor = "pointer";
     }
     return style;
   };
@@ -134,7 +156,9 @@ const MenuPickerGemini = ({ label, items = [], onSelect, value }) => {
             >
               <div style={styles.itemContent}>
                 <div style={styles.itemLabel}>{item.label}</div>
-                {item.details && <div style={styles.itemDetails}>{item.details}</div>}
+                {item.details && (
+                  <div style={styles.itemDetails}>{item.details}</div>
+                )}
               </div>
               <div style={styles.iconWrapper}>
                 {item.icon}

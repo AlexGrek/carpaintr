@@ -1,558 +1,560 @@
 /* CSS Variables for scaling */
 :root {
-    --car-scale: 1;
-    --car-font-size: 12px;
+  --car-scale: 1;
+  --car-font-size: 12px;
 }
 
 /* Car Diagram Container */
 .car-container {
-    position: relative;
-    width: 450px;
-    height: 800px;
-    overflow: visible;
-    margin: 0 auto;
-    transform: scale(var(--car-scale));
-    transform-origin: top center;
+  position: relative;
+  width: 450px;
+  height: 800px;
+  overflow: visible;
+  margin: 0 auto;
+  transform: scale(var(--car-scale));
+  transform-origin: top center;
 }
 
 .car-container-container {
-    display: flex;
-    flex-wrap: wrap-reverse;
-    justify-content: center;
-    padding: 10px;
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: center;
+  padding: 10px;
 }
 
-.car-container-container>* {
-    max-width: 800px;
+.car-container-container > * {
+  max-width: 800px;
 }
 
 /* Base Car Part Styles */
 .car-part {
-    position: absolute;
-    background-color: rgba(200, 210, 220, 0.2);
-    border: 2px solid #1a1a1a9f;
-    border-radius: 4px;
-    box-sizing: border-box;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: rgba(0, 0, 0, 0.8);
-    font-size: var(--car-font-size);
-    font-weight: 500;
-    text-align: center;
-    padding: 2px;
+  position: absolute;
+  background-color: rgba(200, 210, 220, 0.2);
+  border: 2px solid #1a1a1a9f;
+  border-radius: 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.8);
+  font-size: var(--car-font-size);
+  font-weight: 500;
+  text-align: center;
+  padding: 2px;
 }
 
 .car-part:hover {
-    background-color: rgba(173, 216, 230, 0.9);
-    z-index: 10;
-    color: black;
+  background-color: rgba(173, 216, 230, 0.9);
+  z-index: 10;
+  color: black;
 }
 
 /* Central Body Parts */
 .front-bumper {
-    top: 0px;
-    left: 150px;
-    width: 150px;
-    height: 40px;
-    border-radius: 15px 15px 5px 5px;
+  top: 0px;
+  left: 150px;
+  width: 150px;
+  height: 40px;
+  border-radius: 15px 15px 5px 5px;
 }
 
 .hood {
-    top: 40px;
-    left: 150px;
-    width: 150px;
-    height: 140px;
+  top: 40px;
+  left: 150px;
+  width: 150px;
+  height: 140px;
 }
 
 .windshield {
-    top: 180px;
-    left: 150px;
-    width: 150px;
-    height: 70px;
-    border-bottom-width: 0;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+  top: 180px;
+  left: 150px;
+  width: 150px;
+  height: 70px;
+  border-bottom-width: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 .roof {
-    top: 250px;
-    left: 150px;
-    width: 150px;
-    height: 200px;
+  top: 250px;
+  left: 150px;
+  width: 150px;
+  height: 200px;
 }
 
 .rear-glass {
-    top: 450px;
-    left: 150px;
-    width: 150px;
-    height: 70px;
-    border-top-width: 0;
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+  top: 450px;
+  left: 150px;
+  width: 150px;
+  height: 70px;
+  border-top-width: 0;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
 .trunk {
-    top: 520px;
-    left: 150px;
-    width: 150px;
-    height: 120px;
+  top: 520px;
+  left: 150px;
+  width: 150px;
+  height: 120px;
 }
 
 .rear-bumper {
-    top: 640px;
-    left: 150px;
-    width: 150px;
-    height: 40px;
-    border-radius: 5px 5px 15px 15px;
+  top: 640px;
+  left: 150px;
+  width: 150px;
+  height: 40px;
+  border-radius: 5px 5px 15px 15px;
 }
 
 /* Headlights and Taillights */
 .headlight-left {
-    color: transparent;
-    top: 10px;
-    left: 110px;
-    width: 40px;
-    height: 30px;
-    border-radius: 15px 5px 5px 5px;
+  color: transparent;
+  top: 10px;
+  left: 110px;
+  width: 40px;
+  height: 30px;
+  border-radius: 15px 5px 5px 5px;
 }
 
 .headlight-right {
-    color: transparent;
-    top: 10px;
-    left: 300px;
-    width: 40px;
-    height: 30px;
-    border-radius: 5px 15px 5px 5px;
+  color: transparent;
+  top: 10px;
+  left: 300px;
+  width: 40px;
+  height: 30px;
+  border-radius: 5px 15px 5px 5px;
 }
 
 .taillight-left {
-    color: transparent;
-    top: 640px;
-    left: 110px;
-    width: 40px;
-    height: 30px;
-    border-radius: 5px 5px 5px 15px;
+  color: transparent;
+  top: 640px;
+  left: 110px;
+  width: 40px;
+  height: 30px;
+  border-radius: 5px 5px 5px 15px;
 }
 
 .taillight-right {
-    color: transparent;
-    top: 640px;
-    left: 300px;
-    width: 40px;
-    height: 30px;
-    border-radius: 5px 5px 15px 5px;
+  color: transparent;
+  top: 640px;
+  left: 300px;
+  width: 40px;
+  height: 30px;
+  border-radius: 5px 5px 15px 5px;
 }
 
 /* Fenders */
 .front-fender-left {
-    top: 40px;
-    left: 70px;
-    width: 80px;
-    height: 140px;
+  top: 40px;
+  left: 70px;
+  width: 80px;
+  height: 140px;
 }
 
 .front-fender-right {
-    top: 40px;
-    left: 300px;
-    width: 80px;
-    height: 140px;
+  top: 40px;
+  left: 300px;
+  width: 80px;
+  height: 140px;
 }
 
 .rear-fender-left {
-    top: 520px;
-    left: 70px;
-    width: 80px;
-    height: 120px;
+  top: 520px;
+  left: 70px;
+  width: 80px;
+  height: 120px;
 }
 
 .rear-fender-right {
-    top: 520px;
-    left: 300px;
-    width: 80px;
-    height: 120px;
+  top: 520px;
+  left: 300px;
+  width: 80px;
+  height: 120px;
 }
 
 /* Doors - Recalculated for 20px side panels */
 .front-door-left {
-    top: 180px;
-    left: 70px;
-    width: 60px;
-    height: 170px;
+  top: 180px;
+  left: 70px;
+  width: 60px;
+  height: 170px;
 }
 
 .front-door-right {
-    top: 180px;
-    left: 320px;
-    width: 60px;
-    height: 170px;
+  top: 180px;
+  left: 320px;
+  width: 60px;
+  height: 170px;
 }
 
 .rear-door-left {
-    top: 350px;
-    left: 70px;
-    width: 60px;
-    height: 170px;
+  top: 350px;
+  left: 70px;
+  width: 60px;
+  height: 170px;
 }
 
 .rear-door-right {
-    top: 350px;
-    left: 320px;
-    width: 60px;
-    height: 170px;
+  top: 350px;
+  left: 320px;
+  width: 60px;
+  height: 170px;
 }
 
 /* Side Panels - 20px wide, fits between doors and main body */
 .side-panel-left {
-    color: transparent;
-    top: 180px;
-    left: 130px;
-    width: 20px;
-    height: 340px;
+  color: transparent;
+  top: 180px;
+  left: 130px;
+  width: 20px;
+  height: 340px;
 }
 
 .side-panel-right {
-    color: transparent;
-    top: 180px;
-    left: 300px;
-    width: 20px;
-    height: 340px;
+  color: transparent;
+  top: 180px;
+  left: 300px;
+  width: 20px;
+  height: 340px;
 }
 
 /* Wheels */
 .wheel-front-left {
-    top: 120px;
-    left: 0px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    z-index: 5;
+  top: 120px;
+  left: 0px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  z-index: 5;
 }
 
 .wheel-front-right {
-    top: 120px;
-    left: 380px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    z-index: 5;
+  top: 120px;
+  left: 380px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  z-index: 5;
 }
 
 .wheel-rear-left {
-    top: 520px;
-    left: 0px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    z-index: 5;
+  top: 520px;
+  left: 0px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  z-index: 5;
 }
 
 .wheel-rear-right {
-    top: 520px;
-    left: 380px;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    z-index: 5;
+  top: 520px;
+  left: 380px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  z-index: 5;
 }
 
 /* Context Menu Styles */
 .context-menu {
-    position: fixed;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    z-index: 1000;
-    min-width: 200px;
-    max-width: 90vw;
+  position: fixed;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  z-index: 1000;
+  min-width: 200px;
+  max-width: 90vw;
 }
 
 .context-menu-header {
-    font-weight: bold;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 8px;
-    font-size: 16px;
-    color: #333;
+  font-weight: bold;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
 }
 
 .context-menu-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 12.2em;
-    overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 12.2em;
+  overflow-y: auto;
 }
 
 .context-menu-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .context-menu-item:hover {
-    background-color: #f5f5f5;
+  background-color: #f5f5f5;
 }
 
 /* Responsive scaling using CSS variables */
 @media (max-width: 768px) {
-    :root {
-        --car-scale: 1.0;
-        --car-font-size: 10px;
-    }
+  :root {
+    --car-scale: 1;
+    --car-font-size: 10px;
+  }
 
-    .car-container {
-        width: 400px;
-        /* Reduced from 450px to match compressed layout */
-    }
+  .car-container {
+    width: 400px;
+    /* Reduced from 450px to match compressed layout */
+  }
 
-    .car-container-container {
-        padding: 5px;
-    }
+  .car-container-container {
+    padding: 5px;
+  }
 
-    /* Smaller wheels on mobile to reduce width */
-    .wheel-front-left {
-        top: 135px;
-        left: 5px;
-        width: 40px;
-        height: 40px;
-        color: transparent;
-    }
+  /* Smaller wheels on mobile to reduce width */
+  .wheel-front-left {
+    top: 135px;
+    left: 5px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
 
-    .wheel-front-right {
-        top: 135px;
-        left: 355px;
-        width: 40px;
-        height: 40px;
-        color: transparent;
-    }
+  .wheel-front-right {
+    top: 135px;
+    left: 355px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
 
-    .wheel-rear-left {
-        top: 535px;
-        left: 5px;
-        width: 40px;
-        height: 40px;
-        color: transparent;
-    }
+  .wheel-rear-left {
+    top: 535px;
+    left: 5px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
 
-    .wheel-rear-right {
-        top: 535px;
-        left: 355px;
-        width: 40px;
-        height: 40px;
-        color: transparent;
-    }
+  .wheel-rear-right {
+    top: 535px;
+    left: 355px;
+    width: 40px;
+    height: 40px;
+    color: transparent;
+  }
 
-    /* Compress left column - fenders and doors closer to center */
-    .front-fender-left {
-        left: 45px;
-        width: 80px;
-    }
+  /* Compress left column - fenders and doors closer to center */
+  .front-fender-left {
+    left: 45px;
+    width: 80px;
+  }
 
-    .rear-fender-left {
-        left: 45px;
-        width: 80px;
-    }
+  .rear-fender-left {
+    left: 45px;
+    width: 80px;
+  }
 
-    .front-door-left {
-        left: 45px;
-        width: 60px;
-    }
+  .front-door-left {
+    left: 45px;
+    width: 60px;
+  }
 
-    .rear-door-left {
-        left: 45px;
-        width: 60px;
-    }
+  .rear-door-left {
+    left: 45px;
+    width: 60px;
+  }
 
-    /* Adjust side panels to close gaps */
-    .side-panel-left {
-        left: 105px;
-        width: 20px;
-    }
+  /* Adjust side panels to close gaps */
+  .side-panel-left {
+    left: 105px;
+    width: 20px;
+  }
 
-    .side-panel-right {
-        left: 275px;
-        width: 20px;
-    }
+  .side-panel-right {
+    left: 275px;
+    width: 20px;
+  }
 
-    /* Compress right column - move closer to center */
-    .front-fender-right {
-        left: 275px;
-        width: 80px;
-    }
+  /* Compress right column - move closer to center */
+  .front-fender-right {
+    left: 275px;
+    width: 80px;
+  }
 
-    .rear-fender-right {
-        left: 275px;
-        width: 80px;
-    }
+  .rear-fender-right {
+    left: 275px;
+    width: 80px;
+  }
 
-    .front-door-right {
-        left: 295px;
-        width: 60px;
-    }
+  .front-door-right {
+    left: 295px;
+    width: 60px;
+  }
 
-    .rear-door-right {
-        left: 295px;
-        width: 60px;
-    }
+  .rear-door-right {
+    left: 295px;
+    width: 60px;
+  }
 
-    /* Keep main body centered in the 400px container */
-    .front-bumper {
-        left: 125px;
-        width: 150px;
-    }
+  /* Keep main body centered in the 400px container */
+  .front-bumper {
+    left: 125px;
+    width: 150px;
+  }
 
-    .hood {
-        left: 125px;
-        width: 150px;
-    }
+  .hood {
+    left: 125px;
+    width: 150px;
+  }
 
-    .windshield {
-        left: 125px;
-        width: 150px;
-    }
+  .windshield {
+    left: 125px;
+    width: 150px;
+  }
 
-    .roof {
-        left: 125px;
-        width: 150px;
-    }
+  .roof {
+    left: 125px;
+    width: 150px;
+  }
 
-    .rear-glass {
-        left: 125px;
-        width: 150px;
-    }
+  .rear-glass {
+    left: 125px;
+    width: 150px;
+  }
 
-    .trunk {
-        left: 125px;
-        width: 150px;
-    }
+  .trunk {
+    left: 125px;
+    width: 150px;
+  }
 
-    .rear-bumper {
-        left: 125px;
-        width: 150px;
-    }
+  .rear-bumper {
+    left: 125px;
+    width: 150px;
+  }
 
-    /* Adjust headlights and taillights */
-    .headlight-left {
-        left: 85px;
-    }
+  /* Adjust headlights and taillights */
+  .headlight-left {
+    left: 85px;
+  }
 
-    .headlight-right {
-        left: 275px;
-    }
+  .headlight-right {
+    left: 275px;
+  }
 
-    .taillight-left {
-        left: 85px;
-    }
+  .taillight-left {
+    left: 85px;
+  }
 
-    .taillight-right {
-        left: 275px;
-    }
+  .taillight-right {
+    left: 275px;
+  }
 
-    .context-menu {
-        min-width: 150px;
-        padding: 8px;
-        font-size: 13px;
-    }
+  .context-menu {
+    min-width: 150px;
+    padding: 8px;
+    font-size: 13px;
+  }
 
-    .context-menu-header {
-        font-size: 14px;
-    }
+  .context-menu-header {
+    font-size: 14px;
+  }
 
-    .context-menu-item {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
+  .context-menu-item {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 600px) {
-    :root {
-        --car-scale: 1.25;
-        --car-font-size: 9px;
-    }
+  :root {
+    --car-scale: 1.25;
+    --car-font-size: 9px;
+  }
 
-    .car-container-container {
-        padding: 5px;
-    }
+  .car-container-container {
+    padding: 5px;
+  }
 }
 
 @media (max-width: 480px) {
-    :root {
-        --car-scale: 1.15;
-        --car-font-size: 11pt;
-    }
+  :root {
+    --car-scale: 1.15;
+    --car-font-size: 11pt;
+  }
 
-    .car-container-container {
-        padding: 5px;
-    }
+  .car-container-container {
+    padding: 5px;
+  }
 
-    .context-menu {
-        min-width: 120px;
-        padding: 6px;
-        font-size: 12px;
-    }
+  .context-menu {
+    min-width: 120px;
+    padding: 6px;
+    font-size: 12px;
+  }
 
-    .context-menu-header {
-        font-size: 13px;
-    }
+  .context-menu-header {
+    font-size: 13px;
+  }
 
-    .context-menu-item {
-        padding: 4px 6px;
-        font-size: 11px;
-    }
+  .context-menu-item {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
 }
 
 /* Mobile Modal Overlay */
 .context-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    animation: fadeInContext 0.2s ease-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeInContext 0.2s ease-out;
 }
 
 /* Mobile Modal Centered */
 .context-menu-mobile {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    max-height: 80vh;
-    width: 90vw;
-    max-width: 400px;
-    z-index: 1001;
-    padding: 16px;
-    font-size: 16px;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-height: 80vh;
+  width: 90vw;
+  max-width: 400px;
+  z-index: 1001;
+  padding: 16px;
+  font-size: 16px;
 }
 
 .context-menu-mobile .context-menu-header {
-    font-size: 18px;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
+  font-size: 18px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 .context-menu-mobile .context-menu-list {
-    max-height: calc(80vh - 100px);
+  max-height: calc(80vh - 100px);
 }
 
 .context-menu-mobile .context-menu-item {
-    padding: 12px 16px;
-    font-size: 16px;
+  padding: 12px 16px;
+  font-size: 16px;
 }
 
 @keyframes fadeInContext {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

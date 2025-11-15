@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import CarPaintEstimator from '../calc/CarpaintEstimator';
-import TopBarUser from '../layout/TopBarUser';
-import { useLocation, useNavigate } from 'react-router-dom';
-import CalcMain from '../calc/CalcMain';
+import React, { useCallback, useEffect, useState } from "react";
+import CarPaintEstimator from "../calc/CarpaintEstimator";
+import TopBarUser from "../layout/TopBarUser";
+import { useLocation, useNavigate } from "react-router-dom";
+import CalcMain from "../calc/CalcMain";
 
 const CalcPage = () => {
-
-      const [hasChanges, setHasChanges] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -14,7 +13,7 @@ const CalcPage = () => {
   const confirmNavigation = useCallback(() => {
     if (hasChanges) {
       return window.confirm(
-        'You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.'
+        "You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.",
       );
     }
     return true;
@@ -25,8 +24,8 @@ const CalcPage = () => {
     const handleBeforeUnload = (e) => {
       if (hasChanges) {
         e.preventDefault();
-        e.returnValue = ''; // Chrome requires returnValue to be set
-        return ''; // Some browsers require a return value
+        e.returnValue = ""; // Chrome requires returnValue to be set
+        return ""; // Some browsers require a return value
       }
     };
 
@@ -35,35 +34,43 @@ const CalcPage = () => {
         const shouldLeave = confirmNavigation();
         if (!shouldLeave) {
           // Push the current state back to prevent navigation
-          window.history.pushState(null, '', location.pathname);
+          window.history.pushState(null, "", location.pathname);
         }
       }
     };
 
     // Add event listeners
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
 
     // Push initial state to handle back button
-    window.history.pushState(null, '', location.pathname);
+    window.history.pushState(null, "", location.pathname);
 
     // Cleanup
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [hasChanges, confirmNavigation, location.pathname]);
 
   // Custom navigation function that can be passed to child components
-  const handleNavigation = useCallback((path) => {
-    if (confirmNavigation()) {
-      navigate(path);
-    }
-  }, [navigate, confirmNavigation]);
+  const handleNavigation = useCallback(
+    (path) => {
+      if (confirmNavigation()) {
+        navigate(path);
+      }
+    },
+    [navigate, confirmNavigation],
+  );
 
-    return <div><TopBarUser onNavigate={handleNavigation}/><div style={{ maxWidth: '2000px', margin: '0 auto', padding: '1em 0' }}>
-        <CalcMain setChanges={setHasChanges} /></div>
+  return (
+    <div>
+      <TopBarUser onNavigate={handleNavigation} />
+      <div style={{ maxWidth: "2000px", margin: "0 auto", padding: "1em 0" }}>
+        <CalcMain setChanges={setHasChanges} />
+      </div>
     </div>
-}
+  );
+};
 
-export default CalcPage
+export default CalcPage;

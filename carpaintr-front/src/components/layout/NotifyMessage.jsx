@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Message, Divider } from 'rsuite';
+import React, { useState, useEffect } from "react";
+import { Message, Divider } from "rsuite";
 
-const NotifyMessage = ({ 
-  text, 
-  title, 
+const NotifyMessage = ({
+  text,
+  title,
   type = "info",
   duration = 3000,
-  className = 'fade-in-simple',
-  children
+  className = "fade-in-simple",
+  children,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentText, setCurrentText] = useState(null);
@@ -17,28 +17,28 @@ const NotifyMessage = ({
     if (!inputText) return { parsedText: inputText, parsedType: type };
 
     const lowerText = inputText.toLowerCase();
-    
-    if (lowerText.startsWith('success')) {
+
+    if (lowerText.startsWith("success")) {
       return {
         parsedText: inputText.substring(7).trim(), // Remove "success" and trim
-        parsedType: 'success'
+        parsedType: "success",
       };
     }
-    
-    if (lowerText.startsWith('error')) {
+
+    if (lowerText.startsWith("error")) {
       return {
         parsedText: inputText.substring(5).trim(), // Remove "error" and trim
-        parsedType: 'error'
+        parsedType: "error",
       };
     }
-    
-    if (lowerText.startsWith('warning')) {
+
+    if (lowerText.startsWith("warning")) {
       return {
         parsedText: inputText.substring(7).trim(), // Remove "warning" and trim
-        parsedType: 'warning'
+        parsedType: "warning",
       };
     }
-    
+
     return { parsedText: inputText, parsedType: type };
   };
 
@@ -49,7 +49,7 @@ const NotifyMessage = ({
     if (parsedText && parsedText !== currentText) {
       setCurrentText(parsedText);
       setIsVisible(true);
-      
+
       // Hide message after duration
       const timer = setTimeout(() => {
         setIsVisible(false);
@@ -57,7 +57,7 @@ const NotifyMessage = ({
 
       return () => clearTimeout(timer);
     }
-    
+
     // Hide message if text becomes null/empty
     if (!parsedText) {
       setIsVisible(false);
@@ -72,8 +72,8 @@ const NotifyMessage = ({
 
   return (
     <Message
-      className={className} 
-      showIcon 
+      className={className}
+      showIcon
       full
       closable
       type={parsedType}

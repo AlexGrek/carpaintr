@@ -1,24 +1,26 @@
 export function decodeJwtData(token) {
   // Guard against invalid input
-  if (!token || typeof token !== 'string') {
-    throw new Error('Invalid token: Token must be a non-empty string');
+  if (!token || typeof token !== "string") {
+    throw new Error("Invalid token: Token must be a non-empty string");
   }
 
   try {
     // Split the token into parts
-    const parts = token.split('.');
+    const parts = token.split(".");
 
     // A valid JWT has 3 parts: header, payload, and signature
     if (parts.length !== 3) {
-      throw new Error('Invalid token format: JWT must have three parts');
+      throw new Error("Invalid token format: JWT must have three parts");
     }
 
     // Decode the payload (second part)
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
+    );
 
     // Check if the token has an expiration claim (exp)
     if (!payload.exp) {
-      throw new Error('Token does not contain expiration information');
+      throw new Error("Token does not contain expiration information");
     }
 
     const level = payload.level || "Unknown";
@@ -29,7 +31,8 @@ export function decodeJwtData(token) {
 
     // Calculate days till expiration
     const millisecondsPerDay = 24 * 60 * 60 * 1000;
-    const daysTillExpiration = (expirationDate - currentDate) / millisecondsPerDay;
+    const daysTillExpiration =
+      (expirationDate - currentDate) / millisecondsPerDay;
 
     // Check if expired
     const isExpired = currentDate > expirationDate;
@@ -38,10 +41,10 @@ export function decodeJwtData(token) {
       expirationDate,
       daysTillExpiration: parseFloat(daysTillExpiration.toFixed(2)),
       level,
-      isExpired
+      isExpired,
     };
   } catch (error) {
-    if (error.message.includes('Token')) {
+    if (error.message.includes("Token")) {
       throw error; // Re-throw our custom errors
     } else {
       throw new Error(`Error decoding JWT token: ${error.message}`);

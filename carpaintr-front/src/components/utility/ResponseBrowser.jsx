@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import ObjectBrowser from './ObjectBrowser'; // Assuming ObjectBrowser.jsx is in the same directory
-import './ResponseBrowser.css'; // Custom CSS for loader and error messages
-import { authFetchJson } from '../../utils/authFetch';
+import React, { useState, useEffect } from "react";
+import ObjectBrowser from "./ObjectBrowser"; // Assuming ObjectBrowser.jsx is in the same directory
+import "./ResponseBrowser.css"; // Custom CSS for loader and error messages
+import { authFetchJson } from "../../utils/authFetch";
 
 const ResponseBrowser = ({ url }) => {
   const [data, setData] = useState(null);
@@ -11,14 +11,14 @@ const ResponseBrowser = ({ url }) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true); // Start loading
-      setError(null);   // Clear previous errors
-      setData(null);    // Clear previous data
+      setError(null); // Clear previous errors
+      setData(null); // Clear previous data
 
       try {
         const result = await authFetchJson(url);
         setData(result);
       } catch (err) {
-        setError(err.message || 'An unknown error occurred.');
+        setError(err.message || "An unknown error occurred.");
       } finally {
         setLoading(false); // End loading
       }
@@ -57,7 +57,9 @@ const ResponseBrowser = ({ url }) => {
   if (!data) {
     return (
       <div className="response-browser-container">
-        <p className="no-data-message">No data available. Please provide a valid URL.</p>
+        <p className="no-data-message">
+          No data available. Please provide a valid URL.
+        </p>
       </div>
     );
   }

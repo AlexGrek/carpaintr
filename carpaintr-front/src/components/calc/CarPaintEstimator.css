@@ -1,26 +1,26 @@
 .calc-file-load-entry {
-    padding: 6pt;
-    width: 100%;
-    height: 4em;
-    border: 1px solid lightcoral;
-    border-radius: 4pt;
-    cursor: pointer;
-    box-shadow: 0px 0px 3px 0px rgba(78,78,78,0.75);
+  padding: 6pt;
+  width: 100%;
+  height: 4em;
+  border: 1px solid lightcoral;
+  border-radius: 4pt;
+  cursor: pointer;
+  box-shadow: 0px 0px 3px 0px rgba(78, 78, 78, 0.75);
 }
 
 .calc-file-load-entry:hover {
-    border: 1px solid orangered;
+  border: 1px solid orangered;
 }
 
 .calc-file-load-stack {
-    width: 100%;
+  width: 100%;
 }
 
 .calc-buttons-panel-stack {
-    margin-bottom: 4pt;
-    position: sticky;
+  margin-bottom: 4pt;
+  position: sticky;
 }
 
 .calc-buttons-panel-stack button {
-    min-height: 25pt;
+  min-height: 25pt;
 }
