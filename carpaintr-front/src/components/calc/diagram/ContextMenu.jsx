@@ -9,7 +9,7 @@ import {
   Folder,
 } from "lucide-react";
 
-const ContextMenu = ({ position, items, title, onClose }, ref) => {
+const ContextMenu = ({ position, items, title, onClose, onSelect }, ref) => {
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
   // Separate ungrouped and grouped items
@@ -58,8 +58,8 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
             <li
               key={`ungrouped-${index}`}
               className="context-menu-item"
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              onClick={() => alert(`Selected: ${item.name}`)}
+              style={{ display: "flex", alignItems: "center", gap: "8px", opacity: item.alreadyUsed ? "0.5" : "1" }}
+              onClick={() => onSelect(item)}
             >
               <FileText size={16} style={{ flexShrink: 0 }} />
               <span>{item.name}</span>
@@ -109,8 +109,9 @@ const ContextMenu = ({ position, items, title, onClose }, ref) => {
                         alignItems: "center",
                         gap: "8px",
                         paddingLeft: "40px",
+                        opacity: item.alreadyUsed ? "0.5" : "1"
                       }}
-                      onClick={() => alert(`Selected: ${item.name}`)}
+                      onClick={() => onSelect(item)}
                     >
                       <FileText size={14} style={{ flexShrink: 0 }} />
                       <span>{item.name}</span>

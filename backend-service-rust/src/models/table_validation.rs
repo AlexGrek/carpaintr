@@ -47,6 +47,13 @@ pub fn make_basic_validation_rules() -> Vec<ValidationRule> {
             },
         },
         ValidationRule {
+            matcher: "  ".to_string(),
+            key: None,
+            fix_action: FixAction::Replace {
+                replacement: " ".to_string(),
+            },
+        },
+        ValidationRule {
             matcher: "5дв.".to_string(),
             key: None,
             fix_action: FixAction::Replace {

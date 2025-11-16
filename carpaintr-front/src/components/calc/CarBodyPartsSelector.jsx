@@ -269,15 +269,15 @@ const CarBodyPartsSelector = ({
       const newPart = existingPart
         ? { ...existingPart } // If existing, create a shallow copy to modify
         : {
-            action: null,
-            replace: false,
-            original: true,
-            damageLevel: 0,
-            name: partName,
-            grid: generateInitialGrid(mapVisual(partName ? partName : "")),
-            outsideRepairZone: null,
-            tableData: getOrFetchTableData(partName),
-          };
+          action: null,
+          replace: false,
+          original: true,
+          damageLevel: 0,
+          name: partName,
+          grid: generateInitialGrid(mapVisual(partName ? partName : "")),
+          outsideRepairZone: null,
+          tableData: getOrFetchTableData(partName),
+        };
 
       setDrawerCurrentPart(newPart);
       setIsDrawerOpen(true);
@@ -386,6 +386,10 @@ const CarBodyPartsSelector = ({
     setCalculations,
   ]);
 
+  const handleDiagramSelect = (item) => {
+    handlePartSelect(item.name)
+  }
+
   return (
     <div className="car-body-parts-selector">
       <div className="car-container-container">
@@ -397,6 +401,8 @@ const CarBodyPartsSelector = ({
         <Tabs defaultActiveKey="1" appearance="pills">
           <Tabs.Tab eventKey="1" title={str("Car diagram")}>
             <CarDiagram
+              alreadyPresent={selectedParts.map(part => part.name)}
+              onSelect={handleDiagramSelect}
               partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
             />
           </Tabs.Tab>

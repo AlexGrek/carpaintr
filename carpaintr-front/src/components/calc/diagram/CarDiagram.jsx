@@ -8,13 +8,16 @@ export function buildCarSubcomponentsFromT2(data) {
     const zone = item.zone?.trim();
     const name = item.name?.trim();
 
-    if (!zone || !name || name === "(Додати)") return acc; // skip invalid or placeholder names
+    if (!zone || !name || name === "(Додати)") {
+      // console.log(`skipping ${JSON.stringify(item)}`)
+      return acc;
+    } // skip invalid or placeholder names
 
     if (!acc[zone]) {
       acc[zone] = [];
     }
 
-    acc[zone].push(item);
+    acc[zone].push({alreadyUsed: false, ...item});
     return acc;
   }, {});
 }
@@ -81,7 +84,7 @@ export const partClassNames = {
 };
 
 // --- Main CarDiagram Component ---
-const CarDiagram = ({ partSubComponents = PARTSUBCOMPONENTS }) => {
+const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS, onSelect = () => {} }) => {
   const [menuState, setMenuState] = useState({
     visible: false,
     position: { x: 0, y: 0 },
@@ -99,7 +102,15 @@ const CarDiagram = ({ partSubComponents = PARTSUBCOMPONENTS }) => {
         x: event.clientX - 15, // center X of clicked element
         y: event.clientY - 60, // center Y of clicked element
       },
-      items: items,
+      items: items.map((item) => {
+        if (alreadyPresent.indexOf(item.name) >= 0) {
+          console.log(item)
+          console.log("HOLA!")
+          return {...item, alreadyUsed: true}
+        }
+        
+        return item
+      }),
       title: title,
     });
   };
@@ -153,6 +164,7 @@ const CarDiagram = ({ partSubComponents = PARTSUBCOMPONENTS }) => {
           position={menuState.position}
           items={menuState.items}
           title={menuState.title}
+          onSelect={onSelect}
         />
       )}
     </>
