@@ -3,6 +3,7 @@ import { styles } from "../layout/StageView";
 import LoadCalculationMenu from "./LoadCalculationMenu";
 import Trans from "../../localization/Trans";
 import { CarCard } from "../utility/CarCard";
+import CreateCard from "../utility/CreateCard";
 
 const RenderUnsaved = ({ dataString, onLoadData }) => {
   try {
@@ -35,16 +36,8 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
     <div style={styles.sampleStage}>
       <div className="fade-in-simple">
         <div style={styles.buttonGroup}>
-          <Button
-            size="lg"
-            onClick={onNext}
-            appearance="ghost"
-            style={{ margin: "30pt 0" }}
-          >
-            <Trans>New calculation</Trans>
-          </Button>
+          <CreateCard onClick={() => onNext()}></CreateCard>
         </div>
-        <Divider />
         {unsaved && <RenderUnsaved dataString={unsaved} onLoadData={onLoad} />}
         <Panel
           bordered
