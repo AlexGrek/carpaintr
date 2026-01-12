@@ -7,6 +7,7 @@ import {
   Placeholder,
   toaster,
   VStack,
+  Loader,
 } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
@@ -18,6 +19,7 @@ import CarBodyPartsSelector from "./CarBodyPartsSelector";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import MenuPickerV2 from "../layout/MenuPickerV2";
+import CarBodyMain from "./CarBodyMain";
 
 const BodyPartsStage = ({
   title,
@@ -33,53 +35,135 @@ const BodyPartsStage = ({
   const [partsVisual, setPartsVisual] = useState({});
   const [selectedParts, setSelectedParts] = useState([]);
   const [repairQuality, setRepairQuality] = useState("");
-  const [repairQualityIOptions, setRepairQualityOptions] = useState([]);
+  const [repairQualityOptions, setRepairQualityOptions] = useState([]);
   const [calculations, setCalculations] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const handleSetSelectedParts = useCallback(
     (val) => setSelectedParts(val),
     [],
   );
   const { str } = useLocale();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let data = await authFetchYaml("/api/v1/user/global/parts_visual.yaml");
-        setPartsVisual(data);
-        let qualityOptions = await authFetchYaml(
-          "/api/v1/user/global/quality.yaml",
-        );
-        setRepairQualityOptions(qualityOptions.options);
-        setRepairQuality(qualityOptions.default);
-      } catch (error) {
-        console.error("Failed to fetch parts_visual or qualityOptions:", error);
-        toaster.push(<Message type="error">{error.toString()}</Message>);
-      }
-    };
-    fetchData();
+  // Unified error handler
+  const handleError = useCallback((error, context) => {
+    const errorMessage = `${context}: ${error.message || error.toString()}`;
+    console.error(errorMessage, error);
+    setError(errorMessage);
+    toaster.push(
+      <Message type="error" showIcon closable>
+        {errorMessage}
+      </Message>,
+      { placement: 'topCenter', duration: 5000 }
+    );
   }, []);
 
   useEffect(() => {
-    const parts = stageData["parts"];
-    if (parts) {
-      setSelectedParts(parts.selectedParts);
-      setCalculations(parts.calculations);
-      setRepairQuality(parts.repairQuality || "");
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch parts visual data
+        const partsVisualData = await authFetchYaml("/api/v1/user/global/parts_visual.yaml");
+        console.log("Parts visual data fetched:", partsVisualData);
+        setPartsVisual(partsVisualData);
+
+        // Fetch quality options
+        const qualityData = await authFetchYaml("/api/v1/user/global/quality.yaml");
+        console.log("Quality options fetched:", qualityData);
+        setRepairQualityOptions(qualityData.options || []);
+        setRepairQuality(qualityData.default || "");
+
+        // Show success message
+        toaster.push(
+          <Message type="success" showIcon closable>
+            <Trans>Data loaded successfully</Trans>
+          </Message>,
+          { placement: 'topCenter', duration: 2000 }
+        );
+      } catch (error) {
+        handleError(error, "Failed to fetch configuration data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [handleError]);
+
+  useEffect(() => {
+    try {
+      const parts = stageData["parts"];
+      if (parts) {
+        console.log("Loading stage data:", parts);
+        setSelectedParts(parts.selectedParts || []);
+        setCalculations(parts.calculations || {});
+        setRepairQuality(parts.repairQuality || "");
+      }
+    } catch (error) {
+      handleError(error, "Failed to load stage data");
     }
-  }, [stageData]);
+  }, [stageData, handleError]);
 
   const handleClose = useCallback(() => {
-    const data = {
-      partsVisual,
-      selectedParts,
-      calculations,
-      repairQuality,
-    };
-    if (onMoveForward) {
-      onMoveForward();
+    try {
+      const data = {
+        partsVisual,
+        selectedParts,
+        calculations,
+        repairQuality,
+      };
+      
+      console.log("Saving stage data:", data);
+      setStageData({ parts: data, calculations });
+      
+      if (onMoveForward) {
+        onMoveForward();
+      }
+    } catch (error) {
+      handleError(error, "Failed to save data");
     }
-    setStageData({ parts: data, calculations });
-  }, [onMoveForward, partsVisual, selectedParts, setStageData, calculations]);
+  }, [onMoveForward, partsVisual, selectedParts, calculations, repairQuality, setStageData, handleError]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div style={styles.sampleStage}>
+        <div style={{ ...styles.sampleStageInner, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <VStack spacing={3} alignItems="center">
+            <Loader size="lg" content={<Trans>Loading configuration...</Trans>} />
+          </VStack>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div style={styles.sampleStage}>
+        <div style={styles.sampleStageInner}>
+          <VStack spacing={3} alignItems="center">
+            <Message type="error" showIcon>
+              {error}
+            </Message>
+            <HStack spacing={2}>
+              <Button onClick={() => window.location.reload()} appearance="primary">
+                <Trans>Retry</Trans>
+              </Button>
+              {onMoveBack && (
+                <Button onClick={onMoveBack} appearance="ghost">
+                  <Trans>Back</Trans>
+                </Button>
+              )}
+            </HStack>
+          </VStack>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.sampleStage}>
@@ -110,18 +194,18 @@ const BodyPartsStage = ({
         >
           <VStack spacing={3} style={{ minWidth: "12em" }}>
             <MenuPickerV2
-              items={repairQualityIOptions}
+              items={repairQualityOptions}
               onSelect={setRepairQuality}
               value={repairQuality}
               label={str("Repair quality")}
               style={{ width: "100%" }}
             />
-            <CarBodyPartsSelector
+            <CarBodyMain
               partsVisual={partsVisual}
               selectedParts={selectedParts}
               onChange={handleSetSelectedParts}
-              carClass={stageData["car"].carClass ?? null}
-              body={stageData["car"].bodyType ?? null}
+              carClass={stageData["car"]?.carClass ?? ''}
+              body={stageData["car"]?.bodyType ?? ''}
               calculations={calculations}
               setCalculations={setCalculations}
             />
