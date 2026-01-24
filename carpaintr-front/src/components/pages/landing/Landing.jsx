@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./styles.css";
 import { Button, Message } from "rsuite";
 import { useNavigate } from "react-router-dom";
-import { authFetch, fetchCompanyInfo } from "../../../utils/authFetch";
+import { fetchCompanyInfo } from "../../../utils/authFetch";
 import Trans from "../../../localization/Trans";
 import {
   useLocale,

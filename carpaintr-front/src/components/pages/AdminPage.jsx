@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Breadcrumb, Message, Loader, Text } from "rsuite";
+import { useEffect, useState } from "react";
+import { Breadcrumb, Message, Loader } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import AdminTools from "../AdminTools";

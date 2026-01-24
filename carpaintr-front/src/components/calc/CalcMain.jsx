@@ -1,13 +1,11 @@
-/* eslint-disable react/display-name */
-import React, { useCallback, useState, useEffect, useRef } from "react";
+ 
+import React, { useCallback, useState } from "react";
 import "./CarPaintEstimator.css";
 import "./calc_translations";
 import StageView from "../layout/StageView";
 import { Car, CarFront, Paintbrush, Table2 } from "lucide-react";
 import CalcMainMenuStage from "./CalcMainMenuStage";
-import { toaster, Message } from "rsuite"; // adjust path if different
-import { authFetch } from "../../utils/authFetch";
-import { useLocation } from "react-router-dom";
+// adjust path if different
 
 const stages = [
   {

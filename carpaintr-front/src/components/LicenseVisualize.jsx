@@ -1,5 +1,5 @@
 import { Stat, DatePicker, Tag } from "rsuite";
-import { useLocale, registerTranslations } from "../localization/LocaleContext";
+import { registerTranslations } from "../localization/LocaleContext";
 import Trans from "../localization/Trans";
 
 registerTranslations("ua", {

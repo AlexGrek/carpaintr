@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Input, Button, TagPicker, Message, toaster, Progress } from "rsuite";
 import { authFetch } from "../../utils/authFetch";
 import AppVersionBadge from "../AppVersionBadge";

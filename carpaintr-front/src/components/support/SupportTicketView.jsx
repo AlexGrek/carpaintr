@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button, Input, Checkbox } from "rsuite";
 import "./SupportTicketView.css";
 import { authFetch } from "../../utils/authFetch";

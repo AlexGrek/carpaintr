@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Grid, Row, Loader } from "rsuite";
 import { authFetch } from "../utils/authFetch";
 import LicenseBadge from "./license/LicenseBadge";

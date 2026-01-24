@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { Modal, Button, Form, Input } from "rsuite";
 
 // Create the context

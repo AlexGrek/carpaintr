@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Container,
   Content,
-  Header,
   FlexboxGrid,
   Panel,
   Button,
@@ -15,7 +14,6 @@ import {
   ButtonToolbar,
   Schema,
   Message,
-  Tag,
   Stat,
   HStack,
 } from "rsuite";

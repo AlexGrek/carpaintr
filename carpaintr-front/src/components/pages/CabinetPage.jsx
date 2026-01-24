@@ -1,8 +1,7 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import TopBarUser from "../layout/TopBarUser";
 import { Loader, Panel, PanelGroup, Placeholder } from "rsuite";
 import ActiveLicenseMarker from "../ActiveLicenseMarker";
-import Trans from "../../localization/Trans";
 import {
   useLocale,
   registerTranslations,

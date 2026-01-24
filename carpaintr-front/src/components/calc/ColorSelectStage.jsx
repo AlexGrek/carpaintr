@@ -1,4 +1,4 @@
-import { Button, HStack, IconButton, Panel, Placeholder, VStack } from "rsuite";
+import { Button, HStack, IconButton, Placeholder, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";

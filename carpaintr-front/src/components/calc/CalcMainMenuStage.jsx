@@ -1,4 +1,4 @@
-import { Button, Divider, Panel } from "rsuite";
+import { Button, Panel } from "rsuite";
 import { styles } from "../layout/StageView";
 import LoadCalculationMenu from "./LoadCalculationMenu";
 import Trans from "../../localization/Trans";

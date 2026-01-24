@@ -1,5 +1,5 @@
 // FilesystemBrowser.jsx
-import React, {
+import {
   useState,
   useEffect,
   useCallback,

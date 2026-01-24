@@ -1,7 +1,6 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { Navbar, Dropdown, Nav } from "rsuite";
 import { useNavigate } from "react-router-dom";
-import OffRoundIcon from "@rsuite/icons/OffRound";
 import { logout } from "../../utils/authFetch";
 import "./TopBarUser.css";
 import { handleOpenNewTab } from "../../utils/utils";

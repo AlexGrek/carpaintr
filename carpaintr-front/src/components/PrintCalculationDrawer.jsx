@@ -3,15 +3,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Drawer,
   Button,
-  Tabs,
-  Placeholder,
   Message,
   Input,
   Form,
   Stack,
   Divider,
   useToaster,
-  IconButton,
   Panel,
   Loader,
   Checkbox,
@@ -19,11 +16,8 @@ import {
 import { useMediaQuery } from "react-responsive";
 import { useLocale } from "../localization/LocaleContext";
 import { authFetch } from "../utils/authFetch";
-import FileDownloadIcon from "@rsuite/icons/FileDownload";
-import PagePreviousIcon from "@rsuite/icons/PagePrevious";
-import FunnelIcon from "@rsuite/icons/Funnel"; // Added for Generate Preview button
+// Added for Generate Preview button
 import Trans from "../localization/Trans";
-import ObjectBrowser from "./utility/ObjectBrowser";
 import { isArrayLike } from "lodash";
 import { File, FileDown } from "lucide-react";
 

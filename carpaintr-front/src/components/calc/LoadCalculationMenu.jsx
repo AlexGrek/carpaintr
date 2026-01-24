@@ -15,9 +15,8 @@ import {
   Panel,
   useToaster,
 } from "rsuite";
-import { Car, DownloadCloud, File } from "lucide-react";
+import { Car } from "lucide-react";
 import { capitalizeFirstLetter } from "../../utils/utils";
-import Trans from "../../localization/Trans";
 import ErrorMessage from "../layout/ErrorMessage";
 
 // Helper function to format time ago

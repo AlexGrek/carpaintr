@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader, Message, useToaster } from "rsuite";
 import { authFetch, handleAuthResponse } from "../utils/authFetch";
 import "./ActiveLicenseMarker.css";

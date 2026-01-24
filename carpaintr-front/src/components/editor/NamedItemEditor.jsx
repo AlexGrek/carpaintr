@@ -1,4 +1,3 @@
-import React from "react";
 import { Panel, Stack, Input, IconButton } from "rsuite";
 import { Trash } from "@rsuite/icons";
 import ItemEditor from "./ItemEditor";

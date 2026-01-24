@@ -1,6 +1,6 @@
 // components/ProcessorGenerator.jsx
 
-import React, { useState, useCallback, Suspense, lazy, useEffect } from "react";
+import { useState, useCallback, Suspense, lazy, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Form,
@@ -15,7 +15,6 @@ import {
   Whisper,
   Panel,
   Notification,
-  toaster,
   Loader,
   Container,
   Header,

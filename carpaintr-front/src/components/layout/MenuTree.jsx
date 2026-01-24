@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./MenuTree.css";
 
 const MenuTree = ({ items, value, onChange }) => {

@@ -5,11 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { isArray, isObjectLike } from "lodash";
 import { authFetch, authFetchYaml } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Button, Input, Loader, Modal, SelectPicker, Tabs } from "rsuite";
+import { Button, Input, Loader, Modal, SelectPicker } from "rsuite";
 import SelectionInput from "../SelectionInput";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import MenuPickerV2 from "../layout/MenuPickerV2";
-import Trans from "../../localization/Trans";
 import { tryDecodeVin } from "../../vindecoder";
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render

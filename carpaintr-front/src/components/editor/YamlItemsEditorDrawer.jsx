@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Drawer, Button } from "rsuite";
 import { AddOutline } from "@rsuite/icons";
 import jsyaml from "js-yaml";

@@ -1,4 +1,3 @@
-import React from "react";
 import { Input, InputPicker } from "rsuite";
 
 export default function MoneyEditor({ value, onChange, preferredCurrency }) {

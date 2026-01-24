@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./ObjectBrowser.css"; // Custom CSS file for ObjectBrowser specific styles
 import jsyaml from "js-yaml";
 

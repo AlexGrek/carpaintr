@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ObjectBrowser from "./ObjectBrowser"; // Assuming ObjectBrowser.jsx is in the same directory
 import "./ResponseBrowser.css"; // Custom CSS for loader and error messages
 import { authFetchJson } from "../../utils/authFetch";

@@ -1,4 +1,3 @@
-import { Placeholder } from "rsuite";
 import TopBarUser from "../layout/TopBarUser";
 import SupportRequestForm from "../admreq/SupportRequestForm";
 import UserSupportRequests from "../admreq/UserSupportRequests";

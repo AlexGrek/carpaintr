@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { Button, Modal } from "rsuite";
 import Trans from "../../localization/Trans";
 

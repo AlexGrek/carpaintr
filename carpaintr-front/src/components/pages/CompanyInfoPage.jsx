@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { authFetch, getCompanyInfo } from "../../utils/authFetch";
+import { useEffect, useState } from "react";
+import { getCompanyInfo } from "../../utils/authFetch";
 import LicenseInfoTable from "../LicenseInfoTable";
 import { dump } from "js-yaml";
 

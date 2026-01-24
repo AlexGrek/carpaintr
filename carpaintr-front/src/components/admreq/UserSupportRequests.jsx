@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Drawer } from "rsuite";
 import "./UserSupportRequests.css";
 import { authFetch } from "../../utils/authFetch";

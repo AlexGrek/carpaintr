@@ -1,4 +1,4 @@
-/* eslint-disable react/display-name */
+ 
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
@@ -15,9 +15,8 @@ import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 import Trans from "../../localization/Trans";
 import {
   useLocale,
-  registerTranslations,
 } from "../../localization/LocaleContext"; // Import registerTranslations
-import { useGlobalCallbacks } from "../GlobalCallbacksContext"; // Ensure this context is stable
+// Ensure this context is stable
 import "./CarPaintEstimator.css";
 import { capitalizeFirstLetter, handleOpenNewTab } from "../../utils/utils";
 

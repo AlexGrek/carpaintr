@@ -1,4 +1,4 @@
-import { Button, Divider, Input, Panel, Text } from "rsuite";
+import { Button, Divider, Input } from "rsuite";
 import { styles } from "../layout/StageView";
 import VehicleSelect from "./VehicleSelect";
 import Trans from "../../localization/Trans";

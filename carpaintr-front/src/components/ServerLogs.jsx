@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader, Panel, Button, Whisper, Tooltip } from "rsuite";
 import { authFetch } from "../utils/authFetch";
 import { useLocale } from "../localization/LocaleContext"; // Import useLocale and registerTranslations

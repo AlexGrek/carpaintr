@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "../../utils/authFetch";
 import ErrorMessage from "../layout/ErrorMessage";
-import { Button, IconButton, Loader, Panel, Table } from "rsuite";
+import { IconButton, Loader, Panel, Table } from "rsuite";
 import {
   registerTranslations,
   useLocale,

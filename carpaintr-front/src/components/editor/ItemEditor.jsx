@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Form, InlineEdit, Toggle, TagInput } from "rsuite";
 
 // Edits the fields of a single object (e.g., the properties of "fabia").

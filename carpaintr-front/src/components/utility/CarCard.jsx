@@ -1,5 +1,3 @@
-import { Car } from "lucide-react";
-import React from "react";
 
 /**
  * Small data card to visualize a vehicle-like object.

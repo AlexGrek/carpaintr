@@ -1,4 +1,3 @@
-import React from "react";
 import { Message, Divider, HStack, Button } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import Trans from "../../localization/Trans";

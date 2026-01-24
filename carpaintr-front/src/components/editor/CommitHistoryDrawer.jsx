@@ -1,5 +1,5 @@
 // CommitHistoryDrawer.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Drawer, Button, List, Placeholder, Modal, Message } from "rsuite";
 import { useMediaQuery } from "react-responsive";
 import { authFetch } from "../../utils/authFetch";

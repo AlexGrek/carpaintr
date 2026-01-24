@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-import { Button, Drawer, Steps, Divider, Panel, VStack } from "rsuite";
-import { Focus, Grid2x2X, Grid2x2Plus, Handshake } from "lucide-react";
-import jsyaml from "js-yaml";
+import { Button, Drawer, Divider, Panel, VStack } from "rsuite";
 
-import MenuTree from "../layout/MenuTree";
 import GridDraw from "./GridDraw";
 import SelectionInput from "../SelectionInput";
 import BottomStickyLayout from "../layout/BottomStickyLayout";

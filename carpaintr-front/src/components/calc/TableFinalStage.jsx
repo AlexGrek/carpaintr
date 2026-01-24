@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Button,
   DatePicker,
@@ -7,7 +7,6 @@ import {
   IconButton,
   Input,
   Panel,
-  VStack,
 } from "rsuite";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { styles } from "../layout/StageView";

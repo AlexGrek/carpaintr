@@ -3,8 +3,6 @@ import {
   HStack,
   IconButton,
   Message,
-  Panel,
-  Placeholder,
   toaster,
   VStack,
   Loader,
@@ -12,10 +10,8 @@ import {
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
-import React, { useCallback, useEffect, useState } from "react";
-import SelectionInput from "../SelectionInput";
+import { useCallback, useEffect, useState } from "react";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
-import CarBodyPartsSelector from "./CarBodyPartsSelector";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import MenuPickerV2 from "../layout/MenuPickerV2";

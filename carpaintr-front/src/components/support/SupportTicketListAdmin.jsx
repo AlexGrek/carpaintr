@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, Button, Drawer, IconButton } from "rsuite";
 import SupportTicketView from "./SupportTicketView";
 import "./SupportTicketListAdmin.css";

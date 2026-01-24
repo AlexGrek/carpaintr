@@ -1,4 +1,3 @@
-import React from "react";
 import { Car, Palette, Tag, Scan, CreditCard, Gauge } from "lucide-react";
 
 const CarVisualizer = ({ data }) => {

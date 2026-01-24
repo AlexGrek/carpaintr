@@ -1,7 +1,4 @@
-import React from "react";
 import "./ColorGrid.css";
-import Trans from "../localization/Trans";
-import { useLocale } from "../localization/LocaleContext";
 
 const ColorGrid = ({ colors, selectedColor, onChange }) => {
   const renderColor = (color) => {

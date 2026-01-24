@@ -1,5 +1,4 @@
-import React from "react";
-import { Table, Button, Container } from "rsuite";
+import { Table, Container } from "rsuite";
 
 const LicenseInfoTable = ({ companyInfo }) => {
   if (!companyInfo) {

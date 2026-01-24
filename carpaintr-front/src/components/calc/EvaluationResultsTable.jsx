@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Message, InlineEdit, Panel, Stack, useToaster } from "rsuite";
+import { useCallback, useEffect } from "react";
+import { Message, Panel, Stack, useToaster } from "rsuite";
 import "./EvaluationResultsTable.css";
 import Trans from "../../localization/Trans";
 import { registerTranslations } from "../../localization/LocaleContext";
