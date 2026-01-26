@@ -5,10 +5,10 @@ replicaCount: 1
 image:
   # -- The container image repository
   repository: grekodocker/autolab-api
-  # -- The container image tag
-  tag: "latest"
+  # -- The container image tag (git short hash, set via --set image.tag=xxx)
+  tag: ""
   # -- The image pull policy
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 # -- The name of the Kubernetes secret holding keys (SECRET_KEY, SECRET_KEY_LICENSE, admins.txt)
 secretName: autolab-api-secret
@@ -39,10 +39,10 @@ pdfgen:
   image:
     # -- The container image repository
     repository: grekodocker/autolab-pdf
-    # -- The container image tag
-    tag: "latest"
+    # -- The container image tag (git short hash, set via --set pdfgen.image.tag=xxx)
+    tag: ""
     # -- The image pull policy
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   # -- Resource limits and requests for the pdfgen container
   resources:
     limits:

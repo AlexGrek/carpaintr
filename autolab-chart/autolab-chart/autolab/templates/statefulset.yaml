@@ -1,3 +1,6 @@
+{{- if not .Values.image.tag }}
+{{- fail "image.tag is required. Use --set image.tag=<git-short-hash>" }}
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

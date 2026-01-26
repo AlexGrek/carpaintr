@@ -1,3 +1,6 @@
+{{- if not .Values.pdfgen.image.tag }}
+{{- fail "pdfgen.image.tag is required. Use --set pdfgen.image.tag=<git-short-hash>" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

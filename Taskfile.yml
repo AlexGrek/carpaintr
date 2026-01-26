@@ -4,7 +4,8 @@ vars:
   # Docker Hub images
   HUB_API_IMAGE: "grekodocker/autolab-api"
   HUB_PDF_IMAGE: "grekodocker/autolab-pdf"
-  TAG: '{{.TAG | default "latest"}}'
+  TAG:
+    sh: git rev-parse --short HEAD
   # Helm/Kubernetes
   NAMESPACE: '{{.NAMESPACE | default "autolab"}}'
   RELEASE_NAME: '{{.RELEASE_NAME | default "autolab"}}'
