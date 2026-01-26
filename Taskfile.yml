@@ -1,11 +1,14 @@
-version: '3'
+version: "3"
 
 vars:
-  NAME: '{{.NAME | default "autolab-api"}}'
-  PDFGEN_NAME: '{{.PDFGEN_NAME | default "autolab-pdfgen"}}'
-  IMAGE_NAME: 'localhost:5000/{{.NAME | default "autolab-api"}}'
-  PDFGEN_IMAGE_NAME: 'localhost:5000/{{.PDFGEN_NAME | default "autolab-pdfgen"}}'
+  # Docker Hub images
+  HUB_API_IMAGE: "grekodocker/autolab-api"
+  HUB_PDF_IMAGE: "grekodocker/autolab-pdf"
+  TAG: '{{.TAG | default "latest"}}'
+  # Helm/Kubernetes
   NAMESPACE: '{{.NAMESPACE | default "autolab"}}'
+  RELEASE_NAME: '{{.RELEASE_NAME | default "autolab"}}'
+  CHART_PATH: "./autolab-chart/autolab-chart/autolab"
 
 tasks:
   default:
@@ -14,56 +17,78 @@ tasks:
       - task --list
 
   # Docker build tasks
-  docker-build:
+  build:
     desc: Build all Docker images
     deps:
-      - docker-build-backend
-      - docker-build-pdfgen
+      - build-backend
+      - build-pdfgen
 
-  docker-build-backend:
+  build-backend:
     desc: Build backend Docker image
     cmds:
-      - docker build . -t {{.IMAGE_NAME}}
+      - docker build . -t {{.HUB_API_IMAGE}}:{{.TAG}}
 
-  docker-build-pdfgen:
+  build-pdfgen:
     desc: Build PDF generator Docker image
     dir: pdf_backend
     cmds:
-      - docker build . -t {{.PDFGEN_IMAGE_NAME}}
+      - docker build . -t {{.HUB_PDF_IMAGE}}:{{.TAG}}
 
-  docker-push:
-    desc: Push all Docker images to registry
+  push:
+    desc: Push all Docker images to Docker Hub
     cmds:
-      - docker push {{.IMAGE_NAME}}
-      - docker push {{.PDFGEN_IMAGE_NAME}}
+      - docker push {{.HUB_API_IMAGE}}:{{.TAG}}
+      - docker push {{.HUB_PDF_IMAGE}}:{{.TAG}}
 
-  all:
-    desc: Build and push all Docker images
+  release:
+    desc: Build and push all Docker images to Docker Hub
     cmds:
-      - task: docker-build
-      - task: docker-push
+      - task: build
+      - task: push
+
+  # Helm deployment tasks
+  deploy:
+    desc: Deploy/upgrade using Helm
+    cmds:
+      - helm upgrade --install {{.RELEASE_NAME}} {{.CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}}
+
+  deploy-dry-run:
+    desc: Preview Helm deployment (dry-run)
+    cmds:
+      - helm upgrade --install {{.RELEASE_NAME}} {{.CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --dry-run
+
+  undeploy:
+    desc: Uninstall Helm release
+    cmds:
+      - helm uninstall {{.RELEASE_NAME}} --namespace {{.NAMESPACE}}
 
   redeploy:
-    desc: Build, push, and restart pods
+    desc: Build, push, and deploy
     cmds:
-      - task: all
-      - kubectl delete pod -n {{.NAMESPACE}} -l app=autolab-api
-      - kubectl delete pod -n {{.NAMESPACE}} -l app=autolab-pdfgen
+      - task: release
+      - task: deploy
 
-  # Kubernetes deployment tasks
-  deploy-pdfgen:
-    desc: Deploy PDF generator to Kubernetes
+  restart:
+    desc: Restart pods (pull latest images)
     cmds:
-      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/pdfgen-k3s-deployment.yaml
+      - kubectl rollout restart statefulset/{{.RELEASE_NAME}}-autolab-api -n {{.NAMESPACE}}
+      - kubectl rollout restart deployment/autolab-pdfgen -n {{.NAMESPACE}}
 
-  deploy-service:
-    desc: Deploy all services to Kubernetes
-    deps:
-      - deploy-pdfgen
+  status:
+    desc: Show deployment status
     cmds:
-      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/secret.yaml
-      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/k3s-deployment.yaml
-      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/traefik-ingressroute.yaml
+      - helm status {{.RELEASE_NAME}} --namespace {{.NAMESPACE}}
+      - kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/instance={{.RELEASE_NAME}}
+
+  logs:
+    desc: Show logs from API pod
+    cmds:
+      - kubectl logs -n {{.NAMESPACE}} -l app=autolab-api --tail=100 -f
+
+  logs-pdf:
+    desc: Show logs from PDF generator pod
+    cmds:
+      - kubectl logs -n {{.NAMESPACE}} -l app=autolab-pdfgen --tail=100 -f
 
   # Development tasks
   dev:
