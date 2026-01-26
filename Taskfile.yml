@@ -1,0 +1,101 @@
+version: '3'
+
+vars:
+  NAME: '{{.NAME | default "autolab-api"}}'
+  PDFGEN_NAME: '{{.PDFGEN_NAME | default "autolab-pdfgen"}}'
+  IMAGE_NAME: 'localhost:5000/{{.NAME | default "autolab-api"}}'
+  PDFGEN_IMAGE_NAME: 'localhost:5000/{{.PDFGEN_NAME | default "autolab-pdfgen"}}'
+  NAMESPACE: '{{.NAMESPACE | default "autolab"}}'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  # Docker build tasks
+  docker-build:
+    desc: Build all Docker images
+    deps:
+      - docker-build-backend
+      - docker-build-pdfgen
+
+  docker-build-backend:
+    desc: Build backend Docker image
+    cmds:
+      - docker build . -t {{.IMAGE_NAME}}
+
+  docker-build-pdfgen:
+    desc: Build PDF generator Docker image
+    dir: pdf_backend
+    cmds:
+      - docker build . -t {{.PDFGEN_IMAGE_NAME}}
+
+  docker-push:
+    desc: Push all Docker images to registry
+    cmds:
+      - docker push {{.IMAGE_NAME}}
+      - docker push {{.PDFGEN_IMAGE_NAME}}
+
+  all:
+    desc: Build and push all Docker images
+    cmds:
+      - task: docker-build
+      - task: docker-push
+
+  redeploy:
+    desc: Build, push, and restart pods
+    cmds:
+      - task: all
+      - kubectl delete pod -n {{.NAMESPACE}} -l app=autolab-api
+      - kubectl delete pod -n {{.NAMESPACE}} -l app=autolab-pdfgen
+
+  # Kubernetes deployment tasks
+  deploy-pdfgen:
+    desc: Deploy PDF generator to Kubernetes
+    cmds:
+      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/pdfgen-k3s-deployment.yaml
+
+  deploy-service:
+    desc: Deploy all services to Kubernetes
+    deps:
+      - deploy-pdfgen
+    cmds:
+      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/secret.yaml
+      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/k3s-deployment.yaml
+      - kubectl --namespace {{.NAMESPACE}} apply -f k8s-deploy/traefik-ingressroute.yaml
+
+  # Development tasks
+  dev:
+    desc: Start frontend and backend in development mode
+    deps:
+      - task: frontend-deps
+        silent: true
+    cmds:
+      - task: dev-parallel
+
+  frontend-deps:
+    desc: Install frontend dependencies if needed
+    dir: carpaintr-front
+    status:
+      - test -d node_modules
+    cmds:
+      - npm install
+
+  dev-parallel:
+    desc: Run frontend and backend in parallel
+    deps:
+      - task: frontend
+      - task: backend
+
+  frontend:
+    desc: Start frontend development server
+    dir: carpaintr-front
+    cmds:
+      - npm run dev
+
+  backend:
+    desc: Start backend with hot reload
+    dir: backend-service-rust
+    cmds:
+      - cargo watch -x run
