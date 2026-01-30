@@ -1,0 +1,41 @@
+# Development environment values
+# Namespace: autolab-dev
+
+# Environment identifier
+environment: development
+
+# Secret name (must be created separately in the namespace)
+secretName: autolab-api-secret
+
+# Resource configuration (lower for dev)
+resources:
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+  requests:
+    cpu: "50m"
+    memory: "128Mi"
+
+persistence:
+  size: 500Mi
+
+pdfgen:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: autolab-dev.dcommunity.space
+  tls:
+    enabled: true
+    secretName: autolab-dev-cert

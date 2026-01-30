@@ -7,9 +7,19 @@ vars:
   TAG:
     sh: git rev-parse --short HEAD
   # Helm/Kubernetes
-  NAMESPACE: '{{.NAMESPACE | default "autolab"}}'
-  RELEASE_NAME: '{{.RELEASE_NAME | default "autolab"}}'
   CHART_PATH: "./autolab-chart/autolab-chart/autolab"
+  # Environment configs (dev is default)
+  ENV: '{{.ENV | default "dev"}}'
+  # Environment-specific settings
+  NAMESPACE_dev: "autolab-dev"
+  NAMESPACE_staging: "autolab-staging"
+  NAMESPACE_prod: "autolab-prod0"
+  RELEASE_dev: "autolab-dev"
+  RELEASE_staging: "autolab-staging"
+  RELEASE_prod: "autolab-prod"
+  VALUES_dev: "values-dev.yaml"
+  VALUES_staging: "values-staging.yaml"
+  VALUES_prod: "values-prod.yaml"
 
 tasks:
   default:
@@ -47,49 +57,125 @@ tasks:
       - task: build
       - task: push
 
-  # Helm deployment tasks
+  # Helm deployment tasks - Multi-stage
+  # Usage: task deploy (defaults to dev)
+  # Usage: task deploy ENV=staging
+  # Usage: task deploy ENV=prod
   deploy:
-    desc: Deploy/upgrade using Helm
+    desc: "Deploy to environment (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
     cmds:
-      - helm upgrade --install {{.RELEASE_NAME}} {{.CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}}
+      - helm upgrade --install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}}
 
   deploy-dry-run:
-    desc: Preview Helm deployment (dry-run)
+    desc: "Preview Helm deployment (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
     cmds:
-      - helm upgrade --install {{.RELEASE_NAME}} {{.CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --dry-run
+      - helm upgrade --install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --dry-run
+
+  # Convenience aliases for each environment
+  deploy-dev:
+    desc: Deploy to development (autolab-dev namespace)
+    cmds:
+      - task: deploy
+        vars:
+          ENV: dev
+
+  deploy-staging:
+    desc: Deploy to staging (autolab-staging namespace)
+    cmds:
+      - task: deploy
+        vars:
+          ENV: staging
+
+  deploy-prod:
+    desc: Deploy to production (autolab-prod0 namespace)
+    cmds:
+      - task: deploy
+        vars:
+          ENV: prod
 
   undeploy:
-    desc: Uninstall Helm release
+    desc: "Uninstall Helm release (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
     cmds:
-      - helm uninstall {{.RELEASE_NAME}} --namespace {{.NAMESPACE}}
+      - helm uninstall {{.REL}} --namespace {{.NS}}
 
   redeploy:
-    desc: Build, push, and deploy
+    desc: "Build, push, and deploy (ENV=dev|staging|prod, default: dev)"
     cmds:
       - task: release
       - task: deploy
 
-  restart:
-    desc: Restart pods (pull latest images)
+  redeploy-dev:
+    desc: Build, push, and deploy to dev
     cmds:
-      - kubectl rollout restart statefulset/{{.RELEASE_NAME}}-autolab-api -n {{.NAMESPACE}}
-      - kubectl rollout restart deployment/autolab-pdfgen -n {{.NAMESPACE}}
+      - task: release
+      - task: deploy-dev
+
+  redeploy-staging:
+    desc: Build, push, and deploy to staging
+    cmds:
+      - task: release
+      - task: deploy-staging
+
+  redeploy-prod:
+    desc: Build, push, and deploy to production
+    cmds:
+      - task: release
+      - task: deploy-prod
+
+  restart:
+    desc: "Restart pods (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+    cmds:
+      - kubectl rollout restart statefulset/{{.REL}}-autolab-api -n {{.NS}}
+      - kubectl rollout restart deployment/autolab-pdfgen -n {{.NS}}
 
   status:
-    desc: Show deployment status
+    desc: "Show deployment status (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
     cmds:
-      - helm status {{.RELEASE_NAME}} --namespace {{.NAMESPACE}}
-      - kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/instance={{.RELEASE_NAME}}
+      - helm status {{.REL}} --namespace {{.NS}}
+      - kubectl get pods -n {{.NS}} -l app.kubernetes.io/instance={{.REL}}
+
+  status-all:
+    desc: Show deployment status for all environments
+    cmds:
+      - echo "=== DEV (autolab-dev) ==="
+      - kubectl get pods -n autolab-dev 2>/dev/null || echo "No pods in autolab-dev"
+      - echo ""
+      - echo "=== STAGING (autolab-staging) ==="
+      - kubectl get pods -n autolab-staging 2>/dev/null || echo "No pods in autolab-staging"
+      - echo ""
+      - echo "=== PROD (autolab-prod0) ==="
+      - kubectl get pods -n autolab-prod0 2>/dev/null || echo "No pods in autolab-prod0"
 
   logs:
-    desc: Show logs from API pod
+    desc: "Show logs from API pod (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
     cmds:
-      - kubectl logs -n {{.NAMESPACE}} -l app=autolab-api --tail=100 -f
+      - kubectl logs -n {{.NS}} -l app=autolab-api --tail=100 -f
 
   logs-pdf:
-    desc: Show logs from PDF generator pod
+    desc: "Show logs from PDF generator pod (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
     cmds:
-      - kubectl logs -n {{.NAMESPACE}} -l app=autolab-pdfgen --tail=100 -f
+      - kubectl logs -n {{.NS}} -l app=autolab-pdfgen --tail=100 -f
 
   # Development tasks
   dev:

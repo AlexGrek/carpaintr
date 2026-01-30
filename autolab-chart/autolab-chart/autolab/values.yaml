@@ -1,3 +1,6 @@
+# -- Environment identifier (development, staging, production)
+environment: production
+
 # -- Number of replicas for the StatefulSet.
 # For an app with an embedded DB like Sled, this should almost always be 1.
 replicaCount: 1

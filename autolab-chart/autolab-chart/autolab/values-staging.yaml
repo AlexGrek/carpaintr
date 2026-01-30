@@ -1,0 +1,41 @@
+# Staging environment values
+# Namespace: autolab-staging
+
+# Environment identifier
+environment: staging
+
+# Secret name (must be created separately in the namespace)
+secretName: autolab-api-secret
+
+# Resource configuration (moderate for staging)
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+
+persistence:
+  size: 1Gi
+
+pdfgen:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: autolab-staging.dcommunity.space
+  tls:
+    enabled: true
+    secretName: autolab-staging-cert

@@ -1,0 +1,41 @@
+# Production environment values
+# Namespace: autolab-prod0
+
+# Environment identifier
+environment: production
+
+# Secret name (must be created separately in the namespace)
+secretName: autolab-api-secret
+
+# Resource configuration (full for production)
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+
+persistence:
+  size: 5Gi
+
+pdfgen:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  host: autolab.dcommunity.space
+  tls:
+    enabled: true
+    secretName: autolab-prod-cert
