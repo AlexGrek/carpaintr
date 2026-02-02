@@ -77,36 +77,38 @@ const CreateUser = () => {
           Користувача створено успішно!
         </Message>
       )}
-      <Form layout="vertical">
-        <Form.Group controlId="email">
-          <Form.ControlLabel>Електронна пошта</Form.ControlLabel>
-          <Input type="email" value={email} onChange={setEmail} required />
-        </Form.Group>
-        <Form.Group controlId="password">
-          <Form.ControlLabel>Пароль</Form.ControlLabel>
-          <Input
-            type="password"
-            value={password}
-            onChange={setPassword}
-            required
-          />
-        </Form.Group>
-        <Form.Group controlId="confirmPassword">
-          <Form.ControlLabel>Підтвердити пароль</Form.ControlLabel>
-          <Input
-            type="password"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            required
-          />
-        </Form.Group>
-        <Form.Group controlId="companyName">
-          <Form.ControlLabel>Назва компанії</Form.ControlLabel>
-          <Input value={companyName} onChange={setCompanyName} required />
-        </Form.Group>
-        <Button appearance="primary" onClick={handleCreateUser}>
-          Створити
-        </Button>
+      <Form>
+        <Form.Stack layout="vertical">
+          <Form.Group controlId="email">
+            <Form.ControlLabel>Електронна пошта</Form.ControlLabel>
+            <Input type="email" value={email} onChange={setEmail} required />
+          </Form.Group>
+          <Form.Group controlId="password">
+            <Form.ControlLabel>Пароль</Form.ControlLabel>
+            <Input
+              type="password"
+              value={password}
+              onChange={setPassword}
+              required
+            />
+          </Form.Group>
+          <Form.Group controlId="confirmPassword">
+            <Form.ControlLabel>Підтвердити пароль</Form.ControlLabel>
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              required
+            />
+          </Form.Group>
+          <Form.Group controlId="companyName">
+            <Form.ControlLabel>Назва компанії</Form.ControlLabel>
+            <Input value={companyName} onChange={setCompanyName} required />
+          </Form.Group>
+          <Button appearance="primary" onClick={handleCreateUser}>
+            Створити
+          </Button>
+        </Form.Stack>
       </Form>
     </div>
   );

@@ -114,9 +114,11 @@ const ItemEditor = ({ value, onChange }) => {
 
   return (
     <Form fluid>
-      {Object.entries(internalData).map(([key, val]) =>
-        renderFieldEditor(key, val),
-      )}
+      <Form.Stack>
+        {Object.entries(internalData).map(([key, val]) =>
+          renderFieldEditor(key, val),
+        )}
+      </Form.Stack>
     </Form>
   );
 };

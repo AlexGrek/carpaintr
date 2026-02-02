@@ -47,25 +47,27 @@ const TopBarUser = () => {
       >
         <span className="topbar-header-brand">autolab</span>
       </Navbar.Brand>
-      <Nav pullRight>
-        <Dropdown
-          title=""
-          icon={<Menu />}
-          placement="bottomEnd"
-          trigger={["click", "hover"]}
-        >
-          <Dropdown.Item eventKey="logout" onSelect={handleSelect}>
-            Вийти
-          </Dropdown.Item>
-          <Dropdown.Item eventKey="manage" onSelect={handleSelect}>
-            Налаштування
-          </Dropdown.Item>
-          <Dropdown.Separator />
-          <Dropdown.Item eventKey="report" onSelect={handleSelect}>
-            Надіслати відгук
-          </Dropdown.Item>
-        </Dropdown>
-      </Nav>
+      <Navbar.Content align="end">
+        <Nav>
+          <Dropdown
+            title=""
+            icon={<Menu />}
+            placement="bottomEnd"
+            trigger={["click", "hover"]}
+          >
+            <Dropdown.Item eventKey="logout" onSelect={handleSelect}>
+              Вийти
+            </Dropdown.Item>
+            <Dropdown.Item eventKey="manage" onSelect={handleSelect}>
+              Налаштування
+            </Dropdown.Item>
+            <Dropdown.Separator />
+            <Dropdown.Item eventKey="report" onSelect={handleSelect}>
+              Надіслати відгук
+            </Dropdown.Item>
+          </Dropdown>
+        </Nav>
+      </Navbar.Content>
     </Navbar>
   );
 };

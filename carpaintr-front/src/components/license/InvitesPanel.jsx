@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import {
   Container,
   Content,
-  FlexboxGrid,
+  Row,
+  Col,
   Panel,
   Button,
   Form,
   Radio,
   RadioGroup,
-  InputNumber,
+  NumberInput,
   Loader,
   Table,
   ButtonToolbar,
@@ -123,8 +124,8 @@ function InvitesPanel() {
   return (
     <Container style={{ padding: "20px" }}>
       <Content>
-        <FlexboxGrid justify="center">
-          <FlexboxGrid.Item colspan={12}>
+        <Row justify="center">
+          <Col span={12}>
             <Panel header={<h3>Generate New Invite</h3>} bordered>
               <Form
                 ref={formRef}
@@ -134,61 +135,63 @@ function InvitesPanel() {
                 model={model}
                 fluid
               >
-                <Form.Group controlId="evaluation_license_type">
-                  <Form.ControlLabel>License Type</Form.ControlLabel>
-                  <Form.Control
-                    name="evaluation_license_type"
-                    defaultValue="Basic"
-                  />
-                  <Form.HelpText>e.g., Basic, Pro, Enterprise</Form.HelpText>
-                </Form.Group>
-
-                <Form.Group controlId="evaluation_license_duration_days">
-                  <Form.ControlLabel>Duration (Days)</Form.ControlLabel>
-                  <Form.Control
-                    name="evaluation_license_duration_days"
-                    accepter={InputNumber}
-                    min={1}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="usage_policy">
-                  <Form.ControlLabel>Usage Policy</Form.ControlLabel>
-                  <Form.Control
-                    name="usage_policy"
-                    accepter={RadioGroup}
-                    inline
-                  >
-                    <Radio value="UseOnce">UseOnce</Radio>
-                    <Radio value="UseForever">UseForever</Radio>
-                    <Radio value="UseUpToCertainLimit">
-                      UseUpToCertainLimit
-                    </Radio>
-                  </Form.Control>
-                </Form.Group>
-
-                {formValue.usage_policy === "UseUpToCertainLimit" && (
-                  <Form.Group controlId="usage_limit">
-                    <Form.ControlLabel>Usage Limit</Form.ControlLabel>
+                <Form.Stack>
+                  <Form.Group controlId="evaluation_license_type">
+                    <Form.ControlLabel>License Type</Form.ControlLabel>
                     <Form.Control
-                      name="usage_limit"
-                      accepter={InputNumber}
+                      name="evaluation_license_type"
+                      defaultValue="Basic"
+                    />
+                    <Form.HelpText>e.g., Basic, Pro, Enterprise</Form.HelpText>
+                  </Form.Group>
+
+                  <Form.Group controlId="evaluation_license_duration_days">
+                    <Form.ControlLabel>Duration (Days)</Form.ControlLabel>
+                    <Form.Control
+                      name="evaluation_license_duration_days"
+                      accepter={NumberInput}
                       min={1}
                     />
                   </Form.Group>
-                )}
 
-                <Form.Group>
-                  <ButtonToolbar>
-                    <Button
-                      appearance="primary"
-                      onClick={handleGenerate}
-                      disabled={loading}
+                  <Form.Group controlId="usage_policy">
+                    <Form.ControlLabel>Usage Policy</Form.ControlLabel>
+                    <Form.Control
+                      name="usage_policy"
+                      accepter={RadioGroup}
+                      inline
                     >
-                      {loading ? <Loader /> : "Generate Invite"}
-                    </Button>
-                  </ButtonToolbar>
-                </Form.Group>
+                      <Radio value="UseOnce">UseOnce</Radio>
+                      <Radio value="UseForever">UseForever</Radio>
+                      <Radio value="UseUpToCertainLimit">
+                        UseUpToCertainLimit
+                      </Radio>
+                    </Form.Control>
+                  </Form.Group>
+
+                  {formValue.usage_policy === "UseUpToCertainLimit" && (
+                    <Form.Group controlId="usage_limit">
+                      <Form.ControlLabel>Usage Limit</Form.ControlLabel>
+                      <Form.Control
+                        name="usage_limit"
+                        accepter={NumberInput}
+                        min={1}
+                      />
+                    </Form.Group>
+                  )}
+
+                  <Form.Group>
+                    <ButtonToolbar>
+                      <Button
+                        appearance="primary"
+                        onClick={handleGenerate}
+                        disabled={loading}
+                      >
+                        {loading ? <Loader /> : "Generate Invite"}
+                      </Button>
+                    </ButtonToolbar>
+                  </Form.Group>
+                </Form.Stack>
               </Form>
               {generatedInvite && (
                 <Panel
@@ -213,13 +216,13 @@ function InvitesPanel() {
                 </Panel>
               )}
             </Panel>
-          </FlexboxGrid.Item>
-        </FlexboxGrid>
+          </Col>
+        </Row>
 
         <hr style={{ margin: "40px 0" }} />
 
-        <FlexboxGrid justify="center">
-          <FlexboxGrid.Item colspan={20}>
+        <Row justify="center">
+          <Col span={20}>
             <Panel
               header={<h3>Active Invites</h3>}
               bordered
@@ -287,8 +290,8 @@ function InvitesPanel() {
                 </Table>
               )}
             </Panel>
-          </FlexboxGrid.Item>
-        </FlexboxGrid>
+          </Col>
+        </Row>
       </Content>
     </Container>
   );

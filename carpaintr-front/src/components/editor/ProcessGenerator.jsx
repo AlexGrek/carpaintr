@@ -7,7 +7,7 @@ import {
   Button,
   ButtonToolbar,
   Input,
-  InputNumber,
+  NumberInput,
   TagPicker,
   Stack,
   IconButton,
@@ -562,7 +562,7 @@ ${renderClauses()}
             <Form.ControlLabel>
               <Trans>Ordering Number</Trans>
             </Form.ControlLabel>
-            <Form.Control name="orderingNum" accepter={InputNumber} />
+            <Form.Control name="orderingNum" accepter={NumberInput} />
           </Form.Group>
 
           <Form.Group>

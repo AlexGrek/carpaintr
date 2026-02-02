@@ -1,0 +1,83 @@
+/* EXACT THEME PRESERVATION FROM custom-theme.less */
+/* RSuite v6 CSS Variable Overrides */
+
+:root {
+  /* Primary colors - from custom-theme.less */
+  --rs-primary-500: #e23b1a;
+  --rs-primary-700: #8a3f26;
+
+  /* Font customizations - EXACT from custom-theme.less */
+  --rs-font-family: "Lucida Grande", "Avenir Next", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", STXihei, sans-serif;
+  --rs-font-size-base: 0.875rem; /* 14px converted to rem */
+}
+
+/* Drawer backdrop - dark overlay with blur */
+.rs-drawer-backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Drawer content - translucent white with glass effect */
+.rs-drawer-content {
+  background-color: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 6px; /* Default RSuite border-radius */
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Drawer body padding */
+.rs-drawer-body {
+  padding: 10pt;
+}
+
+/* Drawer header padding */
+.rs-drawer-header {
+  padding: 15pt;
+  padding-left: 40pt;
+}
+
+/* Ghost button styling */
+.rs-btn.rs-btn-ghost {
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.rs-btn.rs-btn-ghost:hover {
+  background-color: rgba(249, 240, 234, 0.845);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Steps component - process icon color */
+.rs-steps-item-status-process .rs-steps-item-icon-wrapper {
+  color: #343434e7;
+}
+
+/* Picker - left alignment */
+.rs-picker {
+  text-align: left;
+}
+
+/* Nav pills - centered, full width */
+.rs-nav.rs-nav-pills.rs-nav-horizontal {
+  justify-content: center;
+  width: 100%;
+}
+
+/* Tabs - full width */
+.rs-tabs {
+  width: 100%;
+}
+
+/* Navbar - preserve transparent background for top-bar-dashboard */
+.rs-navbar.top-bar-dashboard {
+  background-color: transparent;
+}
+
+.rs-navbar.top-bar-dashboard .rs-navbar-brand,
+.rs-navbar.top-bar-dashboard .rs-navbar-content {
+  background-color: transparent;
+}

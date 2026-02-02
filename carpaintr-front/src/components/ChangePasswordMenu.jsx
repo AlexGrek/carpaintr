@@ -79,29 +79,31 @@ const ChangePassword = () => {
         onCheck={setFormError}
         ref={formRef}
       >
-        <Form.Group controlId="currentPassword">
-          <Form.ControlLabel>Старий пароль</Form.ControlLabel>
-          <Form.Control
-            name="currentPassword"
-            type="password"
-            placeholder="Старий пароль"
-          />
-        </Form.Group>
+        <Form.Stack layout="vertical">
+          <Form.Group controlId="currentPassword">
+            <Form.ControlLabel>Старий пароль</Form.ControlLabel>
+            <Form.Control
+              name="currentPassword"
+              type="password"
+              placeholder="Старий пароль"
+            />
+          </Form.Group>
 
-        <Form.Group controlId="newPassword">
-          <Form.ControlLabel>Новий пароль</Form.ControlLabel>
-          <Form.Control
-            name="newPassword"
-            type="password"
-            placeholder="Новий пароль"
-          />
-        </Form.Group>
+          <Form.Group controlId="newPassword">
+            <Form.ControlLabel>Новий пароль</Form.ControlLabel>
+            <Form.Control
+              name="newPassword"
+              type="password"
+              placeholder="Новий пароль"
+            />
+          </Form.Group>
 
-        <Form.Group>
-          <Button appearance="primary" onClick={handleSubmit} loading={loading}>
-            Змінити пароль
-          </Button>
-        </Form.Group>
+          <Form.Group>
+            <Button appearance="primary" onClick={handleSubmit} loading={loading}>
+              Змінити пароль
+            </Button>
+          </Form.Group>
+        </Form.Stack>
       </Form>
     </>
   );

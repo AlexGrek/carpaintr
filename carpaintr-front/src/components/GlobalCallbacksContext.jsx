@@ -40,27 +40,29 @@ export const GlobalCallbacksProvider = ({ children }) => {
         </Modal.Header>
         <Modal.Body>
           <Form fluid>
-            <div>
-              <p>Email (optional)</p>
-              <Input
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={(value) => handleFieldChange(value, "email")}
-                placeholder="Enter your email"
-              />
-            </div>
-            <div>
-              <p>Describe the Issue</p>
-              <Input
-                as="textarea"
-                name="issue"
-                rows={5}
-                value={formData.issue}
-                onChange={(value) => handleFieldChange(value, "issue")}
-                placeholder="Describe the issue in detail"
-              />
-            </div>
+            <Form.Stack>
+              <div>
+                <p>Email (optional)</p>
+                <Input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(value) => handleFieldChange(value, "email")}
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <p>Describe the Issue</p>
+                <Input
+                  as="textarea"
+                  name="issue"
+                  rows={5}
+                  value={formData.issue}
+                  onChange={(value) => handleFieldChange(value, "issue")}
+                  placeholder="Describe the issue in detail"
+                />
+              </div>
+            </Form.Stack>
           </Form>
         </Modal.Body>
         <Modal.Footer>

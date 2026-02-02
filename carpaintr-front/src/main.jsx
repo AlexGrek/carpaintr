@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import "rsuite/dist/rsuite.min.css";
 import "../styles.less";
+import "./theme-overrides.css";
 import { CustomProvider } from "rsuite";
 
 const fallbackEl = document.getElementById("fallback-refresh");
