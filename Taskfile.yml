@@ -57,6 +57,46 @@ tasks:
       - task: build
       - task: push
 
+  # Multi-architecture build tasks
+  multiarch-setup:
+    desc: Setup QEMU and buildx builder for multi-architecture builds
+    cmds:
+      - docker run --privileged --rm tonistiigi/binfmt --install all
+      - docker buildx create --name multiarch-builder --driver docker-container --bootstrap --use 2>/dev/null || docker buildx use multiarch-builder
+
+  multiarch-build-backend:
+    desc: Build multi-arch backend image (arm64 + amd64) sequentially
+    cmds:
+      - echo "Building arm64 backend..."
+      - docker buildx build --builder multiarch-builder --platform linux/arm64 -t {{.HUB_API_IMAGE}}:{{.TAG}}-arm64 --push .
+      - echo "Building amd64 backend..."
+      - docker buildx build --builder multiarch-builder --platform linux/amd64 -t {{.HUB_API_IMAGE}}:{{.TAG}}-amd64 --push .
+      - echo "Creating multi-arch manifest..."
+      - docker buildx imagetools create -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest {{.HUB_API_IMAGE}}:{{.TAG}}-arm64 {{.HUB_API_IMAGE}}:{{.TAG}}-amd64
+
+  multiarch-build-pdfgen:
+    desc: Build multi-arch PDF generator image (arm64 + amd64) sequentially
+    dir: pdf_backend
+    cmds:
+      - echo "Building arm64 PDF generator..."
+      - docker buildx build --builder multiarch-builder --platform linux/arm64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}}-arm64 --push .
+      - echo "Building amd64 PDF generator..."
+      - docker buildx build --builder multiarch-builder --platform linux/amd64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}}-amd64 --push .
+      - echo "Creating multi-arch manifest..."
+      - docker buildx imagetools create -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest {{.HUB_PDF_IMAGE}}:{{.TAG}}-arm64 {{.HUB_PDF_IMAGE}}:{{.TAG}}-amd64
+
+  multiarch-build:
+    desc: Build all multi-arch Docker images (arm64 + amd64)
+    deps:
+      - multiarch-build-backend
+      - multiarch-build-pdfgen
+
+  multiarch-release:
+    desc: Setup QEMU, build and push multi-arch images (arm64 + amd64) to Docker Hub
+    cmds:
+      - task: multiarch-setup
+      - task: multiarch-build
+
   # Helm deployment tasks - Multi-stage
   # Usage: task deploy (defaults to dev)
   # Usage: task deploy ENV=staging
