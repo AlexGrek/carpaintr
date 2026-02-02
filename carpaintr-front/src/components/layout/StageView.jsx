@@ -147,6 +147,38 @@ function StageView({
     })),
   );
 
+  // Preload next stage component to eliminate loading delays
+  useEffect(() => {
+    const nextStageIndex = activeStageIndex + 1;
+    if (nextStageIndex >= stages.length) return;
+
+    const nextStage = stages[nextStageIndex];
+    const nextComponent = nextStage?.component;
+
+    if (!nextComponent) return;
+
+    // Wrap in try-catch to handle any synchronous errors
+    try {
+      // If the component is a lazy-loaded component (React.lazy result),
+      // it has a _payload and _init function we can use to preload
+      if (typeof nextComponent._init === 'function' && nextComponent._payload) {
+        // Check if already loaded (status: 1 = resolved)
+        if (nextComponent._payload._status !== 1) {
+          // Trigger the lazy component's loader function
+          nextComponent._init(nextComponent._payload).catch(() => {
+            // Silently ignore preload errors - component will retry when actually needed
+          });
+        }
+      } else if (typeof nextComponent.preload === 'function') {
+        // Support custom preload function if defined
+        nextComponent.preload();
+      }
+    } catch (error) {
+      // Silently ignore any preload errors - component will load when needed
+      console.debug('Preload attempt failed, component will load on demand:', error);
+    }
+  }, [activeStageIndex, stages]);
+
   // Effect to handle URL changes (including back/forward buttons)
   useEffect(() => {
     const handlePopState = () => {

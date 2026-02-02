@@ -12,3 +12,4 @@ backend-service-rust/application.log
 **/.DS_store
 **/application.log
 .~lock*
+carpaintr-front/public/version.json
