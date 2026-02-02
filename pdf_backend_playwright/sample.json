@@ -1,0 +1,71 @@
+{
+      "custom_template_content": null,
+      "company_info": {
+        "email": "admin@example.com",
+        "license": null,
+        "company_name": "Жопа",
+        "company_addr": "",
+        "current_time": "2025-08-08T22:36:53.176882900Z",
+        "lang_ui": "ua",
+        "lang_output": "ua",
+        "pricing_preferences": {
+          "preferred_currency": "грн",
+          "norm_price": {
+            "amount": "43.21",
+            "currency": "грн"
+          }
+        }
+      },
+      "calculation": {
+        "calc": {
+          "Двері передні ліві": [
+            {
+              "error": null,
+              "name": "РАБОТЫ  АРМАТУРНЫЕ  СНЯТИЕ УСТАНОВКА ДЛЯ РЕМОНТА",
+              "result": [
+                {
+                  "estimation": 0.4,
+                  "evaluate": "0,4",
+                  "name": "Зняти «Деталь» для ремонту",
+                  "price": 1,
+                  "sum": "0.40",
+                  "tooltip": "Арматурные работы снять"
+                },
+                {
+                  "estimation": 0.8,
+                  "evaluate": "0,8",
+                  "name": "Встановити «Деталь» після ремонту",
+                  "price": 1,
+                  "sum": "0.80",
+                  "tooltip": "Just paint part"
+                }
+              ],
+              "text": "{\"name\":\"Зняти «Деталь» для ремонту\",\"evaluate\":\"0,4\",\"tooltip\":\"Арматурные работы снять\"};{\"name\":\"Встановити «Деталь» після ремонту\",\"evaluate\":\"0,8\",\"tooltip\":\"Just paint part\"}"
+            }
+          ]
+        },
+        "car": {
+          "VIN": "",
+          "bodyType": "hatchback 5 doors",
+          "carClass": "C",
+          "licensePlate": "",
+          "make": null,
+          "model": null,
+          "notes": "",
+          "storeFileName": null,
+          "year": "2018"
+        },
+        "order": {
+          "orderDate": "2025-08-18T08:48:42.614Z",
+          "orderNumber": "0"
+        },
+        "paint": {
+          "color": "Сірий",
+          "paintType": "metallic"
+        }
+      },
+      "metadata": {
+        "order_number": "0",
+        "order_notes": null
+      }
+    }

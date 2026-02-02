@@ -3,7 +3,7 @@ version: "3"
 vars:
   # Docker Hub images
   HUB_API_IMAGE: "grekodocker/autolab-api"
-  HUB_PDF_IMAGE: "grekodocker/autolab-pdf"
+  HUB_PDF_IMAGE: "grekodocker/autolab-pdf"  # Now uses Playwright (lightweight)
   TAG:
     sh: git rev-parse --short HEAD
   # Helm/Kubernetes
@@ -27,75 +27,68 @@ tasks:
     cmds:
       - task --list
 
-  # Docker build tasks
-  build:
-    desc: Build all Docker images
-    deps:
-      - build-backend
-      - build-pdfgen
-
-  build-backend:
-    desc: Build backend Docker image
-    cmds:
-      - docker build . -t {{.HUB_API_IMAGE}}:{{.TAG}}
-
-  build-pdfgen:
-    desc: Build PDF generator Docker image
-    dir: pdf_backend
-    cmds:
-      - docker build . -t {{.HUB_PDF_IMAGE}}:{{.TAG}}
-
-  push:
-    desc: Push all Docker images to Docker Hub
-    cmds:
-      - docker push {{.HUB_API_IMAGE}}:{{.TAG}}
-      - docker push {{.HUB_PDF_IMAGE}}:{{.TAG}}
-
-  release:
-    desc: Build and push all Docker images to Docker Hub
-    cmds:
-      - task: build
-      - task: push
-
-  # Multi-architecture build tasks
-  multiarch-setup:
-    desc: Setup QEMU and buildx builder for multi-architecture builds
+  # Docker build tasks (multi-architecture by default)
+  buildx-setup:
+    desc: Setup buildx builder for multi-architecture builds
     cmds:
       - docker run --privileged --rm tonistiigi/binfmt --install all
       - docker buildx create --name multiarch-builder --driver docker-container --bootstrap --use 2>/dev/null || docker buildx use multiarch-builder
+    status:
+      - docker buildx ls | grep -q multiarch-builder
 
-  multiarch-build-backend:
-    desc: Build multi-arch backend image (arm64 + amd64) sequentially
+  build:
+    desc: Build and push all multi-arch Docker images (arm64 + amd64)
+    deps:
+      - buildx-setup
     cmds:
-      - echo "Building arm64 backend..."
-      - docker buildx build --builder multiarch-builder --platform linux/arm64 -t {{.HUB_API_IMAGE}}:{{.TAG}}-arm64 --push .
-      - echo "Building amd64 backend..."
-      - docker buildx build --builder multiarch-builder --platform linux/amd64 -t {{.HUB_API_IMAGE}}:{{.TAG}}-amd64 --push .
-      - echo "Creating multi-arch manifest..."
-      - docker buildx imagetools create -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest {{.HUB_API_IMAGE}}:{{.TAG}}-arm64 {{.HUB_API_IMAGE}}:{{.TAG}}-amd64
+      - task: build-backend
+      - task: build-pdfgen
 
-  multiarch-build-pdfgen:
-    desc: Build multi-arch PDF generator image (arm64 + amd64) sequentially
+  build-backend:
+    desc: Build and push multi-arch backend image (arm64 + amd64)
+    deps:
+      - buildx-setup
+    cmds:
+      - echo "Building multi-arch backend image {{.HUB_API_IMAGE}}:{{.TAG}}..."
+      - docker buildx build --builder multiarch-builder --platform linux/arm64,linux/amd64 -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest --push .
+
+  build-pdfgen:
+    desc: Build and push multi-arch Playwright PDF generator image (arm64 + amd64)
+    dir: pdf_backend_playwright
+    deps:
+      - buildx-setup
+    cmds:
+      - echo "Building multi-arch PDF generator image {{.HUB_PDF_IMAGE}}:{{.TAG}}..."
+      - docker buildx build --builder multiarch-builder --platform linux/arm64,linux/amd64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest --push .
+
+  build-pdfgen-legacy:
+    desc: Build legacy WeasyPrint PDF generator Docker image (single arch)
     dir: pdf_backend
     cmds:
-      - echo "Building arm64 PDF generator..."
-      - docker buildx build --builder multiarch-builder --platform linux/arm64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}}-arm64 --push .
-      - echo "Building amd64 PDF generator..."
-      - docker buildx build --builder multiarch-builder --platform linux/amd64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}}-amd64 --push .
-      - echo "Creating multi-arch manifest..."
-      - docker buildx imagetools create -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest {{.HUB_PDF_IMAGE}}:{{.TAG}}-arm64 {{.HUB_PDF_IMAGE}}:{{.TAG}}-amd64
+      - docker build . -t {{.HUB_PDF_IMAGE}}:{{.TAG}}-legacy
 
-  multiarch-build:
-    desc: Build all multi-arch Docker images (arm64 + amd64)
-    deps:
-      - multiarch-build-backend
-      - multiarch-build-pdfgen
-
-  multiarch-release:
-    desc: Setup QEMU, build and push multi-arch images (arm64 + amd64) to Docker Hub
+  release:
+    desc: Build and push all multi-arch Docker images to Docker Hub
     cmds:
-      - task: multiarch-setup
-      - task: multiarch-build
+      - task: build
+
+  # Single-architecture build tasks (for local development)
+  build-local:
+    desc: Build local single-arch images (not pushed)
+    cmds:
+      - task: build-backend-local
+      - task: build-pdfgen-local
+
+  build-backend-local:
+    desc: Build backend Docker image for local architecture only
+    cmds:
+      - docker build . -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest
+
+  build-pdfgen-local:
+    desc: Build Playwright PDF generator Docker image for local architecture only
+    dir: pdf_backend_playwright
+    cmds:
+      - docker build . -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest
 
   # Helm deployment tasks - Multi-stage
   # Usage: task deploy (defaults to dev)
@@ -216,6 +209,86 @@ tasks:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
     cmds:
       - kubectl logs -n {{.NS}} -l app=autolab-pdfgen --tail=100 -f
+
+  # Secret management tasks
+  secret-create:
+    desc: "Create Kubernetes secret manually (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      JWT_SECRET:
+        sh: openssl rand -base64 32
+      LICENSE_SECRET:
+        sh: openssl rand -base64 32
+    cmds:
+      - echo "Creating secret in namespace {{.NS}}..."
+      - kubectl create secret generic autolab-api-secret --namespace {{.NS}} --from-literal=SECRET_KEY={{.JWT_SECRET}} --from-literal=SECRET_KEY_LICENSE={{.LICENSE_SECRET}} --from-file=admins.txt=backend-service-rust/admins.txt --dry-run=client -o yaml | kubectl apply -f -
+      - echo "Secret created/updated successfully"
+
+  secret-delete:
+    desc: "Delete Kubernetes secret (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+    cmds:
+      - kubectl delete secret autolab-api-secret --namespace {{.NS}} --ignore-not-found=true
+
+  secret-recreate:
+    desc: "Recreate Kubernetes secret (ENV=dev|staging|prod, default: dev)"
+    cmds:
+      - task: secret-delete
+      - task: secret-create
+
+  secret-show:
+    desc: "Show current secret values (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+    cmds:
+      - echo "Secret in namespace {{.NS}}:"
+      - kubectl get secret autolab-api-secret --namespace {{.NS}} -o yaml 2>/dev/null || echo "Secret not found"
+
+  # Helm install tasks using current kubectl context and commit hash
+  helm-context:
+    desc: Show current kubectl context and commit hash
+    cmds:
+      - echo "Current kubectl context:" && kubectl config current-context
+      - echo "Current commit hash:" && echo {{.TAG}}
+      - echo "Backend image:" && echo {{.HUB_API_IMAGE}}:{{.TAG}}
+      - echo "PDF image:" && echo {{.HUB_PDF_IMAGE}}:{{.TAG}}
+
+  helm-install:
+    desc: "Install with current kubectl context and commit hash (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
+      CONTEXT:
+        sh: kubectl config current-context
+    cmds:
+      - echo "Installing to context {{.CONTEXT}} with commit {{.TAG}}"
+      - helm install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --kube-context={{.CONTEXT}}
+
+  helm-upgrade:
+    desc: "Upgrade with current kubectl context and commit hash (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
+      CONTEXT:
+        sh: kubectl config current-context
+    cmds:
+      - echo "Upgrading in context {{.CONTEXT}} with commit {{.TAG}}"
+      - helm upgrade {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --kube-context={{.CONTEXT}}
+
+  helm-install-or-upgrade:
+    desc: "Install or upgrade with current kubectl context and commit hash (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
+      CONTEXT:
+        sh: kubectl config current-context
+    cmds:
+      - echo "Installing/upgrading to context {{.CONTEXT}} with commit {{.TAG}}"
+      - helm upgrade --install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}} --kube-context={{.CONTEXT}}
 
   # Development tasks
   dev:

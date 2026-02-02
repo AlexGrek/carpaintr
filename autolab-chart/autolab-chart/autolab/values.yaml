@@ -16,6 +16,17 @@ image:
 # -- The name of the Kubernetes secret holding keys (SECRET_KEY, SECRET_KEY_LICENSE, admins.txt)
 secretName: autolab-api-secret
 
+# -- Secret configuration
+secret:
+  # -- Whether to create the secret (set to false if managing secrets externally)
+  create: true
+  # -- JWT secret key (base64 encoded automatically). Leave empty to auto-generate.
+  secretKey: ""
+  # -- License JWT secret key (base64 encoded automatically). Leave empty to auto-generate.
+  secretKeyLicense: ""
+  # -- Admin emails/usernames (plain text, will be base64 encoded). Leave empty for default.
+  admins: ""
+
 # -- Resource limits and requests for the container
 resources:
   limits:

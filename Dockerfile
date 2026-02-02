@@ -9,7 +9,7 @@ COPY carpaintr-front/ .
 RUN npm run build --production
 
 # ---------- Backend Build Stage ----------
-FROM rust:1.87 AS backend
+FROM rust:1.93 AS backend
 WORKDIR /app/backend-service-rust
 # Create dummy static to prevent cargo build issues before copying frontend
 RUN mkdir -p static

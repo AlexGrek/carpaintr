@@ -7,6 +7,15 @@ environment: development
 # Secret name (must be created separately in the namespace)
 secretName: autolab-api-secret
 
+# Secret configuration for dev environment
+secret:
+  create: true
+  secretKey: "dev-jwt-secret-change-in-production"
+  secretKeyLicense: "dev-license-secret-change-in-production"
+  admins: |
+    admin@example.com
+    admin@admin.com
+
 # Resource configuration (lower for dev)
 resources:
   limits:
