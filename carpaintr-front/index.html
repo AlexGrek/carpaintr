@@ -19,11 +19,53 @@
     <meta name="theme-color" content="#e23c1a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>Autolab</title>
+
+    <!-- SEO Meta Tags -->
+    <title>Autolab - Automotive Repair Estimation & Workflow Management</title>
+    <meta name="description" content="Professional automotive repair estimation and workflow management platform. Accurate pricing, task tracking, and business management for auto body shops. Save 3+ hours daily with streamlined estimates." />
+    <meta name="keywords" content="automotive repair, auto body shop, repair estimation, workflow management, task tracking, car repair software, automotive business management" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Autolab - Automotive Business in Your Phone" />
+    <meta property="og:description" content="Accurate repair estimation, task tracking, and workflow management — everything you need to run your workshop on the go." />
+    <meta property="og:site_name" content="Autolab" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Autolab - Automotive Business Management" />
+    <meta name="twitter:description" content="Professional repair estimation and workflow management for auto body shops. Increase profitability and streamline operations." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Autolab",
+      "applicationCategory": "BusinessApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Professional automotive repair estimation and workflow management platform for auto body shops",
+      "operatingSystem": "Web, iOS, Android",
+      "featureList": [
+        "Accurate Repair Estimation",
+        "Task Tracking & Workflow Management",
+        "Built-in Knowledge & Standards Database",
+        "Transparent Pricing Calculations",
+        "Progress Tracking and Notifications"
+      ]
+    }
+    </script>
     <style>
       body {
         margin: 0;
         background-color: #f3edec;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        color: #333;
+        line-height: 1.6;
       }
 
       #fallback-refresh {
@@ -48,6 +90,168 @@
       #fallback-refresh button:hover {
         background-color: #f2f2f246;
       }
+
+      /* Pre-rendered content styles - hidden once React loads */
+      #prerendered-content {
+        display: block;
+      }
+
+      #root:not(:empty) ~ #prerendered-content {
+        display: none;
+      }
+
+      .prerender-header {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1rem 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .prerender-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
+
+      .prerender-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .prerender-logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #e23c1a;
+      }
+
+      .prerender-hero {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);
+      }
+
+      .prerender-hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+        line-height: 1.2;
+      }
+
+      .prerender-hero p {
+        font-size: 1.25rem;
+        color: #555;
+        max-width: 700px;
+        margin: 0 auto 2rem;
+      }
+
+      .prerender-features {
+        padding: 4rem 2rem;
+        background: #fff;
+      }
+
+      .prerender-features h2 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+      }
+
+      .prerender-features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .prerender-feature-card {
+        padding: 2rem;
+        background: #f9f9f9;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .prerender-feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      .prerender-feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+      }
+
+      .prerender-benefits {
+        padding: 4rem 2rem;
+        background: #f3edec;
+      }
+
+      .prerender-benefits h2 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+      }
+
+      .prerender-benefits ul {
+        max-width: 800px;
+        margin: 0 auto;
+        list-style: none;
+        padding: 0;
+      }
+
+      .prerender-benefits li {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .prerender-benefits li:before {
+        content: "✓ ";
+        color: #e23c1a;
+        font-weight: bold;
+        margin-right: 0.5rem;
+      }
+
+      .prerender-cta {
+        padding: 4rem 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, #e23c1a 0%, #d13516 100%);
+        color: white;
+      }
+
+      .prerender-cta h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .prerender-btn {
+        display: inline-block;
+        padding: 1rem 2rem;
+        margin: 0.5rem;
+        background: white;
+        color: #e23c1a;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: transform 0.2s;
+      }
+
+      .prerender-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .prerender-footer {
+        padding: 2rem;
+        text-align: center;
+        background: #2c3e50;
+        color: #fff;
+      }
     </style>
   </head>
 
@@ -59,6 +263,83 @@
     </div>
 
     <div id="root"></div>
+
+    <!-- Pre-rendered content for search engines (hidden once React loads) -->
+    <div id="prerendered-content">
+      <header class="prerender-header">
+        <nav class="prerender-container prerender-nav">
+          <div class="prerender-logo">autolab</div>
+        </nav>
+      </header>
+
+      <main>
+        <section class="prerender-hero">
+          <div class="prerender-container">
+            <h1>Automotive Business in Your Phone</h1>
+            <p>
+              Accurate repair estimation, task tracking, and workflow management —
+              everything you need to run your workshop on the go.
+            </p>
+          </div>
+        </section>
+
+        <section class="prerender-features">
+          <div class="prerender-container">
+            <h2>Accurate Repair Estimation & Workflow Management</h2>
+            <p style="text-align: center; color: #555; max-width: 800px; margin: 0 auto;">
+              Complete business management solution combining realistic pricing with smart task tracking
+            </p>
+
+            <div class="prerender-features-grid">
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📐</div>
+                <h3>Accurate Repair Estimation</h3>
+                <p>Use proven methods to calculate fair and transparent repair costs in minutes.</p>
+              </article>
+
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📋</div>
+                <h3>Task Tracking & Workflow</h3>
+                <p>Follow each job from estimate to completion with clear progress tracking and notifications.</p>
+              </article>
+
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📚</div>
+                <h3>Built-in Knowledge & Standards</h3>
+                <p>Reference database of costs, labor times, and best practices to support your daily work.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="prerender-benefits">
+          <div class="prerender-container">
+            <h2>Boost Profitability & Streamline Operations</h2>
+            <ul>
+              <li>Increase pricing accuracy with proven calculation methods</li>
+              <li>Save 3+ hours daily with streamlined estimates and management</li>
+              <li>Win more jobs with transparent, consistent pricing</li>
+              <li>Reduce task completion time with smart tracking</li>
+              <li>Eliminate missed deadlines and pricing errors</li>
+              <li>Scale operations with consistent standards and automation</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="prerender-cta">
+          <div class="prerender-container">
+            <h2>Ready to Transform Your Business?</h2>
+            <a href="/register" class="prerender-btn">Get Started Today</a>
+            <a href="/login" class="prerender-btn">Schedule a Demo</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="prerender-footer">
+        <p>&copy; 2025 Autolab. All rights reserved. Built for auto body professionals.</p>
+      </footer>
+    </div>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

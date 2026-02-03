@@ -18,8 +18,8 @@ export default defineConfig({
       manifest: {
         name: "Autolab",
         short_name: "Autolab",
-        description: "Your app description here",
-        theme_color: "#ffffff",
+        description: "Professional automotive repair estimation and workflow management for auto body shops",
+        theme_color: "#e23c1a",
         icons: [
           {
             src: "pwa-192x192.png",

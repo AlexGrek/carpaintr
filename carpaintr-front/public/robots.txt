@@ -1,0 +1,13 @@
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Sitemap location (update with your actual domain)
+# Sitemap: https://yourdomain.com/sitemap.xml
+
+# Disallow admin and internal pages
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /cabinet/
+Disallow: /fileeditor/
+Disallow: /api/
