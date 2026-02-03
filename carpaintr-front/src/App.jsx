@@ -10,6 +10,7 @@ import CatalogPage from "./components/pages/CatalogPage.jsx";
 import { useVersionCheck } from "./version";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import CreateProcPage from "./components/pages/CreateProcPage.jsx";
+import NotFoundPage from "./components/pages/NotFoundPage.jsx";
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import("./components/pages/LandingPage.jsx"));
@@ -72,6 +73,9 @@ function App() {
                 <Route path="/app/report" element={<ContactSupport />} />
                 <Route path="/app/create-proc" element={<CreateProcPage />} />
                 <Route path="/app/templates" element={<TemplatesPage />} />
+
+                {/* 404 - Catch all unmatched routes */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
