@@ -52,23 +52,26 @@ function App() {
           <ErrorBoundary>
             <Suspense fallback={<ComponentLoadingPage />}>
               <Routes>
+                {/* Marketing landing page - only route at root level */}
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegistrationPage />} />
-                <Route path="/calc" element={<CalcPage />} />
-                <Route path="/calc2/*" element={<CalcPageV2 />} />
-                <Route path="/admin/*" element={<AdminPage />} />
-                <Route path="/company" element={<CompanyInfoPage />} />
-                <Route path="/catalog" element={<CatalogPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/aboutus" element={<AboutUsPage />} />
-                <Route path="/cabinet" element={<CabinetPage />} />
-                <Route path="/fileeditor" element={<FileEditorPage />} />
-                <Route path="/dashboard" element={<UsersDashboard />} />
-                <Route path="/wip" element={<WipPage />} />
-                <Route path="/report" element={<ContactSupport />} />
-                <Route path="/create-proc" element={<CreateProcPage />} />
-                <Route path="/templates" element={<TemplatesPage />} />
+
+                {/* All application routes under /app */}
+                <Route path="/app/login" element={<LoginPage />} />
+                <Route path="/app/register" element={<RegistrationPage />} />
+                <Route path="/app/calc" element={<CalcPage />} />
+                <Route path="/app/calc2/*" element={<CalcPageV2 />} />
+                <Route path="/app/admin/*" element={<AdminPage />} />
+                <Route path="/app/company" element={<CompanyInfoPage />} />
+                <Route path="/app/catalog" element={<CatalogPage />} />
+                <Route path="/app/history" element={<HistoryPage />} />
+                <Route path="/app/aboutus" element={<AboutUsPage />} />
+                <Route path="/app/cabinet" element={<CabinetPage />} />
+                <Route path="/app/fileeditor" element={<FileEditorPage />} />
+                <Route path="/app/dashboard" element={<UsersDashboard />} />
+                <Route path="/app/wip" element={<WipPage />} />
+                <Route path="/app/report" element={<ContactSupport />} />
+                <Route path="/app/create-proc" element={<CreateProcPage />} />
+                <Route path="/app/templates" element={<TemplatesPage />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>

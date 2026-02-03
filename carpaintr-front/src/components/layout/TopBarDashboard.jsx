@@ -21,7 +21,7 @@ const TopBarDashboard = () => {
           break;
         case "manage":
           // No need for console.log in production code unless debugging
-          navigate("/cabinet");
+          navigate("/app/cabinet");
           break;
         case "report":
           // No need for console.log in production code unless debugging
@@ -39,7 +39,7 @@ const TopBarDashboard = () => {
     <Navbar className="top-bar-dashboard blurred-background">
       <Navbar.Brand
         style={{ margin: "0", padding: 0, paddingLeft: "8pt" }}
-        onClick={() => navigate("/dashboard")} // Directly use onClick for navigation
+        onClick={() => navigate("/app/dashboard")} // Directly use onClick for navigation
       >
         <span className="topbar-header-brand">autolab</span>
       </Navbar.Brand>

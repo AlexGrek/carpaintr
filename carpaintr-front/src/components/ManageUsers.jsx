@@ -71,7 +71,7 @@ const ManageUsers = () => {
       if (data.token) {
         localStorage.setItem("authToken", data.token); // Store the token in localStorage
         resetCompanyInfo();
-        navigate("/dashboard");
+        navigate("/app/dashboard");
       }
     } catch (error) {
       setError(error.message);

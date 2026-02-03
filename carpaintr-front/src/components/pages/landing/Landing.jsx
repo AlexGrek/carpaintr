@@ -93,10 +93,10 @@ const Header = () => {
           </li>
         </ul>
         <div>
-          <a href="/login" className="login-btn">
+          <a href="/app/login" className="login-btn">
             <Trans>Log In</Trans>
           </a>
-          <a href="/register" className="cta-btn">
+          <a href="/app/register" className="cta-btn">
             <Trans>Join</Trans>
           </a>
         </div>
@@ -175,7 +175,7 @@ const LoggedInMiniPanel = ({ companyName }) => {
         <Button
           appearance="primary"
           color="green"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/app/dashboard")}
         >
           {str("Open dashboard")}
         </Button>

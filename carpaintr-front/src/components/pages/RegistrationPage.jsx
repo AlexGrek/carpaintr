@@ -56,7 +56,7 @@ const RegistrationPage = () => {
         { placement: "topCenter" },
       );
       // Navigate the user to the login page after successful registration
-      navigate("/login");
+      navigate("/app/login");
     } catch (error) {
       // Catch any errors during the fetch request or response handling
       // Display an error message using the toaster

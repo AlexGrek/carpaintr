@@ -31,7 +31,7 @@ const TopBar = () => {
   const handleLogout = () => {
     localStorage.removeItem("authToken"); // Remove the token
     setIsLoggedIn(false);
-    navigate("/login");
+    navigate("/app/login");
   };
 
   return (
@@ -47,15 +47,15 @@ const TopBar = () => {
             <>
               {isLoggedIn ? (
                 <Stack>
-                  <Nav.Item onClick={() => navigate("/calc")}>
+                  <Nav.Item onClick={() => navigate("/app/calc")}>
                     Calculate
                   </Nav.Item>
                   <Nav.Item onClick={handleLogout}>Logout</Nav.Item>
                 </Stack>
               ) : (
                 <span>
-                  <Nav.Item onClick={() => navigate("/login")}>Увійти</Nav.Item>
-                  <Nav.Item onClick={() => navigate("/register")}>
+                  <Nav.Item onClick={() => navigate("/app/login")}>Увійти</Nav.Item>
+                  <Nav.Item onClick={() => navigate("/app/register")}>
                     Зареєструватися
                   </Nav.Item>
                 </span>

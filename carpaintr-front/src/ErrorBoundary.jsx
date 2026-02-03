@@ -77,11 +77,11 @@ class ErrorBoundary extends React.Component {
             </p>
             <p>
               🇬🇧 Our team is already notified about this failure.{" "}
-              <a href="/report?msg=Frontend_error">Report error</a> manually.
+              <a href="/app/report?msg=Frontend_error">Report error</a> manually.
             </p>
             <p>
               🇺🇦 Наша команда вже поінформована про проблему.{" "}
-              <a href="/report?msg=Помилка_відображення">
+              <a href="/app/report?msg=Помилка_відображення">
                 Повідомити про помилку
               </a>{" "}
               власноруч.
@@ -91,10 +91,10 @@ class ErrorBoundary extends React.Component {
               <Breadcrumb.Item href="/">
                 <Globe />
               </Breadcrumb.Item>
-              <Breadcrumb.Item href="/report?msg=Frontend_error">
+              <Breadcrumb.Item href="/app/report?msg=Frontend_error">
                 <BugOff />
               </Breadcrumb.Item>
-              <Breadcrumb.Item href="/dashboard">
+              <Breadcrumb.Item href="/app/dashboard">
                 <Home />
               </Breadcrumb.Item>
               <Breadcrumb.Item active>

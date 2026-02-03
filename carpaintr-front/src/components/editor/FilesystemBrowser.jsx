@@ -544,7 +544,7 @@ const FilesystemBrowser = ({ filesystems }) => {
       setNewFileType("yaml");
       setShowCreateModal(true);
     } else if (eventKey === "create-proc") {
-      navigate("/create-proc");
+      navigate("/app/create-proc");
     }
   };
 

@@ -70,7 +70,7 @@ const AdminPage = () => {
             <Breadcrumb.Item href="/">
               <Trans>Home</Trans>
             </Breadcrumb.Item>
-            <Breadcrumb.Item href="/dashboard">
+            <Breadcrumb.Item href="/app/dashboard">
               <Trans>Dashboard</Trans>
             </Breadcrumb.Item>
             <Breadcrumb.Item active>

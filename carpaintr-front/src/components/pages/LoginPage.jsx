@@ -108,7 +108,7 @@ const LoginPage = () => {
         </Form>
         {/* Footer links */}
         <div style={{ marginTop: "16pt", textAlign: "center" }}>
-          <Link to="/register" style={{ marginRight: "20px" }}>
+          <Link to="/app/register" style={{ marginRight: "20px" }}>
             Реєстрація
           </Link>
           <Link to="/">← Назад на головну</Link>
