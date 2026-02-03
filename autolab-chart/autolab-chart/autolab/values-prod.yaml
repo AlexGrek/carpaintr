@@ -35,7 +35,14 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  host: autolab.dcommunity.space
+  host: autolab.alexgr.space
   tls:
     enabled: true
     secretName: autolab-prod-cert
+
+backup:
+  enabled: true
+  schedule: "0 0 * * *"  # Midnight UTC = 2-3 AM Kyiv time
+  timezone: "Europe/Kyiv"
+  retention: 14  # Keep 2 weeks of backups for production
+  storageSize: 10Gi

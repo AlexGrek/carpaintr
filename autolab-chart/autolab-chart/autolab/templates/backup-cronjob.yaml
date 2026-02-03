@@ -1,0 +1,84 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "autolab-api.fullname" . }}-backup
+  labels:
+    {{- include "autolab-api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.backup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backup.failedJobsHistoryLimit }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "autolab-api.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: {{ .Values.backup.image }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/backups/autolab-backup-${TIMESTAMP}.tar.gz"
+
+              echo "Starting backup at $(date)"
+              echo "Creating backup: ${BACKUP_FILE}"
+
+              # Create compressed archive of the data directory
+              tar -czf "${BACKUP_FILE}" -C /data .
+
+              BACKUP_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
+              echo "Backup completed: ${BACKUP_FILE} (${BACKUP_SIZE})"
+
+              # Remove old backups (keep last N backups as configured)
+              echo "Cleaning up old backups (keeping last {{ .Values.backup.retention }} backups)..."
+              cd /backups
+              ls -t autolab-backup-*.tar.gz | tail -n +{{ add .Values.backup.retention 1 }} | xargs -r rm -v
+
+              echo "Backup process completed successfully at $(date)"
+            env:
+            - name: TZ
+              value: {{ .Values.backup.timezone }}
+            volumeMounts:
+            - name: data-volume
+              mountPath: /data
+              readOnly: true
+            - name: backup-volume
+              mountPath: /backups
+            resources:
+              {{- toYaml .Values.backup.resources | nindent 14 }}
+          volumes:
+          - name: data-volume
+            persistentVolumeClaim:
+              claimName: autolab-api-storage-{{ include "autolab-api.fullname" . }}-0
+          - name: backup-volume
+            persistentVolumeClaim:
+              claimName: {{ include "autolab-api.fullname" . }}-backup
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "autolab-api.fullname" . }}-backup
+  labels:
+    {{- include "autolab-api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.backup.storageClassName }}
+  storageClassName: {{ .Values.backup.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.backup.storageSize }}
+{{- end }}

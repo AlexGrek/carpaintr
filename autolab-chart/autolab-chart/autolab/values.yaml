@@ -84,3 +84,36 @@ ingress:
     # -- The name of the secret to store the certificate.
     # cert-manager will create this secret.
     secretName: autolab-cert
+
+# -----------------------------------------------------------------
+# Backup configuration
+# -----------------------------------------------------------------
+backup:
+  # -- Enable or disable automated backups
+  enabled: true
+  # -- Cron schedule for backups (in UTC)
+  # "0 23 * * *" = 11 PM UTC = 1 AM/2 AM Kyiv (depending on DST)
+  # "0 0 * * *" = Midnight UTC = 2 AM/3 AM Kyiv (depending on DST)
+  schedule: "0 0 * * *"
+  # -- Timezone for the backup job (used for logging timestamps)
+  timezone: "Europe/Kyiv"
+  # -- Number of backup files to retain (older backups are automatically deleted)
+  retention: 7
+  # -- Size of the backup PersistentVolumeClaim
+  storageSize: 5Gi
+  # -- (Optional) StorageClass for backup volume. If empty, uses cluster default.
+  storageClassName: ""
+  # -- Container image for running backups (needs tar, gzip, date, basic shell)
+  image: "busybox:1.36"
+  # -- Number of successful job runs to keep in history
+  successfulJobsHistoryLimit: 3
+  # -- Number of failed job runs to keep in history
+  failedJobsHistoryLimit: 3
+  # -- Resource limits for the backup job
+  resources:
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
