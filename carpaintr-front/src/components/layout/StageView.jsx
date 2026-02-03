@@ -44,6 +44,20 @@ export const styles = {
   },
   stageContent: {
     width: "100%",
+    position: "relative",
+    overflow: "hidden",
+  },
+  stageContentInner: {
+    transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+    willChange: "opacity, transform",
+  },
+  stageContentVisible: {
+    opacity: 1,
+    transform: "translateX(0) scale(1)",
+  },
+  stageContentHidden: {
+    opacity: 0,
+    transform: "translateX(-20px) scale(0.98)",
   },
   sampleStage: {
     // padding: '10px',
@@ -53,9 +67,6 @@ export const styles = {
     margin: "0 auto",
     width: "100%",
     maxWidth: "500pt",
-  },
-  sampleStageInner: {
-    transition: "opacity 200ms ease-in-out",
   },
   buttonGroup: {
     display: "flex",
@@ -107,7 +118,7 @@ const replaceUrlParam = (key, value) => {
 function StageView({
   stages,
   initialState = {},
-  animationDelay = 100,
+  animationDelay = 300,
   onSave = null,
 }) {
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -330,31 +341,40 @@ function StageView({
       </nav>
 
       <main style={styles.stageContent}>
-        <Suspense
-          fallback={
-            <div>
-              <Loader center></Loader>
-            </div>
-          }
+        <div
+          style={{
+            ...styles.stageContentInner,
+            ...(isFadingOut
+              ? styles.stageContentHidden
+              : styles.stageContentVisible),
+          }}
         >
-          <ActiveComponent
-            {...activeStageProps}
-            index={activeStageIndex}
-            enabled={stagesState[activeStageIndex]?.enabled || false}
-            fadeOutStarted={isFadingOut}
-            previousStageIndex={previousStageIndex}
-            previousStageName={
-              previousStageIndex !== null
-                ? stages[previousStageIndex]?.name
-                : null
+          <Suspense
+            fallback={
+              <div>
+                <Loader center></Loader>
+              </div>
             }
-            onMoveForward={handleMoveForward}
-            onMoveBack={handleMoveBack}
-            onMoveTo={handleMoveToByNameOrIndex}
-            stageData={stageData}
-            setStageData={handleSetStageData}
-          />
-        </Suspense>
+          >
+            <ActiveComponent
+              {...activeStageProps}
+              index={activeStageIndex}
+              enabled={stagesState[activeStageIndex]?.enabled || false}
+              fadeOutStarted={isFadingOut}
+              previousStageIndex={previousStageIndex}
+              previousStageName={
+                previousStageIndex !== null
+                  ? stages[previousStageIndex]?.name
+                  : null
+              }
+              onMoveForward={handleMoveForward}
+              onMoveBack={handleMoveBack}
+              onMoveTo={handleMoveToByNameOrIndex}
+              stageData={stageData}
+              setStageData={handleSetStageData}
+            />
+          </Suspense>
+        </div>
       </main>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Button, HStack, IconButton, Placeholder, VStack } from "rsuite";
+import { Button, HStack, IconButton, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
@@ -6,8 +6,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import SelectionInput from "../SelectionInput";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
-
-const ColorPicker = React.lazy(() => import("./ColorPicker"));
+import ColorPicker from "./ColorPicker";
 
 const ColorSelectStage = ({
   title,
@@ -78,9 +77,7 @@ const ColorSelectStage = ({
             </HStack>
           }
         >
-          <React.Suspense fallback={<Placeholder.Paragraph rows={8} />}>
-            <ColorPicker setColor={setColor} selectedColor={color} />
-          </React.Suspense>
+          <ColorPicker setColor={setColor} selectedColor={color} />
           <VStack
             justifyContent="center"
             alignItems="center"

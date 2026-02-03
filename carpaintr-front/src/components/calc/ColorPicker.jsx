@@ -1,9 +1,55 @@
 /* eslint-disable react/display-name */
 import React, { useEffect, useState } from "react";
 import { authFetchYaml } from "../../utils/authFetch";
-import { Placeholder } from "rsuite";
+import ColorGrid from "../ColorGrid";
 
-const ColorGrid = React.lazy(() => import("../ColorGrid")); // Used by ColorPicker
+// Placeholder component that mimics the color grid structure
+const ColorGridPlaceholder = () => {
+  const rows = 5;
+  const cols = 4;
+  const totalItems = rows * cols;
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        maxWidth: "600px",
+        margin: "auto",
+        gap: "16px",
+        gridTemplateColumns: "repeat(4, minmax(24px, 1fr))",
+        padding: "7px",
+      }}
+    >
+      {Array.from({ length: totalItems }).map((_, index) => (
+        <div
+          key={index}
+          style={{
+            borderRadius: "8px",
+            overflow: "hidden",
+            boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.2)",
+            opacity: 0.3,
+          }}
+        >
+          <div
+            style={{
+              height: "60px",
+              backgroundColor: "rgba(255, 255, 255, 0.8)",
+            }}
+          />
+          <div
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              padding: "8px",
+              textAlign: "center",
+              fontSize: "14px",
+              height: "20px",
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // Memoized ColorPicker to prevent unnecessary re-renders
 const ColorPicker = React.memo(({ setColor, selectedColor }) => {
@@ -22,7 +68,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
   }, []); // Empty dependency array means this runs once on mount
 
   if (baseColors == null || baseColors.rows === undefined) {
-    return <Placeholder.Paragraph rows={3} />; // Show a placeholder while loading
+    return <ColorGridPlaceholder />; // Show a placeholder while loading
   }
 
   const displayColors = baseColors.rows;
@@ -30,17 +76,12 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
   return (
     <div>
       {displayColors.map((subgrid, index) => (
-        // Add a unique key for list rendering
-        <React.Suspense
+        <ColorGrid
           key={index}
-          fallback={<Placeholder.Paragraph rows={6} />}
-        >
-          <ColorGrid
-            colors={subgrid}
-            selectedColor={selectedColor}
-            onChange={setColor}
-          />
-        </React.Suspense>
+          colors={subgrid}
+          selectedColor={selectedColor}
+          onChange={setColor}
+        />
       ))}
     </div>
   );
