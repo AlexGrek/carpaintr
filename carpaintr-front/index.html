@@ -30,6 +30,8 @@
     <meta property="og:title" content="Autolab - Automotive Business in Your Phone" />
     <meta property="og:description" content="Accurate repair estimation, task tracking, and workflow management — everything you need to run your workshop on the go." />
     <meta property="og:site_name" content="Autolab" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="uk_UA" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -98,6 +100,15 @@
 
       #root:not(:empty) ~ #prerendered-content {
         display: none;
+      }
+
+      /* Language-specific content visibility */
+      .lang-content {
+        display: none;
+      }
+
+      .lang-content.active {
+        display: block;
       }
 
       .prerender-header {
@@ -256,6 +267,46 @@
   </head>
 
   <body>
+    <!-- Language detection script (runs before React) -->
+    <script>
+      (function() {
+        function detectLanguage() {
+          // Check localStorage first
+          const stored = localStorage.getItem('preferred_language');
+          if (stored && ['en', 'ua'].includes(stored)) {
+            return stored;
+          }
+
+          // Check browser language
+          const languages = [navigator.language, ...(navigator.languages || [])].map(
+            lang => lang.toLowerCase()
+          );
+
+          if (languages.some(lang => ['uk', 'uk-ua', 'ru', 'ru-ru'].includes(lang))) {
+            return 'ua';
+          }
+
+          return 'en';
+        }
+
+        const lang = detectLanguage();
+        document.documentElement.setAttribute('data-lang', lang);
+        document.documentElement.setAttribute('lang', lang === 'ua' ? 'uk' : lang);
+
+        // Show appropriate language content when DOM is ready
+        function showLanguageContent() {
+          const content = document.querySelector('.lang-content[data-lang="' + lang + '"]');
+          if (content) content.classList.add('active');
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', showLanguageContent);
+        } else {
+          showLanguageContent();
+        }
+      })();
+    </script>
+
     <div id="fallback-refresh">
       <button onclick="location.reload()">
         Refresh Page | Оновити сторінку
@@ -272,7 +323,8 @@
         </nav>
       </header>
 
-      <main>
+      <!-- English Content -->
+      <main class="lang-content" data-lang="en">
         <section class="prerender-hero">
           <div class="prerender-container">
             <h1>Automotive Business in Your Phone</h1>
@@ -335,8 +387,71 @@
         </section>
       </main>
 
+      <!-- Ukrainian Content -->
+      <main class="lang-content" data-lang="ua">
+        <section class="prerender-hero">
+          <div class="prerender-container">
+            <h1>Автомобільний бізнес у вашому телефоні</h1>
+            <p>
+              Точні оцінки ремонту, відстеження завдань та управління процесами — все необхідне для вашої майстерні у телефоні.
+            </p>
+          </div>
+        </section>
+
+        <section class="prerender-features">
+          <div class="prerender-container">
+            <h2>Точні оцінки та управління процесами</h2>
+            <p style="text-align: center; color: #555; max-width: 800px; margin: 0 auto;">
+              Комплексне рішення для управління бізнесом, що поєднує реалістичні оцінки з розумним відстеженням завдань
+            </p>
+
+            <div class="prerender-features-grid">
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📐</div>
+                <h3>Точні оцінки ремонту</h3>
+                <p>Використовуйте перевірені методи для швидкого та прозорого розрахунку вартості ремонту.</p>
+              </article>
+
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📋</div>
+                <h3>Відстеження завдань та робочих процесів</h3>
+                <p>Відстежуйте кожне завдання від кошторису до завершення з чітким контролем прогресу та сповіщеннями.</p>
+              </article>
+
+              <article class="prerender-feature-card">
+                <div class="prerender-feature-icon">📚</div>
+                <h3>Вбудовані знання та стандарти</h3>
+                <p>База витрат, трудовитрат та кращих практик для підтримки щоденної роботи.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="prerender-benefits">
+          <div class="prerender-container">
+            <h2>Збільшіть прибутковість та оптимізуйте роботу</h2>
+            <ul>
+              <li>Підвищуйте точність оцінок за допомогою перевірених методів</li>
+              <li>Економте понад 3 години щодня завдяки швидким оцінкам і управлінню</li>
+              <li>Отримуйте більше замовлень завдяки прозорим і стабільним цінам</li>
+              <li>Скорочуйте час виконання завдань завдяки зручному відстеженню</li>
+              <li>Позбавляйтесь прострочених термінів і помилок у кошторисах</li>
+              <li>Масштабуйте роботу завдяки стандартам і автоматизації</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="prerender-cta">
+          <div class="prerender-container">
+            <h2>Готові змінити свій бізнес?</h2>
+            <a href="/register" class="prerender-btn">Почніть сьогодні</a>
+            <a href="/login" class="prerender-btn">Заплануйте демо</a>
+          </div>
+        </section>
+      </main>
+
       <footer class="prerender-footer">
-        <p>&copy; 2025 Autolab. All rights reserved. Built for auto body professionals.</p>
+        <p>&copy; 2025 Autolab. Всі права захищено. Створено для професіоналів авторемонту.</p>
       </footer>
     </div>
 

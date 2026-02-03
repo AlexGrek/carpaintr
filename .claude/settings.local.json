@@ -10,7 +10,8 @@
       "Bash(git merge:*)",
       "Bash(task --list:*)",
       "Bash(curl:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(/Users/vedmedik/dev/carpaintr/test-multilang.sh)"
     ]
   }
 }
