@@ -8,7 +8,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git merge:*)",
-      "Bash(task --list:*)"
+      "Bash(task --list:*)",
+      "Bash(curl:*)",
+      "Bash(chmod:*)"
     ]
   }
 }
