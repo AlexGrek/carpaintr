@@ -156,7 +156,7 @@ export function handleAuthResponse(response, navigate, location) {
   if (response.status === 401 || response.status === 403) {
     // Preserve current path + query for redirect after login
     const currentPath = location.pathname + location.search;
-    navigate(`/login?redirect=${encodeURIComponent(currentPath)}`, {
+    navigate(`/app/login?redirect=${encodeURIComponent(currentPath)}`, {
       replace: true,
     });
     return true;

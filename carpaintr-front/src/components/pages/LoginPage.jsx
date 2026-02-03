@@ -20,9 +20,9 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Read ?redirect query parameter, default to /dashboard
+  // Read ?redirect query parameter, default to /app/dashboard
   const params = new URLSearchParams(location.search);
-  const redirect = params.get("redirect") || "/dashboard";
+  const redirect = params.get("redirect") || "/app/dashboard";
 
   // Check authentication on mount
   useEffect(() => {

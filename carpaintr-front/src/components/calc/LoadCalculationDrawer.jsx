@@ -92,7 +92,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
 
   const handleFileSelect = useCallback(
     (filename) => {
-      navigate(`/calc?id=${filename}`); // Navigate to /calc?id={filename}
+      navigate(`/app/calc?id=${filename}`); // Navigate to /app/calc?id={filename}
       onClose();
     },
     [navigate, onClose],

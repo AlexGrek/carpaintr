@@ -125,7 +125,7 @@ const LoadCalculationMenu = React.memo(
     const handleFileSelect = useCallback(
       (filename) => {
         if (!onDataLoaded) {
-          navigate(`/calc2?id=${filename}`); // Navigate to /calc?id={filename}
+          navigate(`/app/calc2?id=${filename}`); // Navigate to /app/calc2?id={filename}
           onClose();
         } else {
           loadById(filename);
