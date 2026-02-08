@@ -4,7 +4,23 @@
 :root {
   /* Primary colors - from custom-theme.less */
   --rs-primary-500: #e23b1a;
-  --rs-primary-700: #8a3f26;
+  --rs-primary-600: #c63215; /* Darker shade for hover */
+  --rs-primary-700: #a02811; /* Even darker for active */
+
+  /* Button state colors */
+  --rs-btn-primary-bg: var(--rs-primary-500);
+  --rs-btn-primary-hover-bg: var(--rs-primary-600);
+  --rs-btn-primary-active-bg: var(--rs-primary-700);
+  --rs-btn-primary-border-color: var(--rs-primary-600);
+
+  /* Subtle button colors */
+  --rs-btn-subtle-hover-bg: rgba(226, 59, 26, 0.1);
+  --rs-btn-subtle-active-bg: rgba(226, 59, 26, 0.2);
+  --rs-btn-subtle-hover-text: var(--rs-primary-500);
+
+  /* Link button colors */
+  --rs-btn-link-hover-text: var(--rs-primary-500);
+  --rs-btn-link-active-text: var(--rs-primary-700);
 
   /* Font customizations - EXACT from custom-theme.less */
   --rs-font-family: "Lucida Grande", "Avenir Next", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", STXihei, sans-serif;
