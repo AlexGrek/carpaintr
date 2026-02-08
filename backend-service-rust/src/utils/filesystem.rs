@@ -31,8 +31,7 @@ pub fn safety_check_only<P: AsRef<Path>, P2: AsRef<Path>>(
     target: P2,
 ) -> Result<P2, SafeFsError> {
     let base_clean = base.as_ref().lexiclean();
-    let full_target = target.as_ref().lexiclean();
-    let target_clean = full_target.lexiclean();
+    let target_clean = target.as_ref().lexiclean();
 
     if target_clean.starts_with(&base_clean) {
         Ok(target)
@@ -70,11 +69,11 @@ pub async fn safe_write<P: AsRef<Path>>(
 ) -> Result<PathBuf, SafeFsError> {
     let safe_path = safe_join(&base, &target_relative)?;
     log::debug!("Safely writing file {:?}", safe_path);
+    cache.invalidate(safe_path.as_ref()).await;
     if let Some(parent) = safe_path.parent() {
         fs::create_dir_all(parent).await?;
     }
     fs::write(&safe_path, content).await?;
-    cache.invalidate(safe_path.as_ref()).await;
     Ok(safe_path)
 }
 
@@ -86,19 +85,19 @@ pub async fn safe_write_overwrite<P: AsRef<Path>>(
 ) -> Result<PathBuf, SafeFsError> {
     let safe_path = safe_join(&base, &target_relative)?;
     log::debug!("Safely writing file {:?}", safe_path);
+    cache.invalidate(safe_path.as_ref()).await;
     if let Some(parent) = safe_path.parent() {
         fs::create_dir_all(parent).await?;
     }
-    cache.invalidate(safe_path.as_ref()).await;
-    // Check if file exists and log it
-    if safe_path.exists() {
+
+    // Check if file exists and log it (async)
+    if fs::metadata(&safe_path).await.is_ok() {
         log::debug!("File {:?} exists, will overwrite", safe_path);
     }
 
     match fs::write(&safe_path, content).await {
         Ok(()) => {
             log::debug!("Successfully wrote file {:?}", safe_path);
-            cache.invalidate(safe_path.as_ref()).await;
             Ok(safe_path)
         }
         Err(e) => {
@@ -166,15 +165,20 @@ pub async fn delete_user_data_gracefully(
         let file_name = entry.file_name();
         let dest_path = deleted_user_catalog.join(file_name);
 
-        if dest_path.exists() {
-            if dest_path.is_dir() {
+        // Check if destination exists using async metadata check
+        if let Ok(metadata) = fs::metadata(&dest_path).await {
+            if metadata.is_dir() {
                 fs::remove_dir_all(&dest_path).await?;
             } else {
                 fs::remove_file(&dest_path).await?;
             }
         }
 
+        // Invalidate both source and destination paths
         cache.invalidate(&entry_path).await;
+        cache.invalidate(&dest_path).await;
+
+        // Rename operation - if this fails, no data is lost since source still exists
         fs::rename(&entry_path, &dest_path).await?;
     }
     Ok(())
@@ -289,13 +293,10 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     }
 
     log::info!("Reading file: {:?}", path_buf);
-    if fs::metadata(&path_buf).await.is_ok() {
-        let content = fs::read_to_string(&path_buf).await?;
-        cache.as_string.write().await.put(path_buf, content.clone());
-        Ok(content)
-    } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "File not found by path").into())
-    }
+    // Read directly - let the error propagate naturally if file doesn't exist
+    let content = fs::read_to_string(&path_buf).await?;
+    cache.as_string.write().await.put(path_buf, content.clone());
+    Ok(content)
 }
 
 pub async fn get_file_bytes<P: AsRef<Path>>(
