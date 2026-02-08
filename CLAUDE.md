@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation
+
+**Comprehensive documentation is available in `docs/`:**
+- [Development Guide](docs/development.md) - Setup, testing, code organization
+- [Deployment Guide](docs/deployment.md) - Docker, Kubernetes, Helm, CI/CD
+- [Backup & Restore](docs/backup.md) - Automated backups, restore procedures
+
 ## Build & Development Commands
 
 ```bash
