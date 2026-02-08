@@ -48,15 +48,26 @@ const CarBodyMain = ({
         [],
     );
 
-    const handleDiagramSelect = (item) => {
-        handlePartSelect(item.name)
-    }
+    const handleDiagramSelect = useCallback((item) => {
+        // Toggle item in selectedItems array
+        setSelectedItems(prev => {
+            const existingIndex = prev.findIndex(i => i.name === item.name);
+            if (existingIndex >= 0) {
+                // Remove item
+                return prev.filter((_, idx) => idx !== existingIndex);
+            } else {
+                // Add item
+                return [...prev, item];
+            }
+        });
+    }, []);
 
     const [errors, setErrors] = useState([]);
 
     const [availableParts, setAvailableParts] = useState([]);
     const [availablePartsT2, setAvailablePartsT2] = useState([]);
     const [processors, setProcessors] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     // Unified error handler
     const handleError = useCallback((context, error) => {
@@ -197,13 +208,60 @@ const CarBodyMain = ({
 
             <div style={{ padding: '4pt', textAlign: 'center', width: '100%' }}>
                 {!showTechData ? (
-                    // actual shit
-                    <CarDiagram
-                        alreadyPresent={selectedParts.map(part => part.name)}
-                        onSelect={handleDiagramSelect}
-                        partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
-                    />
+                    <>
+                        <CarDiagram
+                            selectedItems={selectedItems}
+                            onSelect={handleDiagramSelect}
+                            partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
+                        />
 
+                        {/* Selected Items Table */}
+                        {selectedItems.length > 0 && (
+                            <div style={{ marginTop: '20px', textAlign: 'left' }}>
+                                <h4>Selected Parts ({selectedItems.length})</h4>
+                                <table style={{
+                                    width: '100%',
+                                    borderCollapse: 'collapse',
+                                    marginTop: '10px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    <thead>
+                                        <tr style={{ backgroundColor: '#f5f5f5' }}>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Name</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Zone</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Group</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedItems.map((item, index) => (
+                                            <tr key={index}>
+                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
+                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
+                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
+                                                <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                    <button
+                                                        onClick={() => handleDiagramSelect(item)}
+                                                        style={{
+                                                            padding: '4px 12px',
+                                                            backgroundColor: '#dc2626',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '4px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '12px'
+                                                        }}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     // Technical data display
                     <div style={{ textAlign: 'left' }}>

@@ -345,3 +345,40 @@ tasks:
     dir: backend-service-rust
     cmds:
       - cargo watch -x run
+
+  # Integration testing tasks
+  test:setup:
+    desc: Setup integration test environment
+    dir: backend-integration-tests
+    cmds:
+      - task setup
+
+  test:
+    desc: Run integration tests
+    dir: backend-integration-tests
+    cmds:
+      - task test
+
+  test:auth:
+    desc: Run authentication integration tests
+    dir: backend-integration-tests
+    cmds:
+      - task test:auth
+
+  test:admin:
+    desc: Run admin integration tests
+    dir: backend-integration-tests
+    cmds:
+      - task test:admin
+
+  test:cov:
+    desc: Run integration tests with coverage
+    dir: backend-integration-tests
+    cmds:
+      - task test:cov
+
+  test:check:
+    desc: Check if backend is running before tests
+    dir: backend-integration-tests
+    cmds:
+      - task check-backend

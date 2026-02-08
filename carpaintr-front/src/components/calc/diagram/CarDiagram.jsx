@@ -89,7 +89,7 @@ export const partClassNames = {
 };
 
 // --- Main CarDiagram Component ---
-const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS, onSelect = () => {} }) => {
+const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () => {} }) => {
   const [menuState, setMenuState] = useState({
     visible: false,
     position: { x: 0, y: 0 },
@@ -102,8 +102,8 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
   const handlePartClick = (event, title, items) => {
     event.stopPropagation();
 
-    // Create Set for O(1) lookups instead of O(n) indexOf
-    const alreadyPresentSet = new Set(alreadyPresent);
+    // Create Set for O(1) lookups - check by item name
+    const selectedNamesSet = new Set(selectedItems.map(item => item.name));
 
     setMenuState({
       visible: true,
@@ -112,12 +112,9 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
         y: event.clientY + MENU_OFFSET_Y,
       },
       items: items.map((item) => {
-        if (alreadyPresentSet.has(item.name)) {
-          console.log(item)
-          console.log("HOLA!")
+        if (selectedNamesSet.has(item.name)) {
           return { ...item, alreadyUsed: true }
         }
-
         return item
       }),
       title: title,
@@ -127,6 +124,11 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
   const closeMenu = useCallback(() => {
     setMenuState((prevState) => ({ ...prevState, visible: false }));
   }, []);
+
+  const handleSelect = useCallback((item) => {
+    onSelect(item);
+    closeMenu();
+  }, [onSelect, closeMenu]);
 
   useEffect(() => {
     if (!menuState.visible) return;
@@ -194,7 +196,7 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
           position={menuState.position}
           items={menuState.items}
           title={menuState.title}
-          onSelect={onSelect}
+          onSelect={handleSelect}
         />
       )}
     </>

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git checkout:*)",
       "Bash(npm install)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(task test:setup:*)",
+      "Bash(task setup:*)",
+      "Bash(task test:*)"
     ]
   }
 }

@@ -25,6 +25,107 @@ task docker-push       # Push to localhost:5000 registry
 task redeploy          # Build, push, restart k8s pods
 ```
 
+## Integration Testing
+
+A comprehensive pytest-based integration test suite is available in `backend-integration-tests/`.
+
+### Quick Start
+
+```bash
+# Run all integration tests (auto-installs dependencies)
+task test
+
+# Run specific test categories
+task test:auth         # Authentication tests
+task test:admin        # Admin-specific tests
+task test:cov          # With coverage report
+
+# Check if backend is running
+task test:check
+```
+
+### Test Environment Setup
+
+The test suite uses `uv` (modern Python package manager) and automatically sets up a virtual environment on first run:
+
+```bash
+# First time setup (if not using task commands)
+cd backend-integration-tests
+task setup             # Creates venv, installs dependencies
+source .venv/bin/activate
+
+# Or let test commands auto-setup
+task test              # Will run setup if needed
+```
+
+**Requirements:**
+- Python 3.11+
+- `uv` package manager (install: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Backend running at `localhost:8080`
+
+### Test Structure
+
+```
+backend-integration-tests/
+├── tests/
+│   ├── conftest.py          # Reusable fixtures (auth, clients, etc.)
+│   ├── test_auth.py         # Authentication & admin tests
+│   └── test_example_*.py    # Additional test examples
+├── pyproject.toml           # Dependencies & pytest config
+├── Taskfile.yml             # Test tasks
+└── README.md                # Detailed documentation
+```
+
+### Key Fixtures (in `conftest.py`)
+
+- **`http_client`** - Unauthenticated async HTTP client
+- **`authenticated_client`** - Auto-authenticated test user client
+- **`admin_authenticated_client`** - Auto-authenticated admin client
+- **`test_user_token`** / **`test_admin_token`** - JWT tokens
+- **`backend_health_check`** - Ensures backend is running before tests
+
+### Authentication Flow (Important)
+
+The backend uses a two-step authentication flow:
+
+1. **`POST /api/v1/register`** - Creates user account
+   - Returns: `200` with **empty body** (no token)
+   - Example: `{"email": "user@example.com", "password": "pass123", "company_name": "Company"}`
+
+2. **`POST /api/v1/login`** - Authenticates and gets token
+   - Returns: `200` with JSON `{"token": "jwt_token_here"}`
+   - Example: `{"email": "user@example.com", "password": "pass123"}`
+
+3. **Protected routes** - Use JWT token in `Authorization: Bearer <token>` header
+
+### Admin Users
+
+Admin status is determined by `backend-service-rust/admins.txt`. The test admin email (`test_admin@example.com`) is already configured.
+
+### Writing New Tests
+
+```python
+import pytest
+import httpx
+
+@pytest.mark.integration
+async def test_my_endpoint(authenticated_client):
+    """Test with auto-authenticated user."""
+    response = await authenticated_client.get("/api/v1/user/my_endpoint")
+    assert response.status_code == 200
+    data = response.json()
+    assert "expected_field" in data
+```
+
+### Coverage
+
+```bash
+task test:cov          # Run with coverage report
+# Opens htmlcov/index.html for detailed coverage analysis
+```
+
+For more details, see `backend-integration-tests/README.md`.
+
 ## Architecture Overview
 
 Three-service architecture:
@@ -53,6 +154,16 @@ Axum-based REST API with Sled embedded database.
 - User (jwt_auth + license check): `/api/v1/user/*`
 - Admin (jwt_auth + admin check): `/api/v1/admin/*`
 - Editor: `/api/v1/editor/*` (user file management with git-like commits)
+
+**Logging:** Custom logging system via `src/exlogging.rs`. Use `log_event(LogLevel, message, user)` for structured logging. Logs are written to file specified by `LOG_FILE_PATH` env var (default: `application.log`).
+
+**Debug logging in calc modules:**
+- `src/calc/t2.rs` - Comprehensive debug logging for T2 table processing:
+  - Data loading (file paths, row counts, CSV structure)
+  - Filtering operations (match counts, empty results warnings)
+  - Row parsing (field validation, action parsing, success details)
+  - Batch operations (progress tracking, error counts)
+  - Use `LogLevel::Debug` for operational info, `LogLevel::Trace` for detailed row data
 
 ### Frontend (`carpaintr-front/`)
 

@@ -14,7 +14,8 @@
       "Bash(/Users/vedmedik/dev/carpaintr/test-multilang.sh)",
       "Bash(/Users/vedmedik/dev/carpaintr/simulate-bot-crawl.sh)",
       "Bash(/Users/vedmedik/dev/carpaintr/update-routes.sh)",
-      "Bash(/Users/vedmedik/dev/carpaintr/verify-routes.sh)"
+      "Bash(/Users/vedmedik/dev/carpaintr/verify-routes.sh)",
+      "Bash(tree:*)"
     ]
   }
 }

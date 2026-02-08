@@ -1,0 +1,130 @@
+version: '3'
+
+vars:
+  VENV_DIR: .venv
+  PYTHON: "{{.VENV_DIR}}/bin/python"
+  PYTEST: "{{.VENV_DIR}}/bin/pytest"
+
+tasks:
+  setup:
+    desc: "Initial setup: create venv and install dependencies"
+    status:
+      - test -f {{.VENV_DIR}}/bin/pytest
+    preconditions:
+      - sh: command -v uv
+        msg: |
+          uv is not installed. Please install it first:
+
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+          Then restart your shell and try again.
+    cmds:
+      - |
+        echo "Creating virtual environment..."
+      - uv venv {{.VENV_DIR}}
+      - |
+        echo "Installing dependencies..."
+      - uv pip install --python {{.VENV_DIR}}/bin/python -e ".[dev]"
+      - |
+        echo ""
+        echo "Setup complete! Activate the environment with:"
+        echo "  source .venv/bin/activate"
+
+  install:
+    desc: "Install/update dependencies"
+    cmds:
+      - uv pip install --python {{.VENV_DIR}}/bin/python -e ".[dev]"
+
+  test:
+    desc: "Run all tests"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v"
+
+  test:auth:
+    desc: "Run authentication tests only"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v -m auth"
+
+  test:admin:
+    desc: "Run admin tests only"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v -m admin"
+
+  test:integration:
+    desc: "Run all integration tests"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v -m integration"
+
+  test:cov:
+    desc: "Run tests with coverage report"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} --cov=tests --cov-report=html --cov-report=term"
+      - |
+        echo ""
+        echo "Coverage report generated in htmlcov/index.html"
+
+  test:fast:
+    desc: "Run tests in parallel (requires pytest-xdist)"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -n auto"
+
+  test:watch:
+    desc: "Run tests in watch mode (requires pytest-watch)"
+    cmds:
+      - "{{.VENV_DIR}}/bin/ptw -- -v"
+
+  clean:
+    desc: "Clean up generated files"
+    cmds:
+      - rm -rf .pytest_cache
+      - rm -rf htmlcov
+      - rm -rf .coverage
+      - rm -rf *.egg-info
+      - find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete
+
+  clean:all:
+    desc: "Clean everything including venv"
+    cmds:
+      - task: clean
+      - rm -rf {{.VENV_DIR}}
+
+  lint:
+    desc: "Run linting (if ruff/black installed)"
+    cmds:
+      - "{{.VENV_DIR}}/bin/ruff check tests/ || echo 'ruff not installed'"
+      - "{{.VENV_DIR}}/bin/black --check tests/ || echo 'black not installed'"
+
+  format:
+    desc: "Format code (if black installed)"
+    cmds:
+      - "{{.VENV_DIR}}/bin/black tests/ || echo 'black not installed'"
+
+  shell:
+    desc: "Activate virtual environment in current shell"
+    cmds:
+      - |
+        echo "Run: source .venv/bin/activate"
+
+  check-backend:
+    desc: "Check if backend is running"
+    cmds:
+      - |
+        if curl -s -o /dev/null http://localhost:8080/api/v1/login; then
+          echo "✅ Backend is running at http://localhost:8080"
+        else
+          echo "❌ Backend is NOT running at http://localhost:8080"
+          echo "Start it with: task backend (from project root)"
+          exit 1
+        fi
+
+  default:
+    desc: "Show available tasks"
+    cmds:
+      - task --list

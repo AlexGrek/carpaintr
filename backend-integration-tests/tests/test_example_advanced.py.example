@@ -1,0 +1,211 @@
+"""
+Example advanced integration tests.
+
+This file demonstrates how to write more complex integration tests.
+Rename to test_example_advanced.py to run these tests.
+"""
+import pytest
+import httpx
+
+
+@pytest.mark.integration
+class TestUserEndpoints:
+    """Example tests for user endpoints."""
+
+    async def test_get_company_info(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test retrieving company information."""
+        response = await authenticated_client.get("/getcompanyinfo")
+
+        # May return 200 with data or 404 if not set
+        assert response.status_code in (200, 404)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, dict)
+
+    async def test_update_company_info(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test updating company information."""
+        company_data = {
+            "company_name": "Updated Test Company",
+            "address": "123 Test Street",
+            "phone": "+1234567890",
+        }
+
+        response = await authenticated_client.post(
+            "/updatecompanyinfo",
+            json=company_data,
+        )
+
+        assert response.status_code in (200, 201)
+
+
+@pytest.mark.integration
+@pytest.mark.admin
+class TestAdminEndpoints:
+    """Example tests for admin endpoints."""
+
+    async def test_list_users(
+        self,
+        admin_authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing all users (admin only)."""
+        response = await admin_authenticated_client.get("/admin/listusers")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+
+    async def test_list_users_unauthorized(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test that regular user cannot list all users."""
+        response = await authenticated_client.get("/admin/listusers")
+
+        assert response.status_code in (403, 401)
+
+    async def test_get_cache_status(
+        self,
+        admin_authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test getting cache status (admin only)."""
+        response = await admin_authenticated_client.get("/admin/cache_status")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, dict)
+
+
+@pytest.mark.integration
+class TestCalculationEndpoints:
+    """Example tests for calculation-related endpoints."""
+
+    async def test_list_car_makes(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing car manufacturers."""
+        response = await authenticated_client.get("/user/carmakes")
+
+        # May require license, but should not return auth error
+        assert response.status_code in (200, 403, 402)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, (list, dict))
+
+    async def test_get_season(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test getting current season data."""
+        response = await authenticated_client.get("/user/season")
+
+        assert response.status_code in (200, 403, 402, 404)
+
+    async def test_list_class_body_types(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing car class and body type mappings."""
+        response = await authenticated_client.get("/user/list_class_body_types")
+
+        assert response.status_code in (200, 403, 402)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, (list, dict))
+
+
+@pytest.mark.integration
+class TestFileEndpoints:
+    """Example tests for file/attachment endpoints."""
+
+    async def test_list_attachments(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing user attachments."""
+        response = await authenticated_client.get("/user/attachment_list")
+
+        assert response.status_code in (200, 403, 402)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, list)
+
+
+@pytest.mark.integration
+class TestEditorEndpoints:
+    """Example tests for editor endpoints."""
+
+    async def test_list_user_files(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing user files in editor."""
+        response = await authenticated_client.get("/editor/list_user_files")
+
+        assert response.status_code in (200, 403, 402)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, (list, dict))
+
+    async def test_list_common_files(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test listing common files in editor."""
+        response = await authenticated_client.get("/editor/list_common_files")
+
+        assert response.status_code in (200, 403, 402)
+
+
+@pytest.mark.integration
+class TestSupportEndpoints:
+    """Example tests for support request endpoints."""
+
+    async def test_user_get_support_requests(
+        self,
+        authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test getting user's support requests."""
+        response = await authenticated_client.get("/user/support_requests")
+
+        # May require license
+        assert response.status_code in (200, 403, 402)
+
+        if response.status_code == 200:
+            data = response.json()
+            assert isinstance(data, list)
+
+    async def test_admin_get_all_support_requests(
+        self,
+        admin_authenticated_client: httpx.AsyncClient,
+        backend_health_check,
+    ):
+        """Test admin getting all support requests."""
+        response = await admin_authenticated_client.get("/admin/support_all")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
