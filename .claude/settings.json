@@ -6,7 +6,10 @@
       "Bash(docker build:*)",
       "Bash(task test:setup:*)",
       "Bash(task setup:*)",
-      "Bash(task test:*)"
+      "Bash(task test:*)",
+      "Bash(cargo check:*)",
+      "Bash(task test:check:*)",
+      "Bash(task test:cov:*)"
     ]
   }
 }

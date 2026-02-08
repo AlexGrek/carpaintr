@@ -4,6 +4,58 @@ Reusable pytest fixtures defined in `tests/conftest.py`.
 
 ## Available Fixtures
 
+### License Management
+
+#### `generate_license`
+**Type:** Async function fixture
+**Dependencies:** `admin_authenticated_client`
+**Scope:** Function
+
+Provides a helper function to generate licenses for users. Automatically uses admin authentication.
+
+**Signature:**
+```python
+async def generate_license(
+    email: str,
+    days: int = 365,
+    level: Optional[str] = None
+) -> Optional[str]
+```
+
+**Parameters:**
+- `email` - Email of the user to generate license for
+- `days` - Number of days until license expiry (default: 365)
+- `level` - License level/tier, e.g., "premium", "standard", "enterprise" (optional)
+
+**Returns:** Confirmation message string if successful, None otherwise
+
+**Example:**
+```python
+async def test_with_licensed_user(generate_license, test_user_credentials):
+    user_email = test_user_credentials["email"]
+
+    # Generate a 90-day premium license
+    result = await generate_license(user_email, days=90, level="premium")
+    assert result is not None
+    assert "generated" in result.lower()
+```
+
+**Direct API Call Example:**
+```python
+async def test_license_generation(admin_authenticated_client):
+    response = await admin_authenticated_client.post(
+        "/admin/license/generate",
+        json={
+            "email": "user@example.com",
+            "days": 365,
+            "level": "premium"  # optional
+        }
+    )
+    assert response.status_code == 200
+```
+
+**Note:** The backend uses an untagged enum for license requests, so the JSON is sent directly without variant wrapping.
+
 ### HTTP Clients
 
 #### `http_client`

@@ -85,12 +85,16 @@ task test:auth
 # Admin tests only
 task test:admin
 
+# License management tests only
+task test:license
+
 # Integration tests
 task test:integration
 
 # Or with pytest directly
 pytest -m auth
 pytest -m admin
+pytest -m license
 pytest -m integration
 ```
 

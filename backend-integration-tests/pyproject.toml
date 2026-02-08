@@ -37,6 +37,7 @@ addopts = [
 markers = [
     "auth: Authentication tests",
     "admin: Admin-specific tests",
+    "license: License management tests",
     "integration: Integration tests requiring running backend",
 ]
 

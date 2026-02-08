@@ -38,6 +38,7 @@ task test
 # Run specific test categories
 task test:auth         # Authentication tests
 task test:admin        # Admin-specific tests
+task test:license      # License management tests
 task test:cov          # With coverage report
 
 # Check if backend is running
@@ -70,6 +71,7 @@ backend-integration-tests/
 ├── tests/
 │   ├── conftest.py          # Reusable fixtures (auth, clients, etc.)
 │   ├── test_auth.py         # Authentication & admin tests
+│   ├── test_license.py      # License management tests
 │   └── test_example_*.py    # Additional test examples
 ├── pyproject.toml           # Dependencies & pytest config
 ├── Taskfile.yml             # Test tasks
@@ -82,6 +84,7 @@ backend-integration-tests/
 - **`authenticated_client`** - Auto-authenticated test user client
 - **`admin_authenticated_client`** - Auto-authenticated admin client
 - **`test_user_token`** / **`test_admin_token`** - JWT tokens
+- **`generate_license`** - Helper function to generate licenses (requires admin auth)
 - **`backend_health_check`** - Ensures backend is running before tests
 
 ### Authentication Flow (Important)
@@ -101,6 +104,40 @@ The backend uses a two-step authentication flow:
 ### Admin Users
 
 Admin status is determined by `backend-service-rust/admins.txt`. The test admin email (`test_admin@example.com`) is already configured.
+
+### License Management Testing
+
+The test suite includes comprehensive license management testing capabilities:
+
+**Endpoint:** `POST /api/v1/admin/license/generate` (admin-only)
+
+**Using the `generate_license` fixture:**
+```python
+async def test_with_license(generate_license, test_user_credentials):
+    user_email = test_user_credentials["email"]
+
+    # Generate a 90-day premium license
+    result = await generate_license(user_email, days=90, level="premium")
+    assert result is not None
+```
+
+**Direct API call:**
+```python
+async def test_license_gen(admin_authenticated_client):
+    response = await admin_authenticated_client.post(
+        "/admin/license/generate",
+        json={
+            "email": "user@example.com",
+            "days": 365,
+            "level": "premium"  # optional
+        }
+    )
+    assert response.status_code == 200
+```
+
+*Note: The backend uses an untagged enum, so JSON is sent directly without variant tags.*
+
+**License cache invalidation:** `POST /api/v1/admin/license/invalidate/{email}` (admin-only)
 
 ### Writing New Tests
 

@@ -202,6 +202,60 @@ async def admin_authenticated_client(
         yield client
 
 
+async def generate_license_for_user(
+    admin_client: httpx.AsyncClient,
+    email: str,
+    days: int = 365,
+    level: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Helper function to generate a license for a user using admin privileges.
+
+    Args:
+        admin_client: Authenticated admin HTTP client
+        email: Email of the user to generate license for
+        days: Number of days until license expiry (default: 365)
+        level: License level/tier (optional)
+
+    Returns:
+        Response message if successful, None otherwise.
+    """
+    payload = {
+        "email": email,
+        "days": days,
+    }
+
+    # Add level if provided
+    if level is not None:
+        payload["level"] = level
+
+    response = await admin_client.post(
+        "/admin/license/generate",
+        json=payload,
+    )
+
+    if response.status_code == 200:
+        return response.json()
+    return None
+
+
+@pytest.fixture
+async def generate_license(admin_authenticated_client: httpx.AsyncClient):
+    """
+    Fixture that provides a license generation helper function.
+    Uses admin authentication to generate licenses for any user.
+
+    Example usage:
+        license_msg = await generate_license("user@example.com", days=90)
+    """
+    async def _generate(email: str, days: int = 365, level: Optional[str] = None):
+        return await generate_license_for_user(
+            admin_authenticated_client, email, days, level
+        )
+
+    return _generate
+
+
 @pytest.fixture(scope="session")
 def backend_health_check():
     """

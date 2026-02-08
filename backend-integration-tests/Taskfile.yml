@@ -53,6 +53,12 @@ tasks:
     cmds:
       - "{{.PYTEST}} -v -m admin"
 
+  test:license:
+    desc: "Run license management tests only"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v -m license"
+
   test:integration:
     desc: "Run all integration tests"
     deps: [setup]

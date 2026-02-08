@@ -9,10 +9,7 @@ use crate::calc::constants::*;
 use crate::errors::AppError;
 use crate::exlogging::{log_event, LogLevel};
 use crate::utils::stringext::StringExt;
-use crate::utils::{
-    self, parse_csv_file_async_safe,
-    DataStorageCache,
-};
+use crate::utils::{parse_csv_file_async_safe, DataStorageCache};
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
 

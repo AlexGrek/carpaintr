@@ -40,6 +40,7 @@ task setup             # Setup environment (run once)
 task test              # Run all tests
 task test:auth         # Auth tests only
 task test:admin        # Admin tests only
+task test:license      # License tests only
 task test:cov          # With coverage report
 task check-backend     # Verify backend is running
 task clean             # Clean up generated files
@@ -48,12 +49,14 @@ task --list            # Show all available tasks
 
 ## Current Test Coverage
 
-**14 passing tests** covering:
+**24 passing tests** covering:
 - User registration (valid/invalid data, duplicate emails)
 - User login (valid/invalid credentials)
 - Admin status checking (admin vs regular users)
 - JWT token validation
 - Protected endpoint access
+- License generation (admin-only, by days, with/without level)
+- License cache invalidation (admin-only)
 
 ## Documentation
 
@@ -77,7 +80,8 @@ backend-integration-tests/
 │   └── deployment.md
 └── tests/
     ├── conftest.py         # Shared fixtures
-    └── test_auth.py        # Authentication tests
+    ├── test_auth.py        # Authentication tests
+    └── test_license.py     # License management tests
 ```
 
 ## Quick Example
