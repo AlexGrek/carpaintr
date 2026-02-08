@@ -164,7 +164,13 @@ const CarBodyMain = ({
         <Panel
             header={`Car Body: ${body || 'Unknown'} (Class ${carClass || 'N/A'})`}
             className={className}
-            style={{ ...style, position: 'relative' }}
+            style={{
+                ...style,
+                position: 'relative',
+                maxWidth: '900px',
+                margin: '0 auto',
+                width: '100%'
+            }}
         >
             {/* Settings cog button */}
             <button

@@ -299,6 +299,27 @@ tasks:
     cmds:
       - task: dev-parallel
 
+  dev-browser:
+    desc: Start frontend and backend in development mode and open browser
+    deps:
+      - task: frontend-deps
+        silent: true
+    cmds:
+      - task: dev-parallel-with-browser
+
+  dev-parallel-with-browser:
+    desc: Run frontend, backend, and open browser in parallel
+    deps:
+      - task: frontend
+      - task: backend
+      - task: open-browser
+
+  open-browser:
+    desc: Wait for dev servers to start, then open browser
+    cmds:
+      - sleep 3
+      - open http://localhost:5173
+
   frontend-deps:
     desc: Install frontend dependencies if needed
     dir: carpaintr-front

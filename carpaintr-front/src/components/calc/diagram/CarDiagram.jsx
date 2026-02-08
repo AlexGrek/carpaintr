@@ -3,21 +3,26 @@ import ContextMenu from "./ContextMenu";
 import CarPart from "./CarPart";
 import "./CarDiagram.css";
 
+// Menu positioning offsets
+const MENU_OFFSET_X = -15;
+const MENU_OFFSET_Y = -60;
+
 export function buildCarSubcomponentsFromT2(data) {
   return data.reduce((acc, item) => {
     const zone = item.zone?.trim();
     const name = item.name?.trim();
 
+    // Skip invalid or placeholder names
     if (!zone || !name || name === "(Додати)") {
       // console.log(`skipping ${JSON.stringify(item)}`)
       return acc;
-    } // skip invalid or placeholder names
+    }
 
     if (!acc[zone]) {
       acc[zone] = [];
     }
 
-    acc[zone].push({alreadyUsed: false, ...item});
+    acc[zone].push({ ...item, alreadyUsed: false });
     return acc;
   }, {});
 }
@@ -96,19 +101,23 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
 
   const handlePartClick = (event, title, items) => {
     event.stopPropagation();
+
+    // Create Set for O(1) lookups instead of O(n) indexOf
+    const alreadyPresentSet = new Set(alreadyPresent);
+
     setMenuState({
       visible: true,
       position: {
-        x: event.clientX - 15, // center X of clicked element
-        y: event.clientY - 60, // center Y of clicked element
+        x: event.clientX + MENU_OFFSET_X,
+        y: event.clientY + MENU_OFFSET_Y,
       },
       items: items.map((item) => {
-        if (alreadyPresent.indexOf(item.name) >= 0) {
+        if (alreadyPresentSet.has(item.name)) {
           console.log(item)
           console.log("HOLA!")
-          return {...item, alreadyUsed: true}
+          return { ...item, alreadyUsed: true }
         }
-        
+
         return item
       }),
       title: title,
@@ -120,13 +129,26 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
   }, []);
 
   useEffect(() => {
-    window.addEventListener("click", closeMenu);
-    return () => {
-      window.removeEventListener("click", closeMenu);
-    };
-  }, [closeMenu]);
+    if (!menuState.visible) return;
 
-  // Adjust position after menu is rendered
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        closeMenu();
+      }
+    };
+
+    // Delay to avoid immediate close from the same click that opened menu
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [menuState.visible, closeMenu]);
+
+  // Adjust position after menu is rendered to keep it within viewport
   useEffect(() => {
     if (menuState.visible && menuRef.current) {
       const { offsetWidth: w, offsetHeight: h } = menuRef.current;
@@ -134,15 +156,23 @@ const CarDiagram = ({ alreadyPresent = [], partSubComponents = PARTSUBCOMPONENTS
       const vh = window.innerHeight;
 
       let { x, y } = menuState.position;
+      let adjusted = false;
 
-      if (x + w > vw) x = x - w; // flip to left
-      if (y + h > vh) y = y - h; // flip above
+      if (x + w > vw) {
+        x = x - w; // flip to left
+        adjusted = true;
+      }
+      if (y + h > vh) {
+        y = y - h; // flip above
+        adjusted = true;
+      }
 
-      if (x !== menuState.position.x || y !== menuState.position.y) {
+      if (adjusted) {
         setMenuState((s) => ({ ...s, position: { x, y } }));
       }
     }
-  }, [menuState.position, menuState.visible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuState.visible]); // Intentionally omitting menuState.position to prevent re-render loops
 
   return (
     <>

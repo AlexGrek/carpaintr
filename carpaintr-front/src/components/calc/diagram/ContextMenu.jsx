@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import PropTypes from "prop-types";
 import { useMediaQuery } from "react-responsive";
 import {
@@ -9,7 +9,7 @@ import {
   Folder,
 } from "lucide-react";
 
-const ContextMenu = ({ position, items, title, onClose, onSelect }, ref) => {
+const ContextMenu = forwardRef(({ position, items, title, onClose, onSelect }, ref) => {
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
   // Separate ungrouped and grouped items
@@ -125,7 +125,9 @@ const ContextMenu = ({ position, items, title, onClose, onSelect }, ref) => {
       </div>
     </>
   );
-};
+});
+
+ContextMenu.displayName = "ContextMenu";
 
 ContextMenu.propTypes = {
   position: PropTypes.shape({
