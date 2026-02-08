@@ -15,7 +15,8 @@
       "Bash(/Users/vedmedik/dev/carpaintr/simulate-bot-crawl.sh)",
       "Bash(/Users/vedmedik/dev/carpaintr/update-routes.sh)",
       "Bash(/Users/vedmedik/dev/carpaintr/verify-routes.sh)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(find:*)"
     ]
   }
 }

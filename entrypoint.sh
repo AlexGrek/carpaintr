@@ -41,20 +41,21 @@ else
     exit 1
   fi
 
-  echo "Initiating copy of initial data from '${INITIAL_DATA}' to '${TARGET}'."
-  echo "This operation will copy directories and their contents recursively."
-  echo "Existing files and directories in '${TARGET}' will NOT be overwritten."
+  echo "Initiating sync of initial data from '${INITIAL_DATA}' to '${TARGET}'."
+  echo "This operation will sync directories and their contents recursively."
+  echo "Files will be updated only if the source is newer (preserves manual changes)."
 
-  # Copy contents from INITIAL_DATA to TARGET.
-  # -a, --archive: copy recursively and preserve attributes (permissions, timestamps, etc.).
-  # -n, --no-clobber: do not overwrite an existing file.
+  # Sync contents from INITIAL_DATA to TARGET using rsync.
+  # -a, --archive: recursive, preserve permissions, timestamps, symlinks, etc.
   # -v, --verbose: explain what is being done.
-  cp -anv "${INITIAL_DATA}"/* "${TARGET}"/
+  # -u, --update: skip files that are newer in the destination.
+  # Using -u for update-only behavior (copies new files, updates if source is newer).
+  rsync -avu "${INITIAL_DATA}/" "${TARGET}/"
 
   if [ $? -eq 0 ]; then
-    echo "Initial data copy operation completed successfully."
+    echo "Initial data sync operation completed successfully."
   else
-    echo "Warning: Initial data copy operation encountered issues. Check logs above for details."
+    echo "Warning: Initial data sync operation encountered issues. Check logs above for details."
   fi
 fi
 

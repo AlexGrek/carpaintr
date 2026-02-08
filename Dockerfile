@@ -30,7 +30,7 @@ RUN touch src/main.rs && cargo build --release
 # ---------- Runtime Stage ----------
 FROM debian:stable-slim
 # Install only necessary runtime dependencies
-RUN apt-get update && apt-get install -y ca-certificates git --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates git rsync --no-install-recommends && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 # Copy only the binary and static files
 COPY --from=backend /app/backend-service-rust/target/release/rust-web-service /app/backend
