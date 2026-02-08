@@ -6,6 +6,7 @@ import { useLocale, registerTranslations } from '../../localization/LocaleContex
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
+import MenuPickerV2 from '../layout/MenuPickerV2';
 
 registerTranslations("ua", {
     "Selected Parts": "Обрані деталі",
@@ -18,6 +19,14 @@ registerTranslations("ua", {
     "Part Details": "Деталі деталі",
     "Close": "Закрити",
     "No additional information available": "Немає додаткової інформації",
+    "Actions": "Дії",
+    "Select actions for this part": "Виберіть дії для цієї деталі",
+    "assemble": "зібрати",
+    "twist": "вигнути",
+    "paint": "фарбувати",
+    "replace": "замінити",
+    "mount": "змонтувати",
+    "repair": "відремонтувати",
 });
 
 const CarBodyMain = ({
@@ -35,6 +44,15 @@ const CarBodyMain = ({
     const { str } = useLocale();
     const [company, setCompany] = useState(null);
     const [showTechData, setShowTechData] = useState(false);
+
+    // State declarations - must come before callbacks that use them
+    const [errors, setErrors] = useState([]);
+    const [availableParts, setAvailableParts] = useState([]);
+    const [availablePartsT2, setAvailablePartsT2] = useState([]);
+    const [processors, setProcessors] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerPartDetails, setDrawerPartDetails] = useState(null);
 
     // Handler for selecting a new part from the dropdown
     const handlePartSelect = useCallback(
@@ -69,25 +87,37 @@ const CarBodyMain = ({
                 // Remove item
                 return prev.filter((_, idx) => idx !== existingIndex);
             } else {
-                // Add item
-                return [...prev, item];
+                // Add item with null selectedAction
+                return [...prev, { ...item, selectedAction: null }];
             }
         });
     }, []);
 
-    const handleShowDetails = useCallback((item) => {
-        setDrawerPartDetails(item);
-        setDrawerOpen(true);
+    const handleSelectAction = useCallback((itemName, action) => {
+        setSelectedItems(prev => prev.map(item => {
+            if (item.name === itemName) {
+                return { ...item, selectedAction: action };
+            }
+            return item;
+        }));
     }, []);
 
-    const [errors, setErrors] = useState([]);
+    const handleShowDetails = useCallback((item) => {
+        // Find the item in selectedItems to get the current selectedActions
+        const selectedItem = selectedItems.find(i => i.name === item.name);
+        setDrawerPartDetails(selectedItem || item);
+        setDrawerOpen(true);
+    }, [selectedItems]);
 
-    const [availableParts, setAvailableParts] = useState([]);
-    const [availablePartsT2, setAvailablePartsT2] = useState([]);
-    const [processors, setProcessors] = useState([]);
-    const [selectedItems, setSelectedItems] = useState([]);
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [drawerPartDetails, setDrawerPartDetails] = useState(null);
+    // Update drawer details when selectedItems change (to reflect action toggles)
+    useEffect(() => {
+        if (drawerOpen && drawerPartDetails) {
+            const updatedItem = selectedItems.find(i => i.name === drawerPartDetails.name);
+            if (updatedItem) {
+                setDrawerPartDetails(updatedItem);
+            }
+        }
+    }, [selectedItems, drawerOpen, drawerPartDetails]);
 
     // Unified error handler
     const handleError = useCallback((context, error) => {
@@ -250,52 +280,61 @@ const CarBodyMain = ({
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Actions")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>{str("Details")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>{str("Action")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {selectedItems.map((item, index) => (
-                                            <tr key={index}>
-                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
-                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
-                                                <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
-                                                <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                                    <button
-                                                        onClick={() => handleShowDetails(item)}
-                                                        style={{
-                                                            padding: '4px 8px',
-                                                            backgroundColor: '#3b82f6',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            borderRadius: '4px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '14px',
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                        title={str("Details")}
-                                                    >
-                                                        ⋯
-                                                    </button>
-                                                </td>
-                                                <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                                    <button
-                                                        onClick={() => handleDiagramSelect(item)}
-                                                        style={{
-                                                            padding: '4px 12px',
-                                                            backgroundColor: '#dc2626',
-                                                            color: 'white',
-                                                            border: 'none',
-                                                            borderRadius: '4px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '12px'
-                                                        }}
-                                                    >
-                                                        {str("Remove")}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {selectedItems.map((item, index) => {
+                                            const actionDisplay = item.selectedAction
+                                                ? str(item.selectedAction)
+                                                : '-';
+                                            return (
+                                                <tr key={index}>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd', fontSize: '12px' }}>
+                                                        {actionDisplay}
+                                                    </td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                        <button
+                                                            onClick={() => handleShowDetails(item)}
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                backgroundColor: '#3b82f6',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '14px',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                            title={str("Details")}
+                                                        >
+                                                            ⋯
+                                                        </button>
+                                                    </td>
+                                                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                        <button
+                                                            onClick={() => handleDiagramSelect(item)}
+                                                            style={{
+                                                                padding: '4px 12px',
+                                                                backgroundColor: '#dc2626',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px'
+                                                            }}
+                                                        >
+                                                            {str("Remove")}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -494,6 +533,38 @@ const CarBodyMain = ({
                             <div style={{ marginBottom: '15px' }}>
                                 <strong>{str("Group")}:</strong> {drawerPartDetails.group || '-'}
                             </div>
+
+                            {/* Action Selection */}
+                            {drawerPartDetails.actions && drawerPartDetails.actions.length > 0 && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <Divider />
+                                    <MenuPickerV2
+                                        label={str("Actions")}
+                                        items={drawerPartDetails.actions.map(action => ({
+                                            label: str(action),
+                                            value: action
+                                        }))}
+                                        value={drawerPartDetails.selectedAction}
+                                        onSelect={(value) => handleSelectAction(drawerPartDetails.name, value)}
+                                        style={{ maxWidth: '100%' }}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Action-specific tabs/content */}
+                            {drawerPartDetails.selectedAction && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <Divider />
+                                    <h5 style={{ marginBottom: '10px' }}>
+                                        {str(drawerPartDetails.selectedAction)} - Details
+                                    </h5>
+                                    <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                                        <p style={{ fontSize: '13px', color: '#666' }}>
+                                            Content for {str(drawerPartDetails.selectedAction)} action will appear here.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Show all available properties */}
                             {Object.keys(drawerPartDetails).length > 0 && (

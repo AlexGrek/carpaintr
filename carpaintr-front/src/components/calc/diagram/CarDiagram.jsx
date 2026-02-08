@@ -170,19 +170,28 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuState.visible]); // Intentionally omitting menuState.position to prevent re-render loops
 
+  // Count selected items per zone
+  const getSelectedCountForZone = useCallback((zoneName) => {
+    return selectedItems.filter(item => item.zone === zoneName).length;
+  }, [selectedItems]);
+
   return (
     <>
       <div className="car-container" onClick={closeMenu}>
-        {carParts.map((part) => (
-          <CarPart
-            key={part.id}
-            id={part.id}
-            name={part.name}
-            className={partClassNames[part.id]}
-            onPartClick={handlePartClick}
-            partSubComponents={partSubComponents}
-          />
-        ))}
+        {carParts.map((part) => {
+          const selectedCount = getSelectedCountForZone(part.name);
+          return (
+            <CarPart
+              key={part.id}
+              id={part.id}
+              name={part.name}
+              className={partClassNames[part.id]}
+              onPartClick={handlePartClick}
+              partSubComponents={partSubComponents}
+              selectedCount={selectedCount}
+            />
+          );
+        })}
       </div>
       {menuState.visible && createPortal(
         <ContextMenu
