@@ -66,6 +66,152 @@ React 19 SPA with RSuite UI components and TailwindCSS.
 
 **State:** JWT token and company info stored in localStorage. No Redux/Zustand.
 
+## UI Libraries & Dependencies
+
+### Core UI Libraries
+- **RSuite** - Primary UI component library (Button, Panel, Message, Loader, etc.)
+  - Import from `"rsuite"`
+  - Provides pre-built form components, navigation, and layout utilities
+- **TailwindCSS** - Utility-first CSS framework for custom styling
+- **lucide-react** - Modern icon library (LogIn, UserPlus, etc.)
+  - Import individual icons: `import { LogIn, UserPlus } from "lucide-react"`
+- **react-responsive** - Media query hook for responsive design
+  - `useMediaQuery({ maxWidth: 767 })` for mobile detection
+
+### Styling Approach
+- Use RSuite components for complex UI elements (forms, buttons, modals)
+- Use TailwindCSS classes for layout and spacing
+- Use inline styles for component-specific styling
+- Custom CSS modules for complex layouts (e.g., `ColorGrid.css`, `BottomStickyLayout.css`)
+
+## Custom Components & Layouts
+
+### Layout Components
+
+#### `StageView` (`src/components/layout/StageView.jsx`)
+Multi-step wizard component with smooth transitions between stages.
+
+**Usage:**
+```javascript
+import StageView from "../layout/StageView";
+
+<StageView
+  stages={[
+    { name: "step1", component: Step1Component },
+    { name: "step2", component: Step2Component }
+  ]}
+  initialState={{}}
+  animationDelay={300}  // Transition duration in ms
+  onSave={(data) => console.log(data)}
+/>
+```
+
+**Features:**
+- Lazy-loaded stage components
+- Fade + slide + scale transitions (300ms with cubic-bezier easing)
+- Navigation via `onMoveForward`, `onMoveBack`, `onMoveTo`
+- Shared `stageData` object passed between stages
+- Each stage receives props: `index`, `enabled`, `fadeOutStarted`, `stageData`, `setStageData`, `onMoveForward`, `onMoveBack`, `onMoveTo`
+
+**Stage Component Structure:**
+```javascript
+const MyStage = ({
+  stageData,
+  setStageData,
+  onMoveForward,
+  onMoveBack,
+  fadeOutStarted
+}) => {
+  return <div>{/* stage content */}</div>;
+};
+```
+
+#### `BottomStickyLayout` (`src/components/layout/BottomStickyLayout.jsx`)
+Responsive layout with sticky bottom panel for navigation buttons.
+
+**Usage:**
+```javascript
+import BottomStickyLayout from "../layout/BottomStickyLayout";
+
+<BottomStickyLayout
+  bottomPanel={
+    <HStack justifyContent="space-between">
+      <Button onClick={onBack}>Back</Button>
+      <Button onClick={onNext}>Next</Button>
+    </HStack>
+  }
+>
+  {/* Main content */}
+</BottomStickyLayout>
+```
+
+**Behavior:**
+- **Mobile (≤767px):** Bottom panel is `position: fixed` at bottom with backdrop blur
+- **Desktop (>767px):** Bottom panel is `position: static` with top margin
+- Automatically adds 100px padding-bottom on mobile to prevent content overlap
+- Z-index: 100 for mobile sticky mode
+
+### Calculation Components
+
+#### `CarBodyMain` (`src/components/calc/CarBodyMain.jsx`)
+Car body diagram selector with interactive SVG visualization.
+
+**Key features:**
+- Fetches car parts from `/api/v1/user/carparts/{class}/{body}`
+- Fetches T2 subcomponents from `/api/v1/user/carparts_t2/{class}/{body}`
+- Debug mode with ⚙️ button to view technical data
+- Centered layout with max-width: 900px
+
+#### `ColorPicker` (`src/components/calc/ColorPicker.jsx`)
+Color selection grid with loading placeholder.
+
+**Key features:**
+- Fetches colors from `/api/v1/user/global/colors.json`
+- Custom skeleton loader (`ColorGridPlaceholder`) - 5×4 grid of semi-transparent tiles
+- No lazy loading (preloaded with stage)
+- Uses `ColorGrid` component for rendering actual colors
+
+#### `ColorGrid` (`src/components/ColorGrid.jsx`)
+Responsive grid layout for displaying color swatches.
+
+**Layout:**
+- 4-column grid (`repeat(4, minmax(24px, 1fr))`)
+- Each color card: 60px preview + label section
+- Hover effects with scale transform
+- Selected state with border and shadow
+
+### Component Patterns
+
+#### Lazy Loading
+Components are preloaded by `StageView` - avoid `React.lazy()` for nested components to prevent loading delays.
+
+#### Media Queries
+```javascript
+import { useMediaQuery } from "react-responsive";
+
+const isMobile = useMediaQuery({ maxWidth: 767 });
+```
+
+#### Auth Fetch Pattern
+All API calls use wrappers from `src/utils/authFetch.js`:
+```javascript
+import { authFetchJson, authFetchYaml } from "../../utils/authFetch";
+
+const data = await authFetchJson("/api/v1/user/endpoint");
+const config = await authFetchYaml("/api/v1/user/config.yaml");
+```
+
+#### Error Handling
+Use RSuite's `Message` and `toaster` for user feedback:
+```javascript
+import { Message, toaster } from "rsuite";
+
+toaster.push(
+  <Message type="error" showIcon closable>Error message</Message>,
+  { placement: 'topCenter', duration: 5000 }
+);
+```
+
 ## Frontend Localization (i18n)
 
 Supported languages: `en` (English), `ua` (Ukrainian). English keys are used as-is; Ukrainian has translations.

@@ -56,6 +56,12 @@ nav.landing {
   color: #ea580c;
 }
 
+.auth-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .login-btn {
   background: transparent;
   color: #ea580c;
@@ -66,8 +72,9 @@ nav.landing {
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  display: inline-block;
-  margin-right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.9rem;
 }
 
@@ -86,7 +93,9 @@ nav.landing {
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.9rem;
 }
 
@@ -425,8 +434,32 @@ footer {
     display: none;
   }
 
+  nav.landing {
+    align-items: center;
+  }
+
+  .auth-buttons {
+    gap: 0.4rem;
+  }
+
+  .login-btn,
+  .cta-btn {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .login-btn {
+    border-width: 1.5px;
+  }
+
   .hero h1 {
     font-size: 2.2rem;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
   }
 
   .benefits-text h2 {
@@ -435,5 +468,27 @@ footer {
 
   .final-cta h2 {
     font-size: 1.8rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .logo {
+    font-size: 22pt;
+  }
+
+  .auth-buttons {
+    gap: 0.3rem;
+  }
+
+  .login-btn,
+  .cta-btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.8rem;
+    gap: 0.35rem;
+  }
+
+  .container {
+    padding: 0 15px;
   }
 }

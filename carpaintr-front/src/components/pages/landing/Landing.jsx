@@ -8,6 +8,8 @@ import {
   useLocale,
   registerTranslations,
 } from "../../../localization/LocaleContext";
+import { LogIn, UserPlus } from "lucide-react";
+import { useMediaQuery } from "react-responsive";
 
 registerTranslations("ua", {
   Features: "Можливості",
@@ -71,6 +73,8 @@ registerTranslations("ua", {
 });
 
 const Header = () => {
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
   return (
     <header className="landing">
       <nav className="container landing">
@@ -92,11 +96,13 @@ const Header = () => {
             </a>
           </li>
         </ul>
-        <div>
+        <div className="auth-buttons">
           <a href="/app/login" className="login-btn">
+            {isMobile && <LogIn size={18} />}
             <Trans>Log In</Trans>
           </a>
           <a href="/app/register" className="cta-btn">
+            {isMobile && <UserPlus size={18} />}
             <Trans>Join</Trans>
           </a>
         </div>
