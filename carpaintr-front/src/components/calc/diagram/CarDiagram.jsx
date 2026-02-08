@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ContextMenu from "./ContextMenu";
 import CarPart from "./CarPart";
 import "./CarDiagram.css";
 
-// Menu positioning offsets
-const MENU_OFFSET_X = -15;
-const MENU_OFFSET_Y = -60;
+// Menu positioning offsets - small offsets to position menu near cursor
+const MENU_OFFSET_X = 10;
+const MENU_OFFSET_Y = 10;
 
 export function buildCarSubcomponentsFromT2(data) {
   return data.reduce((acc, item) => {
@@ -102,6 +103,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
   const handlePartClick = (event, title, items) => {
     event.stopPropagation();
 
+    // Use clientX/clientY for viewport coordinates (menu is portaled to body with position: fixed)
     setMenuState({
       visible: true,
       position: {
@@ -182,7 +184,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
           />
         ))}
       </div>
-      {menuState.visible && (
+      {menuState.visible && createPortal(
         <ContextMenu
           ref={menuRef}
           position={menuState.position}
@@ -191,7 +193,8 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
           selectedItems={selectedItems}
           onClose={closeMenu}
           onSelect={handleSelect}
-        />
+        />,
+        document.body
       )}
     </>
   );

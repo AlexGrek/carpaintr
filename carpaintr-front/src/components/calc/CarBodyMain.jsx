@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Divider, Panel, Message } from 'rsuite';
+import { Divider, Panel, Message, Drawer } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
@@ -14,6 +14,10 @@ registerTranslations("ua", {
     "Group": "Група",
     "Action": "Дія",
     "Remove": "Видалити",
+    "Details": "Деталі",
+    "Part Details": "Деталі деталі",
+    "Close": "Закрити",
+    "No additional information available": "Немає додаткової інформації",
 });
 
 const CarBodyMain = ({
@@ -71,12 +75,19 @@ const CarBodyMain = ({
         });
     }, []);
 
+    const handleShowDetails = useCallback((item) => {
+        setDrawerPartDetails(item);
+        setDrawerOpen(true);
+    }, []);
+
     const [errors, setErrors] = useState([]);
 
     const [availableParts, setAvailableParts] = useState([]);
     const [availablePartsT2, setAvailablePartsT2] = useState([]);
     const [processors, setProcessors] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerPartDetails, setDrawerPartDetails] = useState(null);
 
     // Unified error handler
     const handleError = useCallback((context, error) => {
@@ -239,7 +250,8 @@ const CarBodyMain = ({
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
                                             <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{str("Action")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>{str("Details")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>{str("Action")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -248,6 +260,24 @@ const CarBodyMain = ({
                                                 <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
                                                 <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
                                                 <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
+                                                <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                    <button
+                                                        onClick={() => handleShowDetails(item)}
+                                                        style={{
+                                                            padding: '4px 8px',
+                                                            backgroundColor: '#3b82f6',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '4px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '14px',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                        title={str("Details")}
+                                                    >
+                                                        ⋯
+                                                    </button>
+                                                </td>
                                                 <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                                                     <button
                                                         onClick={() => handleDiagramSelect(item)}
@@ -428,6 +458,71 @@ const CarBodyMain = ({
                     </div>
                 )}
             </div>
+
+            {/* Part Details Drawer */}
+            <Drawer
+                open={drawerOpen}
+                onClose={() => setDrawerOpen(false)}
+                size={isMobile ? 'full' : 'sm'}
+            >
+                <Drawer.Header>
+                    <Drawer.Title>{drawerPartDetails?.name || str("Part Details")}</Drawer.Title>
+                    <Drawer.Actions>
+                        <button
+                            onClick={() => setDrawerOpen(false)}
+                            style={{
+                                padding: '6px 16px',
+                                backgroundColor: '#666',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}
+                        >
+                            {str("Close")}
+                        </button>
+                    </Drawer.Actions>
+                </Drawer.Header>
+                <Drawer.Body>
+                    {drawerPartDetails ? (
+                        <div style={{ padding: '10px' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                                <strong>{str("Zone")}:</strong> {drawerPartDetails.zone || '-'}
+                            </div>
+
+                            <div style={{ marginBottom: '15px' }}>
+                                <strong>{str("Group")}:</strong> {drawerPartDetails.group || '-'}
+                            </div>
+
+                            {/* Show all available properties */}
+                            {Object.keys(drawerPartDetails).length > 0 && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <Divider />
+                                    <details>
+                                        <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
+                                            Raw Data
+                                        </summary>
+                                        <pre style={{
+                                            background: '#f5f5f5',
+                                            padding: '10px',
+                                            borderRadius: '4px',
+                                            fontSize: '11px',
+                                            fontFamily: 'monospace',
+                                            overflow: 'auto',
+                                            maxHeight: '400px'
+                                        }}>
+                                            {JSON.stringify(drawerPartDetails, null, 2)}
+                                        </pre>
+                                    </details>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Message type="info">{str("No additional information available")}</Message>
+                    )}
+                </Drawer.Body>
+            </Drawer>
         </Panel>
     );
 };
