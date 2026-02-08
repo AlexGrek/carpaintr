@@ -2,10 +2,19 @@ import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Divider, Panel, Message } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
-import { useLocale } from '../../localization/LocaleContext';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
+
+registerTranslations("ua", {
+    "Selected Parts": "Обрані деталі",
+    "Name": "Назва",
+    "Zone": "Зона",
+    "Group": "Група",
+    "Action": "Дія",
+    "Remove": "Видалити",
+});
 
 const CarBodyMain = ({
     partsVisual,
@@ -218,7 +227,7 @@ const CarBodyMain = ({
                         {/* Selected Items Table */}
                         {selectedItems.length > 0 && (
                             <div style={{ marginTop: '20px', textAlign: 'left' }}>
-                                <h4>Selected Parts ({selectedItems.length})</h4>
+                                <h4>{str("Selected Parts")} ({selectedItems.length})</h4>
                                 <table style={{
                                     width: '100%',
                                     borderCollapse: 'collapse',
@@ -227,10 +236,10 @@ const CarBodyMain = ({
                                 }}>
                                     <thead>
                                         <tr style={{ backgroundColor: '#f5f5f5' }}>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Name</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Zone</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Group</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
+                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{str("Action")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -252,7 +261,7 @@ const CarBodyMain = ({
                                                             fontSize: '12px'
                                                         }}
                                                     >
-                                                        Remove
+                                                        {str("Remove")}
                                                     </button>
                                                 </td>
                                             </tr>

@@ -102,21 +102,13 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
   const handlePartClick = (event, title, items) => {
     event.stopPropagation();
 
-    // Create Set for O(1) lookups - check by item name
-    const selectedNamesSet = new Set(selectedItems.map(item => item.name));
-
     setMenuState({
       visible: true,
       position: {
         x: event.clientX + MENU_OFFSET_X,
         y: event.clientY + MENU_OFFSET_Y,
       },
-      items: items.map((item) => {
-        if (selectedNamesSet.has(item.name)) {
-          return { ...item, alreadyUsed: true }
-        }
-        return item
-      }),
+      items: items,
       title: title,
     });
   };
@@ -127,8 +119,8 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
 
   const handleSelect = useCallback((item) => {
     onSelect(item);
-    closeMenu();
-  }, [onSelect, closeMenu]);
+    // Don't close menu - let user select multiple items
+  }, [onSelect]);
 
   useEffect(() => {
     if (!menuState.visible) return;
@@ -196,6 +188,8 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
           position={menuState.position}
           items={menuState.items}
           title={menuState.title}
+          selectedItems={selectedItems}
+          onClose={closeMenu}
           onSelect={handleSelect}
         />
       )}
