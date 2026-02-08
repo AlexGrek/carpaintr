@@ -304,7 +304,7 @@
 /* Responsive scaling using CSS variables */
 @media (max-width: 768px) {
   :root {
-    --car-scale: 1;
+    --car-scale: 0.88;
     --car-font-size: 10px;
   }
 
@@ -474,7 +474,7 @@
 
 @media (max-width: 600px) {
   :root {
-    --car-scale: 1.25;
+    --car-scale: 0.82;
     --car-font-size: 9px;
   }
 
@@ -485,8 +485,8 @@
 
 @media (max-width: 480px) {
   :root {
-    --car-scale: 1.15;
-    --car-font-size: 11pt;
+    --car-scale: 0.76;
+    --car-font-size: 10px;
   }
 
   .car-container-container {
