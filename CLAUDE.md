@@ -25,6 +25,29 @@ task docker-push       # Push to localhost:5000 registry
 task redeploy          # Build, push, restart k8s pods
 ```
 
+## Backup & Restore
+
+**Full documentation**: See [docs/backup.md](docs/backup.md)
+
+The application includes automated Kubernetes backups (daily by default, keeps last 10 backups):
+
+```bash
+# View backup status
+kubectl get cronjob
+kubectl get jobs | grep backup
+
+# Manual backup
+kubectl create job --from=cronjob/autolab-api-backup manual-backup-$(date +%s)
+
+# View backup logs
+kubectl logs job/<backup-job-name>
+
+# Configure via Helm
+helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
+  --set backup.retention=10 \
+  --set backup.schedule="0 0 * * *"
+```
+
 ## Integration Testing
 
 A comprehensive pytest-based integration test suite is available in `backend-integration-tests/`.

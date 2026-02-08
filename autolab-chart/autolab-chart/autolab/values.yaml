@@ -98,7 +98,7 @@ backup:
   # -- Timezone for the backup job (used for logging timestamps)
   timezone: "Europe/Kyiv"
   # -- Number of backup files to retain (older backups are automatically deleted)
-  retention: 7
+  retention: 10
   # -- Size of the backup PersistentVolumeClaim
   storageSize: 5Gi
   # -- (Optional) StorageClass for backup volume. If empty, uses cluster default.
