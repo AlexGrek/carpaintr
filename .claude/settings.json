@@ -9,7 +9,9 @@
       "Bash(task test:*)",
       "Bash(cargo check:*)",
       "Bash(task test:check:*)",
-      "Bash(task test:cov:*)"
+      "Bash(task test:cov:*)",
+      "Bash(kubectl:*)",
+      "Bash(helm get values:*)"
     ]
   }
 }

@@ -382,3 +382,105 @@ tasks:
     dir: backend-integration-tests
     cmds:
       - task check-backend
+
+  # Database management tasks
+  db-reset:
+    desc: "Reset database by deleting PVC (ENV=dev|staging, default: dev) - WARNING: DESTRUCTIVE - PRODUCTION BLOCKED"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+    preconditions:
+      - sh: '[ "{{.ENV}}" != "prod" ]'
+        msg: "BLOCKED - Database reset is not allowed on production environment. This is a safety measure to prevent data loss."
+    cmds:
+      - echo "WARNING - This will DELETE ALL DATA in {{.ENV}} environment!"
+      - echo "Namespace - {{.NS}}"
+      - echo "PVC - autolab-api-storage-{{.REL}}-autolab-api-0"
+      - echo "Press Ctrl+C within 5 seconds to cancel..."
+      - sleep 5
+      - echo "Scaling down StatefulSet..."
+      - kubectl scale statefulset/{{.REL}}-autolab-api --replicas=0 -n {{.NS}}
+      - echo "Waiting for pod to terminate..."
+      - kubectl wait --for=delete pod/{{.REL}}-autolab-api-0 -n {{.NS}} --timeout=60s || true
+      - echo "Deleting PVC..."
+      - kubectl delete pvc autolab-api-storage-{{.REL}}-autolab-api-0 -n {{.NS}}
+      - echo "Scaling up StatefulSet..."
+      - kubectl scale statefulset/{{.REL}}-autolab-api --replicas=1 -n {{.NS}}
+      - echo "Waiting for pod to be ready..."
+      - kubectl wait --for=condition=ready pod/{{.REL}}-autolab-api-0 -n {{.NS}} --timeout=120s
+      - echo "Database reset complete! New empty database created."
+
+  db-reset-dev:
+    desc: Reset dev database (autolab-dev namespace) - WARNING DESTRUCTIVE
+    cmds:
+      - task: db-reset
+        vars: {ENV: dev}
+
+  db-reset-staging:
+    desc: Reset staging database (autolab-staging namespace) - WARNING DESTRUCTIVE
+    cmds:
+      - task: db-reset
+        vars: {ENV: staging}
+
+  db-reset-prod-force:
+    desc: "DANGEROUS - Force reset production database (requires CONFIRM_PROD=yes)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" "prod")}}'
+      REL: '{{index . (printf "RELEASE_%s" "prod")}}'
+    preconditions:
+      - sh: '[ "{{.CONFIRM_PROD}}" = "yes" ]'
+        msg: "BLOCKED - You must set CONFIRM_PROD=yes to reset production database. Example: task db-reset-prod-force CONFIRM_PROD=yes"
+    cmds:
+      - echo "CRITICAL WARNING - You are about to DELETE ALL PRODUCTION DATA!"
+      - echo "Namespace - {{.NS}}"
+      - echo "PVC - autolab-api-storage-{{.REL}}-autolab-api-0"
+      - echo "This action is IRREVERSIBLE and will cause DOWNTIME!"
+      - echo "Press Ctrl+C within 10 seconds to cancel..."
+      - sleep 10
+      - echo "Last chance - Press Ctrl+C within 5 seconds..."
+      - sleep 5
+      - echo "Scaling down StatefulSet..."
+      - kubectl scale statefulset/{{.REL}}-autolab-api --replicas=0 -n {{.NS}}
+      - echo "Waiting for pod to terminate..."
+      - kubectl wait --for=delete pod/{{.REL}}-autolab-api-0 -n {{.NS}} --timeout=60s || true
+      - echo "Deleting PVC..."
+      - kubectl delete pvc autolab-api-storage-{{.REL}}-autolab-api-0 -n {{.NS}}
+      - echo "Scaling up StatefulSet..."
+      - kubectl scale statefulset/{{.REL}}-autolab-api --replicas=1 -n {{.NS}}
+      - echo "Waiting for pod to be ready..."
+      - kubectl wait --for=condition=ready pod/{{.REL}}-autolab-api-0 -n {{.NS}} --timeout=120s
+      - echo "Production database reset complete. All data has been deleted."
+
+  db-backup:
+    desc: "Create manual backup now (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      TIMESTAMP:
+        sh: date +%s
+    cmds:
+      - echo "Creating manual backup in {{.NS}}..."
+      - kubectl create job --from=cronjob/{{.REL}}-autolab-api-backup manual-backup-{{.TIMESTAMP}} -n {{.NS}}
+      - echo "Backup job created - manual-backup-{{.TIMESTAMP}}"
+      - echo "Check status with - kubectl logs -n {{.NS}} job/manual-backup-{{.TIMESTAMP}} -f"
+
+  db-backup-dev:
+    desc: Create manual backup of dev database
+    cmds:
+      - task: db-backup
+        vars: {ENV: dev}
+
+  db-list-backups:
+    desc: "List available backups (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+    cmds:
+      - echo "Backups in {{.NS}}"
+      - kubectl exec -n {{.NS}} statefulset/{{.REL}}-autolab-api -- ls -lh /backups/ 2>/dev/null || echo "No backups found or pod not ready"
+
+  db-list-backups-dev:
+    desc: List dev backups
+    cmds:
+      - task: db-list-backups
+        vars: {ENV: dev}

@@ -18,7 +18,10 @@
       "Bash(tree:*)",
       "Bash(find:*)",
       "Bash(task check-backend:*)",
-      "Bash(task test:license:*)"
+      "Bash(task test:license:*)",
+      "Bash(kubectl get:*)",
+      "Bash(kubectl config get-contexts:*)",
+      "Bash(helm list:*)"
     ]
   }
 }
