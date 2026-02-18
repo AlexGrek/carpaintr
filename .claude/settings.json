@@ -14,7 +14,8 @@
       "Bash(helm get values:*)",
       "Bash(task backend:*)",
       "Bash(.venv/bin/pytest tests/test_license_protection.py -v)",
-      "Bash(task db-list-backups:*)"
+      "Bash(task db-list-backups:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

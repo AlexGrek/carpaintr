@@ -25,7 +25,9 @@ import {
   InputPicker,
   TreePicker,
   useToaster,
+  Drawer,
 } from "rsuite";
+import { useMediaQuery } from "react-responsive";
 import {
   Copy,
   Trash2,
@@ -207,6 +209,7 @@ const ClauseListEditor = ({
   allTablesData,
 }) => {
   const { str } = useLocale();
+  const isMobile = useMediaQuery({ maxWidth: 767 });
   const handleAddClause = () => {
     const newClause = {
       id: nextId(),
@@ -247,9 +250,15 @@ const ClauseListEditor = ({
           className="fade-in-simple"
           key={clause.id}
           bordered
-          style={{ marginBottom: "10px", backgroundColor: "ghostwhite" }}
+          style={{
+            marginBottom: "12px",
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            border: "1px solid #e8e8e8",
+          }}
         >
-          <Form layout="horizontal">
+          <Form layout={isMobile ? "vertical" : "horizontal"}>
             <Form.Group>
               <Form.ControlLabel>
                 <Trans>Name</Trans>
@@ -282,11 +291,8 @@ const ClauseListEditor = ({
                 }
                 defaultExpandAll
               />
-              {console.log(allTablesData)}
               <Form.HelpText>
-                <Trans>
-                  JS expression for the value. E.g., `tableData["t1"]["field1"]`
-                </Trans>
+                {str('JS expression for the value. E.g., `tableData["t1"]["field1"]`')}
               </Form.HelpText>
             </Form.Group>
             <Form.Group>
@@ -319,18 +325,20 @@ const ClauseListEditor = ({
                 </Trans>
               </Form.HelpText>
             </Form.Group>
-            <IconButton
-              icon={<CopyPlus />}
-              circle
-              onClick={() => handleDuplicateClause(clause)}
-            ></IconButton>
-            <IconButton
-              icon={<Trash />}
-              color="red"
-              circle
-              appearance="subtle"
-              onClick={() => handleRemoveClause(clause.id)}
-            ></IconButton>
+            <HStack spacing={8} style={{ marginTop: "4px" }}>
+              <IconButton
+                icon={<CopyPlus size={16} />}
+                circle
+                onClick={() => handleDuplicateClause(clause)}
+              />
+              <IconButton
+                icon={<Trash size={16} />}
+                color="red"
+                circle
+                appearance="subtle"
+                onClick={() => handleRemoveClause(clause.id)}
+              />
+            </HStack>
           </Form>
         </Panel>
       ))}
@@ -356,6 +364,7 @@ ClauseListEditor.propTypes = {
 // ==================================
 const ProcessorGenerator = () => {
   const { str } = useLocale();
+  const isMobile = useMediaQuery({ maxWidth: 767 });
   const [stage, setStage] = useState("form"); // 'form' or 'code'
   const [uploading, setUploading] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -496,7 +505,7 @@ ${renderClauses()}
       const result = await response.json();
       toaster.push(
         <Notification type="success" header="Upload Successful" closable>
-          Processor '{formData.name}' uploaded to {result.path}.
+          Processor &apos;{formData.name}&apos; uploaded to {result.path}.
         </Notification>,
       );
     } catch (error) {
@@ -510,28 +519,41 @@ ${renderClauses()}
     }
   };
 
-  const renderStage1 = () => (
-    <HStack alignItems="flex-start" justifyContent="center" spacing="50">
-      {catalogOpen && (
-        <Suspense fallback={<Loader />}>
-          <Panel bordered style={{ marginRight: "18pt", minWidth: "230px" }}>
-            <PartsCatalog />
-          </Panel>
-        </Suspense>
-      )}
-      <Content style={{ maxWidth: "600px" }}>
-        <IconButton
-          icon={<SearchIcon />}
-          appearance={catalogOpen ? "primary" : "default"}
-          onClick={() => setCatalogOpen(!catalogOpen)}
+  const renderStage1 = () => {
+    const catalogContent = (
+      <Suspense fallback={<Loader />}>
+        <PartsCatalog />
+      </Suspense>
+    );
+
+    const formContent = (
+      <Content
+        style={{
+          maxWidth: isMobile ? "100%" : "600px",
+          width: "100%",
+          padding: isMobile ? "0 4px" : undefined,
+        }}
+      >
+        <HStack
+          spacing={8}
+          alignItems="center"
+          style={{ marginBottom: "8px" }}
         >
-          <Trans>Catalog</Trans>
-        </IconButton>
-        <Header>
-          <h2>
+          <IconButton
+            icon={<SearchIcon />}
+            appearance={catalogOpen ? "primary" : "ghost"}
+            onClick={() => setCatalogOpen(!catalogOpen)}
+          >
+            <Trans>Catalog</Trans>
+          </IconButton>
+        </HStack>
+
+        <Header style={{ marginBottom: "16px" }}>
+          <h2 style={{ margin: 0, fontSize: isMobile ? "20px" : "24px" }}>
             <Trans>Processor Generator</Trans>
           </h2>
         </Header>
+
         <Form
           fluid
           model={formModel}
@@ -622,61 +644,120 @@ ${renderClauses()}
             onChange={(value) => setFormData({ ...formData, clauses: value })}
             tables={formData.requiredTables}
             allTablesData={Object.keys(allTablesData).map((item) => {
-              let value = allTablesData[item];
-              console.log("value", value);
+              const value = allTablesData[item];
               return {
                 label: item,
-                children: value.map((inner) => {
-                  return {
-                    value: `tableData["${item}"]["${inner}"]`,
-                    label: inner,
-                    children: [],
-                  };
-                }),
+                children: value.map((inner) => ({
+                  value: `tableData["${item}"]["${inner}"]`,
+                  label: inner,
+                  children: [],
+                })),
                 value: `tableData["${item}"]`,
               };
             })}
           />
 
-          <Form.Group>
-            <ButtonToolbar>
-              <Button appearance="primary" onClick={generateProcessorCode}>
-                <Trans>Generate Code</Trans>
-              </Button>
-            </ButtonToolbar>
+          <Form.Group style={{ marginTop: "8px" }}>
+            <Button
+              appearance="primary"
+              size={isMobile ? "lg" : "md"}
+              block={isMobile}
+              onClick={generateProcessorCode}
+            >
+              <Trans>Generate Code</Trans>
+            </Button>
           </Form.Group>
         </Form>
       </Content>
-    </HStack>
-  );
+    );
+
+    return (
+      <>
+        {/* Mobile: catalog as bottom drawer */}
+        {isMobile && (
+          <Drawer
+            open={catalogOpen}
+            onClose={() => setCatalogOpen(false)}
+            placement="bottom"
+            size="lg"
+          >
+            <Drawer.Header>
+              <Drawer.Title>
+                <Trans>Catalog</Trans>
+              </Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body>{catalogContent}</Drawer.Body>
+          </Drawer>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            gap: "40px",
+            alignItems: "flex-start",
+            justifyContent: "center",
+          }}
+        >
+          {/* Desktop: inline catalog sidebar */}
+          {!isMobile && catalogOpen && (
+            <Panel
+              bordered
+              style={{
+                minWidth: "230px",
+                flexShrink: 0,
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            >
+              {catalogContent}
+            </Panel>
+          )}
+
+          {formContent}
+        </div>
+      </>
+    );
+  };
 
   const renderStage2 = () => (
     <>
-      <Header>
-        <h2>
-          <Trans>Generated Code for</Trans> '{formData.name}'
+      <Header style={{ marginBottom: "16px" }}>
+        <h2 style={{ margin: 0, fontSize: isMobile ? "18px" : "22px" }}>
+          <Trans>Generated Code for</Trans>{" "}
+          <span style={{ fontStyle: "italic", color: "#555" }}>
+            {formData.name}
+          </span>
         </h2>
-        <p>
+        <p style={{ margin: "4px 0 0", color: "#888", fontSize: "13px" }}>
           <Trans>You can make final manual edits below before uploading.</Trans>
         </p>
       </Header>
       <Content>
         <Input
           as="textarea"
-          rows={25}
+          rows={isMobile ? 16 : 25}
           value={generatedCode}
           onChange={setGeneratedCode}
           style={{
             fontFamily: "monospace",
             fontSize: "12px",
-            marginBottom: "1rem",
+            marginBottom: "12px",
+            borderRadius: "6px",
           }}
         />
-        <ButtonToolbar>
+        <ButtonToolbar
+          style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: "8px",
+          }}
+        >
           <Button
             onClick={() => setStage("form")}
             color="red"
-            startIcon={<ArrowLeft />}
+            appearance="ghost"
+            block={isMobile}
+            startIcon={<ArrowLeft size={16} />}
           >
             <Trans>Back to Form</Trans>
           </Button>
@@ -685,7 +766,8 @@ ${renderClauses()}
             color="green"
             onClick={handleUpload}
             loading={uploading}
-            startIcon={!uploading && <UploadCloud />}
+            block={isMobile}
+            startIcon={!uploading && <UploadCloud size={16} />}
           >
             <Trans>Upload to Server</Trans>
           </Button>
@@ -706,7 +788,7 @@ ${renderClauses()}
   });
 
   return (
-    <Container style={{ padding: "20px" }}>
+    <Container style={{ padding: isMobile ? "12px 8px" : "20px" }}>
       {uploading && <Loader backdrop content="uploading..." vertical />}
       {stage === "form" ? renderStage1() : renderStage2()}
     </Container>
