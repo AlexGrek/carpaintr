@@ -95,7 +95,7 @@ const Dashboard = () => {
       }
     };
     fetchAdminStatus();
-  });
+  }, []);
 
   useEffect(() => {
     const reportError = (err) => {

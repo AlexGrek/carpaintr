@@ -19,13 +19,17 @@ const ActiveLicenseMarker = () => {
     const fetchLicenses = async () => {
       try {
         const response = await authFetch("/api/v1/getactivelicense");
-        if (!handleAuthResponse(response, navigate, location)) {
-          if (!response.ok) {
-            throw new Error(`Error: ${response.statusText}`);
-          }
-          const data = await response.json();
-          setLicenseStatus(data);
+        // Only redirect to login on 401 (invalid/expired session). 403 can mean
+        // forbidden for this resource (e.g. no license) and must not trigger a
+        // redirect loop with LoginPage's "already have token" redirect.
+        if (response.status === 401 && handleAuthResponse(response, navigate, location)) {
+          return;
         }
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setLicenseStatus(data);
       } catch (err) {
         setError(err.message);
       } finally {
