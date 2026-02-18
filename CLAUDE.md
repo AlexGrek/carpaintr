@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [Development Guide](docs/development.md) - Setup, testing, code organization
 - [Deployment Guide](docs/deployment.md) - Docker, Kubernetes, Helm, CI/CD
 - [Backup & Restore](docs/backup.md) - Automated backups, restore procedures
+- [Secrets Management](docs/secrets-management.md) - JWT & license secret initialization
 
 ## Build & Development Commands
 
@@ -88,6 +89,43 @@ The restore script automatically:
 ```
 
 **Supported backup formats:** `.tar.gz`, `.tgz`, `.zip`
+
+## Secrets Management
+
+**Full documentation**: See [docs/secrets-management.md](docs/secrets-management.md)
+
+**CRITICAL**: Kubernetes secrets must be initialized ONCE and never regenerated. If secrets change, JWT tokens become invalid and users can't login.
+
+### Quick Start
+
+```bash
+# Initialize secrets (one-time operation per environment)
+task secret-init-dev
+task secret-init-staging
+task secret-init-prod
+
+# Then deploy normally (Helm will use existing secrets)
+task deploy-dev
+task redeploy-staging
+task redeploy-prod
+```
+
+### Key Points
+
+- **Development**: `secret.create: true` - Auto-generates secrets on first deploy
+- **Staging/Production**: `secret.create: false` - Must pre-create secrets before deployment
+- **Redeploy**: Never touches existing secrets (JWT and licenses remain valid)
+- **Backup/Restore**: Secrets are NOT in backups; they persist separately in Kubernetes
+
+### Verify Secrets
+
+```bash
+# Check if secret exists
+kubectl get secret autolab-api-secret -n <namespace>
+
+# View secret keys
+kubectl get secret autolab-api-secret -n <namespace> -o jsonpath='{.data}' | jq 'keys[]'
+```
 
 ## Integration Testing
 

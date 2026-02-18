@@ -19,12 +19,13 @@ secretName: autolab-api-secret
 # -- Secret configuration
 secret:
   # -- Whether to create the secret (set to false if managing secrets externally)
-  create: true
-  # -- JWT secret key (base64 encoded automatically). Leave empty to auto-generate.
+  # Default: false - Secrets must be pre-created in the cluster to prevent accidental regeneration
+  create: false
+  # -- JWT secret key (base64 encoded automatically). Only used if create: true
   secretKey: ""
-  # -- License JWT secret key (base64 encoded automatically). Leave empty to auto-generate.
+  # -- License JWT secret key (base64 encoded automatically). Only used if create: true
   secretKeyLicense: ""
-  # -- Admin emails/usernames (plain text, will be base64 encoded). Leave empty for default.
+  # -- Admin emails/usernames (plain text, will be base64 encoded). Only used if create: true
   admins: ""
 
 # -- Resource limits and requests for the container

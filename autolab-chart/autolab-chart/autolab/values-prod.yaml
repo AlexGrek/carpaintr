@@ -7,6 +7,13 @@ environment: production
 # Secret name (must be created separately in the namespace)
 secretName: autolab-api-secret
 
+# Secret configuration
+# IMPORTANT: create: false - Secrets must be pre-created in the cluster
+# This prevents accidental regeneration of JWT and license secrets on redeploy
+# See: scripts/init-secrets.sh for how to create secrets
+secret:
+  create: false
+
 # Resource configuration (full for production)
 resources:
   limits:

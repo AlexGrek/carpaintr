@@ -8,6 +8,8 @@ environment: development
 secretName: autolab-api-secret
 
 # Secret configuration for dev environment
+# Note: create: true for convenience in development (auto-generates if secret doesn't exist)
+# For production environments, use create: false and pre-create secrets manually
 secret:
   create: true
   secretKey: "dev-jwt-secret-change-in-production"

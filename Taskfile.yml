@@ -210,9 +210,40 @@ tasks:
     cmds:
       - kubectl logs -n {{.NS}} -l app=autolab-pdfgen --tail=100 -f
 
-  # Secret management tasks
+  # Secret management tasks - IMPORTANT: Secrets should be created ONCE and never regenerated
+  # This prevents JWT authentication and license validation from breaking on redeploy
+  secret-init:
+    desc: "Initialize stable secrets for environment (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+    cmds:
+      - echo "Initializing secrets for {{.ENV}} environment..."
+      - ./scripts/init-secrets.sh {{.NS}} {{.REL}}
+
+  secret-init-dev:
+    desc: Initialize stable secrets for dev environment
+    cmds:
+      - task: secret-init
+        vars:
+          ENV: dev
+
+  secret-init-staging:
+    desc: Initialize stable secrets for staging environment
+    cmds:
+      - task: secret-init
+        vars:
+          ENV: staging
+
+  secret-init-prod:
+    desc: Initialize stable secrets for production environment
+    cmds:
+      - task: secret-init
+        vars:
+          ENV: prod
+
   secret-create:
-    desc: "Create Kubernetes secret manually (ENV=dev|staging|prod, default: dev)"
+    desc: "DEPRECATED - Use secret-init instead. Creates secret (ENV=dev|staging|prod, default: dev)"
     vars:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
       JWT_SECRET:
@@ -220,7 +251,11 @@ tasks:
       LICENSE_SECRET:
         sh: openssl rand -base64 32
     cmds:
-      - echo "Creating secret in namespace {{.NS}}..."
+      - |
+        echo "⚠️  WARNING: This task is deprecated."
+        echo "Use 'task secret-init' instead to create stable secrets."
+        echo ""
+        echo "Creating secret in namespace {{.NS}}..."
       - kubectl create secret generic autolab-api-secret --namespace {{.NS}} --from-literal=SECRET_KEY={{.JWT_SECRET}} --from-literal=SECRET_KEY_LICENSE={{.LICENSE_SECRET}} --from-file=admins.txt=backend-service-rust/admins.txt --dry-run=client -o yaml | kubectl apply -f -
       - echo "Secret created/updated successfully"
 
