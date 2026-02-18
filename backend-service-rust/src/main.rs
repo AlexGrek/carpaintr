@@ -58,7 +58,7 @@ fn spawn_periodic_cleanup(state: Arc<AppState>) {
 async fn main() -> tokio::io::Result<()> {
     dotenv().ok();
 
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug,tower_http=warn,sled=warn"));
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "data/sled_db".to_string());
     let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| "supersecretjwtkey".to_string());
