@@ -1,21 +1,100 @@
+/* TopBarDashboard - transparent at top, glass when scrolled */
+.rs-navbar.top-bar-dashboard,
 .top-bar-dashboard {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0);
+  min-height: 56px;
+  padding: 0 20px;
   z-index: 10000;
-  padding: 8px 16px !important;
-  min-height: auto !important;
+  background: transparent !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: background 0.2s ease, backdrop-filter 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rs-navbar.top-bar-dashboard.top-bar-dashboard-scrolled,
+.top-bar-dashboard.top-bar-dashboard-scrolled {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: rgba(234, 88, 12, 0.12);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
 }
 
 .top-bar-dashboard :where(.rs-navbar-header, .rs-navbar-body, .rs-navbar-content) {
-  padding: 4px 0 !important;
+  padding: 0;
+  min-height: 56px;
 }
 
-/* Ensure dropdown menu has high z-index to cover content */
 .top-bar-dashboard :where(.rs-dropdown) {
   z-index: 10001 !important;
 }
 
 .top-bar-dashboard :where(.rs-dropdown-menu) {
   z-index: 10001 !important;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 6px 0;
+  min-width: 200px;
+}
+
+.top-bar-dashboard :where(.rs-dropdown-item) {
+  padding: 10px 16px;
+}
+
+.top-bar-dashboard-brand {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+
+/* Same logo identity as TopBarUser - do not change font, size or weight */
+.top-bar-dashboard .topbar-header-brand {
+  font-family: "nunito", sans-serif;
+  font-size: 28pt;
+  margin: auto;
+  cursor: pointer;
+}
+
+.top-bar-dashboard-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.top-bar-dashboard-menu-trigger:hover {
+  background: rgba(234, 88, 12, 0.08);
+  color: #ea580c;
+}
+
+.top-bar-dashboard-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-bar-dashboard-menu-item-logout {
+  color: #dc2626;
+}
+
+.top-bar-dashboard :where(.rs-dropdown-item-active) .top-bar-dashboard-menu-item {
+  color: #ea580c;
 }

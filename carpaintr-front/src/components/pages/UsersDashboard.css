@@ -1,174 +1,306 @@
-/* UsersDashboard.css */
-.feature-card.app-card {
-  animation: fadeInUpApp 0.5s ease-out;
-}
-
-.gradient-box {
-  height: 220pt;
-  width: 100%;
-  padding-top: 60pt;
-  background: radial-gradient(
-    /* Sets the gradient's center high up and not visible,
-    creating a bright glow effect at the top. */
-      at top,
-    /* The gradient starts with a light orange color. */ rgb(253, 180, 131),
-    /* It fades out to an almost white color at the edge. */ rgb(255, 254, 250)
+/* UsersDashboard - full-page orange gradient, no white under transparent top bar */
+.users-dashboard-page {
+  min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    #fff7ed 0%,
+    #ffedd5 15%,
+    #fed7aa 35%,
+    #fdba74 55%,
+    #fb923c 75%,
+    #f97316 100%
   );
+  background-attachment: scroll;
 }
 
-.dashboard-content-container {
-  border-radius: 2rem;
-  box-shadow:
-    0 -8px 16px -4px rgb(0 0 0 / 0.1),
-    /* Shadow pointing upwards (negative Y-offset) */ 0 4px 6px -1px
-      rgb(0 0 0 / 0.1),
-    0 2px 4px -2px rgb(0 0 0 / 0.1);
-  padding: 1.5rem;
-  transform: translateY(-20px);
-  z-index: 2;
-  background-color: #fbfbfb;
+.users-dashboard-body {
+  padding-top: 56px;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 2rem;
+}
+
+/* Hero area - transparent so full-page gradient shows through */
+.gradient-box {
+  min-height: 200px;
+  width: 100%;
+  padding: 2rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  background: transparent;
+  position: relative;
+}
+
+/* Company card in hero */
+.dashboard-company-card {
+  max-width: 420px;
+  margin: 0 auto 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 24px rgba(234, 88, 12, 0.08);
+  padding: 1.25rem 1.5rem;
+}
+
+.dashboard-company-card-inner {
+  text-align: left;
+}
+
+.dashboard-company-card-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ea580c;
+  margin-bottom: 0.35rem;
 }
 
 .dashboard-company-card-name {
-  font-family: "PT Serif", sans-serif;
-  font-style: normal;
-  font-weight: lighter;
+  font-family: "PT Serif", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
 }
 
 .dashboard-company-card-email {
-  font-family: "nunito", sans-serif;
-  font-style: normal;
+  font-size: 0.9rem;
+  color: #64748b !important;
+  margin: 0;
 }
 
-@keyframes fadeInUpApp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+/* Main content card */
+.dashboard-content-container {
+  max-width: 900px;
+  margin: -1.5rem 1rem 0;
+  padding: 1.75rem 1.5rem;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.06),
+    0 10px 20px -4px rgba(0, 0, 0, 0.08),
+    0 -1px 0 0 rgba(0, 0, 0, 0.02);
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 640px) {
+  .dashboard-content-container {
+    margin-left: auto;
+    margin-right: auto;
   }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
-.app-card {
-  background: white;
-  padding: 1.3rem;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-}
-
-.app-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-  border-color: #ea580c;
-}
-
-.app-feature-icon svg {
-  font-size: 22pt;
-  margin: auto;
-  text-align: center;
-  display: block;
-}
-
+/* Apps section header */
 .apps-list {
-  max-width: 800px;
-  margin: auto;
+  max-width: 100%;
+}
+
+.apps-list-container {
+  width: 100%;
 }
 
 .apps-list-section-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  width: 100%;
   justify-content: space-between;
-  font-size: x-large;
-  margin: 8pt;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.app-list-view-mode {
+@media (max-width: 480px) {
+  .apps-list-section-header {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .apps-list-title {
+    font-size: 1.1rem;
+  }
+}
+
+.apps-list-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.apps-list-title-icon {
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+/* Pill view toggle - desktop */
+.apps-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.apps-view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.apps-view-toggle-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.apps-view-toggle-btn.active {
+  color: #ea580c;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Narrow screens: icon-only to fit one row, compact padding */
+@media (max-width: 480px) {
+  .apps-view-toggle {
+    padding: 3px;
+    border-radius: 10px;
+  }
+
+  .apps-view-toggle-btn {
+    padding: 8px 10px;
+    min-width: 40px;
+  }
+
+  .apps-view-toggle-btn .apps-view-toggle-btn-label {
+    display: none;
+  }
+}
+
+/* App cards base */
+.app-card {
+  background: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(234, 88, 12, 0.12);
+  border-color: rgba(234, 88, 12, 0.35);
+}
+
+.app-feature-icon {
   display: flex;
-  font-size: small;
-  margin: 0 8pt;
-  justify-content: space-between;
-  align-content: baseline;
-  width: 110pt;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #ea580c;
 }
 
-/* Styles for list view (default, already largely covered by .app-card) */
+.app-feature-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.app-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0.5rem 0 0.25rem;
+  line-height: 1.3;
+}
+
+.app-description {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* List view */
 .features-grid.list-view {
   display: flex;
   flex-direction: column;
-  /* Stacks items vertically */
-  gap: 1rem;
-  /* Space between list items */
+  gap: 0.75rem;
 }
 
 .features-grid.list-view .app-card {
   width: 100%;
-  /* Full width for list items */
   display: flex;
   flex-direction: row;
   align-items: center;
   text-align: left;
-  padding: 1rem 2rem;
-  /* Adjust padding for list view */
+  padding: 1rem 1.25rem;
 }
 
 .features-grid.list-view .app-card .app-feature-icon {
-  margin-right: 1.5rem;
-  /* Space between icon and text */
+  margin: 0 1.25rem 0 0;
+  flex-shrink: 0;
 }
 
 .features-grid.list-view .app-card h3 {
-  margin-bottom: 0.5rem;
-  /* Space between title and description */
+  margin: 0 0 0.2rem 0;
 }
 
-.features-grid.list-view .app-card p {
-  margin-top: 0;
-  margin-bottom: 0;
+.features-grid.list-view .app-card .app-description {
+  margin: 0;
 }
 
-/* Styles for grid view (smartphone menu style) */
+/* Grid view (compact) */
 .features-grid.grid-view {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  /* Max 4 per row, responsive */
   gap: 1rem;
-  /* Space between grid items */
   justify-items: center;
-  /* Center items in their grid cells */
 }
 
 .features-grid.grid-view .app-card.compact-app-card {
   padding: 1rem;
-  box-shadow: none;
-  /* Remove shadow for a lighter feel */
-  border: none;
-  /* Remove border */
-  background: transparent;
-  /* Transparent background */
+  width: 100%;
+  max-width: 120px;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100px;
-  /* Fixed height for consistent sizing */
-  width: 150px;
-  /* Fixed width */
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .features-grid.grid-view .app-card.compact-app-card:hover {
-  transform: translateY(-5px);
-  /* Smaller hover effect */
-  background: #f0f0f0;
-  /* Slight background on hover */
-  border-radius: 8px;
-  /* Rounded corners on hover */
+  background: #fff7ed;
+  border-radius: 14px;
+  border: 1px solid rgba(234, 88, 12, 0.2);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.08);
 }
 
 .features-grid.grid-view .app-card.compact-app-card .app-feature-icon {
@@ -176,57 +308,49 @@
 }
 
 .features-grid.grid-view .app-card.compact-app-card h3 {
-  font-size: 0.7em;
-  /* Smaller font size for titles */
+  font-size: 0.75rem;
   text-align: center;
   word-break: break-word;
-  /* Break long words */
   margin-top: 0;
 }
 
-.features-grid.grid-view .app-card.compact-app-card p {
-  display: none;
-  /* Hide descriptions in compact view */
-}
-
-/* Styles for blocks view (hybrid grid) */
+/* Blocks view */
 .features-grid.blocks-view {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  /* Responsive grid, minimum 200px */
-  gap: 2pt;
-  /* 2pt margin between blocks */
+  gap: 1rem;
 }
 
 .features-grid.blocks-view .app-card {
-  padding: 1.5rem;
-  border-radius: 8px;
-  /* Rounded corners for blocks */
-  text-align: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-  /* Lighter shadow */
-  border: 1px solid #e0e0e0;
-  /* Subtle border */
+  padding: 1.25rem;
   height: auto;
-  /* Allow height to adjust */
-}
-
-.features-grid.blocks-view .app-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  border-color: #ea580c;
 }
 
 .features-grid.blocks-view .app-card .app-feature-icon {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .features-grid.blocks-view .app-card h3 {
-  font-size: 1.1em;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
 }
 
-.features-grid.blocks-view .app-card p {
-  font-size: 0.9em;
-  color: #666;
+.features-grid.blocks-view .app-card .app-description {
+  font-size: 0.8rem;
+}
+
+/* Animations */
+@keyframes fadeInUpApp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feature-card.app-card {
+  animation: fadeInUpApp 0.4s ease-out;
 }

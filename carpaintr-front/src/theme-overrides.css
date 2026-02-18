@@ -88,11 +88,7 @@
   width: 100%;
 }
 
-/* Navbar - preserve transparent background for top-bar-dashboard */
-.rs-navbar.top-bar-dashboard {
-  background-color: transparent;
-}
-
+/* Navbar - top-bar-dashboard uses its own glass style (TopBarDashboard.css) */
 .rs-navbar.top-bar-dashboard .rs-navbar-brand,
 .rs-navbar.top-bar-dashboard .rs-navbar-content {
   background-color: transparent;

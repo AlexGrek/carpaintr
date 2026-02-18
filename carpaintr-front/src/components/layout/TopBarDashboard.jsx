@@ -1,31 +1,35 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navbar, Dropdown, Nav } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../utils/authFetch";
 import "./TopBarDashboard.css";
 import { handleOpenNewTab } from "../../utils/utils";
-import { Menu } from "lucide-react";
+import { LogOut, MessageCircle, Menu, Settings } from "lucide-react";
+
+const SCROLL_THRESHOLD = 8;
 
 const TopBarDashboard = () => {
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
 
-  // Use useCallback to memoize handleSelect, preventing unnecessary re-renders of Dropdown.Item components.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleSelect = useCallback(
     (eventKey) => {
-      console.log(eventKey);
       switch (eventKey) {
         case "logout":
-          // No need for console.log in production code unless debugging
           logout();
           navigate("/");
           break;
         case "manage":
-          // No need for console.log in production code unless debugging
           navigate("/app/cabinet");
           break;
         case "report":
-          // No need for console.log in production code unless debugging
-          // Implement feedback submission logic here (e.g., open a modal, navigate to a feedback page)
           handleOpenNewTab("/report");
           break;
         default:
@@ -33,13 +37,16 @@ const TopBarDashboard = () => {
       }
     },
     [navigate],
-  ); // navigate is a dependency, though it's stable from useNavigate
+  );
 
   return (
-    <Navbar className="top-bar-dashboard blurred-background">
+    <Navbar
+      className={`top-bar-dashboard ${scrolled ? "top-bar-dashboard-scrolled" : ""}`}
+    >
       <Navbar.Brand
+        className="top-bar-dashboard-brand"
         style={{ margin: "0", padding: 0, paddingLeft: "8pt" }}
-        onClick={() => navigate("/app/dashboard")} // Directly use onClick for navigation
+        onClick={() => navigate("/app/dashboard")}
       >
         <span className="topbar-header-brand">autolab</span>
       </Navbar.Brand>
@@ -47,19 +54,39 @@ const TopBarDashboard = () => {
         <Nav>
           <Dropdown
             title=""
-            icon={<Menu />}
+            renderToggle={(props, ref) => (
+              <button
+                ref={ref}
+                {...props}
+                type="button"
+                className="top-bar-dashboard-menu-trigger"
+                aria-label="Menu"
+              >
+                <Menu size={22} strokeWidth={2} />
+              </button>
+            )}
             placement="bottomEnd"
-            trigger={["click", "hover"]}
+            trigger="click"
+            onSelect={handleSelect}
           >
-            <Dropdown.Item eventKey="logout" onSelect={handleSelect}>
-              Вийти
+            <Dropdown.Item eventKey="manage">
+              <span className="top-bar-dashboard-menu-item">
+                <Settings size={16} />
+                <span>Налаштування</span>
+              </span>
             </Dropdown.Item>
-            <Dropdown.Item eventKey="manage" onSelect={handleSelect}>
-              Налаштування
+            <Dropdown.Item eventKey="report">
+              <span className="top-bar-dashboard-menu-item">
+                <MessageCircle size={16} />
+                <span>Надіслати відгук</span>
+              </span>
             </Dropdown.Item>
             <Dropdown.Separator />
-            <Dropdown.Item eventKey="report" onSelect={handleSelect}>
-              Надіслати відгук
+            <Dropdown.Item eventKey="logout">
+              <span className="top-bar-dashboard-menu-item top-bar-dashboard-menu-item-logout">
+                <LogOut size={16} />
+                <span>Вийти</span>
+              </span>
             </Dropdown.Item>
           </Dropdown>
         </Nav>

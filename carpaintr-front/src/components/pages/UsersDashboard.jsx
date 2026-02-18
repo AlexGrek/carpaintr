@@ -1,7 +1,7 @@
 // UsersDashboard.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Panel, Text, Message, Dropdown, Button } from "rsuite";
+import { Text, Message } from "rsuite";
 import ActiveLicenseMarker from "../ActiveLicenseMarker";
 import Trans from "../../localization/Trans";
 import {
@@ -52,9 +52,9 @@ registerTranslations("ua", {
 
 const UsersDashboard = () => {
   return (
-    <div>
+    <div className="users-dashboard-page">
       <TopBarDashboard />
-      <div style={{ margin: "0", padding: "0" }}>
+      <div className="users-dashboard-body">
         <Dashboard />
       </div>
     </div>
@@ -64,14 +64,17 @@ const UsersDashboard = () => {
 const ShowCompanyCard = ({ company }) => {
   const { str } = useLocale();
   return (
-    <Panel header={str("Your company")} className="fade-in-simple">
-      <h2 className="dashboard-company-card-name">
-        {company && company.company_name}
-      </h2>
-      <Text className="dashboard-company-card-email" muted>
-        {company && company.email}
-      </Text>
-    </Panel>
+    <div className="dashboard-company-card fade-in-simple">
+      <div className="dashboard-company-card-inner">
+        <span className="dashboard-company-card-label">{str("Your company")}</span>
+        <h2 className="dashboard-company-card-name">
+          {company && company.company_name}
+        </h2>
+        <Text className="dashboard-company-card-email" muted>
+          {company && company.email}
+        </Text>
+      </div>
+    </div>
   );
 };
 
@@ -204,50 +207,34 @@ const DashboardNavigationButtons = ({ admin }) => {
     },
   ];
 
-  const renderIconButton = (props, ref) => {
-    return (
-      <Button {...props} ref={ref} circle>
-        <LayoutGrid />
-      </Button>
-    );
-  };
-
-  const handleSelectViewMode = (eventKey) => {
-    setViewMode(eventKey);
-  };
-
   return (
     <section className="apps-list slide-in-simple">
       <div className="apps-list-container">
         <div className="apps-list-section-header">
-          <p>
+          <h2 className="apps-list-title">
+            <LayoutGrid size={22} className="apps-list-title-icon" />
             <Trans>Available apps</Trans>
-          </p>
-          <Dropdown
-            placement="leftStart"
-            renderToggle={renderIconButton}
-            trigger="click"
-            onSelect={handleSelectViewMode}
-          >
-            <Dropdown.Item eventKey="list">
-              <p className="app-list-view-mode">
-                <Rows3 />
-                <Trans>As list</Trans>
-              </p>
-            </Dropdown.Item>
-            <Dropdown.Item eventKey="grid">
-              <p className="app-list-view-mode">
-                <Grip />
-                <Trans>As grid</Trans>
-              </p>
-            </Dropdown.Item>
-            <Dropdown.Item eventKey="blocks">
-              <p className="app-list-view-mode">
-                <Grid2X2 />
-                <Trans>As blocks</Trans>
-              </p>
-            </Dropdown.Item>
-          </Dropdown>
+          </h2>
+          <div className="apps-view-toggle" role="tablist" aria-label="View mode">
+            {[
+              { key: "list", icon: Rows3, label: str("As list") },
+              { key: "grid", icon: Grip, label: str("As grid") },
+              { key: "blocks", icon: Grid2X2, label: str("As blocks") },
+            ].map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={viewMode === key}
+                aria-label={label}
+                className={`apps-view-toggle-btn ${viewMode === key ? "active" : ""}`}
+                onClick={() => setViewMode(key)}
+              >
+                <Icon size={16} aria-hidden />
+                <span className="apps-view-toggle-btn-label">{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className={`features-grid ${viewMode}-view`}>
           {features.map((feature, index) => {
