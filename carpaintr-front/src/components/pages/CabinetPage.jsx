@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import TopBarUser from "../layout/TopBarUser";
+import PageHeader from "../layout/PageHeader";
 import { Loader, Panel, PanelGroup, Placeholder } from "rsuite";
 import ActiveLicenseMarker from "../ActiveLicenseMarker";
 import {
@@ -35,6 +36,7 @@ const CabinetPage = () => {
     <div>
       <TopBarUser />
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
+        <PageHeader titleKey="Page header: Your organization" />
         <Panel>
           <ActiveLicenseMarker />
         </Panel>

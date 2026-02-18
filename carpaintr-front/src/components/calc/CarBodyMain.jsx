@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Divider, Panel, Message, Drawer, Modal, Button, Tabs } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
-import { Check, X } from 'lucide-react';
+import { Check, X, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
@@ -47,6 +47,7 @@ registerTranslations("en", {
     "Medium": "Medium",
     "Severe": "Severe",
     "Critical": "Critical",
+    "cells": "cells",
 });
 
 registerTranslations("ua", {
@@ -85,6 +86,7 @@ registerTranslations("ua", {
     "Medium": "Середнє",
     "Severe": "Сильне",
     "Critical": "Критичне",
+    "cells": "клітинок",
 });
 
 const DAMAGE_LEVELS = [
@@ -207,13 +209,16 @@ const CarBodyMain = ({
         setDrawerPartDetails(partToEdit);
         // Initialize local edit state with current values
         const visual = mapVisual(partToEdit.name);
+        const grid = partToEdit.grid || generateInitialGrid(visual);
+        const hasGridData = grid.some(row => row.some(cell => cell > 0));
         setEditedPart({
             name: partToEdit.name,
             action: partToEdit.selectedAction || partToEdit.action || null,
             damageLevel: partToEdit.damageLevel ?? 0,
             original: partToEdit.original ?? true,
             replace: partToEdit.replace ?? false,
-            grid: partToEdit.grid || generateInitialGrid(visual),
+            grid,
+            damageLevelMode: partToEdit.damageLevelMode || (hasGridData ? 'grid' : 'simple'),
         });
         setDrawerOpen(true);
     }, [selectedItems, mapVisual, generateInitialGrid]);
@@ -228,6 +233,7 @@ const CarBodyMain = ({
                         selectedAction: editedPart.action,
                         action: editedPart.action,
                         damageLevel: editedPart.damageLevel,
+                        damageLevelMode: editedPart.damageLevelMode,
                         original: editedPart.original,
                         replace: editedPart.replace,
                         grid: editedPart.grid,
@@ -470,27 +476,32 @@ const CarBodyMain = ({
                             partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
                         />
 
-                        {/* Selected Items Table (Desktop) / Cards (Mobile) */}
+                        {/* Selected Items Table */}
                         {selectedItems.length > 0 && (
                             <div style={{ marginTop: '20px', textAlign: 'left' }}>
-                                <h4>{str("Selected Parts")} ({selectedItems.length})</h4>
+                                <h4 style={{ marginBottom: '0' }}>{str("Selected Parts")} ({selectedItems.length})</h4>
 
-                                {/* Desktop Table View */}
-                                {!isMobile && (
+                                <div style={{
+                                    marginTop: '10px',
+                                    borderRadius: '12px',
+                                    overflow: 'hidden',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                                    border: '1px solid #e5e7eb',
+                                }}>
                                     <table style={{
                                         width: '100%',
                                         borderCollapse: 'collapse',
-                                        marginTop: '10px',
-                                        border: '1px solid #ddd'
+                                        tableLayout: 'auto',
                                     }}>
                                         <thead>
-                                            <tr style={{ backgroundColor: '#f5f5f5' }}>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Actions")}</th>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>{str("Details")}</th>
-                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>{str("Action")}</th>
+                                            <tr style={{
+                                                backgroundColor: '#f3f4f6',
+                                                color: '#374151',
+                                            }}>
+                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'left', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Name")}</th>
+                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'left', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Actions")}</th>
+                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'center', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Damage Level")}</th>
+                                                <th style={{ padding: isMobile ? '10px 4px' : '12px 8px', textAlign: 'center', width: isMobile ? '70px' : '80px' }}></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -498,131 +509,97 @@ const CarBodyMain = ({
                                                 const actionDisplay = item.selectedAction
                                                     ? str(item.selectedAction)
                                                     : '-';
+                                                const dmgLevel = DAMAGE_LEVELS.find(d => d.value === item.damageLevel);
+                                                const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
+                                                const gridMarked = gridFlat.filter(c => c > 0).length;
+                                                const gridTotal = gridFlat.length;
+                                                const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
+                                                const isEven = index % 2 === 0;
                                                 return (
-                                                    <tr key={index}>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd', fontSize: '12px' }}>
-                                                            {actionDisplay}
+                                                    <tr
+                                                        key={index}
+                                                        onClick={() => handleShowDetails(item)}
+                                                        style={{
+                                                            cursor: 'pointer',
+                                                            transition: 'background-color 0.15s ease',
+                                                            backgroundColor: isEven ? '#fff' : '#f9fafb',
+                                                            borderBottom: '1px solid #f0f0f0',
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eef2ff'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isEven ? '#fff' : '#f9fafb'}
+                                                    >
+                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', fontSize: isMobile ? '12px' : '14px', fontWeight: 500 }}>{item.name}</td>
+                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', fontSize: isMobile ? '11px' : '13px', color: '#555' }}>{actionDisplay}</td>
+                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', textAlign: 'center' }}>
+                                                            {item.damageLevelMode === 'grid' ? (
+                                                                <span style={{ fontSize: isMobile ? '11px' : '12px', color: gridMarked > 0 ? '#333' : '#999' }}>
+                                                                    {gridMarked > 0 ? `${gridMarked}/${gridTotal} - ${gridPct}%` : '-'}
+                                                                </span>
+                                                            ) : dmgLevel ? (
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    padding: isMobile ? '2px 8px' : '3px 10px',
+                                                                    borderRadius: '12px',
+                                                                    backgroundColor: dmgLevel.color,
+                                                                    color: dmgLevel.value === 0 ? '#333' : '#fff',
+                                                                    fontSize: isMobile ? '11px' : '12px',
+                                                                    fontWeight: 600,
+                                                                    letterSpacing: '0.2px',
+                                                                }}>
+                                                                    {str(dmgLevel.label)}
+                                                                </span>
+                                                            ) : (
+                                                                <span style={{ color: '#bbb' }}>-</span>
+                                                            )}
                                                         </td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                                            <button
-                                                                onClick={() => handleShowDetails(item)}
-                                                                style={{
-                                                                    padding: '4px 8px',
-                                                                    backgroundColor: '#3b82f6',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '4px',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '14px',
-                                                                    fontWeight: 'bold'
-                                                                }}
-                                                                title={str("Details")}
-                                                            >
-                                                                ⋯
-                                                            </button>
-                                                        </td>
-                                                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                                            <button
-                                                                onClick={() => handleRequestDelete(item)}
-                                                                style={{
-                                                                    padding: '4px 12px',
-                                                                    backgroundColor: '#dc2626',
-                                                                    color: 'white',
-                                                                    border: 'none',
-                                                                    borderRadius: '4px',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: '12px'
-                                                                }}
-                                                            >
-                                                                {str("Remove")}
-                                                            </button>
+                                                        <td style={{ padding: isMobile ? '8px 4px' : '10px 8px', textAlign: 'center' }}>
+                                                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
+                                                                    style={{
+                                                                        padding: isMobile ? '5px 7px' : '6px 8px',
+                                                                        backgroundColor: '#3b82f6',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        borderRadius: '6px',
+                                                                        cursor: 'pointer',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        transition: 'opacity 0.15s',
+                                                                    }}
+                                                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                                                    title={str("Details")}
+                                                                >
+                                                                    <MoreHorizontal size={isMobile ? 14 : 16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
+                                                                    style={{
+                                                                        padding: isMobile ? '5px 7px' : '6px 8px',
+                                                                        backgroundColor: '#ef4444',
+                                                                        color: 'white',
+                                                                        border: 'none',
+                                                                        borderRadius: '6px',
+                                                                        cursor: 'pointer',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        transition: 'opacity 0.15s',
+                                                                    }}
+                                                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                                                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                                                    title={str("Remove")}
+                                                                >
+                                                                    <Trash2 size={isMobile ? 14 : 16} />
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
                                             })}
                                         </tbody>
                                     </table>
-                                )}
-
-                                {/* Mobile Card View */}
-                                {isMobile && (
-                                    <div style={{ marginTop: '10px' }}>
-                                        {selectedItems.map((item, index) => {
-                                            const actionDisplay = item.selectedAction
-                                                ? str(item.selectedAction)
-                                                : '-';
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    style={{
-                                                        border: '1px solid #ddd',
-                                                        borderRadius: '6px',
-                                                        padding: '12px',
-                                                        marginBottom: '12px',
-                                                        backgroundColor: '#fafafa'
-                                                    }}
-                                                >
-                                                    <div style={{ marginBottom: '8px' }}>
-                                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                                                            {item.name}
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                                        <div>
-                                                            <strong>{str("Zone")}:</strong> {item.zone || '-'}
-                                                        </div>
-                                                        <div>
-                                                            <strong>{str("Group")}:</strong> {item.group || '-'}
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-                                                        <strong>{str("Actions")}:</strong> {actionDisplay}
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
-                                                        <button
-                                                            onClick={() => handleShowDetails(item)}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '10px',
-                                                                backgroundColor: '#3b82f6',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '4px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '13px',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        >
-                                                            {str("Details")}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRequestDelete(item)}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '10px',
-                                                                backgroundColor: '#dc2626',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '4px',
-                                                                cursor: 'pointer',
-                                                                fontSize: '13px',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        >
-                                                            {str("Remove")}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </>
@@ -849,8 +826,26 @@ const CarBodyMain = ({
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                                     {str("Damage Level")}
                                 </label>
-                                <Tabs defaultActiveKey="quick" appearance="subtle">
-                                    <Tabs.Tab eventKey="quick" title={str("Quick Select")}>
+                                <Tabs
+                                    activeKey={editedPart.damageLevelMode || 'simple'}
+                                    onSelect={(key) => {
+                                        if (key === 'simple') {
+                                            setEditedPart(prev => ({
+                                                ...prev,
+                                                damageLevelMode: 'simple',
+                                                grid: generateInitialGrid(mapVisual(prev.name)),
+                                            }));
+                                        } else {
+                                            setEditedPart(prev => ({
+                                                ...prev,
+                                                damageLevelMode: 'grid',
+                                                damageLevel: 0,
+                                            }));
+                                        }
+                                    }}
+                                    appearance="subtle"
+                                >
+                                    <Tabs.Tab eventKey="simple" title={str("Quick Select")}>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 0' }}>
                                             {DAMAGE_LEVELS.map(({ value, label, color }) => {
                                                 const isActive = editedPart.damageLevel === value;

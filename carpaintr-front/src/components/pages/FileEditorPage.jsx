@@ -1,4 +1,5 @@
 import TopBarUser from "../layout/TopBarUser";
+import PageHeader from "../layout/PageHeader";
 import FilesystemBrowser from "../editor/FilesystemBrowser";
 
 const filesystemConfigs = [
@@ -29,6 +30,7 @@ const FileEditorPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
+        <PageHeader titleKey="Page header: Customization" />
         <FilesystemBrowser filesystems={filesystemConfigs} />
       </div>
     </div>

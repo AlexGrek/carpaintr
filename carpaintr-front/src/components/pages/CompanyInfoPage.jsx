@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCompanyInfo } from "../../utils/authFetch";
 import LicenseInfoTable from "../LicenseInfoTable";
+import PageHeader from "../layout/PageHeader";
 import { dump } from "js-yaml";
 
 const CompanyInfoPage = () => {
@@ -29,7 +30,8 @@ const CompanyInfoPage = () => {
   }
 
   return (
-    <div>
+    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
+      <PageHeader titleKey="Page header: Company info" />
       <LicenseInfoTable companyInfo={companyInfo} />
       <code>{companyInfoRaw}</code>
     </div>

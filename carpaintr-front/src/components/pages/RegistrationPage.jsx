@@ -9,6 +9,7 @@ import {
   Panel,
 } from "rsuite";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "../layout/PageHeader";
 
 const RegistrationPage = () => {
   // State for email, password, and loading status
@@ -89,6 +90,7 @@ const RegistrationPage = () => {
       >
         {/* rsuite Form component with fluid layout */}
         <Form fluid>
+          <PageHeader titleKey="Page header: Register" />
           <img
             src="/autolab_large_bw.png"
             alt="CarPaintr Logo"

@@ -38,10 +38,12 @@ const ContactSupport = lazy(
 const TemplatesPage = lazy(
   () => import("./components/pages/TemplatesPage.jsx"),
 );
-
-// Static content — no need for lazy-loading simple components
-const HistoryPage = () => <h2>History Page</h2>;
-const AboutUsPage = () => <h2>About Us Page</h2>;
+const HistoryPage = lazy(
+  () => import("./components/pages/HistoryPage.jsx"),
+);
+const AboutUsPage = lazy(
+  () => import("./components/pages/AboutUsPage.jsx"),
+);
 
 function App() {
   useVersionCheck();

@@ -3,6 +3,7 @@ import { Breadcrumb, Message, Loader } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import AdminTools from "../AdminTools";
+import PageHeader from "../layout/PageHeader";
 import Trans from "../../localization/Trans";
 import {
   useLocale,
@@ -60,11 +61,7 @@ const AdminPage = () => {
       ) : (
         <>
           <div className="police-line"></div>
-          <h3>
-            <code>
-              <Trans>Admin Page</Trans>
-            </code>
-          </h3>
+          <PageHeader titleKey="Page header: Admin Area" />
           <AppVersionBadge />
           <Breadcrumb>
             <Breadcrumb.Item href="/">

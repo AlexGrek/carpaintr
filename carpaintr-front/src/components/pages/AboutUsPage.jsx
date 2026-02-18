@@ -1,8 +1,7 @@
 import TopBarUser from "../layout/TopBarUser";
 import PageHeader from "../layout/PageHeader";
-import Trans from "../../localization/Trans";
 
-const WipPage = () => {
+const AboutUsPage = () => {
   return (
     <div>
       <TopBarUser />
@@ -10,13 +9,10 @@ const WipPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Under construction" />
-        <p>
-          <Trans>Under construction</Trans>
-        </p>
+        <PageHeader titleKey="Page header: About us" />
       </div>
     </div>
   );
 };
 
-export default WipPage;
+export default AboutUsPage;

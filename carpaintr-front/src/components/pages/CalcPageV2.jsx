@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import TopBarUser from "../layout/TopBarUser";
+import PageHeader from "../layout/PageHeader";
 import { useLocation, useNavigate } from "react-router-dom";
 import CalcMain from "../calc/CalcMain";
 
@@ -66,6 +67,7 @@ const CalcPage = () => {
     <div>
       <TopBarUser onNavigate={handleNavigation} />
       <div style={{ maxWidth: "2000px", margin: "0 auto", padding: "1em 0" }}>
+        <PageHeader titleKey="Page header: Calculation" />
         <CalcMain setChanges={setHasChanges} />
       </div>
     </div>

@@ -5,6 +5,22 @@ const SUPPORTED_LANGUAGES = ["en", "ua"];
 
 const TRANSLATIONS_BASIC = {
   ua: {
+    "Page header: Dashboard": "Панель",
+    "Page header: Calculation": "Розрахунок",
+    "Page header: Customization": "Персоналізація",
+    "Page header: Catalog": "Каталог",
+    "Page header: Templates": "Шаблони документів",
+    "Page header: Your organization": "Ваша організація",
+    "Page header: Under construction": "У розробці",
+    "Page header: Admin Area": "Адміністрування",
+    "Page header: Contact Support": "Зв'язатися з підтримкою",
+    "Page header: Create processor": "Створити процесор",
+    "Page header: Company info": "Інформація про компанію",
+    "Page header: Sign in": "Увійти",
+    "Page header: Register": "Реєстрація",
+    "Page header: History": "Історія",
+    "Page header: About us": "Про нас",
+    "Under construction": "У розробці",
     "No new notifications": "Сповіщення відсутні",
     "User info": "Користувач",
     Settings: "Налаштування",

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import AppVersionBadge from "../AppVersionBadge";
 import TopBarDashboard from "../layout/TopBarDashboard";
+import PageHeader from "../layout/PageHeader";
 
 registerTranslations("ua", {
   Calculation: "Розрахунок",
@@ -133,6 +134,7 @@ const Dashboard = () => {
         {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
       </div>
       <main className="dashboard-content-container">
+        <PageHeader titleKey="Page header: Dashboard" />
         <DashboardNavigationButtons admin={admin} />
         <AppVersionBadge />
       </main>

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import TopBarUser from "../layout/TopBarUser";
+import PageHeader from "../layout/PageHeader";
 import { Loader, Nav } from "rsuite";
 import ErrorBoundary from "../../ErrorBoundary";
 import { registerTranslations } from "../../localization/LocaleContext";
@@ -61,6 +62,7 @@ const CatalogPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
+        <PageHeader titleKey="Page header: Catalog" />
         <div
           style={{
             backgroundColor: "white",
