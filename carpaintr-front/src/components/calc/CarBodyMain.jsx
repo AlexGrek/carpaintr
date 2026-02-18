@@ -1,12 +1,43 @@
-import { useCallback, useEffect, useState } from 'react';
+/**
+ * @deprecated This component is deprecated and should not be modified.
+ * Use PartDetailsDrawer.jsx and other refactored components instead.
+ */
+
+import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Divider, Panel, Message, Drawer } from 'rsuite';
+import { Divider, Panel, Message, Drawer, Modal, Button } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
+
+registerTranslations("en", {
+    "Selected Parts": "Selected Parts",
+    "Name": "Name",
+    "Zone": "Zone",
+    "Group": "Group",
+    "Action": "Action",
+    "Remove": "Remove",
+    "Details": "Details",
+    "Part Details": "Part Details",
+    "Close": "Close",
+    "No additional information available": "No additional information available",
+    "Actions": "Actions",
+    "Select actions for this part": "Select actions for this part",
+    "assemble": "assemble",
+    "twist": "twist",
+    "paint": "paint",
+    "replace": "replace",
+    "mount": "mount",
+    "repair": "repair",
+    "Confirm Deletion": "Confirm Deletion",
+    "Are you sure you want to remove this part?": "Are you sure you want to remove this part?",
+    "Cancel": "Cancel",
+    "Raw Data": "Raw Data",
+    "Content for action will appear here": "Content for {action} action will appear here",
+});
 
 registerTranslations("ua", {
     "Selected Parts": "Обрані деталі",
@@ -27,6 +58,11 @@ registerTranslations("ua", {
     "replace": "замінити",
     "mount": "змонтувати",
     "repair": "відремонтувати",
+    "Confirm Deletion": "Підтвердити видалення",
+    "Are you sure you want to remove this part?": "Ви впевнені, що хочете видалити цю деталь?",
+    "Cancel": "Скасувати",
+    "Raw Data": "Необроблені дані",
+    "Content for action will appear here": "Зміст для дії {action} з'явиться тут",
 });
 
 const CarBodyMain = ({
@@ -53,6 +89,29 @@ const CarBodyMain = ({
     const [selectedItems, setSelectedItems] = useState([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerPartDetails, setDrawerPartDetails] = useState(null);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+
+    // Ref to prevent infinite loop when syncing state
+    const isInternalUpdate = useRef(false);
+
+    // Ref to track current selectedItems for comparison
+    const selectedItemsRef = useRef(selectedItems);
+
+    // Update ref when selectedItems changes
+    useEffect(() => {
+        selectedItemsRef.current = selectedItems;
+    }, [selectedItems]);
+
+    // Helper to deep compare arrays of objects
+    const arraysEqual = useCallback((a, b) => {
+        if (a === b) return true;
+        if (!a || !b) return false;
+        if (a.length !== b.length) return false;
+
+        // Quick check: compare stringified versions
+        return JSON.stringify(a) === JSON.stringify(b);
+    }, []);
 
     // Handler for selecting a new part from the dropdown
     const handlePartSelect = useCallback(
@@ -109,6 +168,19 @@ const CarBodyMain = ({
         setDrawerOpen(true);
     }, [selectedItems]);
 
+    const handleRequestDelete = useCallback((item) => {
+        setItemToDelete(item);
+        setDeleteConfirmOpen(true);
+    }, []);
+
+    const handleConfirmDelete = useCallback(() => {
+        if (itemToDelete) {
+            handleDiagramSelect(itemToDelete);
+        }
+        setDeleteConfirmOpen(false);
+        setItemToDelete(null);
+    }, [itemToDelete, handleDiagramSelect]);
+
     // Update drawer details when selectedItems change (to reflect action toggles)
     useEffect(() => {
         if (drawerOpen && drawerPartDetails) {
@@ -118,6 +190,62 @@ const CarBodyMain = ({
             }
         }
     }, [selectedItems, drawerOpen, drawerPartDetails]);
+
+    // Sync selectedParts prop → selectedItems state (parent controls initial state)
+    useEffect(() => {
+        if (selectedParts && Array.isArray(selectedParts)) {
+            // Convert selectedParts format to selectedItems format
+            const converted = selectedParts.map(part => ({
+                name: part.name,
+                zone: part.zone || null,
+                group: part.group || null,
+                actions: part.actions || [],
+                selectedAction: part.action || null,
+                // Preserve any additional fields from parent
+                ...part
+            }));
+
+            // Only update if actually different (prevents infinite loops)
+            // Use ref to get current value without adding to dependencies
+            if (!arraysEqual(converted, selectedItemsRef.current)) {
+                console.log('[CarBodyMain] Syncing FROM parent:', { selectedParts, converted, currentItems: selectedItemsRef.current });
+                // Mark as external update to prevent calling onChange
+                isInternalUpdate.current = true;
+                setSelectedItems(converted);
+
+                // Reset flag after state update completes
+                setTimeout(() => {
+                    isInternalUpdate.current = false;
+                    console.log('[CarBodyMain] Reset isInternalUpdate flag');
+                }, 0);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedParts]); // Only run when parent's selectedParts changes, not when internal selectedItems changes
+
+    // Sync selectedItems state → onChange callback (notify parent of changes)
+    // Store previous value to detect actual changes
+    const prevSelectedItemsRef = useRef();
+    useEffect(() => {
+        // Only call onChange if this is a user-initiated change (not from prop sync)
+        // AND the value has actually changed
+        const isUserChange = !isInternalUpdate.current;
+        const hasChanged = !arraysEqual(selectedItems, prevSelectedItemsRef.current);
+
+        console.log('[CarBodyMain] Sync TO parent check:', {
+            isUserChange,
+            hasChanged,
+            selectedItems,
+            prev: prevSelectedItemsRef.current
+        });
+
+        if (isUserChange && onChange && hasChanged) {
+            console.log('[CarBodyMain] Calling onChange with:', selectedItems);
+            prevSelectedItemsRef.current = selectedItems;
+            onChange(selectedItems);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedItems]); // onChange is stable (memoized in parent), don't need it in deps
 
     // Unified error handler
     const handleError = useCallback((context, error) => {
@@ -318,7 +446,7 @@ const CarBodyMain = ({
                                                     </td>
                                                     <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                                                         <button
-                                                            onClick={() => handleDiagramSelect(item)}
+                                                            onClick={() => handleRequestDelete(item)}
                                                             style={{
                                                                 padding: '4px 12px',
                                                                 backgroundColor: '#dc2626',
@@ -556,11 +684,11 @@ const CarBodyMain = ({
                                 <div style={{ marginTop: '20px' }}>
                                     <Divider />
                                     <h5 style={{ marginBottom: '10px' }}>
-                                        {str(drawerPartDetails.selectedAction)} - Details
+                                        {str(drawerPartDetails.selectedAction)} - {str("Details")}
                                     </h5>
                                     <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
                                         <p style={{ fontSize: '13px', color: '#666' }}>
-                                            Content for {str(drawerPartDetails.selectedAction)} action will appear here.
+                                            {str("Content for action will appear here").replace("{action}", str(drawerPartDetails.selectedAction))}
                                         </p>
                                     </div>
                                 </div>
@@ -572,7 +700,7 @@ const CarBodyMain = ({
                                     <Divider />
                                     <details>
                                         <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
-                                            Raw Data
+                                            {str("Raw Data")}
                                         </summary>
                                         <pre style={{
                                             background: '#f5f5f5',
@@ -594,6 +722,33 @@ const CarBodyMain = ({
                     )}
                 </Drawer.Body>
             </Drawer>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                size="xs"
+            >
+                <Modal.Header>
+                    <Modal.Title>{str("Confirm Deletion")}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>{str("Are you sure you want to remove this part?")}</p>
+                    {itemToDelete && (
+                        <p style={{ marginTop: '10px', fontWeight: 'bold' }}>
+                            {itemToDelete.name}
+                        </p>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button onClick={handleConfirmDelete} appearance="primary" color="red">
+                        {str("Remove")}
+                    </Button>
+                    <Button onClick={() => setDeleteConfirmOpen(false)} appearance="subtle">
+                        {str("Cancel")}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Panel>
     );
 };

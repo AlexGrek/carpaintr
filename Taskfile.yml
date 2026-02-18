@@ -475,12 +475,259 @@ tasks:
     vars:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
       REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      BACKUP_PVC: "{{.REL}}-autolab-api-backup"
     cmds:
-      - echo "Backups in {{.NS}}"
-      - kubectl exec -n {{.NS}} statefulset/{{.REL}}-autolab-api -- ls -lh /backups/ 2>/dev/null || echo "No backups found or pod not ready"
+      - echo "Backups in {{.NS}} (PVC {{.BACKUP_PVC}})"
+      - |
+        kubectl run backup-lister-$(date +%s) --rm -i --restart=Never --image=busybox:1.36 -n {{.NS}} --overrides='
+        {
+          "spec": {
+            "containers": [{
+              "name": "backup-lister",
+              "image": "busybox:1.36",
+              "command": ["ls", "-lh", "/backups"],
+              "volumeMounts": [{
+                "name": "backup-volume",
+                "mountPath": "/backups"
+              }]
+            }],
+            "volumes": [{
+              "name": "backup-volume",
+              "persistentVolumeClaim": {
+                "claimName": "{{.BACKUP_PVC}}"
+              }
+            }]
+          }
+        }' 2>/dev/null || echo "Error accessing backup volume"
 
   db-list-backups-dev:
     desc: List dev backups
     cmds:
       - task: db-list-backups
         vars: {ENV: dev}
+
+  db-restore:
+    desc: "Restore database from backup (ENV=dev|staging|prod, BACKUP_FILE=filename)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+    preconditions:
+      - sh: '[ -n "{{.BACKUP_FILE}}" ]'
+        msg: "BACKUP_FILE is required. Example: task db-restore ENV=dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz"
+    cmds:
+      - echo "Restoring {{.BACKUP_FILE}} in {{.NS}}..."
+      - ./scripts/restore-from-backup.sh "{{.BACKUP_FILE}}" "{{.NS}}" "{{.REL}}"
+
+  db-restore-dev:
+    desc: "Restore dev database from backup (BACKUP_FILE=filename required)"
+    preconditions:
+      - sh: '[ -n "{{.BACKUP_FILE}}" ]'
+        msg: "BACKUP_FILE is required. Example: task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz"
+    cmds:
+      - task: db-restore
+        vars:
+          ENV: dev
+          BACKUP_FILE: "{{.BACKUP_FILE}}"
+
+  db-restore-staging:
+    desc: "Restore staging database from backup (BACKUP_FILE=filename required)"
+    preconditions:
+      - sh: '[ -n "{{.BACKUP_FILE}}" ]'
+        msg: "BACKUP_FILE is required. Example: task db-restore-staging BACKUP_FILE=autolab-backup-20260209_120000.tar.gz"
+    cmds:
+      - task: db-restore
+        vars:
+          ENV: staging
+          BACKUP_FILE: "{{.BACKUP_FILE}}"
+
+  db-restore-prod:
+    desc: "Restore production database from backup (BACKUP_FILE=filename + CONFIRM_PROD=yes required)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" "prod")}}'
+      REL: '{{index . (printf "RELEASE_%s" "prod")}}'
+    preconditions:
+      - sh: '[ -n "{{.BACKUP_FILE}}" ]'
+        msg: "BACKUP_FILE is required. Example: task db-restore-prod BACKUP_FILE=autolab-backup-20260209_120000.tar.gz CONFIRM_PROD=yes"
+      - sh: '[ "{{.CONFIRM_PROD}}" = "yes" ]'
+        msg: "CONFIRM_PROD=yes is required for production restore. Example: task db-restore-prod BACKUP_FILE=autolab-backup-20260209_120000.tar.gz CONFIRM_PROD=yes"
+    cmds:
+      - echo "WARNING - Restoring PRODUCTION database from {{.BACKUP_FILE}}"
+      - echo "This will cause downtime and overwrite all current data!"
+      - ./scripts/restore-from-backup.sh "{{.BACKUP_FILE}}" "{{.NS}}" "{{.REL}}"
+
+  db-restore-from-local:
+    desc: "Upload and restore from local backup file (ENV=dev|staging|prod, LOCAL_FILE=path to .tar.gz or .zip)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      BACKUP_PVC: "{{.REL}}-autolab-api-backup"
+      TEMP_POD: "backup-uploader-$(date +%s)"
+      FILENAME:
+        sh: basename "{{.LOCAL_FILE}}"
+    preconditions:
+      - sh: '[ -n "{{.LOCAL_FILE}}" ]'
+        msg: "LOCAL_FILE is required. Example: task db-restore-from-local ENV=dev LOCAL_FILE=./my-backup.tar.gz"
+      - sh: '[ -f "{{.LOCAL_FILE}}" ]'
+        msg: "File {{.LOCAL_FILE}} does not exist"
+    cmds:
+      - echo "═══════════════════════════════════════════════════════════"
+      - echo "Restore from Local Backup File"
+      - echo "═══════════════════════════════════════════════════════════"
+      - echo "Environment {{.ENV}} ({{.NS}})"
+      - echo "Local file {{.LOCAL_FILE}}"
+      - |
+        echo "File size: $(du -h "{{.LOCAL_FILE}}" | cut -f1)"
+      - echo ""
+      - echo "Step 1/2 - Uploading backup file to cluster..."
+      - |
+        kubectl run {{.TEMP_POD}} --image=busybox:1.36 -n {{.NS}} --restart=Never --overrides='
+        {
+          "spec": {
+            "containers": [{
+              "name": "uploader",
+              "image": "busybox:1.36",
+              "command": ["sh", "-c", "sleep 120"],
+              "volumeMounts": [{
+                "name": "backup-volume",
+                "mountPath": "/backups"
+              }]
+            }],
+            "volumes": [{
+              "name": "backup-volume",
+              "persistentVolumeClaim": {
+                "claimName": "{{.BACKUP_PVC}}"
+              }
+            }]
+          }
+        }' 2>/dev/null || true
+      - kubectl wait --for=condition=ready pod/{{.TEMP_POD}} -n {{.NS}} --timeout=30s
+      - kubectl cp "{{.LOCAL_FILE}}" {{.NS}}/{{.TEMP_POD}}:/backups/{{.FILENAME}}
+      - kubectl exec -n {{.NS}} {{.TEMP_POD}} -- ls -lh /backups/{{.FILENAME}}
+      - kubectl delete pod {{.TEMP_POD}} -n {{.NS}} --ignore-not-found=true
+      - echo "✓ Upload complete"
+      - echo ""
+      - echo "Step 2/2 - Starting restore process..."
+      - ./scripts/restore-from-backup.sh "{{.FILENAME}}" "{{.NS}}" "{{.REL}}"
+
+  db-restore-from-local-dev:
+    desc: "Upload and restore from local backup file to dev (LOCAL_FILE=path required)"
+    preconditions:
+      - sh: '[ -n "{{.LOCAL_FILE}}" ]'
+        msg: "LOCAL_FILE is required. Example: task db-restore-from-local-dev LOCAL_FILE=./my-backup.tar.gz"
+    cmds:
+      - task: db-restore-from-local
+        vars:
+          ENV: dev
+          LOCAL_FILE: "{{.LOCAL_FILE}}"
+
+  db-restore-from-local-staging:
+    desc: "Upload and restore from local backup file to staging (LOCAL_FILE=path required)"
+    preconditions:
+      - sh: '[ -n "{{.LOCAL_FILE}}" ]'
+        msg: "LOCAL_FILE is required. Example: task db-restore-from-local-staging LOCAL_FILE=./my-backup.tar.gz"
+    cmds:
+      - task: db-restore-from-local
+        vars:
+          ENV: staging
+          LOCAL_FILE: "{{.LOCAL_FILE}}"
+
+  db-restore-from-local-prod:
+    desc: "Upload and restore from local backup file to production (LOCAL_FILE=path + CONFIRM_PROD=yes required)"
+    preconditions:
+      - sh: '[ -n "{{.LOCAL_FILE}}" ]'
+        msg: "LOCAL_FILE is required. Example: task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes"
+      - sh: '[ "{{.CONFIRM_PROD}}" = "yes" ]'
+        msg: "CONFIRM_PROD=yes is required for production restore. Example: task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes"
+    cmds:
+      - echo "WARNING - Restoring PRODUCTION from local file {{.LOCAL_FILE}}"
+      - echo "This will cause downtime and overwrite all current data!"
+      - task: db-restore-from-local
+        vars:
+          ENV: prod
+          LOCAL_FILE: "{{.LOCAL_FILE}}"
+
+  db-download-backup:
+    desc: "Download backup file from cluster to local machine (ENV=dev|staging|prod, BACKUP_FILE=filename)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      BACKUP_PVC: "{{.REL}}-autolab-api-backup"
+      LOCAL_DIR: "./backups"
+      TEMP_POD: "backup-downloader-{{.BACKUP_FILE}}"
+    preconditions:
+      - sh: '[ -n "{{.BACKUP_FILE}}" ]'
+        msg: "BACKUP_FILE is required. Example: task db-download-backup ENV=dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz"
+    cmds:
+      - mkdir -p {{.LOCAL_DIR}}
+      - echo "Downloading {{.BACKUP_FILE}} from {{.NS}} backup volume..."
+      - |
+        kubectl run {{.TEMP_POD}} --image=busybox:1.36 -n {{.NS}} --restart=Never --overrides='
+        {
+          "spec": {
+            "containers": [{
+              "name": "downloader",
+              "image": "busybox:1.36",
+              "command": ["sh", "-c", "sleep 60"],
+              "volumeMounts": [{
+                "name": "backup-volume",
+                "mountPath": "/backups",
+                "readOnly": true
+              }]
+            }],
+            "volumes": [{
+              "name": "backup-volume",
+              "persistentVolumeClaim": {
+                "claimName": "{{.BACKUP_PVC}}"
+              }
+            }]
+          }
+        }' 2>/dev/null || true
+      - kubectl wait --for=condition=ready pod/{{.TEMP_POD}} -n {{.NS}} --timeout=30s
+      - kubectl cp {{.NS}}/{{.TEMP_POD}}:/backups/{{.BACKUP_FILE}} {{.LOCAL_DIR}}/{{.BACKUP_FILE}}
+      - kubectl delete pod {{.TEMP_POD}} -n {{.NS}} --ignore-not-found=true
+      - echo "Downloaded to {{.LOCAL_DIR}}/{{.BACKUP_FILE}}"
+      - ls -lh {{.LOCAL_DIR}}/{{.BACKUP_FILE}}
+
+  db-upload-backup:
+    desc: "Upload local backup file to cluster (ENV=dev|staging|prod, LOCAL_FILE=path)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+      REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
+      BACKUP_PVC: "{{.REL}}-autolab-api-backup"
+      TEMP_POD: "backup-uploader-$(date +%s)"
+      FILENAME:
+        sh: basename "{{.LOCAL_FILE}}"
+    preconditions:
+      - sh: '[ -n "{{.LOCAL_FILE}}" ]'
+        msg: "LOCAL_FILE is required. Example: task db-upload-backup ENV=dev LOCAL_FILE=./backups/autolab-backup-20260209_120000.tar.gz"
+      - sh: '[ -f "{{.LOCAL_FILE}}" ]'
+        msg: "File {{.LOCAL_FILE}} does not exist"
+    cmds:
+      - echo "Uploading {{.LOCAL_FILE}} to {{.NS}} backup volume..."
+      - |
+        kubectl run {{.TEMP_POD}} --image=busybox:1.36 -n {{.NS}} --restart=Never --overrides='
+        {
+          "spec": {
+            "containers": [{
+              "name": "uploader",
+              "image": "busybox:1.36",
+              "command": ["sh", "-c", "sleep 60"],
+              "volumeMounts": [{
+                "name": "backup-volume",
+                "mountPath": "/backups"
+              }]
+            }],
+            "volumes": [{
+              "name": "backup-volume",
+              "persistentVolumeClaim": {
+                "claimName": "{{.BACKUP_PVC}}"
+              }
+            }]
+          }
+        }' 2>/dev/null || true
+      - kubectl wait --for=condition=ready pod/{{.TEMP_POD}} -n {{.NS}} --timeout=30s
+      - kubectl cp {{.LOCAL_FILE}} {{.NS}}/{{.TEMP_POD}}:/backups/{{.FILENAME}}
+      - echo "Upload complete. Verifying..."
+      - kubectl exec -n {{.NS}} {{.TEMP_POD}} -- ls -lh /backups/{{.FILENAME}}
+      - kubectl delete pod {{.TEMP_POD}} -n {{.NS}} --ignore-not-found=true
+      - echo "File uploaded successfully to cluster backup volume"

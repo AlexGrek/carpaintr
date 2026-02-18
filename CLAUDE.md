@@ -36,23 +36,52 @@ task redeploy          # Build, push, restart k8s pods
 
 **Full documentation**: See [docs/backup.md](docs/backup.md)
 
-The application includes automated Kubernetes backups (daily by default, keeps last 10 backups):
+The application includes automated Kubernetes backups (daily by default, keeps last 10 backups).
+
+### Quick Commands
 
 ```bash
+# List available backups
+task db-list-backups ENV=dev
+
+# Create manual backup
+task db-backup ENV=dev
+task db-backup-dev         # Shorthand for dev
+
+# Restore from backup (already in cluster)
+task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+task db-restore-staging BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+task db-restore-prod BACKUP_FILE=autolab-backup-20260209_120000.tar.gz CONFIRM_PROD=yes
+
+# Restore from local file (auto-upload + restore, supports .tar.gz/.tgz/.zip)
+task db-restore-from-local-dev LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-dev LOCAL_FILE=./external-backup.zip
+task db-restore-from-local-staging LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes
+
+# Download backup to local machine
+task db-download-backup ENV=dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Upload local backup to cluster (without restoring)
+task db-upload-backup ENV=dev LOCAL_FILE=./backups/autolab-backup-20260209_120000.tar.gz
+
 # View backup status
-kubectl get cronjob
-kubectl get jobs | grep backup
+kubectl get cronjob -n autolab-dev
+kubectl get jobs -n autolab-dev | grep backup
+```
 
-# Manual backup
-kubectl create job --from=cronjob/autolab-api-backup manual-backup-$(date +%s)
+### Restore Process
 
-# View backup logs
-kubectl logs job/<backup-job-name>
+The restore script automatically:
+1. Verifies backup file exists
+2. Scales down application (0 replicas)
+3. Creates safety backup of current data
+4. Clears existing data and restores from backup
+5. Scales up application (1 replica)
 
-# Configure via Helm
-helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
-  --set backup.retention=10 \
-  --set backup.schedule="0 0 * * *"
+**Direct script usage:**
+```bash
+./scripts/restore-from-backup.sh <backup-file> <namespace> <release>
 ```
 
 ## Integration Testing

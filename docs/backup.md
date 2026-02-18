@@ -7,25 +7,40 @@ The Carpaintr application includes an automated backup system that runs as a Kub
 ## Architecture
 
 ```
-┌─────────────────────┐
-│  StatefulSet Pod    │
-│  (autolab-api-0)    │
-│                     │
-│  /app/data          │ ← Main data volume (Sled DB, logs, files)
-└─────────────────────┘
-         ↓
-    (backup job)
-         ↓
-┌─────────────────────┐
-│  Backup PVC         │
-│                     │
-│  /backups           │ ← Backup storage
-│    ├── autolab-backup-20260209_120000.tar.gz
-│    ├── autolab-backup-20260208_120000.tar.gz
-│    ├── autolab-backup-20260207_120000.tar.gz
-│    └── ... (last 10)
-└─────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     StatefulSet Pod                         │
+│                   (autolab-api-0)                          │
+│                                                             │
+│  /app/data ← Main data volume (Sled DB, logs, files)      │
+│  (Backup volume NOT mounted here for security)             │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+         ┌─────────────────────────────────┐
+         │   Backup CronJob (daily)        │
+         │   - Mounts BOTH volumes         │
+         │   - Reads from /app/data        │
+         │   - Writes to /backups          │
+         └─────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Backup PVC (separate)                    │
+│                                                             │
+│  /backups ← Backup storage (only accessible via jobs/pods) │
+│    ├── autolab-backup-20260218_000000.tar.gz (latest)     │
+│    ├── autolab-backup-20260217_000000.tar.gz              │
+│    ├── autolab-backup-20260216_000000.tar.gz              │
+│    └── ... (retention: last 10)                           │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Security Design:**
+- The backup volume is **intentionally NOT mounted** on the main application pod
+- This prevents accidental deletion or modification of backups
+- Backups are only accessible via:
+  - Backup CronJob (read-only access to data, write to backups)
+  - Restore jobs (read-only access to backups, write to data)
+  - Temporary pods created by Taskfile commands
+  - Manual kubectl operations
 
 ## Default Configuration
 
@@ -194,10 +209,24 @@ Backup process completed successfully at Sat Feb  9 00:00:52 EET 2026
 
 #### List Backup Files
 
+**Using Taskfile (Recommended):**
+```bash
+# Development
+task db-list-backups ENV=dev
+
+# Staging
+task db-list-backups ENV=staging
+
+# Production
+task db-list-backups ENV=prod
+```
+
+**Manual method:**
 ```bash
 # Create a temporary pod to access backup volume
-kubectl run backup-viewer --rm -it --restart=Never \
+kubectl run backup-viewer --rm -i --restart=Never \
   --image=busybox:1.36 \
+  -n autolab-dev \
   --overrides='
 {
   "spec": {
@@ -213,17 +242,14 @@ kubectl run backup-viewer --rm -it --restart=Never \
     "volumes": [{
       "name": "backup-volume",
       "persistentVolumeClaim": {
-        "claimName": "autolab-api-backup"
+        "claimName": "autolab-dev-autolab-api-backup"
       }
     }]
   }
 }'
 ```
 
-Or if you have shell access to the main pod:
-```bash
-kubectl exec -it autolab-api-0 -- ls -lh /backups
-```
+> **Note**: The backup volume is **not mounted** on the main application pod for security reasons. It's only accessible via the backup CronJob and temporary pods. This prevents accidental modifications or deletions of backups.
 
 ### Manual Backup Trigger
 
@@ -269,14 +295,101 @@ tar -tzf autolab-backup-20260209_000005.tar.gz | head -20
 
 ## Restore Procedures
 
-### Full Restore from Backup
+### Quick Restore (Recommended)
 
-**⚠️ WARNING**: This will overwrite all current application data. Ensure the application is stopped before restoring.
+The easiest way to restore from a backup is using the automated restore script via Taskfile commands.
+
+#### Using Taskfile Commands
+
+**List available backups:**
+```bash
+# Development
+task db-list-backups ENV=dev
+
+# Staging
+task db-list-backups ENV=staging
+
+# Production
+task db-list-backups ENV=prod
+```
+
+**Restore from backup (already in cluster):**
+```bash
+# Development
+task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Staging
+task db-restore-staging BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Production (requires CONFIRM_PROD=yes)
+task db-restore-prod BACKUP_FILE=autolab-backup-20260209_120000.tar.gz CONFIRM_PROD=yes
+```
+
+**Restore from local file (upload + restore in one step):**
+```bash
+# Development
+task db-restore-from-local-dev LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-dev LOCAL_FILE=./external-backup.zip
+
+# Staging
+task db-restore-from-local-staging LOCAL_FILE=./my-backup.tar.gz
+
+# Production (requires CONFIRM_PROD=yes)
+task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes
+```
+
+**Supported formats:**
+- `.tar.gz` / `.tgz` - Compressed tarballs (native format)
+- `.zip` - ZIP archives (for external backups)
+
+The restore process automatically:
+1. ✓ Uploads local file to cluster (if using `db-restore-from-local-*`)
+2. ✓ Verifies backup file exists
+3. ✓ Scales down application (0 replicas)
+4. ✓ Creates safety backup of current data
+5. ✓ Clears existing data
+6. ✓ Detects format and extracts backup archive (supports .tar.gz, .tgz, .zip)
+7. ✓ Scales up application (1 replica)
+8. ✓ Verifies restoration
+
+#### Direct Script Usage
+
+For more control or CI/CD integration:
+
+```bash
+# Make script executable (first time only)
+chmod +x scripts/restore-from-backup.sh
+
+# Run restore
+./scripts/restore-from-backup.sh \
+  <backup-filename> \
+  <namespace> \
+  <release-name>
+
+# Examples:
+./scripts/restore-from-backup.sh \
+  autolab-backup-20260209_120000.tar.gz \
+  autolab-dev \
+  autolab-dev
+
+./scripts/restore-from-backup.sh \
+  autolab-backup-20260209_120000.tar.gz \
+  autolab-prod0 \
+  autolab-prod
+```
+
+### Manual Restore (Advanced)
+
+For troubleshooting or custom restore scenarios:
 
 #### Step 1: Stop the Application
 
 ```bash
-kubectl scale statefulset autolab-api --replicas=0
+# Development
+kubectl scale statefulset autolab-dev-autolab-api --replicas=0 -n autolab-dev
+
+# Production
+kubectl scale statefulset autolab-prod-autolab-api --replicas=0 -n autolab-prod0
 ```
 
 #### Step 2: Create Restore Job
@@ -288,6 +401,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: autolab-restore-20260209
+  namespace: autolab-dev  # Change to your namespace
 spec:
   template:
     spec:
@@ -304,14 +418,29 @@ spec:
 
           echo "Starting restore from ${BACKUP_FILE}"
 
-          # Clear existing data (optional, comment out to merge)
+          # Verify backup exists
+          if [ ! -f "${BACKUP_FILE}" ]; then
+            echo "ERROR: Backup file not found!"
+            exit 1
+          fi
+
+          # Create safety backup (optional)
+          if [ -d /data/sled_db ]; then
+            tar -czf /backups/pre-restore-backup-$(date +%Y%m%d_%H%M%S).tar.gz -C /data . || true
+          fi
+
+          # Clear existing data
           rm -rf /data/*
+          rm -rf /data/.[!.]*
 
           # Extract backup
           tar -xzf "${BACKUP_FILE}" -C /data
 
           echo "Restore completed successfully"
           ls -la /data
+        env:
+        - name: TZ
+          value: "Europe/Kyiv"
         volumeMounts:
         - name: data-volume
           mountPath: /data
@@ -321,33 +450,46 @@ spec:
       volumes:
       - name: data-volume
         persistentVolumeClaim:
-          claimName: autolab-api-storage-autolab-api-0
+          claimName: autolab-api-storage-autolab-dev-autolab-api-0  # Update for your env
       - name: backup-volume
         persistentVolumeClaim:
-          claimName: autolab-api-backup
+          claimName: autolab-dev-autolab-api-backup  # Update for your env
 ```
 
 Apply the restore job:
 
 ```bash
-kubectl apply -f restore-job.yaml
-kubectl logs -f job/autolab-restore-20260209
+kubectl apply -f restore-job.yaml -n autolab-dev
+kubectl logs -f job/autolab-restore-20260209 -n autolab-dev
 ```
 
-#### Step 3: Restart Application
+#### Step 3: Clean Up Job
 
 ```bash
-kubectl scale statefulset autolab-api --replicas=1
+kubectl delete job autolab-restore-20260209 -n autolab-dev
 ```
 
-#### Step 4: Verify Restoration
+#### Step 4: Restart Application
 
 ```bash
+# Development
+kubectl scale statefulset autolab-dev-autolab-api --replicas=1 -n autolab-dev
+
+# Production
+kubectl scale statefulset autolab-prod-autolab-api --replicas=1 -n autolab-prod0
+```
+
+#### Step 5: Verify Restoration
+
+```bash
+# Check pod status
+kubectl get pods -n autolab-dev
+
 # Check application logs
-kubectl logs -f autolab-api-0
+kubectl logs -f autolab-dev-autolab-api-0 -n autolab-dev
 
-# Test API endpoints
-curl -k https://your-domain/api/v1/health
+# Test API health endpoint
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- wget -O- http://localhost:8080/api/v1/health
 ```
 
 ### Partial Restore (Extract Specific Files)
@@ -401,13 +543,61 @@ cp /tmp/specific-file /data/
 
 ## Backup to External Storage
 
-### Copy Backups to External Location
+### Download Backups to Local Machine
+
+The easiest way to download backups is using Taskfile commands:
 
 ```bash
-# Port-forward to access backup volume
-kubectl port-forward pod/autolab-api-0 8888:8080 &
+# List available backups first
+task db-list-backups ENV=dev
 
-# Or create a dedicated pod
+# Download specific backup
+task db-download-backup \
+  ENV=dev \
+  BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# The backup will be saved to ./backups/ directory
+```
+
+**Manual download:**
+```bash
+# Development
+kubectl cp autolab-dev/autolab-dev-autolab-api-0:/backups/autolab-backup-20260209_120000.tar.gz \
+  ./backups/autolab-backup-20260209_120000.tar.gz
+
+# Production
+kubectl cp autolab-prod0/autolab-prod-autolab-api-0:/backups/autolab-backup-20260209_120000.tar.gz \
+  ./backups/autolab-backup-20260209_120000.tar.gz
+```
+
+### Upload Backups to Cluster
+
+Upload a local backup file to the cluster (useful for migrations or restoring from external backups):
+
+```bash
+# Upload backup file
+task db-upload-backup \
+  ENV=dev \
+  LOCAL_FILE=./backups/autolab-backup-20260209_120000.tar.gz
+
+# Then restore it
+task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+```
+
+**Manual upload:**
+```bash
+# Development
+kubectl cp ./backups/autolab-backup-20260209_120000.tar.gz \
+  autolab-dev/autolab-dev-autolab-api-0:/backups/
+
+# Verify upload
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- ls -lh /backups/
+```
+
+### Copy All Backups (Legacy Method)
+
+```bash
+# Create a dedicated pod
 kubectl run backup-copier --rm -it --restart=Never --image=busybox:1.36 \
   --overrides='
 {
@@ -423,7 +613,7 @@ kubectl run backup-copier --rm -it --restart=Never --image=busybox:1.36 \
     }],
     "volumes": [{
       "name": "backup-volume",
-      "persistentVolumeClaim": {"claimName": "autolab-api-backup"}
+      "persistentVolumeClaim": {"claimName": "autolab-dev-autolab-api-backup"}
     }]
   }
 }'
@@ -529,24 +719,74 @@ kubectl get jobs | grep backup | grep -v "1/1"
 7. **Backup Verification**: Implement automated backup integrity checks
 8. **Security**: Ensure backup volumes have appropriate access controls
 
+## Quick Reference
+
+### Common Tasks
+
+```bash
+# List available backups
+task db-list-backups ENV=dev
+
+# Create manual backup
+task db-backup ENV=dev
+
+# Restore from backup (already in cluster)
+task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Restore from local file (auto-upload + restore)
+task db-restore-from-local-dev LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-dev LOCAL_FILE=./external-backup.zip
+
+# Download backup to local machine
+task db-download-backup ENV=dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Upload backup to cluster (without restoring)
+task db-upload-backup ENV=dev LOCAL_FILE=./backups/autolab-backup-20260209_120000.tar.gz
+```
+
+### Environment-Specific Commands
+
+| Task | Development | Staging | Production |
+|------|-------------|---------|------------|
+| **List backups** | `task db-list-backups ENV=dev` | `task db-list-backups ENV=staging` | `task db-list-backups ENV=prod` |
+| **Manual backup** | `task db-backup-dev` | `task db-backup ENV=staging` | `task db-backup ENV=prod` |
+| **Restore (cluster)** | `task db-restore-dev BACKUP_FILE=...` | `task db-restore-staging BACKUP_FILE=...` | `task db-restore-prod BACKUP_FILE=... CONFIRM_PROD=yes` |
+| **Restore (local)** | `task db-restore-from-local-dev LOCAL_FILE=...` | `task db-restore-from-local-staging LOCAL_FILE=...` | `task db-restore-from-local-prod LOCAL_FILE=... CONFIRM_PROD=yes` |
+| **Download** | `task db-download-backup ENV=dev BACKUP_FILE=...` | `task db-download-backup ENV=staging BACKUP_FILE=...` | `task db-download-backup ENV=prod BACKUP_FILE=...` |
+
 ## Disaster Recovery Plan
 
 ### Quick Recovery Steps
 
 1. **Identify Issue**: Determine data corruption/loss scope
-2. **Stop Application**: `kubectl scale statefulset autolab-api --replicas=0`
-3. **List Backups**: Identify correct backup to restore
-4. **Restore Data**: Use restore job procedure
-5. **Verify Integrity**: Check Sled DB and critical data
-6. **Restart Application**: `kubectl scale statefulset autolab-api --replicas=1`
-7. **Test Functionality**: Verify all critical endpoints
-8. **Document Incident**: Record what happened and resolution
+2. **List Available Backups**: `task db-list-backups ENV=<env>`
+3. **Restore Data**: `task db-restore-<env> BACKUP_FILE=<filename>`
+4. **Verify Integrity**: Check logs and test critical endpoints
+5. **Document Incident**: Record what happened and resolution
+
+**Example recovery:**
+```bash
+# 1. List backups to find the right one
+task db-list-backups ENV=prod
+
+# 2. Restore from backup (automated: scale down → restore → scale up)
+task db-restore-prod \
+  BACKUP_FILE=autolab-backup-20260209_120000.tar.gz \
+  CONFIRM_PROD=yes
+
+# 3. Verify application health
+kubectl logs -f autolab-prod-autolab-api-0 -n autolab-prod0
+
+# 4. Test critical endpoints
+curl -k https://autolab.dcommunity.space/api/v1/health
+```
 
 ### Recovery Time Objective (RTO)
 
 - **Backup Frequency**: Daily (24h max data loss)
-- **Estimated Restore Time**: 10-30 minutes (depends on data size)
+- **Estimated Restore Time**: 5-15 minutes (automated restore script)
 - **Verification Time**: 5-10 minutes
+- **Total RTO**: ~15-25 minutes
 
 ## Related Documentation
 
