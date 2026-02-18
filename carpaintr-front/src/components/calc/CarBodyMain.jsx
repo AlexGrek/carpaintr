@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Divider, Panel, Message, Drawer, Modal, Button } from 'rsuite';
+import { Divider, Panel, Message, Drawer, Modal, Button, Tabs } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { Check, X } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
@@ -9,6 +9,7 @@ import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
+import GridDraw from './GridDraw';
 
 registerTranslations("en", {
     "Selected Parts": "Selected Parts",
@@ -39,6 +40,13 @@ registerTranslations("en", {
     "Replace Part": "Replace Part",
     "Save": "Save",
     "toning": "toning",
+    "Quick Select": "Quick Select",
+    "Damage Map": "Damage Map",
+    "None": "None",
+    "Light": "Light",
+    "Medium": "Medium",
+    "Severe": "Severe",
+    "Critical": "Critical",
 });
 
 registerTranslations("ua", {
@@ -70,7 +78,22 @@ registerTranslations("ua", {
     "Replace Part": "Замінити деталь",
     "Save": "Зберегти",
     "toning": "тонування",
+    "Quick Select": "Швидкий вибір",
+    "Damage Map": "Карта пошкоджень",
+    "None": "Немає",
+    "Light": "Легке",
+    "Medium": "Середнє",
+    "Severe": "Сильне",
+    "Critical": "Критичне",
 });
+
+const DAMAGE_LEVELS = [
+    { value: 0, label: "None", color: "#e0e0e0" },
+    { value: 2, label: "Light", color: "#fadb14" },
+    { value: 5, label: "Medium", color: "#fa8c16" },
+    { value: 7, label: "Severe", color: "#f5222d" },
+    { value: 10, label: "Critical", color: "#722ed1" },
+];
 
 const CarBodyMain = ({
     partsVisual,
@@ -87,6 +110,28 @@ const CarBodyMain = ({
     const { str } = useLocale();
     const [company, setCompany] = useState(null);
     const [showTechData, setShowTechData] = useState(false);
+
+    const mapVisual = useCallback((partName) => {
+        if (partName && partsVisual[partName]) {
+            return partsVisual[partName];
+        }
+        return partsVisual.default;
+    }, [partsVisual]);
+
+    const generateInitialGrid = useCallback((visual) => {
+        if (!visual) return [];
+        const rows = visual.y;
+        const cols = visual.x;
+        const grid = [];
+        for (let y = 0; y < rows; y++) {
+            const row = [];
+            for (let x = 0; x < cols; x++) {
+                row.push(visual.unused.includes(`${x},${y}`) ? -1 : 0);
+            }
+            grid.push(row);
+        }
+        return grid;
+    }, []);
 
     // State declarations - must come before callbacks that use them
     const [errors, setErrors] = useState([]);
@@ -167,15 +212,17 @@ const CarBodyMain = ({
 
         setDrawerPartDetails(partToEdit);
         // Initialize local edit state with current values
+        const visual = mapVisual(partToEdit.name);
         setEditedPart({
             name: partToEdit.name,
             action: partToEdit.selectedAction || partToEdit.action || null,
             damageLevel: partToEdit.damageLevel ?? 0,
             original: partToEdit.original ?? true,
             replace: partToEdit.replace ?? false,
+            grid: partToEdit.grid || generateInitialGrid(visual),
         });
         setDrawerOpen(true);
-    }, [selectedItems]);
+    }, [selectedItems, mapVisual, generateInitialGrid]);
 
     const handleDrawerSave = useCallback(() => {
         if (editedPart) {
@@ -189,6 +236,7 @@ const CarBodyMain = ({
                         damageLevel: editedPart.damageLevel,
                         original: editedPart.original,
                         replace: editedPart.replace,
+                        grid: editedPart.grid,
                     };
                 }
                 return item;
@@ -801,29 +849,61 @@ const CarBodyMain = ({
                                 </div>
                             )}
 
-                            {/* Damage Level */}
+                            {/* Damage Level - hidden for replace/mount actions */}
+                            {editedPart.action !== 'replace' && editedPart.action !== 'mount' && (
                             <div style={{ marginTop: '20px', marginBottom: '20px' }}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                                     {str("Damage Level")}
                                 </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="10"
-                                    value={editedPart.damageLevel}
-                                    onChange={(e) => setEditedPart(prev => ({
-                                        ...prev,
-                                        damageLevel: parseInt(e.target.value) || 0
-                                    }))}
-                                    style={{
-                                        width: '100%',
-                                        padding: '8px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ddd',
-                                        fontSize: '14px'
-                                    }}
-                                />
+                                <Tabs defaultActiveKey="quick" appearance="subtle">
+                                    <Tabs.Tab eventKey="quick" title={str("Quick Select")}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 0' }}>
+                                            {DAMAGE_LEVELS.map(({ value, label, color }) => {
+                                                const isActive = editedPart.damageLevel === value;
+                                                return (
+                                                    <button
+                                                        key={value}
+                                                        onClick={() => setEditedPart(prev => ({ ...prev, damageLevel: value }))}
+                                                        style={{
+                                                            flex: '1 1 auto',
+                                                            minWidth: '60px',
+                                                            padding: '10px 12px',
+                                                            borderRadius: '6px',
+                                                            border: isActive ? `2px solid ${color}` : '2px solid #ddd',
+                                                            backgroundColor: isActive ? color : '#fafafa',
+                                                            color: isActive ? '#fff' : '#333',
+                                                            fontWeight: isActive ? 'bold' : 'normal',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'center',
+                                                            fontSize: '13px',
+                                                            transition: 'all 0.15s ease',
+                                                        }}
+                                                    >
+                                                        <div>{str(label)}</div>
+                                                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>{value}</div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </Tabs.Tab>
+                                    <Tabs.Tab eventKey="grid" title={str("Damage Map")}>
+                                        <div style={{ padding: '12px 0' }}>
+                                            {editedPart.grid && editedPart.grid.length > 0 ? (
+                                                <GridDraw
+                                                    gridData={editedPart.grid}
+                                                    visual={mapVisual(editedPart.name)}
+                                                    onGridChange={(newGrid) => setEditedPart(prev => ({ ...prev, grid: newGrid }))}
+                                                />
+                                            ) : (
+                                                <Message type="info">
+                                                    {str("No additional information available")}
+                                                </Message>
+                                            )}
+                                        </div>
+                                    </Tabs.Tab>
+                                </Tabs>
                             </div>
+                            )}
 
                             {/* Original Part Checkbox */}
                             <div style={{ marginTop: '15px', marginBottom: '15px' }}>

@@ -15,7 +15,7 @@ use crate::{
         ManageUserRequest,
     },
     state::AppState,
-    utils::delete_user_data_gracefully,
+    utils::{delete_user_data_gracefully, user_personal_directory_from_email},
 };
 use axum::{
     extract::{Json as AxumJson, Path, Query, State},
@@ -26,7 +26,10 @@ use axum::{
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::io::Write;
 use std::sync::Arc;
+use zip::write::FileOptions;
+use zip::ZipWriter;
 
 // This handler is protected by the admin_check_middleware applied to the /admin scope
 pub async fn check_admin_status(
@@ -232,4 +235,87 @@ pub async fn clear_all_cache(
 ) -> Result<impl IntoResponse, AppError> {
     app_state.cache.invalidate_all().await;
     Ok(Json(json! ({ "cache_invalidated": true })))
+}
+
+/// Recursively collect all file paths under `dir` with relative path strings (forward slashes).
+fn collect_files_under_dir(dir: &std::path::Path) -> std::io::Result<Vec<(String, std::path::PathBuf)>> {
+    let mut out = Vec::new();
+    let entries = std::fs::read_dir(dir)?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        let name = entry
+            .file_name()
+            .to_string_lossy()
+            .to_string();
+        if path.is_dir() {
+            let sub: Vec<_> = collect_files_under_dir(&path)?
+                .into_iter()
+                .map(|(rel, full)| (format!("{}/{}", name, rel), full))
+                .collect();
+            out.extend(sub);
+        } else {
+            out.push((name, path));
+        }
+    }
+    Ok(out)
+}
+
+/// Create a zip archive at `zip_path` containing all files under `source_dir` (paths in zip are relative to source_dir).
+fn create_zip_from_directory(
+    zip_path: &std::path::Path,
+    source_dir: &std::path::Path,
+) -> std::io::Result<()> {
+    let file = std::fs::File::create(zip_path)?;
+    let mut zip = ZipWriter::new(std::io::BufWriter::new(file));
+    let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    let files = collect_files_under_dir(source_dir)?;
+    for (relative_name, full_path) in files {
+        zip.start_file(&relative_name, options)?;
+        let content = std::fs::read(&full_path)?;
+        zip.write_all(&content)?;
+    }
+    zip.finish()?;
+    Ok(())
+}
+
+/// Export a user's personal directory as a zip. Admin only. Zip is created, served, then deleted.
+pub async fn export_user_data_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    Path(user_email): Path<String>,
+) -> Result<Response<axum::body::Body>, AppError> {
+    let user_dir = user_personal_directory_from_email(&app_state.data_dir_path, &user_email)?;
+    if !user_dir.exists() {
+        return Err(AppError::FileNotFound);
+    }
+    let zip_path = std::env::temp_dir().join(format!(
+        "user_export_{}.zip",
+        uuid::Uuid::new_v4()
+    ));
+    let zip_path_clone = zip_path.clone();
+    let user_dir_clone = user_dir.clone();
+    let create_result = tokio::task::spawn_blocking(move || {
+        create_zip_from_directory(&zip_path_clone, &user_dir_clone)
+    })
+    .await
+    .map_err(|e| AppError::ConfigError(format!("export task join: {}", e)))?;
+    if create_result.is_err() {
+        let _ = std::fs::remove_file(&zip_path);
+        return Err(create_result.unwrap_err().into());
+    }
+    let bytes = tokio::fs::read(&zip_path).await;
+    let _ = std::fs::remove_file(&zip_path);
+    let bytes = bytes?;
+    let safe_filename = format!(
+        "user_export_{}.zip",
+        user_email.replace(['@', '.'], "_")
+    );
+    let disposition = format!("attachment; filename=\"{}\"", safe_filename);
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/zip")
+        .header(header::CONTENT_DISPOSITION, disposition)
+        .body(axum::body::Body::from(bytes))
+        .unwrap())
 }

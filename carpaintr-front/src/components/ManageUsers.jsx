@@ -28,6 +28,8 @@ registerTranslations("ua", {
   "Change password": "Змінити пароль",
   "Manage licenses": "Керування ліцензіями",
   Impersonate: "Увійти як",
+  Export: "Експорт",
+  "Failed to export user data": "Не вдалося експортувати дані користувача",
 });
 
 const ManageUsers = () => {
@@ -153,6 +155,34 @@ const ManageUsers = () => {
     await handleImpersonation(managementRequest);
   };
 
+  const handleExportUserData = async (email) => {
+    try {
+      setLoading(true);
+      const encodedEmail = encodeURIComponent(email);
+      const response = await authFetch(
+        `/api/v1/admin/export_user_data/${encodedEmail}`
+      );
+
+      if (!response.ok) {
+        throw new Error(str("Failed to export user data"));
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${email}-export.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLicenseEditorClose = () => {
     setEditingUser(null);
     setLicenseEditorOpen(false);
@@ -258,6 +288,9 @@ const ManageUsers = () => {
               </Button>
               <Button onClick={() => handleImpersonateClick(user)}>
                 <Trans>Impersonate</Trans>
+              </Button>
+              <Button onClick={() => handleExportUserData(email)}>
+                <Trans>Export</Trans>
               </Button>
             </ButtonGroup>
             {/* <code>{JSON.stringify(user)}</code> */}

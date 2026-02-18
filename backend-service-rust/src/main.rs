@@ -178,6 +178,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(get_user_license_handler),
                 )
                 .route(
+                    "/export_user_data/{user_email}",
+                    get(api::v1::admin::export_user_data_handler),
+                )
+                .route(
                     "/trigger_list_class_body_types_rebuild_global",
                     post(api::v1::admin_editor_endpoints::trigger_list_class_body_types_rebuild_global),
                 )

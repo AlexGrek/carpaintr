@@ -22,7 +22,8 @@
       "Bash(kubectl get:*)",
       "Bash(kubectl config get-contexts:*)",
       "Bash(helm list:*)",
-      "Bash(task db-restore-from-local-dev:*)"
+      "Bash(task db-restore-from-local-dev:*)",
+      "Bash(killall:*)"
     ]
   }
 }
