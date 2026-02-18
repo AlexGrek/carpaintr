@@ -19,9 +19,9 @@ const ActiveLicenseMarker = () => {
     const fetchLicenses = async () => {
       try {
         const response = await authFetch("/api/v1/getactivelicense");
-        // Only redirect to login on 401 (invalid/expired session). 403 can mean
-        // forbidden for this resource (e.g. no license) and must not trigger a
-        // redirect loop with LoginPage's "already have token" redirect.
+        // On 401 the session is invalid: handleAuthResponse clears the token
+        // and redirects to login, preventing a login↔dashboard redirect loop.
+        // 403 means forbidden (e.g. no license) — not an auth failure, no redirect.
         if (response.status === 401 && handleAuthResponse(response, navigate, location)) {
           return;
         }
@@ -38,7 +38,8 @@ const ActiveLicenseMarker = () => {
     };
 
     fetchLicenses();
-  }, [location, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (

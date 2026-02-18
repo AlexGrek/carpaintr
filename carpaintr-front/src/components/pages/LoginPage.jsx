@@ -33,7 +33,7 @@ const LoginPage = () => {
       if (!token) return;
       try {
         const resp = await authFetch("/api/v1/getcompanyinfo");
-        if (resp.ok) {
+        if (resp.ok && !redirect.startsWith("/app/login")) {
           navigate(redirect, { replace: true });
         }
       } catch {

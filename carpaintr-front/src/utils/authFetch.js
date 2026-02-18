@@ -145,7 +145,9 @@ export const getOrFetchCompanyInfo = async () => {
 
 /**
 
-* Handle API response authentication errors.
+* Handle API response authentication errors (401 only).
+* Clears the stored token before redirecting so LoginPage does not
+* auto-redirect back to the protected page (preventing redirect loops).
 *
 * @param {Response} response - fetch response object
 * @param {NavigateFunction} navigate - from useNavigate()
@@ -153,7 +155,10 @@ export const getOrFetchCompanyInfo = async () => {
 * @returns {boolean} true if redirected (unauthorized), false otherwise
   */
 export function handleAuthResponse(response, navigate, location) {
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
+    // Clear the invalid/expired token so LoginPage.checkAuth won't
+    // auto-redirect back here and create a login↔dashboard loop.
+    logout();
     // Preserve current path + query for redirect after login
     const currentPath = location.pathname + location.search;
     navigate(`/app/login?redirect=${encodeURIComponent(currentPath)}`, {
