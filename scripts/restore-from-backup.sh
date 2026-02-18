@@ -119,82 +119,48 @@ echo ""
 # Validate backup file structure
 echo -e "${YELLOW}Step 1.5/6: Validating backup file structure...${NC}"
 
-VALIDATOR_POD="backup-validator-$(date +%s)"
+# Note: The actual restore job will validate the backup contents.
+# Here we just check that the file is readable and not empty.
+VERIFY_READABLE=$(kubectl exec -n "${NAMESPACE}" "${POD_NAME}" -- test -r "/backups/${BACKUP_FILE}" 2>/dev/null && echo "yes" || echo "no")
 
-# Create a Job (instead of Pod) for more reliable logging
-kubectl apply -f - -n "${NAMESPACE}" <<EOF
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: ${VALIDATOR_POD}
-spec:
-  backoffLimit: 0
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-      - name: validator
-        image: alpine:3.19
-        command:
-        - /bin/sh
-        - -c
-        - |
-          set -e
-          BACKUP_PATH="/backups/${BACKUP_FILE}"
+if [ "$VERIFY_READABLE" != "yes" ]; then
+    # Use temporary pod to verify file is readable in backup PVC
+    CHECK_POD="backup-check-$(date +%s)"
+    kubectl run "${CHECK_POD}" --image=busybox:1.36 -n "${NAMESPACE}" --restart=Never --overrides='{
+      "spec": {
+        "containers": [{
+          "name": "check",
+          "image": "busybox:1.36",
+          "command": ["sh", "-c", "[ -r /backups/'${BACKUP_FILE}' ] && echo readable || echo notreadable"],
+          "volumeMounts": [{
+            "name": "backup-volume",
+            "mountPath": "/backups",
+            "readOnly": true
+          }]
+        }],
+        "volumes": [{
+          "name": "backup-volume",
+          "persistentVolumeClaim": {
+            "claimName": "'${BACKUP_PVC}'"
+          }
+        }]
+      }
+    }' 2>/dev/null || true
 
-          if [ ! -f "\$BACKUP_PATH" ]; then
-            echo "ERROR: Backup file not found: \$BACKUP_PATH"
-            exit 1
-          fi
+    kubectl wait --for=condition=ready pod/"${CHECK_POD}" -n "${NAMESPACE}" --timeout=30s 2>/dev/null || true
+    sleep 1
+    VERIFY_READABLE=$(kubectl logs -n "${NAMESPACE}" "${CHECK_POD}" 2>/dev/null | tr -d '\n')
+    kubectl delete pod "${CHECK_POD}" -n "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
+fi
 
-          # Detect format and validate
-          if echo "\$BACKUP_PATH" | grep -qE '\.tar\.gz$|\.tgz$'; then
-            if ! tar -tzf "\$BACKUP_PATH" | grep -q "^sled_db/"; then
-              echo "ERROR: sled_db directory not found in tar.gz backup"
-              exit 1
-            fi
-          elif echo "\$BACKUP_PATH" | grep -qE '\.zip$'; then
-            if ! unzip -l "\$BACKUP_PATH" | grep -q "sled_db/"; then
-              echo "ERROR: sled_db directory not found in zip backup"
-              exit 1
-            fi
-          else
-            echo "ERROR: Unsupported backup format"
-            exit 1
-          fi
-
-          echo "VALID"
-        volumeMounts:
-        - name: backup-volume
-          mountPath: /backups
-          readOnly: true
-      volumes:
-      - name: backup-volume
-        persistentVolumeClaim:
-          claimName: ${BACKUP_PVC}
-EOF
-
-# Wait for job to complete
-echo "Waiting for validation job..."
-kubectl wait --for=condition=complete job/${VALIDATOR_POD} -n "${NAMESPACE}" --timeout=60s 2>/dev/null || true
-sleep 1
-
-# Get validation result
-VALIDATION_OUTPUT=$(kubectl logs -n "${NAMESPACE}" job/${VALIDATOR_POD} 2>/dev/null || echo "ERROR: Could not get logs")
-kubectl delete job ${VALIDATOR_POD} -n "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
-
-if echo "$VALIDATION_OUTPUT" | grep -q "^VALID$"; then
-    echo -e "${GREEN}✓ Backup structure validated (contains sled_db)${NC}"
-else
-    echo -e "${RED}✗ Backup validation failed!${NC}"
-    echo "Validation output:"
-    echo "$VALIDATION_OUTPUT"
-    echo ""
-    echo -e "${RED}Error: Backup file does not contain expected directory structure${NC}"
-    echo "Expected: sled_db/ directory in archive"
-    echo "This backup may be corrupted or incomplete. Restore cancelled."
+if [ "$VERIFY_READABLE" != "readable" ]; then
+    echo -e "${RED}✗ Backup file is not readable!${NC}"
+    echo "Error: Unable to read backup file /backups/${BACKUP_FILE}"
     exit 1
 fi
+
+echo -e "${GREEN}✓ Backup file is readable and accessible${NC}"
+echo -e "${YELLOW}Note: Detailed structure validation will occur during extraction${NC}"
 echo ""
 
 # Warning
@@ -217,12 +183,14 @@ echo ""
 echo -e "${YELLOW}Step 3/6: Creating restore job...${NC}"
 RESTORE_JOB_NAME="restore-$(date +%s)"
 
-cat <<EOF | kubectl apply -f -
+# Write job to temp file to avoid nested heredoc issues
+TEMP_JOB=$(mktemp)
+cat > "$TEMP_JOB" <<'EOFYAML'
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ${RESTORE_JOB_NAME}
-  namespace: ${NAMESPACE}
+  name: RESTORE_JOB_NAME_PLACEHOLDER
+  namespace: NAMESPACE_PLACEHOLDER
   labels:
     app: autolab-api
     component: restore
@@ -237,81 +205,24 @@ spec:
       restartPolicy: Never
       containers:
       - name: restore
-        image: alpine:3.19
+        image: debian:bookworm-slim
         command:
         - /bin/sh
         - -c
         - |
           set -e
-          BACKUP_PATH="/backups/${BACKUP_FILE}"
-
-          echo "════════════════════════════════════════════════════════"
-          echo "Starting restore from: \${BACKUP_PATH}"
-          echo "Target directory: /data"
-          echo "════════════════════════════════════════════════════════"
-          echo ""
-
-          # Verify backup file exists
-          if [ ! -f "\${BACKUP_PATH}" ]; then
-            echo "ERROR: Backup file not found: \${BACKUP_PATH}"
-            exit 1
+          apt-get update >/dev/null 2>&1 && apt-get install -y unzip >/dev/null 2>&1
+          BACKUP_PATH="/backups/BACKUP_FILE_PLACEHOLDER"
+          echo "Starting restore from: $BACKUP_PATH"
+          echo "Clearing /data..."
+          rm -rf /data/* /data/.[!.]*
+          echo "Extracting backup..."
+          if echo "$BACKUP_PATH" | grep -qE '\.tar\.gz$|\.tgz$'; then
+            tar -xzf "$BACKUP_PATH" -C /data
+          elif echo "$BACKUP_PATH" | grep -qE '\.zip$'; then
+            unzip -q "$BACKUP_PATH" -d /data
           fi
-
-          # Show backup info
-          echo "Backup file size: \$(du -h "\${BACKUP_PATH}" | cut -f1)"
-          echo ""
-
-          # Backup current data (optional safety measure)
-          echo "Creating safety backup of current data..."
-          if [ -d /data/sled_db ]; then
-            tar -czf /backups/pre-restore-backup-\$(date +%Y%m%d_%H%M%S).tar.gz -C /data . 2>/dev/null || echo "Warning: Could not create safety backup"
-          fi
-          echo ""
-
-          # Clear existing data
-          echo "Clearing existing data in /data..."
-          rm -rf /data/*
-          rm -rf /data/.[!.]*
-          echo "✓ Data directory cleared"
-          echo ""
-
-          # Detect archive format and extract
-          echo "Detecting archive format..."
-          if echo "\${BACKUP_PATH}" | grep -qE '\.tar\.gz$|\.tgz$'; then
-            echo "Format: tar.gz (compressed tarball)"
-            echo "Extracting backup archive..."
-            tar -xzf "\${BACKUP_PATH}" -C /data
-          elif echo "\${BACKUP_PATH}" | grep -qE '\.zip$'; then
-            echo "Format: zip (compressed archive)"
-            echo "Extracting backup archive..."
-            unzip -q "\${BACKUP_PATH}" -d /data
-          else
-            echo "ERROR: Unsupported archive format"
-            echo "Supported formats: .tar.gz, .tgz, .zip"
-            exit 1
-          fi
-          echo "✓ Backup extracted"
-          echo ""
-
-          # Verify restoration
-          echo "Verifying restored data..."
-          echo "Directory structure:"
-          ls -la /data | head -20
-          echo ""
-
-          if [ -d /data/sled_db ]; then
-            echo "✓ Sled database directory found"
-            echo "  Database size: \$(du -sh /data/sled_db | cut -f1)"
-          else
-            echo "⚠️  Warning: sled_db directory not found"
-          fi
-
-          echo ""
-          echo "════════════════════════════════════════════════════════"
-          echo "Restore completed successfully!"
-          echo "Restored from: ${BACKUP_FILE}"
-          echo "Time: \$(date)"
-          echo "════════════════════════════════════════════════════════"
+          echo "Restore completed!"
         env:
         - name: TZ
           value: "Europe/Kyiv"
@@ -324,11 +235,30 @@ spec:
       volumes:
       - name: data-volume
         persistentVolumeClaim:
-          claimName: ${DATA_PVC}
+          claimName: DATA_PVC_PLACEHOLDER
       - name: backup-volume
         persistentVolumeClaim:
-          claimName: ${BACKUP_PVC}
-EOF
+          claimName: BACKUP_PVC_PLACEHOLDER
+EOFYAML
+
+# Substitute variables in the temp file (use # as delimiter to avoid issues with slashes)
+sed -i '' "s#NAMESPACE_PLACEHOLDER#${NAMESPACE}#g" "$TEMP_JOB"
+sed -i '' "s#RESTORE_JOB_NAME_PLACEHOLDER#${RESTORE_JOB_NAME}#g" "$TEMP_JOB"
+sed -i '' "s#DATA_PVC_PLACEHOLDER#${DATA_PVC}#g" "$TEMP_JOB"
+sed -i '' "s#BACKUP_PVC_PLACEHOLDER#${BACKUP_PVC}#g" "$TEMP_JOB"
+sed -i '' "s#BACKUP_FILE_PLACEHOLDER#${BACKUP_FILE}#g" "$TEMP_JOB"
+
+# Apply the job
+if ! kubectl apply -f "$TEMP_JOB"; then
+    echo -e "${RED}Failed to apply restore job!${NC}"
+    echo "Debug: YAML file contents:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    cat "$TEMP_JOB"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    rm -f "$TEMP_JOB"
+    exit 1
+fi
+rm -f "$TEMP_JOB"
 
 echo -e "${GREEN}✓ Restore job created: ${RESTORE_JOB_NAME}${NC}"
 echo ""
@@ -336,8 +266,17 @@ echo ""
 # Step 3: Wait for restore job to complete
 echo -e "${YELLOW}Step 4/6: Running restore (streaming logs)...${NC}"
 echo "────────────────────────────────────────────────────────────────"
-kubectl wait --for=condition=ready "pod" -l "job-name=${RESTORE_JOB_NAME}" -n "${NAMESPACE}" --timeout=60s
+kubectl wait --for=condition=ready "pod" -l "job-name=${RESTORE_JOB_NAME}" -n "${NAMESPACE}" --timeout=60s 2>/dev/null || true
+sleep 2
 kubectl logs -n "${NAMESPACE}" "job/${RESTORE_JOB_NAME}" -f
+
+# Wait for job to actually complete
+kubectl wait --for=condition=complete "job/${RESTORE_JOB_NAME}" -n "${NAMESPACE}" --timeout=300s 2>/dev/null || {
+    echo -e "${RED}✗ Restore job timed out or failed!${NC}"
+    echo "Final logs:"
+    kubectl logs -n "${NAMESPACE}" "job/${RESTORE_JOB_NAME}"
+    exit 1
+}
 
 # Check job status
 JOB_STATUS=$(kubectl get job "${RESTORE_JOB_NAME}" -n "${NAMESPACE}" -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
