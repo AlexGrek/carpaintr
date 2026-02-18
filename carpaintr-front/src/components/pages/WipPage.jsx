@@ -1,8 +1,9 @@
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import Trans from "../../localization/Trans";
 
 const WipPage = () => {
+  useDocumentTitle("Document title: Under construction");
   return (
     <div>
       <TopBarUser />
@@ -10,7 +11,6 @@ const WipPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Under construction" />
         <p>
           <Trans>Under construction</Trans>
         </p>

@@ -1,5 +1,5 @@
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import FilesystemBrowser from "../editor/FilesystemBrowser";
 
 const filesystemConfigs = [
@@ -23,6 +23,7 @@ const filesystemConfigs = [
 ];
 
 const FileEditorPage = () => {
+  useDocumentTitle("Document title: Customization");
   return (
     <div>
       <TopBarUser />
@@ -30,7 +31,6 @@ const FileEditorPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Customization" />
         <FilesystemBrowser filesystems={filesystemConfigs} />
       </div>
     </div>

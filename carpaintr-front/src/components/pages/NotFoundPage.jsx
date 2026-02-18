@@ -3,6 +3,7 @@ import { Button, Panel, Container } from "rsuite";
 import { Home, Wrench } from "lucide-react";
 import Trans from "../../localization/Trans";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import "./NotFoundPage.css";
 
 registerTranslations("ua", {
@@ -18,6 +19,7 @@ registerTranslations("ua", {
 const NotFoundPage = () => {
   const navigate = useNavigate();
   const { str } = useLocale();
+  useDocumentTitle("Document title: Page Not Found");
 
   return (
     <Container className="not-found-page">

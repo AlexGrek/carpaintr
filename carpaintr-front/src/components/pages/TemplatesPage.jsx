@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { Divider, SelectPicker } from "rsuite";
 import {
   registerTranslations,
@@ -22,6 +22,7 @@ registerTranslations("ua", {
 });
 
 const TemplatesPage = () => {
+  useDocumentTitle("Document title: Templates");
   const [errorTitle, setErrorTitle] = useState("");
   const [errorText, setErrorText] = useState(null);
   const [templates, setTemplates] = useState([]);
@@ -80,7 +81,6 @@ const TemplatesPage = () => {
         className="fade-in-simple"
         style={{ minWidth: "400px", margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Templates" />
         <ErrorMessage
           errorText={errorText}
           onClose={() => setErrorText(null)}

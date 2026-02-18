@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useLocation, useNavigate } from "react-router-dom";
 import CalcMain from "../calc/CalcMain";
 
@@ -8,6 +8,7 @@ const CalcPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  useDocumentTitle("Document title: Calculation");
 
   // Function to handle navigation confirmation
   const confirmNavigation = useCallback(() => {
@@ -67,7 +68,6 @@ const CalcPage = () => {
     <div>
       <TopBarUser onNavigate={handleNavigation} />
       <div style={{ maxWidth: "2000px", margin: "0 auto", padding: "1em 0" }}>
-        <PageHeader titleKey="Page header: Calculation" />
         <CalcMain setChanges={setHasChanges} />
       </div>
     </div>

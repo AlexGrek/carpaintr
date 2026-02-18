@@ -9,10 +9,10 @@ import {
   Panel,
 } from "rsuite";
 import { useNavigate } from "react-router-dom";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 const RegistrationPage = () => {
-  // State for email, password, and loading status
+  useDocumentTitle("Document title: Register");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [invite, setInvite] = useState("");
@@ -90,7 +90,6 @@ const RegistrationPage = () => {
       >
         {/* rsuite Form component with fluid layout */}
         <Form fluid>
-          <PageHeader titleKey="Page header: Register" />
           <img
             src="/autolab_large_bw.png"
             alt="CarPaintr Logo"

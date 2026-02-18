@@ -1,9 +1,10 @@
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import SupportRequestForm from "../admreq/SupportRequestForm";
 import UserSupportRequests from "../admreq/UserSupportRequests";
 
 const ContactSupport = () => {
+  useDocumentTitle("Document title: Contact Support");
   return (
     <div>
       <TopBarUser />
@@ -11,7 +12,6 @@ const ContactSupport = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Contact Support" />
         <SupportRequestForm />
         <UserSupportRequests />
       </div>

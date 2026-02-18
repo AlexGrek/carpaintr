@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import CarPaintEstimator from "../calc/CarpaintEstimator";
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const CalcPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  useDocumentTitle("Document title: Calculation");
 
   // Function to handle navigation confirmation
   const confirmNavigation = useCallback(() => {
@@ -67,7 +68,6 @@ const CalcPage = () => {
     <div>
       <TopBarUser onNavigate={handleNavigation} />
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
-        <PageHeader titleKey="Page header: Calculation" />
         <CarPaintEstimator setChanges={setHasChanges} />
       </div>
     </div>

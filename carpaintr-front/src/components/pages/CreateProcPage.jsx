@@ -1,8 +1,9 @@
 import TopBarUser from "../layout/TopBarUser";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import ProcessorGenerator from "../editor/ProcessGenerator";
 
 const CreateProcPage = () => {
+  useDocumentTitle("Document title: Create processor");
   return (
     <div>
       <TopBarUser />
@@ -10,7 +11,6 @@ const CreateProcPage = () => {
         className="fade-in-simple"
         style={{ margin: "0 auto", padding: "1em" }}
       >
-        <PageHeader titleKey="Page header: Create processor" />
         <ProcessorGenerator />
       </div>
     </div>

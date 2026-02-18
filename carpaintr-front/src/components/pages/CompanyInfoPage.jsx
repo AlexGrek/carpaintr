@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { getCompanyInfo } from "../../utils/authFetch";
 import LicenseInfoTable from "../LicenseInfoTable";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { dump } from "js-yaml";
 
 const CompanyInfoPage = () => {
+  useDocumentTitle("Document title: Company info");
   const [companyInfo, setCompanyInfo] = useState(null);
   const [companyInfoRaw, setCompanyInfoRaw] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,6 @@ const CompanyInfoPage = () => {
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
-      <PageHeader titleKey="Page header: Company info" />
       <LicenseInfoTable companyInfo={companyInfo} />
       <code>{companyInfoRaw}</code>
     </div>

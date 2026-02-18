@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import AppVersionBadge from "../AppVersionBadge";
 import TopBarDashboard from "../layout/TopBarDashboard";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 registerTranslations("ua", {
   Calculation: "Розрахунок",
@@ -80,6 +80,7 @@ const Dashboard = () => {
   const [message, setMessage] = useState(null);
   const { str, setLang } = useLocale();
   const [admin, setAdmin] = useState(false);
+  useDocumentTitle("Document title: Dashboard");
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
@@ -134,7 +135,6 @@ const Dashboard = () => {
         {company && <ShowCompanyCard company={company}></ShowCompanyCard>}
       </div>
       <main className="dashboard-content-container">
-        <PageHeader titleKey="Page header: Dashboard" />
         <DashboardNavigationButtons admin={admin} />
         <AppVersionBadge />
       </main>

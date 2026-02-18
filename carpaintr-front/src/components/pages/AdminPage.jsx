@@ -3,7 +3,7 @@ import { Breadcrumb, Message, Loader } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import AdminTools from "../AdminTools";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import Trans from "../../localization/Trans";
 import {
   useLocale,
@@ -23,6 +23,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { str } = useLocale();
+  useDocumentTitle("Document title: Admin Area");
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
@@ -61,7 +62,11 @@ const AdminPage = () => {
       ) : (
         <>
           <div className="police-line"></div>
-          <PageHeader titleKey="Page header: Admin Area" />
+          <h3>
+            <code>
+              <Trans>Admin Page</Trans>
+            </code>
+          </h3>
           <AppVersionBadge />
           <Breadcrumb>
             <Breadcrumb.Item href="/">

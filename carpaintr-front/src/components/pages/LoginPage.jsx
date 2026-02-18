@@ -10,10 +10,11 @@ import {
 } from "rsuite";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { resetCompanyInfo, authFetch } from "../../utils/authFetch";
-import PageHeader from "../layout/PageHeader";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import "./LoginPage.css";
 
 const LoginPage = () => {
+  useDocumentTitle("Document title: Sign in");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,7 +76,6 @@ const LoginPage = () => {
   return (
     <Container className="auth-page">
       <Panel className="auth-panel" bordered>
-        <PageHeader titleKey="Page header: Sign in" />
         <img
           className="auth-logo fade-in-expand-simple"
           src="/autolab_large_bw.png"

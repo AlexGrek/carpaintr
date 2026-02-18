@@ -327,12 +327,17 @@ tasks:
 
   # Development tasks
   dev:
-    desc: Start frontend and backend in development mode
+    desc: Start frontend and backend in development mode (kills stale servers first)
     deps:
       - task: frontend-deps
         silent: true
     cmds:
-      - task: dev-parallel
+      - task: kill-dev
+      - |
+        trap 'kill 0' EXIT
+        (cd carpaintr-front && npm run dev) &
+        (cd backend-service-rust && cargo watch -x run) &
+        wait
 
   dev-browser:
     desc: Start frontend and backend in development mode and open browser
@@ -340,10 +345,16 @@ tasks:
       - task: frontend-deps
         silent: true
     cmds:
-      - task: dev-parallel-with-browser
+      - task: kill-dev
+      - |
+        trap 'kill 0' EXIT
+        (cd carpaintr-front && npm run dev) &
+        (cd backend-service-rust && cargo watch -x run) &
+        sleep 3 && open http://localhost:5173 &
+        wait
 
   dev-parallel-with-browser:
-    desc: Run frontend, backend, and open browser in parallel
+    desc: Run frontend, backend, and open browser in parallel (no stale-kill)
     deps:
       - task: frontend
       - task: backend
@@ -380,6 +391,15 @@ tasks:
     dir: backend-service-rust
     cmds:
       - cargo watch -x run
+
+  kill-dev:
+    desc: Kill all stale dev servers (backend :8080, frontend :5173)
+    cmds:
+      - echo "Stopping stale dev servers..."
+      - lsof -ti :8080 | xargs kill -9 2>/dev/null && echo "  Killed stale backend (:8080)" || echo "  No stale backend on :8080"
+      - lsof -ti :5173 | xargs kill -9 2>/dev/null && echo "  Killed stale frontend (:5173)" || echo "  No stale frontend on :5173"
+      - pkill -f "cargo.watch" 2>/dev/null && echo "  Killed cargo-watch" || true
+      - echo "Done."
 
   # Integration testing tasks
   test:setup:
