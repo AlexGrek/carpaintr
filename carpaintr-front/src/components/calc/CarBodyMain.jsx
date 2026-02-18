@@ -166,29 +166,23 @@ const CarBodyMain = ({
         return JSON.stringify(a) === JSON.stringify(b);
     }, []);
 
-    // Handler for selecting a new part from the dropdown
-    const handlePartSelect = useCallback(
+    // Handler for selecting a new part from the dropdown (currently unused, preserved for future use)
+    const _handlePartSelect = useCallback(
         (partName) => {
-            // Check if the part is already in selectedParts (e.g., if re-opening for edit)
             const existingPart = selectedParts.find((p) => p.name === partName);
 
-            const newPart = existingPart
-                ? { ...existingPart } // If existing, create a shallow copy to modify
+            const _newPart = existingPart
+                ? { ...existingPart }
                 : {
                     action: null,
                     replace: false,
                     original: true,
                     damageLevel: 0,
                     name: partName,
-                    // grid: generateInitialGrid(mapVisual(partName ? partName : "")),
                     outsideRepairZone: null,
-                    // tableData: getOrFetchTableData(partName),
                 };
-
-            // setDrawerCurrentPart(newPart);
-            // setIsDrawerOpen(true);
         },
-        [],
+        [selectedParts],
     );
 
     const handleDiagramSelect = useCallback((item) => {
