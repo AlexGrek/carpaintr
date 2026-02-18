@@ -3,4 +3,19 @@
   width: 100%;
   background-color: rgba(255, 255, 255, 0);
   z-index: 10000;
+  padding: 8px 16px !important;
+  min-height: auto !important;
+}
+
+.top-bar-dashboard :where(.rs-navbar-header, .rs-navbar-body, .rs-navbar-content) {
+  padding: 4px 0 !important;
+}
+
+/* Ensure dropdown menu has high z-index to cover content */
+.top-bar-dashboard :where(.rs-dropdown) {
+  z-index: 10001 !important;
+}
+
+.top-bar-dashboard :where(.rs-dropdown-menu) {
+  z-index: 10001 !important;
 }

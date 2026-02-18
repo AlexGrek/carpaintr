@@ -9,13 +9,37 @@ import {
 } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
-import { useLocale } from "../../localization/LocaleContext";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { useCallback, useEffect, useState } from "react";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import MenuPickerV2 from "../layout/MenuPickerV2";
 import CarBodyMain from "./CarBodyMain";
+
+registerTranslations("en", {
+  "Data loaded successfully": "Data loaded successfully",
+  "Loading configuration...": "Loading configuration...",
+  "Retry": "Retry",
+  "Back": "Back",
+  "Accept": "Accept",
+  "Repair quality": "Repair quality",
+  "Failed to fetch configuration data": "Failed to fetch configuration data",
+  "Failed to load stage data": "Failed to load stage data",
+  "Failed to save data": "Failed to save data",
+});
+
+registerTranslations("ua", {
+  "Data loaded successfully": "Дані успішно завантажені",
+  "Loading configuration...": "Завантаження конфігурації...",
+  "Retry": "Повторити",
+  "Back": "Назад",
+  "Accept": "Прийняти",
+  "Repair quality": "Якість ремонту",
+  "Failed to fetch configuration data": "Помилка завантаження даних конфігурації",
+  "Failed to load stage data": "Помилка завантаження даних етапу",
+  "Failed to save data": "Помилка збереження даних",
+});
 
 const BodyPartsStage = ({
   title,
@@ -44,7 +68,8 @@ const BodyPartsStage = ({
 
   // Unified error handler
   const handleError = useCallback((error, context) => {
-    const errorMessage = `${context}: ${error.message || error.toString()}`;
+    const translatedContext = str(context);
+    const errorMessage = `${translatedContext}: ${error.message || error.toString()}`;
     console.error(errorMessage, error);
     setError(errorMessage);
     toaster.push(
@@ -53,7 +78,7 @@ const BodyPartsStage = ({
       </Message>,
       { placement: 'topCenter', duration: 5000 }
     );
-  }, []);
+  }, [str]);
 
   useEffect(() => {
     const fetchData = async () => {

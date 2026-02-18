@@ -1,12 +1,9 @@
-/**
- * @deprecated This component is deprecated and should not be modified.
- * Use PartDetailsDrawer.jsx and other refactored components instead.
- */
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Divider, Panel, Message, Drawer, Modal, Button } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
+import { Check, X } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
@@ -431,78 +428,159 @@ const CarBodyMain = ({
                             partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
                         />
 
-                        {/* Selected Items Table */}
+                        {/* Selected Items Table (Desktop) / Cards (Mobile) */}
                         {selectedItems.length > 0 && (
                             <div style={{ marginTop: '20px', textAlign: 'left' }}>
                                 <h4>{str("Selected Parts")} ({selectedItems.length})</h4>
-                                <table style={{
-                                    width: '100%',
-                                    borderCollapse: 'collapse',
-                                    marginTop: '10px',
-                                    border: '1px solid #ddd'
-                                }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f5f5f5' }}>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Actions")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>{str("Details")}</th>
-                                            <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>{str("Action")}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+
+                                {/* Desktop Table View */}
+                                {!isMobile && (
+                                    <table style={{
+                                        width: '100%',
+                                        borderCollapse: 'collapse',
+                                        marginTop: '10px',
+                                        border: '1px solid #ddd'
+                                    }}>
+                                        <thead>
+                                            <tr style={{ backgroundColor: '#f5f5f5' }}>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Name")}</th>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Zone")}</th>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Group")}</th>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>{str("Actions")}</th>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>{str("Details")}</th>
+                                                <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>{str("Action")}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedItems.map((item, index) => {
+                                                const actionDisplay = item.selectedAction
+                                                    ? str(item.selectedAction)
+                                                    : '-';
+                                                return (
+                                                    <tr key={index}>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', fontSize: '12px' }}>
+                                                            {actionDisplay}
+                                                        </td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                            <button
+                                                                onClick={() => handleShowDetails(item)}
+                                                                style={{
+                                                                    padding: '4px 8px',
+                                                                    backgroundColor: '#3b82f6',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '14px',
+                                                                    fontWeight: 'bold'
+                                                                }}
+                                                                title={str("Details")}
+                                                            >
+                                                                ⋯
+                                                            </button>
+                                                        </td>
+                                                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                            <button
+                                                                onClick={() => handleRequestDelete(item)}
+                                                                style={{
+                                                                    padding: '4px 12px',
+                                                                    backgroundColor: '#dc2626',
+                                                                    color: 'white',
+                                                                    border: 'none',
+                                                                    borderRadius: '4px',
+                                                                    cursor: 'pointer',
+                                                                    fontSize: '12px'
+                                                                }}
+                                                            >
+                                                                {str("Remove")}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+
+                                {/* Mobile Card View */}
+                                {isMobile && (
+                                    <div style={{ marginTop: '10px' }}>
                                         {selectedItems.map((item, index) => {
                                             const actionDisplay = item.selectedAction
                                                 ? str(item.selectedAction)
                                                 : '-';
                                             return (
-                                                <tr key={index}>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.name}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.zone || '-'}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{item.group || '-'}</td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd', fontSize: '12px' }}>
-                                                        {actionDisplay}
-                                                    </td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                                <div
+                                                    key={index}
+                                                    style={{
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '6px',
+                                                        padding: '12px',
+                                                        marginBottom: '12px',
+                                                        backgroundColor: '#fafafa'
+                                                    }}
+                                                >
+                                                    <div style={{ marginBottom: '8px' }}>
+                                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                                                            {item.name}
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                                        <div>
+                                                            <strong>{str("Zone")}:</strong> {item.zone || '-'}
+                                                        </div>
+                                                        <div>
+                                                            <strong>{str("Group")}:</strong> {item.group || '-'}
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                                                        <strong>{str("Actions")}:</strong> {actionDisplay}
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
                                                         <button
                                                             onClick={() => handleShowDetails(item)}
                                                             style={{
-                                                                padding: '4px 8px',
+                                                                flex: 1,
+                                                                padding: '10px',
                                                                 backgroundColor: '#3b82f6',
                                                                 color: 'white',
                                                                 border: 'none',
                                                                 borderRadius: '4px',
                                                                 cursor: 'pointer',
-                                                                fontSize: '14px',
+                                                                fontSize: '13px',
                                                                 fontWeight: 'bold'
                                                             }}
-                                                            title={str("Details")}
                                                         >
-                                                            ⋯
+                                                            {str("Details")}
                                                         </button>
-                                                    </td>
-                                                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                                                         <button
                                                             onClick={() => handleRequestDelete(item)}
                                                             style={{
-                                                                padding: '4px 12px',
+                                                                flex: 1,
+                                                                padding: '10px',
                                                                 backgroundColor: '#dc2626',
                                                                 color: 'white',
                                                                 border: 'none',
                                                                 borderRadius: '4px',
                                                                 cursor: 'pointer',
-                                                                fontSize: '12px'
+                                                                fontSize: '13px',
+                                                                fontWeight: 'bold'
                                                             }}
                                                         >
                                                             {str("Remove")}
                                                         </button>
-                                                    </td>
-                                                </tr>
+                                                    </div>
+                                                </div>
                                             );
                                         })}
-                                    </tbody>
-                                </table>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </>
@@ -667,11 +745,28 @@ const CarBodyMain = ({
             {/* Part Details Drawer */}
             <Drawer
                 open={drawerOpen}
-                onClose={handleDrawerCancel}
-                size={isMobile ? 'full' : 'sm'}
+                onClose={handleDrawerSave}
+                size={isMobile ? 'full' : 'lg'}
             >
                 <Drawer.Header>
                     <Drawer.Title>{drawerPartDetails?.name || str("Part Details")}</Drawer.Title>
+                    <Drawer.Actions>
+                        <Button
+                            onClick={handleDrawerCancel}
+                            appearance="subtle"
+                            startIcon={<X size={18} />}
+                        >
+                            {!isMobile && str("Cancel")}
+                        </Button>
+                        <Button
+                            onClick={handleDrawerSave}
+                            appearance="primary"
+                            color="green"
+                            startIcon={<Check size={18} />}
+                        >
+                            {!isMobile && str("Save")}
+                        </Button>
+                    </Drawer.Actions>
                 </Drawer.Header>
                 <Drawer.Body>
                     {editedPart ? (
@@ -763,16 +858,6 @@ const CarBodyMain = ({
                             </div>
 
                             <Divider />
-
-                            {/* Save and Cancel Buttons */}
-                            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                                <Button onClick={handleDrawerCancel} appearance="subtle">
-                                    {str("Cancel")}
-                                </Button>
-                                <Button onClick={handleDrawerSave} appearance="primary" color="green">
-                                    {str("Save")}
-                                </Button>
-                            </div>
 
                             {/* Show all available properties */}
                             {drawerPartDetails && Object.keys(drawerPartDetails).length > 0 && (

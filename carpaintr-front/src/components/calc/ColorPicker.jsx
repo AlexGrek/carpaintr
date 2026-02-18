@@ -17,7 +17,7 @@ const ColorGridPlaceholder = () => {
         margin: "auto",
         gap: "16px",
         gridTemplateColumns: "repeat(4, minmax(24px, 1fr))",
-        padding: "7px",
+        padding: "20px 7px 7px 7px",
       }}
     >
       {Array.from({ length: totalItems }).map((_, index) => (
@@ -74,7 +74,7 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
   const displayColors = baseColors.rows;
 
   return (
-    <div>
+    <div style={{ marginTop: '20px' }}>
       {displayColors.map((subgrid, index) => (
         <ColorGrid
           key={index}
