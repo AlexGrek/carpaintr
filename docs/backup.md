@@ -345,12 +345,46 @@ task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes
 The restore process automatically:
 1. ✓ Uploads local file to cluster (if using `db-restore-from-local-*`)
 2. ✓ Verifies backup file exists
-3. ✓ Scales down application (0 replicas)
-4. ✓ Creates safety backup of current data
-5. ✓ Clears existing data
-6. ✓ Detects format and extracts backup archive (supports .tar.gz, .tgz, .zip)
-7. ✓ Scales up application (1 replica)
-8. ✓ Verifies restoration
+3. ✓ **Validates backup file structure** - Checks for presence of `sled_db/` directory (fails if not found)
+4. ✓ Scales down application (0 replicas)
+5. ✓ Creates safety backup of current data
+6. ✓ Clears existing data
+7. ✓ Detects format and extracts backup archive (supports .tar.gz, .tgz, .zip)
+8. ✓ Scales up application (1 replica)
+9. ✓ Verifies restoration
+
+#### Backup Structure Validation
+
+The restore process includes an **automatic validation step** that checks the backup file structure before proceeding with the restore:
+
+**What is validated:**
+- Backup file exists and is readable
+- Archive format is supported (`.tar.gz`, `.tgz`, or `.zip`)
+- **Backup contains the `sled_db/` directory** (the application database)
+
+**Why this matters:**
+- Prevents restoring corrupted or incomplete backups
+- Avoids data loss from invalid backup files
+- Catches issues early before scaling down the application
+
+**If validation fails:**
+The restore process will stop immediately with an error message showing:
+- What was expected (sled_db directory)
+- What the validation found
+- Instructions to verify the backup file
+
+**Example error:**
+```
+✗ Backup validation failed!
+Validation output:
+ERROR: sled_db directory not found in backup
+
+Error: Backup file does not contain expected directory structure
+Expected: sled_db/ directory in archive
+This backup may be corrupted or incomplete. Restore cancelled.
+```
+
+This safety check ensures the application data is never overwritten with an invalid backup.
 
 #### Direct Script Usage
 
@@ -716,8 +750,9 @@ kubectl get jobs | grep backup | grep -v "1/1"
 4. **Retention Planning**: Balance retention count with storage costs and recovery needs
 5. **Schedule Coordination**: Run backups during low-traffic periods
 6. **Document Changes**: Keep this document updated with any customizations
-7. **Backup Verification**: Implement automated backup integrity checks
+7. **Backup Verification**: Trust the built-in structure validation - it automatically checks backup integrity before restore
 8. **Security**: Ensure backup volumes have appropriate access controls
+9. **External Backups**: When using external backup files, ensure they contain the correct directory structure (sled_db/) before restoration
 
 ## Quick Reference
 

@@ -47,15 +47,154 @@ echo ""
 
 # Verify backup file exists
 echo -e "${YELLOW}Step 1/6: Verifying backup file exists...${NC}"
-BACKUP_EXISTS=$(kubectl exec -n "${NAMESPACE}" "${POD_NAME}" -- test -f "/backups/${BACKUP_FILE}" && echo "yes" || echo "no")
+
+# Try to access backup from main pod first, then fall back to temporary pod
+BACKUP_EXISTS=$(kubectl exec -n "${NAMESPACE}" "${POD_NAME}" -- test -f "/backups/${BACKUP_FILE}" 2>/dev/null && echo "yes" || echo "no")
+
+if [ "$BACKUP_EXISTS" != "yes" ]; then
+    # Main pod doesn't have backup volume mounted (security by design)
+    # Use temporary pod to verify backup exists in the backup PVC
+    VERIFY_POD="backup-verify-$(date +%s)"
+    kubectl run "${VERIFY_POD}" --image=busybox:1.36 -n "${NAMESPACE}" --restart=Never --overrides='{
+      "spec": {
+        "containers": [{
+          "name": "verify",
+          "image": "busybox:1.36",
+          "command": ["sh", "-c", "test -f /backups/'${BACKUP_FILE}' && echo yes || echo no"],
+          "volumeMounts": [{
+            "name": "backup-volume",
+            "mountPath": "/backups",
+            "readOnly": true
+          }]
+        }],
+        "volumes": [{
+          "name": "backup-volume",
+          "persistentVolumeClaim": {
+            "claimName": "'${BACKUP_PVC}'"
+          }
+        }]
+      }
+    }' 2>/dev/null || true
+
+    kubectl wait --for=condition=ready pod/"${VERIFY_POD}" -n "${NAMESPACE}" --timeout=30s 2>/dev/null || true
+    sleep 1
+    BACKUP_EXISTS=$(kubectl logs -n "${NAMESPACE}" "${VERIFY_POD}" 2>/dev/null | tr -d '\n')
+    kubectl delete pod "${VERIFY_POD}" -n "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
+fi
+
 if [ "$BACKUP_EXISTS" != "yes" ]; then
     echo -e "${RED}Error: Backup file /backups/${BACKUP_FILE} not found${NC}"
     echo ""
     echo "Available backups:"
-    kubectl exec -n "${NAMESPACE}" "${POD_NAME}" -- ls -lh /backups/ || echo "Could not list backups"
+    LISTER_POD="backup-lister-$(date +%s)"
+    kubectl run "${LISTER_POD}" --image=busybox:1.36 -n "${NAMESPACE}" --restart=Never --overrides='{
+      "spec": {
+        "containers": [{
+          "name": "lister",
+          "image": "busybox:1.36",
+          "command": ["ls", "-lh", "/backups"],
+          "volumeMounts": [{
+            "name": "backup-volume",
+            "mountPath": "/backups",
+            "readOnly": true
+          }]
+        }],
+        "volumes": [{
+          "name": "backup-volume",
+          "persistentVolumeClaim": {
+            "claimName": "'${BACKUP_PVC}'"
+          }
+        }]
+      }
+    }' 2>/dev/null || true
+
+    kubectl wait --for=condition=ready pod/"${LISTER_POD}" -n "${NAMESPACE}" --timeout=30s 2>/dev/null || true
+    kubectl logs -n "${NAMESPACE}" "${LISTER_POD}" 2>/dev/null || echo "Could not list backups"
+    kubectl delete pod "${LISTER_POD}" -n "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
     exit 1
 fi
 echo -e "${GREEN}✓ Backup file exists${NC}"
+echo ""
+
+# Validate backup file structure
+echo -e "${YELLOW}Step 1.5/6: Validating backup file structure...${NC}"
+
+VALIDATOR_POD="backup-validator-$(date +%s)"
+
+# Create a Job (instead of Pod) for more reliable logging
+kubectl apply -f - -n "${NAMESPACE}" <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${VALIDATOR_POD}
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: validator
+        image: alpine:3.19
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          BACKUP_PATH="/backups/${BACKUP_FILE}"
+
+          if [ ! -f "\$BACKUP_PATH" ]; then
+            echo "ERROR: Backup file not found: \$BACKUP_PATH"
+            exit 1
+          fi
+
+          # Detect format and validate
+          if echo "\$BACKUP_PATH" | grep -qE '\.tar\.gz$|\.tgz$'; then
+            if ! tar -tzf "\$BACKUP_PATH" | grep -q "^sled_db/"; then
+              echo "ERROR: sled_db directory not found in tar.gz backup"
+              exit 1
+            fi
+          elif echo "\$BACKUP_PATH" | grep -qE '\.zip$'; then
+            if ! unzip -l "\$BACKUP_PATH" | grep -q "sled_db/"; then
+              echo "ERROR: sled_db directory not found in zip backup"
+              exit 1
+            fi
+          else
+            echo "ERROR: Unsupported backup format"
+            exit 1
+          fi
+
+          echo "VALID"
+        volumeMounts:
+        - name: backup-volume
+          mountPath: /backups
+          readOnly: true
+      volumes:
+      - name: backup-volume
+        persistentVolumeClaim:
+          claimName: ${BACKUP_PVC}
+EOF
+
+# Wait for job to complete
+echo "Waiting for validation job..."
+kubectl wait --for=condition=complete job/${VALIDATOR_POD} -n "${NAMESPACE}" --timeout=60s 2>/dev/null || true
+sleep 1
+
+# Get validation result
+VALIDATION_OUTPUT=$(kubectl logs -n "${NAMESPACE}" job/${VALIDATOR_POD} 2>/dev/null || echo "ERROR: Could not get logs")
+kubectl delete job ${VALIDATOR_POD} -n "${NAMESPACE}" --ignore-not-found=true 2>/dev/null || true
+
+if echo "$VALIDATION_OUTPUT" | grep -q "^VALID$"; then
+    echo -e "${GREEN}✓ Backup structure validated (contains sled_db)${NC}"
+else
+    echo -e "${RED}✗ Backup validation failed!${NC}"
+    echo "Validation output:"
+    echo "$VALIDATION_OUTPUT"
+    echo ""
+    echo -e "${RED}Error: Backup file does not contain expected directory structure${NC}"
+    echo "Expected: sled_db/ directory in archive"
+    echo "This backup may be corrupted or incomplete. Restore cancelled."
+    exit 1
+fi
 echo ""
 
 # Warning

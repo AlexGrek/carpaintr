@@ -74,15 +74,20 @@ kubectl get jobs -n autolab-dev | grep backup
 
 The restore script automatically:
 1. Verifies backup file exists
-2. Scales down application (0 replicas)
-3. Creates safety backup of current data
-4. Clears existing data and restores from backup
-5. Scales up application (1 replica)
+2. **Validates backup file structure** - Ensures backup contains expected `sled_db/` directory before proceeding
+3. Scales down application (0 replicas)
+4. Creates safety backup of current data
+5. Clears existing data and restores from backup
+6. Scales up application (1 replica)
+
+**Critical:** The restore process validates backup integrity by checking for the presence of `sled_db/` directory (the database directory). Corrupted or incomplete backups will be rejected before any data is modified, preventing data loss.
 
 **Direct script usage:**
 ```bash
 ./scripts/restore-from-backup.sh <backup-file> <namespace> <release>
 ```
+
+**Supported backup formats:** `.tar.gz`, `.tgz`, `.zip`
 
 ## Integration Testing
 

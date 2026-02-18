@@ -21,7 +21,8 @@
       "Bash(task test:license:*)",
       "Bash(kubectl get:*)",
       "Bash(kubectl config get-contexts:*)",
-      "Bash(helm list:*)"
+      "Bash(helm list:*)",
+      "Bash(task db-restore-from-local-dev:*)"
     ]
   }
 }

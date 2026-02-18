@@ -561,7 +561,8 @@ tasks:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
       REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
       BACKUP_PVC: "{{.REL}}-autolab-api-backup"
-      TEMP_POD: "backup-uploader-$(date +%s)"
+      TEMP_POD:
+        sh: echo "backup-uploader-$(date +%s)"
       FILENAME:
         sh: basename "{{.LOCAL_FILE}}"
     preconditions:
@@ -694,7 +695,8 @@ tasks:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
       REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
       BACKUP_PVC: "{{.REL}}-autolab-api-backup"
-      TEMP_POD: "backup-uploader-$(date +%s)"
+      TEMP_POD:
+        sh: echo "backup-uploader-$(date +%s)"
       FILENAME:
         sh: basename "{{.LOCAL_FILE}}"
     preconditions:
