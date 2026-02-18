@@ -37,6 +37,11 @@ registerTranslations("en", {
     "Cancel": "Cancel",
     "Raw Data": "Raw Data",
     "Content for action will appear here": "Content for {action} action will appear here",
+    "Damage Level": "Damage Level",
+    "Original Part": "Original Part",
+    "Replace Part": "Replace Part",
+    "Save": "Save",
+    "toning": "toning",
 });
 
 registerTranslations("ua", {
@@ -63,6 +68,11 @@ registerTranslations("ua", {
     "Cancel": "Скасувати",
     "Raw Data": "Необроблені дані",
     "Content for action will appear here": "Зміст для дії {action} з'явиться тут",
+    "Damage Level": "Рівень пошкодження",
+    "Original Part": "Оригінальна деталь",
+    "Replace Part": "Замінити деталь",
+    "Save": "Зберегти",
+    "toning": "тонування",
 });
 
 const CarBodyMain = ({
@@ -89,6 +99,7 @@ const CarBodyMain = ({
     const [selectedItems, setSelectedItems] = useState([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerPartDetails, setDrawerPartDetails] = useState(null);
+    const [editedPart, setEditedPart] = useState(null); // Local state for drawer edits
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
@@ -152,21 +163,48 @@ const CarBodyMain = ({
         });
     }, []);
 
-    const handleSelectAction = useCallback((itemName, action) => {
-        setSelectedItems(prev => prev.map(item => {
-            if (item.name === itemName) {
-                return { ...item, selectedAction: action };
-            }
-            return item;
-        }));
-    }, []);
-
     const handleShowDetails = useCallback((item) => {
-        // Find the item in selectedItems to get the current selectedActions
+        // Find the item in selectedItems to get the current data
         const selectedItem = selectedItems.find(i => i.name === item.name);
-        setDrawerPartDetails(selectedItem || item);
+        const partToEdit = selectedItem || item;
+
+        setDrawerPartDetails(partToEdit);
+        // Initialize local edit state with current values
+        setEditedPart({
+            name: partToEdit.name,
+            action: partToEdit.selectedAction || partToEdit.action || null,
+            damageLevel: partToEdit.damageLevel ?? 0,
+            original: partToEdit.original ?? true,
+            replace: partToEdit.replace ?? false,
+        });
         setDrawerOpen(true);
     }, [selectedItems]);
+
+    const handleDrawerSave = useCallback(() => {
+        if (editedPart) {
+            // Update selectedItems with edited data
+            setSelectedItems(prev => prev.map(item => {
+                if (item.name === editedPart.name) {
+                    return {
+                        ...item,
+                        selectedAction: editedPart.action,
+                        action: editedPart.action,
+                        damageLevel: editedPart.damageLevel,
+                        original: editedPart.original,
+                        replace: editedPart.replace,
+                    };
+                }
+                return item;
+            }));
+        }
+        setDrawerOpen(false);
+        setEditedPart(null);
+    }, [editedPart]);
+
+    const handleDrawerCancel = useCallback(() => {
+        setDrawerOpen(false);
+        setEditedPart(null);
+    }, []);
 
     const handleRequestDelete = useCallback((item) => {
         setItemToDelete(item);
@@ -181,15 +219,15 @@ const CarBodyMain = ({
         setItemToDelete(null);
     }, [itemToDelete, handleDiagramSelect]);
 
-    // Update drawer details when selectedItems change (to reflect action toggles)
-    useEffect(() => {
-        if (drawerOpen && drawerPartDetails) {
-            const updatedItem = selectedItems.find(i => i.name === drawerPartDetails.name);
-            if (updatedItem) {
-                setDrawerPartDetails(updatedItem);
-            }
-        }
-    }, [selectedItems, drawerOpen, drawerPartDetails]);
+    // No longer needed - drawer uses local state now
+    // useEffect(() => {
+    //     if (drawerOpen && drawerPartDetails) {
+    //         const updatedItem = selectedItems.find(i => i.name === drawerPartDetails.name);
+    //         if (updatedItem) {
+    //             setDrawerPartDetails(updatedItem);
+    //         }
+    //     }
+    // }, [selectedItems, drawerOpen, drawerPartDetails]);
 
     // Sync selectedParts prop → selectedItems state (parent controls initial state)
     useEffect(() => {
@@ -629,73 +667,115 @@ const CarBodyMain = ({
             {/* Part Details Drawer */}
             <Drawer
                 open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
+                onClose={handleDrawerCancel}
                 size={isMobile ? 'full' : 'sm'}
             >
                 <Drawer.Header>
                     <Drawer.Title>{drawerPartDetails?.name || str("Part Details")}</Drawer.Title>
-                    <Drawer.Actions>
-                        <button
-                            onClick={() => setDrawerOpen(false)}
-                            style={{
-                                padding: '6px 16px',
-                                backgroundColor: '#666',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '14px'
-                            }}
-                        >
-                            {str("Close")}
-                        </button>
-                    </Drawer.Actions>
                 </Drawer.Header>
                 <Drawer.Body>
-                    {drawerPartDetails ? (
+                    {editedPart ? (
                         <div style={{ padding: '10px' }}>
                             <div style={{ marginBottom: '15px' }}>
-                                <strong>{str("Zone")}:</strong> {drawerPartDetails.zone || '-'}
+                                <strong>{str("Name")}:</strong> {editedPart.name}
                             </div>
 
                             <div style={{ marginBottom: '15px' }}>
-                                <strong>{str("Group")}:</strong> {drawerPartDetails.group || '-'}
+                                <strong>{str("Zone")}:</strong> {drawerPartDetails?.zone || '-'}
                             </div>
 
+                            <div style={{ marginBottom: '15px' }}>
+                                <strong>{str("Group")}:</strong> {drawerPartDetails?.group || '-'}
+                            </div>
+
+                            <Divider />
+
                             {/* Action Selection */}
-                            {drawerPartDetails.actions && drawerPartDetails.actions.length > 0 && (
-                                <div style={{ marginTop: '20px' }}>
-                                    <Divider />
+                            {drawerPartDetails?.actions && drawerPartDetails.actions.length > 0 && (
+                                <div style={{ marginTop: '20px', marginBottom: '20px' }}>
                                     <MenuPickerV2
-                                        label={str("Actions")}
+                                        label={str("Action")}
                                         items={drawerPartDetails.actions.map(action => ({
                                             label: str(action),
                                             value: action
                                         }))}
-                                        value={drawerPartDetails.selectedAction}
-                                        onSelect={(value) => handleSelectAction(drawerPartDetails.name, value)}
+                                        value={editedPart.action}
+                                        onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
                                         style={{ maxWidth: '100%' }}
                                     />
                                 </div>
                             )}
 
-                            {/* Action-specific tabs/content */}
-                            {drawerPartDetails.selectedAction && (
-                                <div style={{ marginTop: '20px' }}>
-                                    <Divider />
-                                    <h5 style={{ marginBottom: '10px' }}>
-                                        {str(drawerPartDetails.selectedAction)} - {str("Details")}
-                                    </h5>
-                                    <div style={{ padding: '10px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                                        <p style={{ fontSize: '13px', color: '#666' }}>
-                                            {str("Content for action will appear here").replace("{action}", str(drawerPartDetails.selectedAction))}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Damage Level */}
+                            <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                                    {str("Damage Level")}
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="10"
+                                    value={editedPart.damageLevel}
+                                    onChange={(e) => setEditedPart(prev => ({
+                                        ...prev,
+                                        damageLevel: parseInt(e.target.value) || 0
+                                    }))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #ddd',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Original Part Checkbox */}
+                            <div style={{ marginTop: '15px', marginBottom: '15px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={editedPart.original}
+                                        onChange={(e) => setEditedPart(prev => ({
+                                            ...prev,
+                                            original: e.target.checked
+                                        }))}
+                                        style={{ marginRight: '8px', width: '16px', height: '16px' }}
+                                    />
+                                    <span>{str("Original Part")}</span>
+                                </label>
+                            </div>
+
+                            {/* Replace Part Checkbox */}
+                            <div style={{ marginTop: '15px', marginBottom: '15px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={editedPart.replace}
+                                        onChange={(e) => setEditedPart(prev => ({
+                                            ...prev,
+                                            replace: e.target.checked
+                                        }))}
+                                        style={{ marginRight: '8px', width: '16px', height: '16px' }}
+                                    />
+                                    <span>{str("Replace Part")}</span>
+                                </label>
+                            </div>
+
+                            <Divider />
+
+                            {/* Save and Cancel Buttons */}
+                            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                <Button onClick={handleDrawerCancel} appearance="subtle">
+                                    {str("Cancel")}
+                                </Button>
+                                <Button onClick={handleDrawerSave} appearance="primary" color="green">
+                                    {str("Save")}
+                                </Button>
+                            </div>
 
                             {/* Show all available properties */}
-                            {Object.keys(drawerPartDetails).length > 0 && (
+                            {drawerPartDetails && Object.keys(drawerPartDetails).length > 0 && (
                                 <div style={{ marginTop: '20px' }}>
                                     <Divider />
                                     <details>
@@ -711,7 +791,7 @@ const CarBodyMain = ({
                                             overflow: 'auto',
                                             maxHeight: '400px'
                                         }}>
-                                            {JSON.stringify(drawerPartDetails, null, 2)}
+                                            {JSON.stringify({ original: drawerPartDetails, edited: editedPart }, null, 2)}
                                         </pre>
                                     </details>
                                 </div>
