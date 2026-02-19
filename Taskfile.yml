@@ -333,14 +333,7 @@ tasks:
         silent: true
     cmds:
       - task: kill-dev
-      - |
-        (cd carpaintr-front && npm run dev) &
-        FE_PID=$!
-        (cd backend-service-rust && cargo watch -x run) &
-        BE_PID=$!
-        cleanup() { /bin/kill "$FE_PID" "$BE_PID" 2>/dev/null; }
-        trap cleanup EXIT INT TERM HUP
-        wait "$FE_PID" "$BE_PID"
+      - ./scripts/dev-watch.sh
 
   dev-browser:
     desc: Start frontend and backend in development mode and open browser
@@ -349,15 +342,8 @@ tasks:
         silent: true
     cmds:
       - task: kill-dev
-      - |
-        (cd carpaintr-front && npm run dev) &
-        FE_PID=$!
-        (cd backend-service-rust && cargo watch -x run) &
-        BE_PID=$!
-        cleanup() { /bin/kill "$FE_PID" "$BE_PID" 2>/dev/null; }
-        trap cleanup EXIT INT TERM HUP
-        sleep 3 && open http://localhost:5173
-        wait "$FE_PID" "$BE_PID"
+      - sleep 3 && open http://localhost:5173 &
+      - ./scripts/dev-watch.sh
 
   dev-parallel-with-browser:
     desc: Run frontend, backend, and open browser in parallel (no stale-kill)

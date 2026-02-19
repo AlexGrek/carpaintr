@@ -1,0 +1,13 @@
+[project]
+name = "carpaintr-load-testing"
+version = "0.1.0"
+description = "High-load testing for carpaintr backend"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.9",
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+]
+
+[tool.pdm]
+distribution = false

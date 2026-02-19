@@ -15,7 +15,15 @@
       "Bash(task backend:*)",
       "Bash(.venv/bin/pytest tests/test_license_protection.py -v)",
       "Bash(task db-list-backups:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(task:*)",
+      "Bash(zsh -c 'trap \"\"echo cleanup\"\" 0 1 2 15; echo ok')",
+      "Bash(lsof:*)",
+      "Bash(pgrep:*)",
+      "Bash(pdm install:*)",
+      "Bash(cargo build:*)",
+      "Bash(pdm run python:*)",
+      "Bash(pkill:*)"
     ]
   }
 }
