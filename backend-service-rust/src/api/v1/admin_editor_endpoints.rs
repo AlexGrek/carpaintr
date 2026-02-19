@@ -56,7 +56,7 @@ pub async fn read_file(
     let data = get_file_as_string_by_path(&user_path.join(&path), user_path, &app_state.cache)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-    Ok(data)
+    Ok(Arc::unwrap_or_clone(data))
 }
 
 pub async fn delete_file(

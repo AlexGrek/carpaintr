@@ -11,3 +11,6 @@ dependencies = [
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+loadtest = "loadtest:main"

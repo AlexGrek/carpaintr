@@ -129,7 +129,7 @@ pub async fn list_all_repair_types(
             .await?;
     let mut all = HashSet::<String>::new();
     let empty = "".to_string();
-    for line in parsed.into_iter() {
+    for line in parsed.iter() {
         let (_name, repairs) = line.get_index(1).unwrap_or((&empty, &empty));
         repairs.split('/').map(|s| s.trim()).for_each(|s| {
             let _ = all.insert(s.to_string());

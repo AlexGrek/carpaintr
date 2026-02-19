@@ -11,6 +11,8 @@ use crate::calc::constants::{self, *};
 use crate::errors::AppError;
 use crate::exlogging::{self, log_event};
 use crate::models::table_validation::{make_basic_validation_rules, ValidationRule};
+use std::sync::Arc;
+
 use crate::utils::{
     self, parse_csv_delimiter_header_async, parse_csv_file_async_safe, serialize_and_write_csv,
     DataStorageCache,
@@ -110,7 +112,7 @@ pub async fn fix_issues_with_csv_async<P: AsRef<std::path::Path>>(
     let mut issues = vec![];
     let mut replacements = HashMap::new();
     let mut keys = HashSet::new();
-    let mut parsed = parse_csv_file_async_safe(base, path, cache).await?;
+    let mut parsed = Arc::unwrap_or_clone(parse_csv_file_async_safe(base, path, cache).await?);
     let (delimiter, _) = parse_csv_delimiter_header_async(&path_buf).await?;
     if delimiter != "," {
         issues.push(format!("W: Incorrect delimiter, got: {}", delimiter));
@@ -193,10 +195,10 @@ pub async fn find_issues_with_csv_async<P: AsRef<std::path::Path>>(
     if delimiter != "," {
         issues.push(format!("W: Incorrect delimiter, got: {}", delimiter));
     }
-    for line in parsed.into_iter() {
-        for (key, value) in line.into_iter() {
-            issues.extend_from_slice(&validate_table_value(&validators, &value, &key));
-            keys.insert(key);
+    for line in parsed.iter() {
+        for (key, value) in line.iter() {
+            issues.extend_from_slice(&validate_table_value(&validators, value, key));
+            keys.insert(key.clone());
         }
     }
     if !keys.contains(constants::CAR_PART_DETAIL_UKR_FIELD) {
@@ -325,8 +327,7 @@ pub async fn lookup_part_in_table(
     cache: &DataStorageCache,
 ) -> Result<(String, Option<IndexMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
-    let found = data.into_iter().find(|row| {
-        // let debug_data: Vec<&String> = row.keys().into_iter().collect();
+    let found = data.iter().find(|row| {
         if !row.contains_key(CAR_PART_DETAIL_UKR_FIELD) {
             return false;
         }
@@ -344,7 +345,7 @@ pub async fn lookup_part_in_table(
             }
         }
         true
-    });
+    }).cloned();
     let table_file_name = file
         .as_path()
         .file_name()
@@ -362,7 +363,7 @@ pub async fn lookup_part_in_table_any_type(
 ) -> Result<(String, Vec<IndexMap<String, String>>), AppError> {
     let data = parse_csv_file_async_safe(data_dir, &file, cache).await?;
     let found: Vec<_> = data
-        .into_iter()
+        .iter()
         .filter(|row| {
             if !row.contains_key(CAR_PART_DETAIL_UKR_FIELD) {
                 return false;
@@ -372,6 +373,7 @@ pub async fn lookup_part_in_table_any_type(
             }
             true
         })
+        .cloned()
         .collect();
     let table_file_name = file
         .as_path()

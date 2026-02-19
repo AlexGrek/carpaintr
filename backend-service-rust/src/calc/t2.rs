@@ -9,6 +9,8 @@ use crate::calc::constants::*;
 use crate::errors::AppError;
 use crate::exlogging::{log_event, LogLevel};
 use crate::utils::stringext::StringExt;
+use std::sync::Arc;
+
 use crate::utils::{parse_csv_file_async_safe, DataStorageCache};
 
 static CSV_EXT: LazyLock<&'static OsStr> = LazyLock::new(|| OsStr::new("csv"));
@@ -53,7 +55,7 @@ pub async fn t2_rows_all(
         );
     }
 
-    Ok(data)
+    Ok(Arc::unwrap_or_clone(data))
 }
 
 pub async fn t2_rows_by_body_type(
@@ -88,7 +90,7 @@ pub async fn t2_rows_by_body_type(
     );
 
     let filtered_by_class: Vec<_> = data
-        .into_iter()
+        .iter()
         .filter(|row| {
             for (k, v) in row.iter() {
                 if k.contains(T2_BODY) && v == car_type {
@@ -102,6 +104,7 @@ pub async fn t2_rows_by_body_type(
             }
             false
         })
+        .cloned()
         .collect();
 
     log_event(

@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::fs;
 use tokio::fs::read_dir;
@@ -118,17 +119,17 @@ pub async fn safe_read<P: AsRef<Path>>(
     base: P,
     target_relative: P,
     cache: &DataStorageCache,
-) -> Result<Vec<u8>, SafeFsError> {
+) -> Result<Arc<Vec<u8>>, SafeFsError> {
     let safe_path = safe_join(&base, &target_relative)?;
     let path_buf = safe_path.to_path_buf();
 
     if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
-        return Ok(data.clone());
+        return Ok(Arc::clone(data));
     }
 
     log::debug!("Safely reading file {:?}", safe_path);
-    let data = fs::read(&safe_path).await?;
-    cache.as_vec_u8.write().await.put(path_buf, data.clone());
+    let data = Arc::new(fs::read(&safe_path).await?);
+    cache.as_vec_u8.write().await.put(path_buf, Arc::clone(&data));
     Ok(data)
 }
 
@@ -261,6 +262,7 @@ pub async fn get_catalog_file_as_string(
         .await?;
         get_file_as_string_by_path(&file_path, data_dir_path, cache)
             .await
+            .map(|arc| Arc::unwrap_or_clone(arc))
             .map_err(|_err| AppError::Forbidden)
     } else {
         Err(AppError::BadRequest(format!(
@@ -284,18 +286,18 @@ pub async fn get_file_as_string_by_path<P: AsRef<Path>>(
     path: &P,
     root: &P,
     cache: &DataStorageCache,
-) -> Result<String, SafeFsError> {
+) -> Result<Arc<String>, SafeFsError> {
     let safe_path = safety_check_only(root, path)?;
     let path_buf = safe_path.as_ref().to_path_buf();
 
     if let Some(data) = cache.as_string.write().await.get(&path_buf) {
-        return Ok(data.clone());
+        return Ok(Arc::clone(data));
     }
 
     log::info!("Reading file: {:?}", path_buf);
     // Read directly - let the error propagate naturally if file doesn't exist
-    let content = fs::read_to_string(&path_buf).await?;
-    cache.as_string.write().await.put(path_buf, content.clone());
+    let content = Arc::new(fs::read_to_string(&path_buf).await?);
+    cache.as_string.write().await.put(path_buf, Arc::clone(&content));
     Ok(content)
 }
 
@@ -303,17 +305,17 @@ pub async fn get_file_bytes<P: AsRef<Path>>(
     path: &P,
     root: &P,
     cache: &DataStorageCache,
-) -> Result<Vec<u8>, SafeFsError> {
+) -> Result<Arc<Vec<u8>>, SafeFsError> {
     let safe_path = safety_check_only(root, path)?;
     let path_buf = safe_path.as_ref().to_path_buf();
 
     if let Some(data) = cache.as_vec_u8.write().await.get(&path_buf) {
-        return Ok(data.clone());
+        return Ok(Arc::clone(data));
     }
 
     log::debug!("Safely reading file {:?}", path_buf);
-    let data = fs::read(&safe_path).await?;
-    cache.as_vec_u8.write().await.put(path_buf, data.clone());
+    let data = Arc::new(fs::read(&safe_path).await?);
+    cache.as_vec_u8.write().await.put(path_buf, Arc::clone(&data));
     Ok(data)
 }
 

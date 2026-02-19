@@ -83,7 +83,7 @@ pub async fn get_calculation_file(
 
     let content = safe_read(&user_path, &file_path, &app_state.cache).await?;
 
-    Ok(([(CONTENT_TYPE, "application/json")], content))
+    Ok(([(CONTENT_TYPE, "application/json")], Arc::unwrap_or_clone(content)))
 }
 
 pub async fn get_calculations_list(

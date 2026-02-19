@@ -23,7 +23,8 @@
       "Bash(pdm install:*)",
       "Bash(cargo build:*)",
       "Bash(pdm run python:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(python loadtest.py:*)"
     ]
   }
 }

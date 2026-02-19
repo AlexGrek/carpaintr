@@ -39,9 +39,9 @@ pub const ATTACHMENTS: &str = "attachments";
 
 #[derive(Debug)]
 pub struct DataStorageCache {
-    pub as_string: Arc<RwLock<LruCache<PathBuf, String>>>,
-    pub as_vec_u8: Arc<RwLock<LruCache<PathBuf, Vec<u8>>>>,
-    pub as_csv: Arc<RwLock<LruCache<PathBuf, Vec<IndexMap<String, String>>>>>,
+    pub as_string: Arc<RwLock<LruCache<PathBuf, Arc<String>>>>,
+    pub as_vec_u8: Arc<RwLock<LruCache<PathBuf, Arc<Vec<u8>>>>>,
+    pub as_csv: Arc<RwLock<LruCache<PathBuf, Arc<Vec<IndexMap<String, String>>>>>>,
 }
 
 impl DataStorageCache {
@@ -86,7 +86,8 @@ impl DataStorageCache {
         let csv_size: usize = csv_cache
             .iter()
             .map(|(_, v)| {
-                v.iter()
+                v.as_ref()
+                    .iter()
                     .map(|row| row.iter().map(|(k, v)| k.len() + v.len()).sum::<usize>())
                     .sum::<usize>()
             })
@@ -145,10 +146,10 @@ pub async fn parse_csv_delimiter_header_async<P: AsRef<Path>>(
 async fn parse_csv_file_async<P: AsRef<Path>>(
     path: P,
     cache: &DataStorageCache,
-) -> Result<Vec<IndexMap<String, String>>, AppError> {
+) -> Result<Arc<Vec<IndexMap<String, String>>>, AppError> {
     let path_buf = path.as_ref().to_path_buf();
     if let Some(cached_data) = cache.as_csv.write().await.get(&path_buf) {
-        return Ok(cached_data.clone());
+        return Ok(Arc::clone(cached_data));
     }
 
     // First pass: detect delimiter by reading only first two lines
@@ -199,7 +200,8 @@ async fn parse_csv_file_async<P: AsRef<Path>>(
         records.push(row_map);
     }
 
-    cache.as_csv.write().await.put(path_buf, records.clone());
+    let records = Arc::new(records);
+    cache.as_csv.write().await.put(path_buf, Arc::clone(&records));
 
     Ok(records)
 }
@@ -208,7 +210,7 @@ pub async fn parse_csv_file_async_safe<P: AsRef<Path>>(
     base: P,
     target: P,
     cache: &DataStorageCache,
-) -> Result<Vec<IndexMap<String, String>>, AppError> {
+) -> Result<Arc<Vec<IndexMap<String, String>>>, AppError> {
     let safe_path = safety_check_only(&base, &target)?;
     let parsed = parse_csv_file_async(&safe_path, cache).await?;
     Ok(parsed)

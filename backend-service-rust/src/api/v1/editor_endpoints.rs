@@ -60,7 +60,7 @@ pub async fn read_user_file(
     let data = get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache)
         .await
         .map_err(|e| AppError::InternalServerError(e.to_string()))?;
-    Ok(data)
+    Ok(Arc::unwrap_or_clone(data))
 }
 
 pub async fn check_user_file(
@@ -165,7 +165,7 @@ pub async fn read_common_file(
     let user_path = PathBuf::new().join(&app_state.data_dir_path).join(COMMON);
     let data =
         get_file_as_string_by_path(&user_path.join(&path), &user_path, &app_state.cache).await?;
-    Ok(data)
+    Ok(Arc::unwrap_or_clone(data))
 }
 
 // Handler for uploading user files
