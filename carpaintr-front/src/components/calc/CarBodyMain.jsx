@@ -3,15 +3,15 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Divider, Panel, Message, Drawer, Modal, Button, Tabs } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
-import { Check, X, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Check, X, MoreHorizontal, Trash2, Bug } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import {
     make_sandbox_extensions,
+    make_sandbox,
     verify_processor,
     evaluate_processor,
     is_supported_repair_type,
-    should_evaluate_processor,
     validate_requirements,
 } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
@@ -168,6 +168,8 @@ const CarBodyMain = ({
 
     const [tableDataRepository, setTableDataRepository] = useState({});
     const [fetchErrors, setFetchErrors] = useState({}); // { partName: errorMessage }
+    const [showDebugMode, setShowDebugMode] = useState(false);
+    const [evaluatorLogs, setEvaluatorLogs] = useState({}); // { partName: LogEntry[] }
     const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
     const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
 
@@ -417,6 +419,7 @@ const CarBodyMain = ({
         });
 
         const updates = {};
+        const logUpdates = {};
         selectedItems.forEach(item => {
             const action = item.selectedAction || item.action || null;
             const tableData = tableDataRepository[item.name];
@@ -439,21 +442,116 @@ const CarBodyMain = ({
                 carPart: item,
             };
 
-            const results = processors
-                .map(proc => {
-                    if (validate_requirements(proc, tdata) !== null) return null;
-                    if (!is_supported_repair_type(proc, action)) return null;
-                    if (!should_evaluate_processor(proc, stuff)) return null;
-                    return evaluate_processor(proc, stuff);
-                })
-                .filter(r => r !== null);
+            const results = [];
+            const debugLogs = [];
+
+            processors.forEach(proc => {
+                // Check 1: required tables present?
+                const missingTable = validate_requirements(proc, tdata);
+                if (missingTable !== null) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'skipped',
+                        reason: 'missing_table',
+                        detail: `Required table "${missingTable}" not found. Available: [${Object.keys(tdata).join(', ')}]`,
+                    });
+                    return;
+                }
+
+                // Check 2: action is supported?
+                if (!is_supported_repair_type(proc, action)) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'skipped',
+                        reason: 'unsupported_action',
+                        detail: `Action "${action}" not in requiredRepairTypes: [${proc.requiredRepairTypes.join(', ')}]`,
+                    });
+                    return;
+                }
+
+                // Check 3: shouldRun() condition
+                let shouldRunResult = false;
+                let shouldRunError = null;
+                try {
+                    shouldRunResult = proc.shouldRun(
+                        make_sandbox(),
+                        stuff.carPart,
+                        stuff.tableData,
+                        stuff.repairAction,
+                        stuff.files,
+                        stuff.carClass,
+                        stuff.carBodyType,
+                        stuff.carYear,
+                        stuff.carModel,
+                        stuff.paint,
+                        stuff.pricing,
+                    );
+                } catch (e) {
+                    shouldRunError = e?.message || String(e);
+                }
+
+                if (shouldRunError) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'error',
+                        reason: 'shouldRun_threw',
+                        detail: `shouldRun() threw: ${shouldRunError}`,
+                    });
+                    return;
+                }
+
+                if (!shouldRunResult) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'skipped',
+                        reason: 'shouldRun_false',
+                        detail: 'shouldRun() returned false',
+                    });
+                    return;
+                }
+
+                // Step 4: run the processor
+                const result = evaluate_processor(proc, stuff);
+                if (result.error) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'error',
+                        reason: 'run_threw',
+                        detail: result.text,
+                    });
+                } else {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'applied',
+                        detail: `${result.result?.length ?? 0} row(s)`,
+                        rows: result.result?.map(r => ({ name: r.name, estimation: r.estimation, tooltip: r.tooltip })),
+                    });
+                    results.push(result);
+                }
+            });
 
             lastEvaluatedRef.current[item.name] = action;
             updates[item.name] = results;
+            logUpdates[item.name] = debugLogs;
         });
 
         if (Object.keys(updates).length > 0) {
             setCalculations(prev => ({ ...prev, ...updates }));
+        }
+        if (Object.keys(logUpdates).length > 0) {
+            setEvaluatorLogs(prev => ({ ...prev, ...logUpdates }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedItems, processors, company, tableDataRepository, carClass, body]);
@@ -484,6 +582,7 @@ const CarBodyMain = ({
         setErrors([]);
         setTableDataRepository({});
         setFetchErrors({});
+        setEvaluatorLogs({});
         lastEvaluatedRef.current = {};
         fetchingPartsRef.current = new Set();
 
@@ -531,6 +630,30 @@ const CarBodyMain = ({
                 width: '100%'
             }}
         >
+            {/* Debug mode toggle button */}
+            <button
+                onClick={() => setShowDebugMode(prev => !prev)}
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '44px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    opacity: showDebugMode ? 0.9 : 0.2,
+                    transition: 'opacity 0.2s',
+                    padding: '5px',
+                    color: showDebugMode ? '#d97706' : '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = showDebugMode ? '0.9' : '0.2'}
+                title="Toggle evaluator debug mode"
+            >
+                <Bug size={16} />
+            </button>
+
             {/* Settings cog button */}
             <button
                 onClick={() => setShowTechData(!showTechData)}
@@ -725,19 +848,92 @@ const CarBodyMain = ({
                                             </div>
                                         );
                                     }
-                                    if (!calcData || calcData.length === 0) return null;
+                                    const hasCalcData = calcData && calcData.length > 0;
+                                    const partDebugLogs = showDebugMode ? evaluatorLogs[item.name] : null;
+                                    if (!hasCalcData && !partDebugLogs) return null;
                                     return (
                                         <div key={item.name} style={{ marginBottom: '28px' }}>
                                             <h5 style={{ marginBottom: '8px' }}>
                                                 {item.name} — <span style={{ fontWeight: 'normal', color: '#555' }}>{str(action)}</span>
                                             </h5>
-                                            <EvaluationResultsTable
-                                                data={calcData}
-                                                setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
-                                                currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
-                                                basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
-                                                skipIncorrect={true}
-                                            />
+                                            {hasCalcData && (
+                                                <EvaluationResultsTable
+                                                    data={calcData}
+                                                    setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
+                                                    currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
+                                                    basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
+                                                    skipIncorrect={true}
+                                                />
+                                            )}
+                                            {partDebugLogs && (
+                                                <div style={{
+                                                    marginTop: hasCalcData ? '10px' : '0',
+                                                    borderLeft: '3px solid #d97706',
+                                                    backgroundColor: '#fffbeb',
+                                                    borderRadius: '0 4px 4px 0',
+                                                    padding: '8px 10px',
+                                                }}>
+                                                    <details open>
+                                                        <summary style={{
+                                                            cursor: 'pointer',
+                                                            fontSize: '12px',
+                                                            color: '#92400e',
+                                                            fontWeight: 600,
+                                                            marginBottom: '6px',
+                                                            userSelect: 'none',
+                                                        }}>
+                                                            🐛 {partDebugLogs.filter(l => l.status === 'applied').length} applied &nbsp;·&nbsp;
+                                                            {partDebugLogs.filter(l => l.status === 'skipped').length} skipped &nbsp;·&nbsp;
+                                                            {partDebugLogs.filter(l => l.status === 'error').length} errors
+                                                            &nbsp;({partDebugLogs.length} processors total)
+                                                        </summary>
+                                                        <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: '1.6' }}>
+                                                            {partDebugLogs.map((log, logIdx) => (
+                                                                <div key={logIdx} style={{
+                                                                    padding: '3px 6px',
+                                                                    marginBottom: '2px',
+                                                                    borderRadius: '3px',
+                                                                    backgroundColor:
+                                                                        log.status === 'applied' ? '#f0fdf4' :
+                                                                        log.status === 'error'   ? '#fef2f2' :
+                                                                        '#f3f4f6',
+                                                                    color:
+                                                                        log.status === 'applied' ? '#166534' :
+                                                                        log.status === 'error'   ? '#dc2626' :
+                                                                        '#6b7280',
+                                                                }}>
+                                                                    <span style={{ marginRight: '6px' }}>
+                                                                        {log.status === 'applied' ? '✅' : log.status === 'error' ? '❌' : '⏭'}
+                                                                    </span>
+                                                                    <strong>{log.processorName || '(unnamed)'}</strong>
+                                                                    {log.category && (
+                                                                        <span style={{ opacity: 0.6, marginLeft: '6px', fontWeight: 'normal' }}>
+                                                                            [{log.category}#{log.orderingNum}]
+                                                                        </span>
+                                                                    )}
+                                                                    <span style={{ marginLeft: '8px', fontWeight: 'normal', opacity: 0.9 }}>
+                                                                        {log.detail}
+                                                                    </span>
+                                                                    {log.rows && log.rows.length > 0 && (
+                                                                        <div style={{ marginLeft: '28px', marginTop: '2px' }}>
+                                                                            {log.rows.map((row, ri) => (
+                                                                                <div key={ri} style={{ fontSize: '10px', color: '#374151' }}>
+                                                                                    ↳ {row.name}: <strong>{row.estimation}</strong>
+                                                                                    {row.tooltip && (
+                                                                                        <span style={{ opacity: 0.5, marginLeft: '4px' }}>
+                                                                                            ({row.tooltip})
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </details>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
