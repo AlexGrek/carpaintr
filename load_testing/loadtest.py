@@ -6,8 +6,14 @@ Simultaneously performs registrations, logins, and license-protected requests,
 then plots response times over the test duration.
 
 Usage:
-    python loadtest.py [--base-url URL] [--duration SECS] [--concurrency N]
-                       [--admin-email EMAIL] [--admin-password PASS]
+    python loadtest.py [--mode steady|full] [--base-url URL] [--duration SECS]
+                       [--concurrency N] [--admin-email EMAIL] [--admin-password PASS]
+
+Modes:
+    steady  - Pre-registers users before the test, then only hits protected/auth
+              endpoints. No registration or login noise during the measured run.
+    full    - Simultaneously performs registrations, logins, AND protected requests
+              during the test (original behavior).
 """
 
 import argparse
@@ -148,6 +154,50 @@ async def login_loop(
         await asyncio.sleep(delay)
 
 
+def _build_carparts_variations() -> list[tuple[str, str, str]]:
+    """Build carparts and carparts_t2 endpoint variations with class/body combos."""
+    combos = [
+        ("B", "hatchback%205%20doors"),
+        ("B", "hatchback%203%20doors"),
+        ("C", "hatchback%205%20doors"),
+        ("C", "hatchback%203%20doors"),
+        ("C", "sedan"),
+        ("D", "sedan"),
+        ("E", "sedan"),
+    ]
+    endpoints = []
+    for cls, body in combos:
+        short_body = body.replace("%20", "").replace("%25", "")[:6]
+        endpoints.append(("GET", f"/user/carparts/{cls}/{body}", f"carparts/{cls}/{short_body}"))
+        endpoints.append(("GET", f"/user/carparts_t2/{cls}/{body}", f"carparts_t2/{cls}/{short_body}"))
+    return endpoints
+
+
+# Pre-built so we don't rebuild every iteration
+_CARPARTS_VARIATIONS = _build_carparts_variations()
+
+# Heavy endpoints that do filesystem searches / file assembly (license-protected)
+HEAVY_ENDPOINTS = [
+    ("GET", "/user/carmakes", "carmakes"),
+    ("GET", "/user/list_class_body_types", "list_class_body"),
+    ("GET", "/user/global/colors.json", "colors.json"),
+    ("GET", "/user/global/quality.yaml", "quality.yaml"),
+    ("GET", "/user/processors_bundle", "processors_bundle"),
+    ("GET", "/user/all_parts_t2", "all_parts_t2"),
+    ("GET", "/user/all_parts", "all_parts"),
+] + _CARPARTS_VARIATIONS
+
+# Light auth-only endpoints (no license required, no filesystem search)
+LIGHT_ENDPOINTS = [
+    ("GET", "/getactivelicense", "get_active_license"),
+    ("GET", "/getcompanyinfo", "get_company_info"),
+    ("GET", "/mylicenses", "my_licenses"),
+    ("GET", "/editor/list_user_files", "list_user_files"),
+]
+
+ALL_ENDPOINTS = HEAVY_ENDPOINTS + LIGHT_ENDPOINTS
+
+
 async def protected_requests_loop(
     session: aiohttp.ClientSession,
     base: str,
@@ -157,25 +207,13 @@ async def protected_requests_loop(
     tokens: list[str],
 ):
     """Hit license-protected and auth-protected endpoints."""
-    protected_endpoints = [
-        ("GET", "/user/carmakes", "carmakes"),
-        ("GET", "/user/list_class_body_types", "list_class_body"),
-        ("GET", "/user/calculationstore/list", "calc_store_list"),
-    ]
-    auth_only_endpoints = [
-        ("GET", "/getactivelicense", "get_active_license"),
-        ("GET", "/getcompanyinfo", "get_company_info"),
-        ("GET", "/mylicenses", "my_licenses"),
-    ]
-    all_endpoints = protected_endpoints + auth_only_endpoints
-
     deadline = time.monotonic() + duration
     while time.monotonic() < deadline:
         if not tokens:
             await asyncio.sleep(0.5)
             continue
         token = random.choice(tokens)
-        method, path, label = random.choice(all_endpoints)
+        method, path, label = random.choice(ALL_ENDPOINTS)
         await timed_request(
             session, method, f"{base}{path}", collector, label,
             headers={"Authorization": f"Bearer {token}"},
@@ -294,29 +332,44 @@ async def run_load_test(args):
         # ------------------------------------------------------------------
         # Phase 3: Load test
         # ------------------------------------------------------------------
-        print(f"[*] Starting load test: {args.duration}s, concurrency={args.concurrency}")
+        mode = args.mode
+        print(f"[*] Starting load test: mode={mode}, {args.duration}s, concurrency={args.concurrency}")
+
+        # Reset collector so only the actual load phase is measured
+        collector.records.clear()
+        collector.start_time = time.monotonic()
+
         delay_between = 1.0 / max(args.rps, 1)
 
         tasks = []
-        # Spread concurrency across workload types
-        n_register = max(1, args.concurrency // 4)
-        n_login = max(1, args.concurrency // 4)
-        n_protected = args.concurrency - n_register - n_login
+        if mode == "full":
+            # Spread concurrency across all workload types
+            n_register = max(1, args.concurrency // 4)
+            n_login = max(1, args.concurrency // 4)
+            n_protected = args.concurrency - n_register - n_login
 
-        for _ in range(n_register):
-            tasks.append(
-                registration_loop(session, base, collector, args.duration, delay_between)
-            )
-        for _ in range(n_login):
-            tasks.append(
-                login_loop(session, base, collector, args.duration, delay_between, credentials)
-            )
-        for _ in range(n_protected):
-            tasks.append(
-                protected_requests_loop(
-                    session, base, collector, args.duration, delay_between, tokens,
+            for _ in range(n_register):
+                tasks.append(
+                    registration_loop(session, base, collector, args.duration, delay_between)
                 )
-            )
+            for _ in range(n_login):
+                tasks.append(
+                    login_loop(session, base, collector, args.duration, delay_between, credentials)
+                )
+            for _ in range(n_protected):
+                tasks.append(
+                    protected_requests_loop(
+                        session, base, collector, args.duration, delay_between, tokens,
+                    )
+                )
+        else:
+            # steady: all workers hit protected/auth-only endpoints
+            for _ in range(args.concurrency):
+                tasks.append(
+                    protected_requests_loop(
+                        session, base, collector, args.duration, delay_between, tokens,
+                    )
+                )
 
         await asyncio.gather(*tasks)
 
@@ -356,15 +409,15 @@ def print_report(collector: ResultCollector):
 
     # Per-endpoint breakdown
     endpoints = sorted(set(r.endpoint for r in records))
-    print(f"\n  {'Endpoint':<25} {'Count':>7} {'p50':>8} {'p90':>8} {'p99':>8} {'Err%':>7}")
-    print(f"  {'-'*25} {'-'*7} {'-'*8} {'-'*8} {'-'*8} {'-'*7}")
+    print(f"\n  {'Endpoint':<30} {'Count':>7} {'p50':>8} {'p90':>8} {'p99':>8} {'Err%':>7}")
+    print(f"  {'-'*30} {'-'*7} {'-'*8} {'-'*8} {'-'*8} {'-'*7}")
     for ep in endpoints:
         ep_records = [r for r in records if r.endpoint == ep]
         ep_lat = [r.latency_ms for r in ep_records]
         ep_err = sum(1 for r in ep_records if r.status == 0 or r.status >= 500)
         err_pct = 100 * ep_err / len(ep_records) if ep_records else 0
         print(
-            f"  {ep:<25} {len(ep_records):>7} "
+            f"  {ep:<30} {len(ep_records):>7} "
             f"{np.percentile(ep_lat, 50):>7.1f} "
             f"{np.percentile(ep_lat, 90):>7.1f} "
             f"{np.percentile(ep_lat, 99):>7.1f} "
@@ -385,15 +438,15 @@ def plot_results(collector: ResultCollector, args):
     if not load_records:
         load_records = records
 
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(18, 11))
     fig.suptitle(
-        f"Load Test Results — {args.duration}s, concurrency={args.concurrency}",
+        f"Load Test Results [{args.mode}] — {args.duration}s, concurrency={args.concurrency}",
         fontsize=14, fontweight="bold",
     )
 
     # Color map for endpoints
     endpoints = sorted(set(r.endpoint for r in load_records))
-    cmap = matplotlib.colormaps.get_cmap("tab10").resampled(max(len(endpoints), 1))
+    cmap = matplotlib.colormaps.get_cmap("tab20").resampled(max(len(endpoints), 1))
     colors = {ep: cmap(i) for i, ep in enumerate(endpoints)}
 
     # --- Plot 1: Response times scatter ---
@@ -411,23 +464,49 @@ def plot_results(collector: ResultCollector, args):
     ax1.legend(fontsize=7, loc="upper right")
     ax1.grid(True, alpha=0.3)
 
-    # --- Plot 2: Throughput over time (1s buckets) ---
+    # --- Plot 2: Throughput over time (1s buckets, grouped by category) ---
     ax2 = axes[0, 1]
     if load_records:
         max_t = max(r.timestamp for r in load_records)
         bucket_size = 1.0
         buckets = np.arange(0, max_t + bucket_size, bucket_size)
-        for ep in endpoints:
-            ep_times = [r.timestamp for r in load_records if r.endpoint == ep]
-            counts, _ = np.histogram(ep_times, bins=buckets)
+
+        # Group endpoints into categories for readable throughput chart
+        categories = {
+            "carparts/*": lambda ep: ep.startswith("carparts/"),
+            "carparts_t2/*": lambda ep: ep.startswith("carparts_t2/"),
+            "heavy (other)": lambda ep: ep in {
+                "carmakes", "list_class_body", "colors.json", "quality.yaml",
+                "processors_bundle", "all_parts_t2", "all_parts",
+            },
+            "light (auth-only)": lambda ep: ep in {
+                "get_active_license", "get_company_info", "my_licenses",
+                "list_user_files",
+            },
+            "register": lambda ep: ep == "register",
+            "login": lambda ep: ep == "login",
+        }
+        cat_colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628"]
+        for (cat_name, matcher), cat_color in zip(categories.items(), cat_colors):
+            cat_times = [r.timestamp for r in load_records if matcher(r.endpoint)]
+            if not cat_times:
+                continue
+            counts, _ = np.histogram(cat_times, bins=buckets)
             ax2.plot(
                 buckets[:-1] + bucket_size / 2, counts / bucket_size,
-                label=ep, color=colors[ep], alpha=0.8,
+                label=cat_name, color=cat_color, alpha=0.8, linewidth=1.5,
             )
+        # Also plot total
+        all_times = [r.timestamp for r in load_records]
+        counts, _ = np.histogram(all_times, bins=buckets)
+        ax2.plot(
+            buckets[:-1] + bucket_size / 2, counts / bucket_size,
+            label="TOTAL", color="black", alpha=0.6, linewidth=2, linestyle="--",
+        )
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("Requests/sec")
-    ax2.set_title("Throughput Over Time")
-    ax2.legend(fontsize=7, loc="upper right")
+    ax2.set_title("Throughput Over Time (by category)")
+    ax2.legend(fontsize=8, loc="upper right")
     ax2.grid(True, alpha=0.3)
 
     # --- Plot 3: Latency distribution (histogram) ---
@@ -467,7 +546,7 @@ def plot_results(collector: ResultCollector, args):
     ax4.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    out_path = "load_test_results.png"
+    out_path = f"load_test_results_{args.mode}.png"
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"[*] Response times graph saved to: {out_path}")
     plt.close()
@@ -479,6 +558,10 @@ def plot_results(collector: ResultCollector, args):
 
 def main():
     parser = argparse.ArgumentParser(description="Carpaintr backend load tester")
+    parser.add_argument("--mode", choices=["steady", "full"], default="steady",
+                        help="Test mode: 'steady' = only protected endpoints with "
+                             "pre-registered users (default), 'full' = registrations + "
+                             "logins + protected endpoints simultaneously")
     parser.add_argument("--base-url", default="http://localhost:8080/api/v1",
                         help="Backend API base URL (default: http://localhost:8080/api/v1)")
     parser.add_argument("--duration", type=int, default=30,
