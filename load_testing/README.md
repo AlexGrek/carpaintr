@@ -7,7 +7,7 @@ breakdown table.
 ## Requirements
 
 - Python 3.11+
-- [pdm](https://pdm-project.org/) — `pip install pdm`
+- [pdm](https://pdm-project.org/)  - `pip install pdm`
 
 ## Setup
 
@@ -19,17 +19,17 @@ pdm install
 ## Running
 
 ```bash
-# Quickstart — steady mode against local backend
+# Quickstart - steady mode against local backend (uses pdm venv)
 pdm run loadtest
 
-# Or run directly
-python loadtest.py
+# Or run the script with pdm venv
+pdm run python loadtest.py
 ```
 
 ### Targeting a server
 
 ```bash
-# Bare hostname — HTTPS assumed
+# Bare hostname  - HTTPS assumed
 python loadtest.py --server myserver.com
 
 # Hostname with port
@@ -46,17 +46,17 @@ python loadtest.py --base-url http://localhost:9090/api/v1
 
 ### All options
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--mode` | `steady` | `steady` or `full` — see Modes below |
-| `--server` | — | Target host/URL (HTTPS). Overrides `--base-url` |
-| `--base-url` | `http://localhost:8080/api/v1` | Full API base URL |
-| `--duration` | `30` | Test duration in seconds |
-| `--concurrency` | `20` | Number of concurrent async workers |
-| `--rps` | `50` | Target requests per second per worker |
-| `--seed-users` | `20` | Users pre-registered before the timed run |
-| `--admin-email` | `test_admin@example.com` | Admin account for license generation |
-| `--admin-password` | `adminpassword123` | Admin password |
+| Flag               | Default                        | Description                                     |
+| ------------------ | ------------------------------ | ----------------------------------------------- |
+| `--mode`           | `steady`                       | `steady` or `full`  - see Modes below           |
+| `--server`         | -                              | Target host/URL (HTTPS). Overrides `--base-url` |
+| `--base-url`       | `http://localhost:8080/api/v1` | Full API base URL                               |
+| `--duration`       | `30`                           | Test duration in seconds                        |
+| `--concurrency`    | `20`                           | Number of concurrent async workers              |
+| `--rps`            | `50`                           | Target requests per second per worker           |
+| `--seed-users`     | `20`                           | Users pre-registered before the timed run       |
+| `--admin-email`    | `test_admin@example.com`       | Admin account for license generation            |
+| `--admin-password` | `adminpassword123`             | Admin password                                  |
 
 ## Modes
 
@@ -80,17 +80,17 @@ Use this to stress-test auth throughput and observe bcrypt contention.
 
 ## Endpoint categories
 
-**Heavy (license-protected)** — filesystem-backed, cached after first access:
+**Heavy (license-protected)**  - filesystem-backed, cached after first access:
 - `GET /user/carmakes`
 - `GET /user/list_class_body_types`
 - `GET /user/global/colors.json`
 - `GET /user/global/quality.yaml`
 - `GET /user/processors_bundle`
 - `GET /user/all_parts` / `all_parts_t2`
-- `GET /user/carparts/{class}/{body}` — 7 class/body combos
-- `GET /user/carparts_t2/{class}/{body}` — same combos, heavier (CSV filtering + T2 parsing)
+- `GET /user/carparts/{class}/{body}`  - 7 class/body combos
+- `GET /user/carparts_t2/{class}/{body}`  - same combos, heavier (CSV filtering + T2 parsing)
 
-**Light (auth-only)** — DB lookups, no license required:
+**Light (auth-only)**  - DB lookups, no license required:
 - `GET /getactivelicense`
 - `GET /getcompanyinfo`
 - `GET /mylicenses`
@@ -99,7 +99,7 @@ Use this to stress-test auth throughput and observe bcrypt contention.
 ## Output
 
 - Console: summary table (total, throughput, p50/p90/p99/max) + per-endpoint breakdown
-- `load_test_results_{mode}.png` — 4-panel chart:
+- `load_test_results_{mode}.png`  - 4-panel chart:
   - Response times scatter over time
   - Throughput per second by category
   - Latency distribution histogram
@@ -108,9 +108,9 @@ Use this to stress-test auth throughput and observe bcrypt contention.
 ## Test phases
 
 ```
-Phase 1  Health check — abort if backend unreachable
+Phase 1  Health check  - abort if backend unreachable
 Phase 2  Seed: register users → login → collect tokens → generate licenses (admin)
-Phase 3  Timed load run (collector reset here — only phase 3 data is reported)
+Phase 3  Timed load run (collector reset here  - only phase 3 data is reported)
 Phase 4  Print report + save PNG
 ```
 
@@ -118,13 +118,13 @@ Phase 4  Print report + save PNG
 
 ```
 load_testing/
-├── loadtest.py      — Main entry point, CLI, orchestrator
-├── workloads.py     — Async worker loops (register, login, protected requests)
-├── endpoints.py     — Endpoint lists (heavy, light, carparts variations)
-├── utils.py         — ResultCollector, timed_request, random helpers
-├── reporting.py     — print_report(), plot_results()
-├── pyproject.toml   — Dependencies (aiohttp, matplotlib, numpy)
-└── RESULTS.md       — Benchmark results history
+├── loadtest.py       - Main entry point, CLI, orchestrator
+├── workloads.py      - Async worker loops (register, login, protected requests)
+├── endpoints.py      - Endpoint lists (heavy, light, carparts variations)
+├── utils.py          - ResultCollector, timed_request, random helpers
+├── reporting.py      - print_report(), plot_results()
+├── pyproject.toml    - Dependencies (aiohttp, matplotlib, numpy)
+└── RESULTS.md        - Benchmark results history
 ```
 
 ## Known behaviour

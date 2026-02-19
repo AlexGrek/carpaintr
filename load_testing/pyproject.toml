@@ -13,4 +13,4 @@ dependencies = [
 distribution = false
 
 [tool.pdm.scripts]
-loadtest = "loadtest:main"
+loadtest = "python loadtest.py"
