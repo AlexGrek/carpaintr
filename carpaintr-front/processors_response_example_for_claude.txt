@@ -1,0 +1,56 @@
+exports.default = [
+  // #U0420#U0410#U0411#U041e#U0422#U042b_#U0410#U0420#U041c#U0410#U0422#U0423#U0420#U041d#U042b#U0415_#U0421#U041d#U042f#U0422#U0418#U0415_#U0423#U0421#U0422#U0410#U041d#U041e#U0412#U041a#U0410_#U0414#U041b#U042f_#U0420#U0415#U041c#U041e#U041d#U0422#U0410.js
+  (({
+    name: "РАБОТЫ  АРМАТУРНЫЕ  СНЯТИЕ УСТАНОВКА ДЛЯ РЕМОНТА",
+    shouldRun: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+        return true;
+    },
+    run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+        // - init section -
+        var output = [];
+        const { mkRow } = x;
+
+        // - check data section -
+        // leave blank now, there are no data validation stages yet
+
+        // - row clause section -
+        output.push(mkRow({name: "Зняти «Деталь» для ремонту", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ РЕМОНТА"], tooltip: "Арматурные работы снять"}));
+        output.push(mkRow({name: "Встановити «Деталь» після ремонту", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ РЕМОНТА"], tooltip: "Just paint part"}));
+
+        // - final section -
+        return output;
+    },
+    requiredTables: ["Арматурные работы"],
+    requiredRepairTypes: ["toning","paint_one_side","paint_two_sides"],
+    requiredFiles: [],
+    category: "General",
+    orderingNum: 100
+})),
+  // РАБОТЫ_АРМАТУРНЫЕ_СНЯТИЕ_УСТАНОВКА_ДЛЯ_РЕМОНТА.js
+  (({
+    name: "РАБОТЫ  АРМАТУРНЫЕ  СНЯТИЕ УСТАНОВКА ДЛЯ РЕМОНТА",
+    shouldRun: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+        return true;
+    },
+    run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint) => {
+        // - init section -
+        var output = [];
+        const { mkRow } = x;
+
+        // - check data section -
+        // leave blank now, there are no data validation stages yet
+
+        // - row clause section -
+        output.push(mkRow({name: "Зняти «Деталь» для ремонту", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ РЕМОНТА"], tooltip: "Арматурные работы снять"}));
+        output.push(mkRow({name: "Встановити «Деталь» після ремонту", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ РЕМОНТА"], tooltip: "Just paint part"}));
+
+        // - final section -
+        return output;
+    },
+    requiredTables: ["Арматурные работы"],
+    requiredRepairTypes: ["toning","paint_one_side","paint_two_sides"],
+    requiredFiles: [],
+    category: "General",
+    orderingNum: 100
+})),
+];

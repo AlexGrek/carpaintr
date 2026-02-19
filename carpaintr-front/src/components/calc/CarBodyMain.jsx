@@ -6,10 +6,19 @@ import { useMediaQuery } from 'react-responsive';
 import { Check, X, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
-import { make_sandbox_extensions, verify_processor } from '../../calc/processor_evaluator';
+import {
+    make_sandbox_extensions,
+    verify_processor,
+    evaluate_processor,
+    is_supported_repair_type,
+    should_evaluate_processor,
+    validate_requirements,
+} from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
 import GridDraw from './GridDraw';
+import { EvaluationResultsTable } from './EvaluationResultsTable';
+import { stripExt } from '../../utils/utils';
 
 registerTranslations("en", {
     "Selected Parts": "Selected Parts",
@@ -48,6 +57,11 @@ registerTranslations("en", {
     "Severe": "Severe",
     "Critical": "Critical",
     "cells": "cells",
+    "Calculations": "Calculations",
+    "Select an action to calculate": "Select an action to calculate",
+    "Failed to load table data": "Failed to load table data",
+    "Retry": "Retry",
+    "Loading table data...": "Loading table data...",
 });
 
 registerTranslations("ua", {
@@ -87,6 +101,11 @@ registerTranslations("ua", {
     "Severe": "Сильне",
     "Critical": "Критичне",
     "cells": "клітинок",
+    "Calculations": "Розрахунки",
+    "Select an action to calculate": "Виберіть дію для розрахунку",
+    "Failed to load table data": "Не вдалося завантажити дані таблиці",
+    "Retry": "Повторити",
+    "Loading table data...": "Завантаження даних таблиці...",
 });
 
 const DAMAGE_LEVELS = [
@@ -147,6 +166,11 @@ const CarBodyMain = ({
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
+    const [tableDataRepository, setTableDataRepository] = useState({});
+    const [fetchErrors, setFetchErrors] = useState({}); // { partName: errorMessage }
+    const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
+    const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
+
     // Ref to prevent infinite loop when syncing state
     const isInternalUpdate = useRef(false);
 
@@ -167,25 +191,6 @@ const CarBodyMain = ({
         // Quick check: compare stringified versions
         return JSON.stringify(a) === JSON.stringify(b);
     }, []);
-
-    // Handler for selecting a new part from the dropdown (currently unused, preserved for future use)
-    const _handlePartSelect = useCallback(
-        (partName) => {
-            const existingPart = selectedParts.find((p) => p.name === partName);
-
-            const _newPart = existingPart
-                ? { ...existingPart }
-                : {
-                    action: null,
-                    replace: false,
-                    original: true,
-                    damageLevel: 0,
-                    name: partName,
-                    outsideRepairZone: null,
-                };
-        },
-        [selectedParts],
-    );
 
     const handleDiagramSelect = useCallback((item) => {
         // Toggle item in selectedItems array
@@ -264,15 +269,19 @@ const CarBodyMain = ({
         setItemToDelete(null);
     }, [itemToDelete, handleDiagramSelect]);
 
-    // No longer needed - drawer uses local state now
-    // useEffect(() => {
-    //     if (drawerOpen && drawerPartDetails) {
-    //         const updatedItem = selectedItems.find(i => i.name === drawerPartDetails.name);
-    //         if (updatedItem) {
-    //             setDrawerPartDetails(updatedItem);
-    //         }
-    //     }
-    // }, [selectedItems, drawerOpen, drawerPartDetails]);
+    // Seed lastEvaluatedRef from existing calculations prop on mount,
+    // so returning to this stage doesn't overwrite manual overrides.
+    useEffect(() => {
+        if (!calculations || Object.keys(calculations).length === 0) return;
+        if (!selectedParts || !Array.isArray(selectedParts)) return;
+        selectedParts.forEach(part => {
+            const action = part.action || part.selectedAction || null;
+            if (action && calculations[part.name]?.length > 0) {
+                lastEvaluatedRef.current[part.name] = action;
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Run once on mount only
 
     // Sync selectedParts prop → selectedItems state (parent controls initial state)
     useEffect(() => {
@@ -291,7 +300,6 @@ const CarBodyMain = ({
             // Only update if actually different (prevents infinite loops)
             // Use ref to get current value without adding to dependencies
             if (!arraysEqual(converted, selectedItemsRef.current)) {
-                console.log('[CarBodyMain] Syncing FROM parent:', { selectedParts, converted, currentItems: selectedItemsRef.current });
                 // Mark as external update to prevent calling onChange
                 isInternalUpdate.current = true;
                 setSelectedItems(converted);
@@ -299,7 +307,6 @@ const CarBodyMain = ({
                 // Reset flag after state update completes
                 setTimeout(() => {
                     isInternalUpdate.current = false;
-                    console.log('[CarBodyMain] Reset isInternalUpdate flag');
                 }, 0);
             }
         }
@@ -315,15 +322,7 @@ const CarBodyMain = ({
         const isUserChange = !isInternalUpdate.current;
         const hasChanged = !arraysEqual(selectedItems, prevSelectedItemsRef.current);
 
-        console.log('[CarBodyMain] Sync TO parent check:', {
-            isUserChange,
-            hasChanged,
-            selectedItems,
-            prev: prevSelectedItemsRef.current
-        });
-
         if (isUserChange && onChange && hasChanged) {
-            console.log('[CarBodyMain] Calling onChange with:', selectedItems);
             prevSelectedItemsRef.current = selectedItems;
             onChange(selectedItems);
         }
@@ -344,10 +343,8 @@ const CarBodyMain = ({
         setErrors(prev => [...prev, errorEntry]);
     }, []);
 
-    // Unified fetch handler with logging
+    // Unified fetch handler
     const fetchData = useCallback(async (url, context, onSuccess) => {
-        console.log(`[${context}] Fetching from: ${url}`);
-
         try {
             const response = await authFetch(url);
 
@@ -364,7 +361,6 @@ const CarBodyMain = ({
                 data = await response.text();
             }
 
-            console.log(`[${context}] Success:`, data);
             onSuccess(data);
 
         } catch (error) {
@@ -372,13 +368,102 @@ const CarBodyMain = ({
         }
     }, [handleError]);
 
+    // Fetch table data for a single part (armored against duplicate fetches)
+    const fetchTableDataForPart = useCallback(async (partName) => {
+        if (fetchingPartsRef.current.has(partName)) return;
+        fetchingPartsRef.current.add(partName);
+        setFetchErrors(prev => { const next = { ...prev }; delete next[partName]; return next; });
+
+        const params = new URLSearchParams({ car_class: carClass, car_type: body, part: partName });
+        try {
+            const response = await authFetch(`/api/v1/user/lookup_all_tables?${params}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                const preprocessed = data.map(table => ({
+                    name: stripExt(table[0]),
+                    data: table[1],
+                    file: table[0],
+                }));
+                setTableDataRepository(prev => ({ ...prev, [partName]: preprocessed }));
+            }
+        } catch (error) {
+            handleError(`Table Data: ${partName}`, error);
+            setFetchErrors(prev => ({ ...prev, [partName]: error.message || 'Unknown error' }));
+            fetchingPartsRef.current.delete(partName); // allow retry
+        }
+    }, [carClass, body, handleError]);
+
+    // Fetch table data whenever a new part appears that we don't have data for yet
+    useEffect(() => {
+        if (!carClass || !body) return;
+        selectedItems.forEach(item => {
+            if (tableDataRepository[item.name] === undefined && !fetchingPartsRef.current.has(item.name)) {
+                fetchTableDataForPart(item.name);
+            }
+        });
+    }, [selectedItems, tableDataRepository, carClass, body, fetchTableDataForPart]);
+
+    // Evaluate processors for each selected part whenever inputs change.
+    // Uses lastEvaluatedRef to skip re-evaluation when (part, action) hasn't changed,
+    // so manual overrides in EvaluationResultsTable are preserved across unrelated updates.
+    useEffect(() => {
+        if (!processors.length || !company) return;
+
+        // Clean up tracking for removed parts
+        const currentNames = new Set(selectedItems.map(i => i.name));
+        Object.keys(lastEvaluatedRef.current).forEach(name => {
+            if (!currentNames.has(name)) delete lastEvaluatedRef.current[name];
+        });
+
+        const updates = {};
+        selectedItems.forEach(item => {
+            const action = item.selectedAction || item.action || null;
+            const tableData = tableDataRepository[item.name];
+            if (!action || !tableData) return;
+
+            // Skip if this exact (part, action) was already evaluated
+            if (lastEvaluatedRef.current[item.name] === action) return;
+
+            const tdata = tableData.reduce((acc, t) => { acc[t.name] = t.data; return acc; }, {});
+            const stuff = {
+                repairAction: action,
+                files: [],
+                carClass,
+                carBodyType: body,
+                carYear: 1999,
+                carModel: {},
+                tableData: tdata,
+                paint: {},
+                pricing: company.pricing_preferences,
+                carPart: item,
+            };
+
+            const results = processors
+                .map(proc => {
+                    if (validate_requirements(proc, tdata) !== null) return null;
+                    if (!is_supported_repair_type(proc, action)) return null;
+                    if (!should_evaluate_processor(proc, stuff)) return null;
+                    return evaluate_processor(proc, stuff);
+                })
+                .filter(r => r !== null);
+
+            lastEvaluatedRef.current[item.name] = action;
+            updates[item.name] = results;
+        });
+
+        if (Object.keys(updates).length > 0) {
+            setCalculations(prev => ({ ...prev, ...updates }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedItems, processors, company, tableDataRepository, carClass, body]);
+
     // Effect to fetch company info and car parts
     useEffect(() => {
         const updateCompanyInfo = async () => {
             try {
                 const info = await getOrFetchCompanyInfo();
                 if (info != null) {
-                    console.log('[Company Info] Loaded:', info);
                     setCompany(info);
                 }
             } catch (error) {
@@ -389,7 +474,6 @@ const CarBodyMain = ({
         updateCompanyInfo();
 
         if (carClass == null || body == null) {
-            console.log('[Init] Waiting for carClass and body to be set');
             return;
         }
 
@@ -398,6 +482,10 @@ const CarBodyMain = ({
         setAvailablePartsT2([]);
         setProcessors([]);
         setErrors([]);
+        setTableDataRepository({});
+        setFetchErrors({});
+        lastEvaluatedRef.current = {};
+        fetchingPartsRef.current = new Set();
 
         // Fetch processors bundle
         fetchData(
@@ -408,7 +496,6 @@ const CarBodyMain = ({
                     const sandbox = { exports: {}, ...make_sandbox_extensions() };
                     new Function("exports", code)(sandbox.exports);
                     const plugins = sandbox.exports.default.map((p) => verify_processor(p));
-                    console.log('[Processors Bundle] Processed plugins:', plugins);
                     setProcessors(plugins);
                 } catch (error) {
                     handleError('Processors Bundle Processing', error);
@@ -602,6 +689,60 @@ const CarBodyMain = ({
                                 </div>
                             </div>
                         )}
+
+                        {/* Calculations Section */}
+                        {selectedItems.length > 0 && (
+                            <div style={{ marginTop: '30px', textAlign: 'left' }}>
+                                <h4 style={{ marginBottom: '12px' }}>{str("Calculations")}</h4>
+                                {selectedItems.map(item => {
+                                    const calcData = calculations?.[item.name];
+                                    const action = item.selectedAction || item.action;
+                                    const fetchError = fetchErrors[item.name];
+                                    const isLoading = fetchingPartsRef.current.has(item.name) && !tableDataRepository[item.name] && !fetchError;
+                                    if (!action) {
+                                        return (
+                                            <div key={item.name} style={{ marginBottom: '12px', color: '#999', fontSize: '13px' }}>
+                                                <strong>{item.name}:</strong> {str("Select an action to calculate")}
+                                            </div>
+                                        );
+                                    }
+                                    if (fetchError) {
+                                        return (
+                                            <div key={item.name} style={{ marginBottom: '16px' }}>
+                                                <Message type="error" showIcon style={{ marginBottom: '6px' }}>
+                                                    <strong>{item.name}:</strong> {str("Failed to load table data")} — {fetchError}
+                                                </Message>
+                                                <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
+                                                    {str("Retry")}
+                                                </Button>
+                                            </div>
+                                        );
+                                    }
+                                    if (isLoading) {
+                                        return (
+                                            <div key={item.name} style={{ marginBottom: '12px', color: '#999', fontSize: '13px' }}>
+                                                <strong>{item.name}:</strong> {str("Loading table data...")}
+                                            </div>
+                                        );
+                                    }
+                                    if (!calcData || calcData.length === 0) return null;
+                                    return (
+                                        <div key={item.name} style={{ marginBottom: '28px' }}>
+                                            <h5 style={{ marginBottom: '8px' }}>
+                                                {item.name} — <span style={{ fontWeight: 'normal', color: '#555' }}>{str(action)}</span>
+                                            </h5>
+                                            <EvaluationResultsTable
+                                                data={calcData}
+                                                setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
+                                                currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
+                                                basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
+                                                skipIncorrect={true}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </>
                 ) : (
                     // Technical data display
@@ -735,6 +876,7 @@ const CarBodyMain = ({
                             {JSON.stringify(calculations, null, 2)}
                         </pre>
 
+                        {/* Debug-only test buttons — intentionally pass wrong types to verify prop plumbing */}
                         <div style={{ marginTop: '20px' }}>
                             <button
                                 onClick={() => onChange && onChange(['test_part'])}

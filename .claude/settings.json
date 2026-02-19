@@ -24,7 +24,9 @@
       "Bash(cargo build:*)",
       "Bash(pdm run python:*)",
       "Bash(pkill:*)",
-      "Bash(python loadtest.py:*)"
+      "Bash(python loadtest.py:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx vite build:*)"
     ]
   }
 }

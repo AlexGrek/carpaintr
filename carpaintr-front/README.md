@@ -10,7 +10,7 @@ React 19 SPA for Carpaintr (Autolab): car paint calculation and management. Part
 - **Icons**: lucide-react
 - **Responsive**: react-responsive
 - **Routing**: React Router DOM
-- **i18n**: English and Ukrainian (LocaleContext)
+- **Localization**: English and Ukrainian (custom LocaleContext)
 
 ## Prerequisites
 
@@ -37,14 +37,14 @@ App: http://localhost:3000. The dev server proxies `/api` to `http://localhost:8
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint issues |
-| `npx tsc --noEmit` | Type check |
+| Command            | Description              |
+| ------------------ | ------------------------ |
+| `npm run dev`      | Start Vite dev server    |
+| `npm run build`    | Production build         |
+| `npm run preview`  | Preview production build |
+| `npm run lint`     | Run ESLint               |
+| `npm run lint:fix` | Fix ESLint issues        |
+| `npx tsc --noEmit` | Type check               |
 
 From repo root: `task frontend` runs the dev server; `task dev` runs frontend + backend.
 
@@ -57,7 +57,7 @@ src/
 │   ├── layout/          # StageView, BottomStickyLayout
 │   ├── calc/            # CarBodyMain, ColorPicker, etc.
 │   └── ColorGrid.jsx    # Shared color grid
-├── localization/        # LocaleContext, Trans (i18n)
+├── localization/        # LocaleContext, Trans (custom)
 ├── utils/
 │   ├── authFetch.js     # API wrappers with JWT
 │   └── storage.js       # localStorage helpers
@@ -77,7 +77,7 @@ const data = await authFetchJson("/api/v1/user/endpoint");
 const config = await authFetchYaml("/api/v1/user/config.yaml");
 ```
 
-### Localization (i18n)
+### Localization (custom)
 
 - **Files**: `src/localization/LocaleContext.jsx`, `Trans.jsx`
 - **Languages**: `en`, `ua`
@@ -153,6 +153,7 @@ Sticky bottom panel on mobile (<=767px), static with margin on desktop. Use for 
 - **CarBodyMain** – Car body diagram; fetches `/api/v1/user/carparts/{class}/{body}` and `carparts_t2/...`.
 - **ColorPicker** – Color grid; fetches `/api/v1/user/global/colors.json`, uses `ColorGrid`.
 - **ColorGrid** – 4-column grid for color swatches (shared component).
+- etc.
 
 ## Adding a New Page
 
