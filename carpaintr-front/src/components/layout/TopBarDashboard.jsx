@@ -69,20 +69,20 @@ const TopBarDashboard = () => {
             trigger="click"
             onSelect={handleSelect}
           >
-            <Dropdown.Item eventKey="manage">
+            <Dropdown.Item eventKey="manage" onSelect={handleSelect}>
               <span className="top-bar-dashboard-menu-item">
                 <Settings size={16} />
                 <span>Налаштування</span>
               </span>
             </Dropdown.Item>
-            <Dropdown.Item eventKey="report">
+            <Dropdown.Item eventKey="report" onSelect={handleSelect}>
               <span className="top-bar-dashboard-menu-item">
                 <MessageCircle size={16} />
                 <span>Надіслати відгук</span>
               </span>
             </Dropdown.Item>
             <Dropdown.Separator />
-            <Dropdown.Item eventKey="logout">
+            <Dropdown.Item eventKey="logout" onSelect={handleSelect}>
               <span className="top-bar-dashboard-menu-item top-bar-dashboard-menu-item-logout">
                 <LogOut size={16} />
                 <span>Вийти</span>
