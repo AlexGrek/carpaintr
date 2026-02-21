@@ -2,15 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { Navbar, Dropdown, Nav } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../utils/authFetch";
+import { useNotificationCount } from "../NotificationCountContext";
 import "./TopBarDashboard.css";
 import { handleOpenNewTab } from "../../utils/utils";
-import { LogOut, MessageCircle, Menu, Settings } from "lucide-react";
+import { Bell, LogOut, MessageCircle, Menu, Settings } from "lucide-react";
 
 const SCROLL_THRESHOLD = 8;
 
 const TopBarDashboard = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const { unreadCount } = useNotificationCount();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
@@ -28,6 +30,9 @@ const TopBarDashboard = () => {
           break;
         case "manage":
           navigate("/app/cabinet");
+          break;
+        case "notifications":
+          navigate("/app/notifications");
           break;
         case "report":
           handleOpenNewTab("/report");
@@ -52,6 +57,19 @@ const TopBarDashboard = () => {
       </Navbar.Brand>
       <Navbar.Content align="end">
         <Nav>
+          <button
+            type="button"
+            className="top-bar-dashboard-notifications-btn"
+            onClick={() => navigate("/app/notifications")}
+            aria-label="Notifications"
+          >
+            <Bell size={22} strokeWidth={2} />
+            {unreadCount > 0 && (
+              <span className="top-bar-dashboard-notifications-badge">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
           <Dropdown
             title=""
             renderToggle={(props, ref) => (
@@ -73,6 +91,12 @@ const TopBarDashboard = () => {
               <span className="top-bar-dashboard-menu-item">
                 <Settings size={16} />
                 <span>Налаштування</span>
+              </span>
+            </Dropdown.Item>
+            <Dropdown.Item eventKey="notifications" onSelect={handleSelect}>
+              <span className="top-bar-dashboard-menu-item">
+                <Bell size={16} />
+                <span>Мої сповіщення</span>
               </span>
             </Dropdown.Item>
             <Dropdown.Item eventKey="report" onSelect={handleSelect}>

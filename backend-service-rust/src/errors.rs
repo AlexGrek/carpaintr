@@ -28,6 +28,8 @@ pub enum AppError {
     // SafeFsError(#[from] SafeFsError),
     #[error("File not found")]
     FileNotFound,
+    #[error("Not found")]
+    NotFound,
     #[error("Unauthorized")]
     Unauthorized,
     #[error("Forbidden")]
@@ -102,6 +104,7 @@ impl IntoResponse for AppError {
             AppError::UserExists => StatusCode::CONFLICT,
             AppError::AdminCheckFailed => StatusCode::NOT_FOUND, // As requested for admin check
             AppError::FileNotFound => StatusCode::NOT_FOUND,
+            AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::ConfigError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InvalidData(_) => StatusCode::BAD_REQUEST,
             AppError::MissingExtension(_) => StatusCode::INTERNAL_SERVER_ERROR, // Indicates a middleware setup issue

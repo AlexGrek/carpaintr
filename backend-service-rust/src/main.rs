@@ -149,6 +149,11 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/support_unresponded", get(api::v1::support::support_get_unresponded))
                 .route("/support_delete", delete(api::v1::support::support_delete))
                 .route("/support_get", get(api::v1::support::support_get))
+                .route(
+                    "/notifications",
+                    get(api::v1::notifications::admin_list_all_notifications)
+                        .post(api::v1::notifications::admin_create_notification),
+                )
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/cache_clear_all", post(api::v1::admin::clear_all_cache))
                 .route("/manageuser", post(api::v1::admin::manage_user))
@@ -220,6 +225,15 @@ async fn main() -> tokio::io::Result<()> {
         .route(
             "/updatecompanyinfo",
             post(api::v1::user::update_company_info),
+        )
+        .route("/notifications", get(api::v1::notifications::list_notifications))
+        .route(
+            "/notifications/unread-count",
+            get(api::v1::notifications::unread_count),
+        )
+        .route(
+            "/notifications/:id/read",
+            axum::routing::patch(api::v1::notifications::mark_notification_read),
         )
         .nest(
             "/user",

@@ -11,6 +11,7 @@ import {
 import { authFetch, fetchCompanyInfo } from "../../utils/authFetch";
 import "./UsersDashboard.css";
 import {
+  Bell,
   Biohazard,
   BrainCircuit,
   Cog,
@@ -46,6 +47,9 @@ registerTranslations("ua", {
   "As grid": "У вигляді сітки", // New translation
   "As blocks": "У вигляді блоків", // New translation
   "Admin Area": "Адміністрування",
+  "Control everything": "Керування системою",
+  "My notifications": "Мої сповіщення",
+  "Your messages and alerts": "Повідомлення та сповіщення",
   Templates: "Шаблони документів",
   "Customize templates": "Налаштування вигляду документів",
 });
@@ -187,6 +191,12 @@ const DashboardNavigationButtons = ({ admin }) => {
       link: "/app/cabinet",
     },
     {
+      icon: <Bell />,
+      title: str("My notifications"),
+      description: str("Your messages and alerts"),
+      link: "/app/notifications",
+    },
+    {
       icon: <FileCheck />,
       title: str("Task Tracking"),
       description: "🚧 " + str("Under construction") + " 🚧",
@@ -201,7 +211,7 @@ const DashboardNavigationButtons = ({ admin }) => {
     {
       icon: <Biohazard />,
       title: str("Admin Area"),
-      description: "Control everything",
+      description: str("Control everything"),
       link: "/app/admin",
       hidden: !admin,
     },

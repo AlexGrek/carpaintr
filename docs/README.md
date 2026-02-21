@@ -94,6 +94,7 @@ Welcome to the Carpaintr (Autolab) documentation. This directory contains compre
 - **File Management**: Editor with git-like commit system
 - **PDF Generation**: HTML to PDF rendering for reports
 - **Automated Backups**: Kubernetes CronJob with retention management
+- **Notifications**: In-app notifications (admin send/broadcast, user "My notifications" page); Sled-backed with automatic cleanup of read notifications older than 24h
 - **i18n**: Multi-language support (English, Ukrainian)
 - **Integration Tests**: Comprehensive pytest test suite
 

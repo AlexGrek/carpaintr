@@ -16,6 +16,7 @@ const ManageUsers = lazy(() => import("./ManageUsers"));
 const ServerLogs = lazy(() => import("./ServerLogs"));
 const InvitesPanel = lazy(() => import("./license/InvitesPanel"));
 const AdminPanelRequests = lazy(() => import("./admreq/AdminPanelRequests"));
+const NotificationsPanel = lazy(() => import("./admin/NotificationsPanel"));
 const FilesystemBrowser = lazy(() => import("./editor/FilesystemBrowser"));
 const ServerStatus = lazy(() => import("./ServerStatus"));
 
@@ -88,6 +89,11 @@ const AdminTools = () => {
       path: "requests",
       title: "Запити",
       component: <AdminPanelRequests />,
+    },
+    {
+      path: "notifications",
+      title: "Сповіщення",
+      component: <NotificationsPanel />,
     },
     {
       path: "files",

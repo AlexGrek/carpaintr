@@ -91,12 +91,18 @@ pub async fn admin_check_middleware(
     }
 }
 
+/// Paths that require JWT but must not be license-protected.
+const LICENSE_EXEMPT_PATHS: &[&str] = &["/notifications/unread-count"];
+
 pub async fn license_expiry_middleware(
     AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
     req: Request<Body>, // Request<Body>
     next: Next,         // Next
 ) -> Result<Response, AppError> {
+    if LICENSE_EXEMPT_PATHS.contains(&req.uri().path()) {
+        return Ok(next.run(req).await);
+    }
     let license_cache = get_license_cache(&app_state);
 
     match license_cache.get_license(&user_email).await {

@@ -1,5 +1,6 @@
 pub mod calculations;
 pub mod invite;
+pub mod notifications;
 pub mod requests;
 pub mod table_validation;
 

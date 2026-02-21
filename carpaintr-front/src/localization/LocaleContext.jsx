@@ -62,6 +62,8 @@ const TRANSLATIONS_BASIC = {
     Close: "Закрити",
     Table: "Таблиця",
     Back: "Назад",
+    "Failed to get company info": "Не вдалося отримати дані про компанію",
+    "Document title: My notifications": "Мої сповіщення",
   },
   en: {},
 };

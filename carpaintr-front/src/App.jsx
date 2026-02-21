@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 
 import { GlobalCallbacksProvider } from "./components/GlobalCallbacksContext.jsx";
+import { NotificationCountProvider } from "./components/NotificationCountContext.jsx";
 import { LocaleProvider } from "./localization/LocaleContext.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import ComponentLoadingPage from "./components/layout/ComponentLoadingPage.jsx";
@@ -38,6 +39,9 @@ const ContactSupport = lazy(
 const TemplatesPage = lazy(
   () => import("./components/pages/TemplatesPage.jsx"),
 );
+const MyNotificationsPage = lazy(
+  () => import("./components/pages/MyNotificationsPage.jsx"),
+);
 const HistoryPage = lazy(
   () => import("./components/pages/HistoryPage.jsx"),
 );
@@ -53,33 +57,36 @@ function App() {
         <Router>
           <ScrollToTop />
           <ErrorBoundary>
-            <Suspense fallback={<ComponentLoadingPage />}>
-              <Routes>
-                {/* Marketing landing page - only route at root level */}
-                <Route path="/" element={<LandingPage />} />
+            <NotificationCountProvider>
+              <Suspense fallback={<ComponentLoadingPage />}>
+                <Routes>
+                  {/* Marketing landing page - only route at root level */}
+                  <Route path="/" element={<LandingPage />} />
 
-                {/* All application routes under /app */}
-                <Route path="/app/login" element={<LoginPage />} />
-                <Route path="/app/register" element={<RegistrationPage />} />
-                <Route path="/app/calc" element={<CalcPage />} />
-                <Route path="/app/calc2/*" element={<CalcPageV2 />} />
-                <Route path="/app/admin/*" element={<AdminPage />} />
-                <Route path="/app/company" element={<CompanyInfoPage />} />
-                <Route path="/app/catalog" element={<CatalogPage />} />
-                <Route path="/app/history" element={<HistoryPage />} />
-                <Route path="/app/aboutus" element={<AboutUsPage />} />
-                <Route path="/app/cabinet" element={<CabinetPage />} />
-                <Route path="/app/fileeditor" element={<FileEditorPage />} />
-                <Route path="/app/dashboard" element={<UsersDashboard />} />
-                <Route path="/app/wip" element={<WipPage />} />
-                <Route path="/app/report" element={<ContactSupport />} />
-                <Route path="/app/create-proc" element={<CreateProcPage />} />
-                <Route path="/app/templates" element={<TemplatesPage />} />
+                  {/* All application routes under /app */}
+                  <Route path="/app/login" element={<LoginPage />} />
+                  <Route path="/app/register" element={<RegistrationPage />} />
+                  <Route path="/app/calc" element={<CalcPage />} />
+                  <Route path="/app/calc2/*" element={<CalcPageV2 />} />
+                  <Route path="/app/admin/*" element={<AdminPage />} />
+                  <Route path="/app/company" element={<CompanyInfoPage />} />
+                  <Route path="/app/catalog" element={<CatalogPage />} />
+                  <Route path="/app/history" element={<HistoryPage />} />
+                  <Route path="/app/aboutus" element={<AboutUsPage />} />
+                  <Route path="/app/cabinet" element={<CabinetPage />} />
+                  <Route path="/app/fileeditor" element={<FileEditorPage />} />
+                  <Route path="/app/dashboard" element={<UsersDashboard />} />
+                  <Route path="/app/wip" element={<WipPage />} />
+                  <Route path="/app/report" element={<ContactSupport />} />
+                  <Route path="/app/create-proc" element={<CreateProcPage />} />
+                  <Route path="/app/templates" element={<TemplatesPage />} />
+                  <Route path="/app/notifications" element={<MyNotificationsPage />} />
 
-                {/* 404 - Catch all unmatched routes */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Suspense>
+                  {/* 404 - Catch all unmatched routes */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            </NotificationCountProvider>
           </ErrorBoundary>
         </Router>
       </GlobalCallbacksProvider>

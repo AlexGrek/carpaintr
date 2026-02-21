@@ -23,3 +23,43 @@
 .top-bar-user :where(.rs-dropdown-menu) {
   z-index: 10001 !important;
 }
+
+.top-bar-user-notifications-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 4px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.top-bar-user-notifications-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.top-bar-user-notifications-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+}

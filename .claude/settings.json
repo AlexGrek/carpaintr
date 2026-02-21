@@ -26,7 +26,8 @@
       "Bash(pkill:*)",
       "Bash(python loadtest.py:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "Bash(python3:*)"
     ]
   }
 }

@@ -11,6 +11,7 @@ This guide covers local development setup and workflows for Carpaintr (Autolab).
 - [Testing](#testing)
 - [Code Organization](#code-organization)
 - [Frontend Development](#frontend-development)
+- [Notifications](#notifications)
 - [Backend Development](#backend-development)
 - [PDF Service Development](#pdf-service-development)
 - [Common Tasks](#common-tasks)
@@ -347,6 +348,40 @@ const result = await authFetchJson('/api/v1/user/action', {
 // GET YAML
 const config = await authFetchYaml('/api/v1/user/config.yaml');
 ```
+
+## Notifications
+
+The application includes an in-app notifications system: admins can send notifications to individual users or broadcast to all users; users see notifications on a dedicated page. Notifications are stored in a Sled tree and cleaned up automatically.
+
+### Backend
+
+- **Storage**: Sled tree `notifications` (same pattern as `support_requests`). Key: composite `(user_email, notification_id)`; value: JSON `Notification` with `id`, `email`, `title`, `body`, `read`, `timestamp`.
+- **Model**: `backend-service-rust/src/models/notifications.rs` (`Notification`).
+- **DB layer**: `backend-service-rust/src/db/notifications.rs` (insert, update, remove, get, list all, query by user email, cleanup).
+- **Cleanup**: Periodic task (same schedule as attachments cleanup) removes notifications that are **read** and older than **24 hours** via `cleanup_old_read_notifications()` in `src/cleanup.rs`.
+
+**User endpoints** (JWT required, not license-protected):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/notifications` | List all notifications for the authenticated user (read and unread). |
+| PATCH | `/api/v1/notifications/:id/read` | Mark one notification as read. Returns 404 if not found or not owned by user. |
+
+**Admin endpoints** (admin middleware):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/admin/notifications` | List all notifications for all users. |
+| POST | `/api/v1/admin/notifications` | Create a notification. Body: `{ "email", "title", "body" }` (camelCase). |
+
+### Frontend
+
+- **User**: "My notifications" page at `/app/notifications`. Entry from dashboard (card "My notifications"). Fetches user notifications; on open, marks all unread as read on the server but keeps them displayed as unread for the current visit. Implemented in `carpaintr-front/src/components/pages/MyNotificationsPage.jsx`.
+- **Admin**: Admin tools tab "Сповіщення" (Notifications) with:
+  - Panel to send a notification (single user by email or broadcast to all via `/api/v1/admin/listusers`).
+  - Table of all notifications (load on "Refresh"); read rows are grayed out.
+  Implemented in `carpaintr-front/src/components/admin/NotificationsPanel.jsx`, registered in `AdminTools.jsx`.
+- **i18n**: Ukrainian translations for all notification-related strings in the components and in `LocaleContext.jsx` (e.g. "My notifications", "Failed to load notifications", "Document title: My notifications"). Use `str("...")` for every user-facing string and `registerTranslations("ua", { ... })` in each component or in the shared locale context.
 
 ## Backend Development
 
