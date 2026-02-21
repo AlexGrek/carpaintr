@@ -232,7 +232,7 @@ async fn main() -> tokio::io::Result<()> {
             get(api::v1::notifications::unread_count),
         )
         .route(
-            "/notifications/:id/read",
+            "/notifications/{id}/read",
             axum::routing::patch(api::v1::notifications::mark_notification_read),
         )
         .nest(
