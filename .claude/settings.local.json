@@ -23,7 +23,8 @@
       "Bash(kubectl config get-contexts:*)",
       "Bash(helm list:*)",
       "Bash(task db-restore-from-local-dev:*)",
-      "Bash(killall:*)"
+      "Bash(killall:*)",
+      "Bash(kubectl run backup-downloader --image=busybox:1.36 -n autolab-dev --restart=Never --overrides='{:*)"
     ]
   }
 }
