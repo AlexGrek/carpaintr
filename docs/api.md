@@ -28,6 +28,13 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 
 ## Public Endpoints
 
+### `GET /api/v1/health`
+Liveness/readiness check. No authentication required. Used by Kubernetes probes.
+
+**Response:** `200 OK` (empty body)
+
+---
+
 ### `POST /api/v1/register`
 Create a new user account.
 

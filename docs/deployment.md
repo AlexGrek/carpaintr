@@ -453,12 +453,17 @@ jobs:
 
 ### Health Checks
 
+The backend exposes `GET /api/v1/health` (no auth) which returns `200 OK`. This is used by the Kubernetes readiness and liveness probes configured in the StatefulSet.
+
 ```bash
 # Check pod status
 kubectl get pods -n autolab
 
 # Check pod health
 kubectl describe pod autolab-api-0 -n autolab
+
+# Test health endpoint directly
+kubectl exec -n autolab autolab-api-0 -- curl -sf http://localhost:8080/api/v1/health
 
 # View logs
 kubectl logs -f autolab-api-0 -n autolab
@@ -597,32 +602,51 @@ pdfgen:
   replicaCount: 3  # Scale PDF generation
 ```
 
-### Upgrades
+### Upgrades (Zero-Downtime)
 
-**Before upgrading:**
-1. Create backup (see [backup.md](./backup.md))
-2. Test in staging environment
-3. Review changelog and breaking changes
-4. Plan maintenance window
+The backend uses an embedded Sled database (single replica). True zero-downtime is approximated through:
 
-**Upgrade process:**
+- **RollingUpdate strategy** on the StatefulSet — Kubernetes terminates the old pod and starts the new one sequentially (at-most-one guarantee, no Sled lock conflict)
+- **`preStop: sleep 10`** — drains in-flight requests before SIGTERM is sent
+- **`terminationGracePeriodSeconds: 30`** — Sled flushes cleanly before the pod is killed
+- **Readiness probe** on `GET /api/v1/health` — traffic only routes to the new pod once it's ready
+- **Image pre-pull** — new image is cached on the cluster node before the rollout starts, eliminating the pull delay
+
+**Standard upgrade (`task redeploy`):**
 ```bash
-# 1. Backup current state
-kubectl create job --from=cronjob/autolab-api-backup pre-upgrade-backup
+# Builds images, pushes, pre-pulls onto node, then deploys
+task redeploy              # dev
+task redeploy ENV=staging
+task redeploy-prod
+```
 
-# 2. Upgrade Helm release
-helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
-  --namespace autolab \
-  --set image.tag=new-version
+The `deploy` task automatically pre-pulls both images before calling `helm upgrade`, so pod replacement is near-instant once triggered.
+
+**Upgrade sequence:**
+1. `task redeploy` builds and pushes new images
+2. `prepull` runs a short-lived pod per image on the cluster → image cached on node → pod deleted
+3. `helm upgrade` updates the StatefulSet spec
+4. Old pod receives `preStop` hook (10s drain), then SIGTERM → Sled flushes → pod terminates
+5. New pod starts → image pull is instant → app starts → readiness probe passes → traffic resumes
+
+Typical downtime window: **~10–15 seconds** (app restart only, no image pull wait).
+
+**Manual steps:**
+```bash
+# 1. Optional: create pre-upgrade backup
+task db-backup ENV=prod
+
+# 2. Deploy (pre-pull + helm upgrade included)
+task redeploy ENV=prod
 
 # 3. Monitor rollout
-kubectl rollout status statefulset/autolab-api -n autolab
+kubectl rollout status statefulset/autolab-prod-autolab-api -n autolab-prod0
 
-# 4. Verify functionality
+# 4. Verify
 curl https://autolab.example.com/api/v1/health
 
 # 5. If issues, rollback
-helm rollback autolab -n autolab
+helm rollback autolab-prod -n autolab-prod0
 ```
 
 ### Cleanup
