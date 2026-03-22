@@ -1,3 +1,7 @@
+---
+description: Load Rust backend context for Carpaintr/Autolab (backend-service-rust/). Use before making any backend changes.
+---
+
 You are working on the Rust backend of the Carpaintr/Autolab project (`backend-service-rust/`). Load this context before making any changes.
 
 ## Full API reference → [`docs/api.md`](../../docs/api.md)

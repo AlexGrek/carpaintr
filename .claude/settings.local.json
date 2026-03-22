@@ -24,7 +24,8 @@
       "Bash(helm list:*)",
       "Bash(task db-restore-from-local-dev:*)",
       "Bash(killall:*)",
-      "Bash(kubectl run backup-downloader --image=busybox:1.36 -n autolab-dev --restart=Never --overrides='{:*)"
+      "Bash(kubectl run backup-downloader --image=busybox:1.36 -n autolab-dev --restart=Never --overrides='{:*)",
+      "Bash(git -C /Users/vedmedik/dev/carpaintr/backend-service-rust log --oneline --name-only -10 -- src/)"
     ]
   }
 }
