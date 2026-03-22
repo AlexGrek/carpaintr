@@ -130,6 +130,7 @@ async fn main() -> tokio::io::Result<()> {
 
     // Define the API router with built-in error handling through Result returns
     let api_router = Router::new()
+        .route("/health", get(api::v1::auth::health))
         .route("/register", post(api::v1::auth::register))
         .route("/login", post(api::v1::auth::login))
         .route("/license", get(api::v1::license::get_license))

@@ -13,18 +13,38 @@ spec:
   selector:
     matchLabels:
       {{- include "autolab-api.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
         {{- include "autolab-api.selectorLabels" . | nindent 8 }}
     spec:
-      terminationGracePeriodSeconds: 2
+      terminationGracePeriodSeconds: 30
       containers:
       - name: autolab-api
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8080 # Hard-coded as it's app-specific
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          failureThreshold: 4
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         env:

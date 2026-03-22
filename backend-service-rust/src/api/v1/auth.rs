@@ -91,3 +91,7 @@ pub async fn impersonate(
 
     Ok(Json(LoginResponse { token }))
 }
+
+pub async fn health() -> impl IntoResponse {
+    StatusCode::OK
+}
