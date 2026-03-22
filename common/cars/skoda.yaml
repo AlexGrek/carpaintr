@@ -1,0 +1,129 @@
+# Skoda Car Catalog from 1990 to 2024
+# Includes models, generations, and key characteristics
+
+# Compact Cars
+"fabia":
+  body: ["hatchback", "combi", "sedan"]
+  class: "compact"
+  gen: ["1999-2007", "2007-2014", "2014-2021", "2021-"]
+  is_suv: false
+  estimated_price: 20000
+  euro_class: "B"
+  euro_body_types: ["hatchback 5 doors", "wagon", "sedan"]
+
+"rapid":
+  body: ["sedan", "spaceback"]
+  class: "compact"
+  gen: ["2012-2019"]
+  is_suv: false
+  estimated_price: 18000
+  euro_class: "C"
+  euro_body_types: ["sedan", "liftback"]
+
+# Mid-Size Cars
+"octavia":
+  body: ["liftback", "combi", "scout"]
+  class: "mid-size"
+  gen: ["1996-2004", "2004-2013", "2013-2020", "2020-"]
+  is_suv: false
+  variants:
+    - "rs" # performance version
+  estimated_price: 25000
+  euro_class: "C"
+  euro_body_types: ["liftback", "wagon"]
+
+# SUVs and Crossovers
+"karoq":
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2017-"]
+  is_suv: true
+  estimated_price: 30000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"kodiaq":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2016-"]
+  is_suv: true
+  variants:
+    - "sportline"
+    - "scout"
+  estimated_price: 38000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"enyaq":
+  body: ["suv", "coupe"]
+  class: "electric suv"
+  gen: ["2020-"]
+  is_suv: true
+  powertrain: "electric"
+  estimated_price: 45000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors", "coupe"]
+
+# Small Cars
+"citigo":
+  body: ["hatchback"]
+  class: "city car"
+  gen: ["2011-2020"]
+  is_suv: false
+  powertrain: ["petrol", "electric"]
+  estimated_price: 15000
+  euro_class: "A"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors"]
+
+# Performance Models
+"rs":
+  models: ["octavia", "fabia"]
+  body: ["liftback", "combi", "hatchback"]
+  class: "high-performance"
+  gen: ["2000-"]
+  is_suv: false
+  estimated_price: 40000
+  euro_class: "C"
+  euro_body_types: ["liftback", "wagon", "hatchback 5 doors"]
+
+# Historical Models
+"felicia":
+  body: ["hatchback", "combi", "pickup"]
+  class: "compact"
+  gen: ["1994-2001"]
+  is_suv: false
+  estimated_price: 10000
+  euro_class: "B"
+  euro_body_types: ["hatchback 5 doors", "wagon", "pickup"]
+
+"superb":
+  body: ["liftback", "combi"]
+  class: "executive"
+  gen: ["2001-2008", "2008-2015", "2015-2023", "2023-"]
+  is_suv: false
+  variants:
+    - "laurin & klement"
+    - "sportline"
+  estimated_price: 33000
+  euro_class: "E"
+  euro_body_types: ["liftback", "wagon"]
+
+# Electric and Hybrid Models
+"scala":
+  body: ["hatchback"]
+  class: "compact"
+  gen: ["2019-"]
+  is_suv: false
+  powertrain: ["petrol", "mild hybrid"]
+  estimated_price: 22000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
+
+"kamiq":
+  body: ["suv"]
+  class: "small suv"
+  gen: ["2019-"]
+  is_suv: true
+  estimated_price: 23000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]

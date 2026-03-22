@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [Deployment Guide](docs/deployment.md) - Docker, Kubernetes, Helm, CI/CD
 - [Backup & Restore](docs/backup.md) - Automated backups, restore procedures
 - [Secrets Management](docs/secrets-management.md) - JWT & license secret initialization
+- [API Documentation](docs/api.md) - Full REST API reference (all endpoints, request/response shapes, auth layers)
 
 ## Build & Development Commands
 
@@ -508,6 +509,18 @@ const MyComponent = () => {
 1. Add language code to `SUPPORTED_LANGUAGES` array in `LocaleContext.jsx`
 2. Add translations to `TRANSLATIONS_BASIC` for core strings
 3. Add `registerTranslations()` calls in components that need the new language
+
+## Frontend Routing Structure
+
+All application routes are under `/app/*`. The root `/` is the marketing landing page.
+
+| Prefix | Purpose |
+|--------|---------|
+| `/` | Marketing landing page (pre-rendered, SEO-optimized) |
+| `/app/*` | Application routes (`/app/login`, `/app/dashboard`, `/app/calc2/*`, `/app/admin/*`, etc.) |
+| `/api/*` | Backend REST API (unchanged) |
+
+When adding navigation links or routes, always use `/app/` prefix for application pages. See `ROUTING-CHANGES.md` for the full route mapping.
 
 ### PDF Backend (`pdf_backend/`)
 

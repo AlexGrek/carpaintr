@@ -1,0 +1,181 @@
+# Audi Car Catalog from 1990 to 2024
+# Includes models, generations, and key characteristics
+
+# Sedans and Coupes
+"a3":
+  body: ["sedan", "hatchback", "cabriolet"]
+  class: "compact premium"
+  gen: ["1996-2003", "2003-2012", "2012-2020", "2020-"]
+  is_suv: false
+  estimated_price: 33000
+  euro_class: "C"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "sedan", "cabriolet"]
+
+"a4":
+  body: ["sedan", "avant", "cabriolet"]
+  class: "mid premium"
+  gen: ["1994-2001", "2001-2004", "2004-2008", "2008-2015", "2015-2023", "2023-"]
+  is_suv: false
+  estimated_price: 38000
+  euro_class: "D"
+  euro_body_types: ["sedan", "wagon", "cabriolet"]
+
+"a5":
+  body: ["coupe", "sportback", "cabriolet"]
+  class: "mid premium"
+  gen: ["2007-2016", "2016-2023", "2023-"]
+  is_suv: false
+  estimated_price: 48000
+  euro_class: "D"
+  euro_body_types: ["coupe", "liftback", "cabriolet"]
+
+"a6":
+  body: ["sedan", "avant"]
+  class: "executive"
+  gen: ["1994-1997", "1997-2004", "2004-2011", "2011-2018", "2018-"]
+  is_suv: false
+  estimated_price: 50000
+  euro_class: "E"
+  euro_body_types: ["sedan", "wagon"]
+
+"a8":
+  body: ["sedan", "long"]
+  class: "luxury"
+  gen: ["1994-2002", "2002-2010", "2010-2017", "2017-"]
+  is_suv: false
+  estimated_price: 70000
+  euro_class: "F"
+  euro_body_types: ["sedan"]
+
+# Sports Cars
+"tt":
+  body: ["coupe", "roadster"]
+  class: "sports"
+  gen: ["1998-2006", "2006-2014", "2014-2023"]
+  is_suv: false
+  estimated_price: 43000
+  euro_class: "D"
+  euro_body_types: ["coupe", "cabriolet"]
+
+"r8":
+  body: ["coupe", "spyder"]
+  class: "supercar"
+  gen: ["2007-2015", "2015-2023"]
+  is_suv: false
+  estimated_price: 145000
+  euro_class: "F"
+  euro_body_types: ["coupe", "cabriolet"]
+
+# SUVs and Crossovers
+"q3":
+  body: ["suv", "crossover"]
+  class: "compact suv"
+  gen: ["2011-2018", "2018-"]
+  is_suv: true
+  estimated_price: 38000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"q5":
+  body: ["suv", "crossover"]
+  class: "mid-size suv"
+  gen: ["2008-2017", "2017-2023", "2023-"]
+  is_suv: true
+  estimated_price: 43000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"q7":
+  body: ["suv"]
+  class: "full-size suv"
+  gen: ["2005-2015", "2015-2023", "2023-"]
+  is_suv: true
+  estimated_price: 58000
+  euro_class: "SUV MAX"
+  euro_body_types: ["suv 5 doors"]
+
+"q8":
+  body: ["suv", "coupe"]
+  class: "luxury suv"
+  gen: ["2018-"]
+  is_suv: true
+  estimated_price: 78000
+  euro_class: "SUV MAX"
+  euro_body_types: ["suv 5 doors"]
+
+# Compact and Subcompact
+"a1":
+  body: ["hatchback", "sportback"]
+  class: "subcompact premium"
+  gen: ["2010-2018", "2018-2024"]
+  is_suv: false
+  estimated_price: 28000
+  euro_class: "B"
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors"]
+
+# Performance Variants
+"rs3":
+  body: ["sedan", "sportback"]
+  class: "high-performance compact"
+  gen: ["2011-2015", "2015-2021", "2021-"]
+  is_suv: false
+  estimated_price: 60000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors", "sedan"]
+
+"rs4":
+  body: ["avant"]
+  class: "high-performance mid"
+  gen: ["2000-2001", "2005-2008", "2012-2015", "2017-2023"]
+  is_suv: false
+  estimated_price: 70000
+  euro_class: "D"
+  euro_body_types: ["wagon"]
+
+"rs5":
+  body: ["coupe", "sportback"]
+  class: "high-performance mid"
+  gen: ["2010-2015", "2018-2023"]
+  is_suv: false
+  estimated_price: 78000
+  euro_class: "D"
+  euro_body_types: ["coupe", "liftback"]
+
+"rs6":
+  body: ["avant"]
+  class: "high-performance executive"
+  gen: ["2002-2004", "2008-2010", "2013-2019", "2019-"]
+  is_suv: false
+  estimated_price: 110000
+  euro_class: "E"
+  euro_body_types: ["wagon"]
+
+"rs7":
+  body: ["sportback"]
+  class: "high-performance luxury"
+  gen: ["2013-2019", "2019-"]
+  is_suv: false
+  estimated_price: 120000
+  euro_class: "F"
+  euro_body_types: ["liftback"]
+
+# Electric and Hybrid Models
+"e-tron":
+  body: ["suv", "sportback"]
+  class: "electric suv"
+  gen: ["2019-"]
+  is_suv: true
+  powertrain: "electric"
+  estimated_price: 78000
+  euro_class: "SUV MAX"
+  euro_body_types: ["suv 5 doors"]
+
+"q4-e-tron":
+  body: ["suv", "sportback"]
+  class: "compact electric suv"
+  gen: ["2021-"]
+  is_suv: true
+  powertrain: "electric"
+  estimated_price: 53000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
