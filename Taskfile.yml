@@ -94,6 +94,31 @@ tasks:
   # Usage: task deploy (defaults to dev)
   # Usage: task deploy ENV=staging
   # Usage: task deploy ENV=prod
+  prepull:
+    desc: "Pre-pull images onto cluster nodes before deployment (ENV=dev|staging|prod, default: dev)"
+    vars:
+      NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
+    cmds:
+      - echo "Pre-pulling {{.HUB_API_IMAGE}}:{{.TAG}} onto cluster..."
+      - |
+        kubectl run prepull-api-{{.TAG}} \
+          --image={{.HUB_API_IMAGE}}:{{.TAG}} \
+          --restart=Never \
+          --namespace={{.NS}} \
+          --command -- /bin/true 2>/dev/null || true
+      - kubectl wait --for=condition=ready pod/prepull-api-{{.TAG}} --namespace={{.NS}} --timeout=300s
+      - kubectl delete pod prepull-api-{{.TAG}} --namespace={{.NS}} --ignore-not-found=true
+      - echo "Pre-pulling {{.HUB_PDF_IMAGE}}:{{.TAG}} onto cluster..."
+      - |
+        kubectl run prepull-pdf-{{.TAG}} \
+          --image={{.HUB_PDF_IMAGE}}:{{.TAG}} \
+          --restart=Never \
+          --namespace={{.NS}} \
+          --command -- /bin/true 2>/dev/null || true
+      - kubectl wait --for=condition=ready pod/prepull-pdf-{{.TAG}} --namespace={{.NS}} --timeout=300s
+      - kubectl delete pod prepull-pdf-{{.TAG}} --namespace={{.NS}} --ignore-not-found=true
+      - echo "Images cached on cluster node. Ready to deploy."
+
   deploy:
     desc: "Deploy to environment (ENV=dev|staging|prod, default: dev)"
     vars:
@@ -101,6 +126,9 @@ tasks:
       REL: '{{index . (printf "RELEASE_%s" .ENV)}}'
       VALS: '{{index . (printf "VALUES_%s" .ENV)}}'
     cmds:
+      - task: prepull
+        vars:
+          ENV: '{{.ENV}}'
       - helm upgrade --install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}}
 
   deploy-dry-run:
