@@ -2,7 +2,7 @@ import { Button, HStack, IconButton, VStack } from "rsuite";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SelectionInput from "../SelectionInput";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import BottomStickyLayout from "../layout/BottomStickyLayout";

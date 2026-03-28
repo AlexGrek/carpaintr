@@ -386,7 +386,7 @@ pub async fn lookup_part_in_table_any_type(
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::merge_directories;
+    use crate::utils::filesystem::merge_directories;
 
     use super::*;
     use std::fs::File;

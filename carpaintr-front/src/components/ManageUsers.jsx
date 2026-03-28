@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, ButtonGroup, Drawer, Loader, Panel } from "rsuite";
+import { Button, ButtonGroup, Drawer, Input, Loader, Panel } from "rsuite";
 import { authFetch, resetCompanyInfo } from "../utils/authFetch";
 import ReloadIcon from "@rsuite/icons/Reload";
 import LicenseManager from "./LicenseManager";
@@ -26,6 +26,11 @@ registerTranslations("ua", {
   "Delete user": "Видалити користувача",
   Delete: "Видалити",
   "Change password": "Змінити пароль",
+  "Reset password": "Скинути пароль",
+  "New password": "Новий пароль",
+  Generate: "Згенерувати",
+  "Set password": "Встановити пароль",
+  "Password is required": "Пароль обов'язковий",
   "Manage licenses": "Керування ліцензіями",
   Impersonate: "Увійти як",
   Export: "Експорт",
@@ -37,6 +42,10 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [licenseEditorOpen, setLicenseEditorOpen] = useState(false);
+  const [passwordResetOpen, setPasswordResetOpen] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationFunc, setConfirmationFunc] = useState(null);
   const [confirmationText, setConfirmationText] = useState(null);
@@ -139,6 +148,44 @@ const ManageUsers = () => {
     };
 
     await sendManagementRequest(managementRequest);
+  };
+
+  const generateRandomPassword = () => {
+    const chars =
+      "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+    return Array.from(
+      { length: 16 },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join("");
+  };
+
+  const handleOpenPasswordReset = (email) => {
+    setPasswordResetUser(email);
+    setNewPassword("");
+    setPasswordError(null);
+    setPasswordResetOpen(true);
+  };
+
+  const handlePasswordResetSubmit = async () => {
+    if (!newPassword.trim()) {
+      setPasswordError(str("Password is required"));
+      return;
+    }
+    try {
+      await handleChPassUser(passwordResetUser, newPassword);
+      setPasswordResetOpen(false);
+      setPasswordResetUser(null);
+      setNewPassword("");
+    } catch (err) {
+      setPasswordError(err.message);
+    }
+  };
+
+  const handlePasswordResetClose = () => {
+    setPasswordResetOpen(false);
+    setPasswordResetUser(null);
+    setNewPassword("");
+    setPasswordError(null);
   };
 
   const handleLicenseManagementClick = (user) => {
@@ -257,6 +304,66 @@ const ManageUsers = () => {
           )}
         </Drawer.Body>
       </Drawer>
+      <Drawer
+        placement="top"
+        open={passwordResetOpen}
+        onClose={handlePasswordResetClose}
+        data-testid="password-reset-drawer"
+      >
+        <Drawer.Header>
+          <Trans>Reset password</Trans>
+          {passwordResetUser && (
+            <span style={{ marginLeft: 8, fontWeight: "normal", opacity: 0.7 }}>
+              — {passwordResetUser}
+            </span>
+          )}
+        </Drawer.Header>
+        <Drawer.Body>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              maxWidth: 400,
+              margin: "0 auto",
+            }}
+          >
+            {passwordError && (
+              <ErrorMessage errorText={passwordError} />
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <Input
+                data-testid="password-reset-input"
+                placeholder={str("New password")}
+                value={newPassword}
+                onChange={setNewPassword}
+                style={{ flex: 1 }}
+              />
+              <Button
+                data-testid="password-generate-button"
+                onClick={() => setNewPassword(generateRandomPassword())}
+              >
+                <Trans>Generate</Trans>
+              </Button>
+            </div>
+            <ButtonGroup>
+              <Button
+                data-testid="password-reset-submit-button"
+                appearance="primary"
+                onClick={handlePasswordResetSubmit}
+              >
+                <Trans>Set password</Trans>
+              </Button>
+              <Button
+                data-testid="password-reset-cancel-button"
+                onClick={handlePasswordResetClose}
+              >
+                <Trans>Cancel</Trans>
+              </Button>
+            </ButtonGroup>
+          </div>
+        </Drawer.Body>
+      </Drawer>
       <p>
         <Trans>Users in system</Trans>{" "}
         <Button startIcon={<ReloadIcon />} onClick={fetchData}>
@@ -279,7 +386,8 @@ const ManageUsers = () => {
                 <Trans>Delete</Trans>
               </Button>
               <Button
-                onClick={() => handleChPassUser(email, "temporary_password_42")}
+                data-testid={`change-password-button-${email}`}
+                onClick={() => handleOpenPasswordReset(email)}
               >
                 <Trans>Change password</Trans>
               </Button>

@@ -27,7 +27,9 @@
       "Bash(python loadtest.py:*)",
       "Bash(npx eslint:*)",
       "Bash(npx vite build:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(cargo test:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
