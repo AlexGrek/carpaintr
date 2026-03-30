@@ -47,6 +47,7 @@ const TopBarDashboard = () => {
   );
 
   return (
+    <>
     <Navbar
       className={`top-bar-dashboard ${scrolled ? "top-bar-dashboard-scrolled" : ""}`}
     >
@@ -120,6 +121,7 @@ const TopBarDashboard = () => {
       </Navbar.Content>
     </Navbar>
     <NotificationsDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   );
 };
 
