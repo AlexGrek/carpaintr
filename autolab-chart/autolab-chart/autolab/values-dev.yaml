@@ -11,9 +11,7 @@ secretName: autolab-api-secret
 # Note: create: true for convenience in development (auto-generates if secret doesn't exist)
 # For production environments, use create: false and pre-create secrets manually
 secret:
-  create: true
-  secretKey: "dev-jwt-secret-change-in-production"
-  secretKeyLicense: "dev-license-secret-change-in-production"
+  create: false
   admins: |
     admin@example.com
     admin@admin.com
