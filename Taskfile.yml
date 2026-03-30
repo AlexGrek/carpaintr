@@ -92,7 +92,7 @@ tasks:
           --restart=Never \
           --namespace={{.NS}} \
           --command -- /bin/true 2>/dev/null || true
-      - kubectl wait --for=condition=ready pod/prepull-api-{{.TAG}} --namespace={{.NS}} --timeout=300s
+      - kubectl wait --for=condition=complete pod/prepull-api-{{.TAG}} --namespace={{.NS}} --timeout=300s
       - kubectl delete pod prepull-api-{{.TAG}} --namespace={{.NS}} --ignore-not-found=true
       - echo "Pre-pulling {{.HUB_PDF_IMAGE}}:{{.TAG}} onto cluster..."
       - |
@@ -101,7 +101,7 @@ tasks:
           --restart=Never \
           --namespace={{.NS}} \
           --command -- /bin/true 2>/dev/null || true
-      - kubectl wait --for=condition=ready pod/prepull-pdf-{{.TAG}} --namespace={{.NS}} --timeout=300s
+      - kubectl wait --for=condition=complete pod/prepull-pdf-{{.TAG}} --namespace={{.NS}} --timeout=300s
       - kubectl delete pod prepull-pdf-{{.TAG}} --namespace={{.NS}} --ignore-not-found=true
       - echo "Images cached on cluster node. Ready to deploy."
 
