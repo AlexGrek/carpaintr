@@ -1,0 +1,45 @@
+name: offload-build
+type: shell
+description: Build and push multi-arch Docker images for carpaintr (backend + pdfgen), then redeploy to Kubernetes
+script: |
+  #!/bin/bash
+  set -euo pipefail
+
+  cd ~/src/carpaintr
+
+  ENV="${ENV:-dev}"
+
+  echo "==> Setting up buildx for multi-arch builds..."
+  task buildx-setup
+
+  if [ "${TARGET}" = "backend" ]; then
+    echo "==> Building backend only..."
+    task build-backend
+  elif [ "${TARGET}" = "pdfgen" ]; then
+    echo "==> Building PDF generator only..."
+    task build-pdfgen
+  else
+    echo "==> Building all images (backend + pdfgen)..."
+    task build
+  fi
+
+  if [ "${DEPLOY}" = "true" ]; then
+    echo "==> Redeploying to Kubernetes (env: ${ENV})..."
+    task redeploy ENV="${ENV}"
+  fi
+
+  echo "==> Build complete."
+params:
+  - name: TARGET
+    type: string
+    description: "Which image to build: 'backend', 'pdfgen', or 'all'"
+    default: all
+  - name: DEPLOY
+    type: string
+    description: "Redeploy to Kubernetes after build ('true' or 'false')"
+    default: "false"
+  - name: ENV
+    type: string
+    description: "Target environment for deploy: 'dev', 'staging', or 'prod'"
+    default: dev
+timeout: 600
