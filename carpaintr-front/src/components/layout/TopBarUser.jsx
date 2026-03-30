@@ -38,6 +38,7 @@ const TopBarUser = () => {
   );
 
   return (
+    <>
     <Navbar
       appearance="inverse"
       className="top-bar-user fade-in-simple"
@@ -89,6 +90,7 @@ const TopBarUser = () => {
       </Navbar.Content>
     </Navbar>
     <NotificationsDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   );
 };
 
