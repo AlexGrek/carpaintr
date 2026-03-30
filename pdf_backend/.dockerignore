@@ -29,10 +29,11 @@ htmlcov/
 dist/
 build/
 
-# Dev data files
-*.pdf
+# Dev data files (not needed in image)
 example.json
 sample.json
+paycheck_data.json
+paycheck.pdf
 
 # OS and editor artifacts
 .DS_Store

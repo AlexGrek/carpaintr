@@ -1,0 +1,60 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+ROUTING-CHANGES.md
+SKILL.md
+
+# CI/CD and tooling
+.drone.yml
+.github/
+.claude/
+Taskfile.yml
+
+# Frontend: exclude everything except what the Dockerfile copies
+carpaintr-front/node_modules/
+carpaintr-front/dist/
+carpaintr-front/.vite/
+carpaintr-front/coverage/
+carpaintr-front/.eslintcache
+
+# Backend Rust: exclude build artifacts and dev files
+backend-service-rust/target/
+backend-service-rust/.cargo/
+# Keep admins.txt — it's needed at runtime in local/dev builds
+
+# Other services (not part of this image)
+pdf_backend/
+pdf_backend_playwright/
+
+# Tests and dev tools
+backend-integration-tests/
+load_testing/
+simulate-bot-crawl.sh
+test-multilang.sh
+test-seo.sh
+update-routes.sh
+verify-routes.sh
+
+# Helm chart and k8s manifests
+autolab-chart/
+k8s-deploy/
+
+# Local data and backups
+backups/
+deleted_support_requests/
+target/
+
+# Scripts (not needed in image; entrypoint.sh is copied explicitly)
+scripts/
+
+# OS and editor artifacts
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
