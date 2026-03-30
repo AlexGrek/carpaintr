@@ -7,10 +7,9 @@ script: |
 
   cd ~/src/carpaintr
 
-  ENV="${ENV:-dev}"
+  git pull
 
-  echo "==> Setting up buildx for multi-arch builds..."
-  task buildx-setup
+  ENV="${ENV:-dev}"
 
   if [ "${TARGET}" = "backend" ]; then
     echo "==> Building backend only..."

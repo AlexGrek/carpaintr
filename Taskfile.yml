@@ -27,39 +27,25 @@ tasks:
     cmds:
       - task --list
 
-  # Docker build tasks (multi-architecture by default)
-  buildx-setup:
-    desc: Setup buildx builder for multi-architecture builds
-    cmds:
-      - docker run --privileged --rm tonistiigi/binfmt --install all
-      - docker buildx create --name multiarch-builder --driver docker-container --bootstrap --use 2>/dev/null || docker buildx use multiarch-builder
-    status:
-      - docker buildx ls | grep -q multiarch-builder
-
+  # Docker build tasks (amd64 only)
   build:
-    desc: Build and push all multi-arch Docker images (arm64 + amd64)
-    deps:
-      - buildx-setup
+    desc: Build and push all Docker images (amd64)
     cmds:
       - task: build-backend
       - task: build-pdfgen
 
   build-backend:
-    desc: Build and push multi-arch backend image (arm64 + amd64)
-    deps:
-      - buildx-setup
+    desc: Build and push backend image (amd64)
     cmds:
-      - echo "Building multi-arch backend image {{.HUB_API_IMAGE}}:{{.TAG}}..."
-      - docker buildx build --builder multiarch-builder --platform linux/arm64,linux/amd64 -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest --push .
+      - echo "Building backend image {{.HUB_API_IMAGE}}:{{.TAG}}..."
+      - docker build --platform linux/amd64 -t {{.HUB_API_IMAGE}}:{{.TAG}} -t {{.HUB_API_IMAGE}}:latest --push .
 
   build-pdfgen:
-    desc: Build and push multi-arch Playwright PDF generator image (arm64 + amd64)
+    desc: Build and push Playwright PDF generator image (amd64)
     dir: pdf_backend_playwright
-    deps:
-      - buildx-setup
     cmds:
-      - echo "Building multi-arch PDF generator image {{.HUB_PDF_IMAGE}}:{{.TAG}}..."
-      - docker buildx build --builder multiarch-builder --platform linux/arm64,linux/amd64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest --push .
+      - echo "Building PDF generator image {{.HUB_PDF_IMAGE}}:{{.TAG}}..."
+      - docker build --platform linux/amd64 -t {{.HUB_PDF_IMAGE}}:{{.TAG}} -t {{.HUB_PDF_IMAGE}}:latest --push .
 
   build-pdfgen-legacy:
     desc: Build legacy WeasyPrint PDF generator Docker image (single arch)
