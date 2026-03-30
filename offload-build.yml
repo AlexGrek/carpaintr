@@ -1,4 +1,4 @@
-name: offload-build
+name: autolab-build
 type: shell
 description: Build and push multi-arch Docker images for carpaintr (backend + pdfgen), then redeploy to Kubernetes
 script: |
