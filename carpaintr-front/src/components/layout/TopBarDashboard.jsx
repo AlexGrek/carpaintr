@@ -3,6 +3,7 @@ import { Navbar, Dropdown, Nav } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../utils/authFetch";
 import { useNotificationCount } from "../NotificationCountContext";
+import NotificationsDrawer from "../NotificationsDrawer";
 import "./TopBarDashboard.css";
 import { handleOpenNewTab } from "../../utils/utils";
 import { Bell, LogOut, MessageCircle, Menu, Settings } from "lucide-react";
@@ -12,6 +13,7 @@ const SCROLL_THRESHOLD = 8;
 const TopBarDashboard = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { unreadCount } = useNotificationCount();
 
   useEffect(() => {
@@ -60,8 +62,9 @@ const TopBarDashboard = () => {
           <button
             type="button"
             className="top-bar-dashboard-notifications-btn"
-            onClick={() => navigate("/app/notifications")}
+            onClick={() => setDrawerOpen(true)}
             aria-label="Notifications"
+            data-testid="notifications-bell-button"
           >
             <Bell size={22} strokeWidth={2} />
             {unreadCount > 0 && (
@@ -116,6 +119,7 @@ const TopBarDashboard = () => {
         </Nav>
       </Navbar.Content>
     </Navbar>
+    <NotificationsDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
   );
 };
 

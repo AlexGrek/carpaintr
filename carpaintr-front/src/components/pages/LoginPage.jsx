@@ -18,6 +18,7 @@ const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
   const toaster = useToaster();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,21 +27,30 @@ const LoginPage = () => {
   const params = new URLSearchParams(location.search);
   const redirect = params.get("redirect") || "/app/dashboard";
 
-  // Check authentication on mount
+  // Check authentication on mount — show UI only after auth check settles
   useEffect(() => {
+    let cancelled = false;
     const checkAuth = async () => {
       const token = localStorage.getItem("authToken");
-      if (!token) return;
+      if (!token) {
+        if (!cancelled) setVisible(true);
+        return;
+      }
       try {
         const resp = await authFetch("/api/v1/getcompanyinfo");
-        if (resp.ok && !redirect.startsWith("/app/login")) {
-          navigate(redirect, { replace: true });
+        if (!cancelled) {
+          if (resp.ok && !redirect.startsWith("/app/login")) {
+            navigate(redirect, { replace: true });
+          } else {
+            setVisible(true);
+          }
         }
       } catch {
-        // silently ignore if not logged in
+        if (!cancelled) setVisible(true);
       }
     };
     checkAuth();
+    return () => { cancelled = true; };
   }, [navigate, redirect]);
 
   const handleLogin = async () => {
@@ -75,7 +85,7 @@ const LoginPage = () => {
 
   return (
     <Container className="auth-page">
-      <Panel className="auth-panel" bordered>
+      <Panel className={`auth-panel${visible ? " auth-panel--visible" : ""}`} bordered>
         <img
           className="auth-logo fade-in-expand-simple"
           src="/autolab_large_bw.png"

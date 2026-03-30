@@ -48,8 +48,7 @@
 }
 
 .blurred-background {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.92);
 }
 
 .no-padding-sides {

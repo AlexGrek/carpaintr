@@ -14,8 +14,7 @@
 
 /* Header */
 header.landing {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.96);
   position: fixed;
   width: 100%;
   top: 0;
@@ -184,8 +183,7 @@ nav.landing {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.22);
   color: white;
   padding: 1.1rem 2.5rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
