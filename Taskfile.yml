@@ -287,12 +287,17 @@ tasks:
       - task: secret-create
 
   secret-show:
-    desc: "Show current secret values (ENV=dev|staging|prod, default: dev)"
+    desc: "Show current secret values decoded as plain text (ENV=dev|staging|prod, default: dev)"
     vars:
       NS: '{{index . (printf "NAMESPACE_%s" .ENV)}}'
     cmds:
-      - echo "Secret in namespace {{.NS}}:"
-      - kubectl get secret autolab-api-secret --namespace {{.NS}} -o yaml 2>/dev/null || echo "Secret not found"
+      - echo "═══════════════════════════════════════════════════════════"
+      - echo "Secrets for namespace {{.NS}}"
+      - echo "═══════════════════════════════════════════════════════════"
+      - |
+        kubectl get secret autolab-api-secret --namespace {{.NS}} -o json 2>/dev/null | \
+        jq -r '.data | to_entries[] | "\(.key): \(.value | @base64d)"' \
+        || echo "Secret 'autolab-api-secret' not found in namespace {{.NS}}"
 
   # Helm install tasks using current kubectl context and commit hash
   helm-context:
