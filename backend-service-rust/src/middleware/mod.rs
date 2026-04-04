@@ -48,7 +48,7 @@ pub async fn jwt_auth_middleware(
 
     let path = parts.uri.path();
 
-    if path == "/register" || path == "/login" {
+    if path.ends_with("/register") || path.ends_with("/login") || path.ends_with("/health") {
         let req = Request::from_parts(parts, body);
         return Ok(next.run(req).await);
     }
