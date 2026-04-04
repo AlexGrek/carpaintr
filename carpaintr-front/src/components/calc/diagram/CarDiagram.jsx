@@ -13,10 +13,8 @@ export function buildCarSubcomponentsFromT2(data) {
     const zone = item.zone?.trim();
     const name = item.name?.trim();
 
-    // Skip invalid, placeholder, or action-less header rows
-    const actions = item.actions;
-    const hasActions = Array.isArray(actions) ? actions.length > 0 : (actions instanceof Set ? actions.size > 0 : false);
-    if (!zone || !name || name === "(Додати)" || !hasActions) {
+    // Skip invalid or placeholder names
+    if (!zone || !name || name === "(Додати)") {
       return acc;
     }
 

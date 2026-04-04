@@ -1143,20 +1143,25 @@ const CarBodyMain = ({
                             <Divider />
 
                             {/* Action Selection */}
-                            {drawerPartDetails?.actions && drawerPartDetails.actions.length > 0 && (
-                                <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-                                    <MenuPickerV2
-                                        label={str("Action")}
-                                        items={drawerPartDetails.actions.map(action => ({
-                                            label: str(action),
-                                            value: action
-                                        }))}
-                                        value={editedPart.action}
-                                        onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
-                                        style={{ maxWidth: '100%' }}
-                                    />
-                                </div>
-                            )}
+                            {(() => {
+                                const availableActions = (drawerPartDetails?.actions && drawerPartDetails.actions.length > 0)
+                                    ? drawerPartDetails.actions
+                                    : ['assemble', 'twist', 'replace', 'mount', 'repair', 'paint'];
+                                return (
+                                    <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+                                        <MenuPickerV2
+                                            label={str("Action")}
+                                            items={availableActions.map(action => ({
+                                                label: str(action),
+                                                value: action
+                                            }))}
+                                            value={editedPart.action}
+                                            onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
+                                            style={{ maxWidth: '100%' }}
+                                        />
+                                    </div>
+                                );
+                            })()}
 
                             {/* Damage Level - hidden for replace/mount actions */}
                             {editedPart.action !== 'replace' && editedPart.action !== 'mount' && (
