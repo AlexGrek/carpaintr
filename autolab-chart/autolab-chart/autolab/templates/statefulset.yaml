@@ -10,6 +10,7 @@ metadata:
 spec:
   serviceName: {{ include "autolab-api.fullname" . }}-headless
   replicas: {{ .Values.replicaCount }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
   selector:
     matchLabels:
       {{- include "autolab-api.selectorLabels" . | nindent 6 }}

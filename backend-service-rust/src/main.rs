@@ -128,11 +128,14 @@ async fn main() -> tokio::io::Result<()> {
         (StatusCode::NOT_FOUND, "API endpoint not found").into_response()
     }
 
-    // Define the API router with built-in error handling through Result returns
-    let api_router = Router::new()
+    // Public routes — no JWT middleware
+    let public_router = Router::new()
         .route("/health", get(api::v1::auth::health))
         .route("/register", post(api::v1::auth::register))
-        .route("/login", post(api::v1::auth::login))
+        .route("/login", post(api::v1::auth::login));
+
+    // Define the API router with built-in error handling through Result returns
+    let api_router = Router::new()
         .route("/license", get(api::v1::license::get_license))
         .route("/getlicenses", get(api::v1::license::get_license_list))
         .nest(
@@ -404,6 +407,8 @@ async fn main() -> tokio::io::Result<()> {
             shared_state.clone(),
             jwt_auth_middleware,
         ))
+        // Merge public routes (no JWT) after applying the JWT layer to protected routes
+        .merge(public_router)
         // Add the API fallback here
         .fallback(api_fallback);
 

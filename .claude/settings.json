@@ -31,7 +31,9 @@
       "Bash(cargo test:*)",
       "Bash(npm run:*)",
       "Bash(git fetch:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(helm uninstall:*)",
+      "Bash(git rebase:*)"
     ]
   }
 }

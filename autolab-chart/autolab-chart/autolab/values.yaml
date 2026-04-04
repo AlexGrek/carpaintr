@@ -5,6 +5,13 @@ environment: production
 # For an app with an embedded DB like Sled, this should almost always be 1.
 replicaCount: 1
 
+# -- Seconds a pod must be Running and passing readiness checks before it is
+# considered "available". Helm/kubectl rollout status waits for this, and the
+# StatefulSet won't proceed to the next pod until the condition is met.
+# Gives the app time to warm up and lets the ingress stop routing to the old
+# pod before the rollout is declared successful.
+minReadySeconds: 15
+
 image:
   # -- The container image repository
   repository: grekodocker/autolab-api
