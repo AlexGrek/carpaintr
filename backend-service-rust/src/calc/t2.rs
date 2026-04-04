@@ -93,7 +93,7 @@ pub async fn t2_rows_by_body_type(
         .iter()
         .filter(|row| {
             for (k, v) in row.iter() {
-                if k.contains(T2_BODY) && v == car_type {
+                if k.contains(T2_BODY) && v.trim_end_matches('.').trim() == car_type {
                     log_event(
                         LogLevel::Trace,
                         format!("t2_rows_by_body_type: Row matched - column='{}', value='{}'", k, v),
