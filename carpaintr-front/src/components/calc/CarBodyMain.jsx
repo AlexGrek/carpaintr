@@ -1142,19 +1142,29 @@ const CarBodyMain = ({
 
                             <Divider />
 
-                            {/* Action Selection */}
+                            {/* Action Selection — uses repair_types.csv per-part values so they
+                                match processor requiredRepairTypes (Ukrainian names). Falls back
+                                to T2 action codes, then to the full 6-action default list. */}
                             {(() => {
-                                const availableActions = (drawerPartDetails?.actions && drawerPartDetails.actions.length > 0)
-                                    ? drawerPartDetails.actions
-                                    : ['assemble', 'twist', 'replace', 'mount', 'repair', 'paint'];
+                                const partTableData = tableDataRepository[drawerPartDetails?.name];
+                                const repairTypesEntry = partTableData?.find(t => t.name === 'repair_types');
+                                const repairTypesStr = repairTypesEntry?.data?.['Ремонти'] || '';
+                                const fromTable = repairTypesStr
+                                    .split('/')
+                                    .map(s => s.trim())
+                                    .filter(Boolean);
+
+                                const items = fromTable.length > 0
+                                    ? fromTable.map(rt => ({ label: rt, value: rt }))
+                                    : (drawerPartDetails?.actions?.length > 0
+                                        ? drawerPartDetails.actions.map(a => ({ label: str(a), value: a }))
+                                        : ['assemble', 'twist', 'replace', 'mount', 'repair', 'paint'].map(a => ({ label: str(a), value: a })));
+
                                 return (
                                     <div style={{ marginTop: '20px', marginBottom: '20px' }}>
                                         <MenuPickerV2
                                             label={str("Action")}
-                                            items={availableActions.map(action => ({
-                                                label: str(action),
-                                                value: action
-                                            }))}
+                                            items={items}
                                             value={editedPart.action}
                                             onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
                                             style={{ maxWidth: '100%' }}

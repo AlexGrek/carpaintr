@@ -176,8 +176,8 @@ export function validate_requirements(processor, tableData) {
 }
 
 export function is_supported_repair_type(processor, repairAction) {
-  const found = processor.requiredRepairTypes.indexOf(repairAction);
-  return found >= 0;
+  if (processor.requiredRepairTypes.length === 0) return true;
+  return processor.requiredRepairTypes.indexOf(repairAction) >= 0;
 }
 
 export function verify_processor(processor) {

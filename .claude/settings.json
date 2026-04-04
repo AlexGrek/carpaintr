@@ -37,7 +37,9 @@
       "Bash(cargo outdated:*)",
       "Bash(cargo search:*)",
       "Bash(cargo update:*)",
-      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/catalog/tables/**)"
+      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/catalog/tables/**)",
+      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom//**)",
+      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/**)"
     ]
   }
 }
