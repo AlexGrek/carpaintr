@@ -8,7 +8,7 @@
   width: 100%;
   min-height: 56px;
   padding: 0 20px;
-  z-index: 10000;
+  z-index: 400;
   background: transparent !important;
   border-bottom: 1px solid transparent;
   box-shadow: none;
@@ -28,11 +28,11 @@
 }
 
 .top-bar-dashboard :where(.rs-dropdown) {
-  z-index: 10001 !important;
+  z-index: 401 !important;
 }
 
 .top-bar-dashboard :where(.rs-dropdown-menu) {
-  z-index: 10001 !important;
+  z-index: 401 !important;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(0, 0, 0, 0.06);

@@ -1,5 +1,5 @@
 ---
-name: frontend-engineer
+name: frontend
 description: Senior frontend engineer for Autolab - React 19/Vite/RSuite expert with mobile-first performance, custom components, data-testable UI, and micro-repository data flow
 triggers: ["carpaintr-front", "frontend", "calc", "UI", "component", "layout"]
 ---

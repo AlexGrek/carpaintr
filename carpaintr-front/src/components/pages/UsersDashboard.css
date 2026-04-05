@@ -3,12 +3,12 @@
   min-height: 100vh;
   background: linear-gradient(
     160deg,
-    #fff1ee 0%,
-    #ffd5cc 15%,
-    #fca99a 35%,
-    #f87060 55%,
-    #ef4444 75%,
-    #dc2626 100%
+    #fff7ed 0%,
+    #ffedd5 15%,
+    #fed7aa 35%,
+    #fb923c 55%,
+    #f97316 75%,
+    #ea580c 100%
   );
   background-attachment: scroll;
 }
