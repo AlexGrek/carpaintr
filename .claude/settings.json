@@ -39,7 +39,12 @@
       "Bash(cargo update:*)",
       "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/catalog/tables/**)",
       "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom//**)",
-      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/**)"
+      "Read(//Users/vedmedik/dev/carpaintr/data/users/admin%40example%2Ecom/**)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(sort find:*)",
+      "Read(//Users/vedmedik/dev/carpaintr/backend-service-rust/data/users/admin%40example%2Ecom/catalog/tables/**)",
+      "Bash(ls backend-service-rust/data/common/procs/*.js)"
     ]
   }
 }
