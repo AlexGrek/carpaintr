@@ -389,7 +389,7 @@ const ProcessorGenerator = () => {
         name: "paint part (one side)",
         evaluate: 'tableData["t1"]["field2"]',
         tooltip: "Just paint part",
-        condition: 'repairAction == "paint_one_side"',
+        condition: 'repairAction == "Ремонт з зовнішнім фарбуванням"',
       },
     ],
   });

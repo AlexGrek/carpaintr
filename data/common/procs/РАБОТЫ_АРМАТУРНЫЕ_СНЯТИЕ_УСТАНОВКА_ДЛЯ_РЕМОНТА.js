@@ -19,7 +19,7 @@
         return output;
     },
     requiredTables: ["Арматурные работы"],
-    requiredRepairTypes: ["toning","paint_one_side","paint_two_sides"],
+    requiredRepairTypes: ["Розтонування фарби","Ремонт з зовнішнім фарбуванням","Ремонт з фарбуваням 2 сторони"],
     requiredFiles: [],
     category: "General",
     orderingNum: 100
