@@ -63,39 +63,52 @@ GET /api/v1/user/carparts/{class}/{body_type}
 
 **File Location:** `tables/t2.csv` in user's micro-repository
 
-**Structure:** CSV with dynamic columns. Required columns:
+**ACTUAL Structure (verified from real data):** CSV with 19 columns. A single row can apply to multiple body types via **8 separate body type columns** (`ТИП КУЗОВА1`–`ТИП КУЗОВА8`). Each row lists which body types it covers as cell values, not as filters.
 
 ```csv
-зона,деталь 1,деталь 2,Схема кузова,ТИП КУЗОВА,розібрати/зібрати,усунення перекосу,замінити,зняти/встановити,ремонт,фарбування
-A,Передній бампер,,bumper_schema,sedan,45,0,120,30,60,25
-A,Капот,Основа,hood_main,sedan,30,0,90,20,50,20
+Схема кузова,ТИП КУЗОВА1,ТИП КУЗОВА2,ТИП КУЗОВА3,ТИП КУЗОВА4,ТИП КУЗОВА5,ТИП КУЗОВА6,ТИП КУЗОВА7,ТИП КУЗОВА8,зона,деталь 1,деталь 2,программа,розібрати/зібрати,усунення перекосу,замінити,зняти/встановити,ремонт,фарбування
+Рис.1,ХЕТЧБЕК 3 двери,ХЕТЧБЕК 5 дверей,КУПЕ,ЛИФТБЭК 5 дверей,СЕДАН,УНИВЕРСАЛ,ВНЕДОРОЖНИК 3 дверный,ВНЕДОРОЖНИК 5 дверный,Бампер задній,Бампер задній,,,,,,,, 
+Рис.2дв.,ХЕТЧБЕК 3 двери,ХЕТЧБЕК 5 дверей,,ЛИФТБЭК 5 дверей,,,ВНЕДОРОЖНИК 3 дверный,ВНЕДОРОЖНИК 5 дверный,Двері багажника,Деталі дверей багажника,Каркас дверей зад.лів.,,розібрати/зібрати,усунення перекосу,,, ремонт,фарбування
 ```
+
+**IMPORTANT — Body type values are Russian (same format as T1):**
+- `ХЕТЧБЕК 3 двери` (hatchback 3 doors)
+- `ХЕТЧБЕК 5 дверей` (hatchback 5 doors)
+- `СЕДАН` (sedan)
+- `УНИВЕРСАЛ` (wagon)
+- `КУПЕ` (coupe)
+- `ЛИФТБЭК 5 дверей` (liftback 5 doors)
+- `ВНЕДОРОЖНИК 3 дверный` (suv 3 doors)
+- `ВНЕДОРОЖНИК 5 дверный` (suv 5 doors)
+
+**IMPORTANT — Action columns store the action name as a string (not a number):**
+The action columns (`розібрати/зібрати`, `ремонт`, etc.) contain either the action name string (non-empty = action supported) or empty string (action not applicable). **Not numeric labor times** — those come from separate lookup tables.
+
+**Header/section rows:** Rows where `деталь 2` is empty and ALL action columns are empty are section header markers (e.g., "Кришка багажника" with `програма = "программа"`). They group sub-parts but are not themselves actionable.
 
 **Field Definitions (from `src/calc/constants.rs`):**
 
 **Core Fields:**
-- **`зона`** (T2_ZONE) - Repair zone identifier (e.g., "A", "B", "hood")
-- **`деталь 1`** (T2_PART_1) - Primary part name (required, cannot be empty)
-- **`деталь 2`** (T2_PART_2) - Secondary/nested part (optional, e.g., "Основа" for "hood base")
+- **`зона`** (T2_ZONE) - Repair zone identifier (e.g., "Кришка багажника", "Бампер задній")
+- **`деталь 1`** (T2_PART_1) - Primary part name or group name (required, cannot be empty)
+- **`деталь 2`** (T2_PART_2) - Sub-part name. If empty: part is ungrouped (`group=null`, `name=деталь 1`). If filled: `group=деталь 1`, `name=деталь 2`
 - **`Схема кузова`** (T2_BLUEPRINT) - Reference to visual blueprint/schema name
-- **`ТИП КУЗОВА`** (T2_BODY) - Body type (e.g., "sedan", "suv 5 doors")
+- **`ТИП КУЗОВАn`** (T2_BODY = "ТИП КУЗОВА") - 8 columns; backend filters by checking if ANY `ТИП КУЗОВАn` value matches the requested body type (using `k.contains("ТИП КУЗОВА")`)
 
-**Action Fields (repair types):**
-- **`розібрати/зібрати`** (T2_ACTION_ASSEMBLE) - Disassemble/assemble time
-- **`усунення перекосу`** (T2_ACTION_TWIST) - Straighten/unbend time
-- **`замінити`** (T2_ACTION_REPLACE) - Replace part time
-- **`зняти/встановити`** (T2_ACTION_MOUNT) - Remove/install time
-- **`ремонт`** (T2_ACTION_REPAIR) - Repair time
-- **`фарбування`** (T2_ACTION_PAINT) - Paint/toning time
-
-**Values:** Numeric (minutes of labor) or empty if action not applicable
+**Action Fields:**
+- **`розібрати/зібрати`** (T2_ACTION_ASSEMBLE) → internal action name: `"assemble"`
+- **`усунення перекосу`** (T2_ACTION_TWIST) → internal action name: `"twist"`
+- **`замінити`** (T2_ACTION_REPLACE) → internal action name: `"replace"`
+- **`зняти/встановити`** (T2_ACTION_MOUNT) → internal action name: `"mount"`
+- **`ремонт`** (T2_ACTION_REPAIR) → internal action name: `"repair"`
+- **`фарбування`** (T2_ACTION_PAINT) → internal action name: `"paint"`
 
 **Backend Model:** [t2.rs:127-135]
 ```rust
 pub struct T2PartEntry {
-    pub name: String,           // Part name (detalь 2 if exists, else деtalь 1)
-    pub group: Option<String>,  // Group name (деtalь 1) if деtalь 2 exists
-    pub actions: HashSet<String>, // Set of applicable action names
+    pub name: String,           // Part name (деталь 2 if exists, else деталь 1)
+    pub group: Option<String>,  // Group name (деталь 1) if деталь 2 exists
+    pub actions: HashSet<String>, // Internal action codes: "assemble","twist","replace","mount","repair","paint"
     pub car_blueprint: String,  // Schema reference
     pub zone: String,           // Zone identifier
 }
@@ -105,8 +118,9 @@ pub struct T2PartEntry {
 ```
 GET /api/v1/user/carparts_t2/{class}/{body_type}
 ```
-- Returns T2PartEntry array filtered by body type
-- Body type filtering checks `ТИП КУЗОВА` column
+- `body_type` is the **English** URL param (e.g., `hatchback 3 doors`)
+- Backend converts it to Russian via `body_type_into_t1_entry()` before filtering T2
+- Filtering matches ANY `ТИП КУЗОВАn` column (column name contains "ТИП КУЗОВА")
 - Used to populate repair action selector and calculations
 
 ---
@@ -177,8 +191,8 @@ When `run()` or `shouldRun()` is called:
 |-----------|------|-------------|
 | `x` | object | Sandbox with `mkRow()` helper |
 | `carPart` | T2PartEntry | Selected car part with name, group, actions |
-| `tableData` | object | All loaded T1 rows keyed by table name |
-| `repairAction` | string | Selected action: "paint", "repair", "mount", etc. |
+| `tableData` | object | All loaded table rows keyed by table name (e.g., `tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ РЕМОНТА"]`) |
+| `repairAction` | string | Selected **Ukrainian repair type** from repair_types.csv (e.g., `"Ремонт без фарбування"`), NOT a T2 internal code |
 | `files` | object | Loaded YAML/JSON files from global/ |
 | `carClass` | string | E.g., "A", "B" |
 | `carBodyType` | string | E.g., "sedan", "suv 5 doors" |
@@ -186,6 +200,16 @@ When `run()` or `shouldRun()` is called:
 | `carModel` | string | E.g., "Camry" |
 | `paint` | string | Paint color selected |
 | `pricing` | object | Currency and pricing preferences |
+
+**`requiredRepairTypes` must use Ukrainian repair type names** matching `repair_types.csv` values:
+```javascript
+requiredRepairTypes: ["Ремонт без фарбування", "Ремонт з зовнішнім фарбуванням"]
+// NOT: ["repair", "paint"]  ← WRONG, these are T2 internal codes
+```
+
+**`requiredRepairTypes: []` (empty) means the processor runs for ALL repair types.** The `is_supported_repair_type()` function returns `true` when the array is empty.
+
+**`requiredTables`** must match the table filename without extension (e.g., `"Арматурные работы"` for `Арматурные_работы.csv`). Case-sensitive, word-order matters.
 
 ### Row Output Structure
 
@@ -367,21 +391,35 @@ adjustments:
 **Backend Usage:** [data_endpoints.rs]
 Used by `get_current_season_info()` to adjust calculation times
 
-#### 5. **repair_types.csv** - Available Repair Actions
+#### 5. **repair_types.csv** - Available Repair Actions per Part
 
+**ACTUAL Structure (verified from real data):**
 ```csv
-Part Category,Repair Types
-Body,розібрати/зібрати/усунення перекосу/замінити
-Paint,фарбування/тонування
-Interior,ремонт/заміна
+Список деталь укр,Ремонти
+Капот,Ремонт з зовнішнім фарбуванням/ Ремонт з фарбуваням 2 сторони/ Ремонт без фарбування/ Розтонування фарби/ Заміна  оригінал деталь з фарбуванням/ Заміна Не оригінал деталь з фарбуванням/ Заміна без фарбування/ Полірування
+Бампер задній,Ремонт з зовнішнім фарбуванням/ Ремонт без фарбування/ Заміна  оригінал деталь з фарбуванням/ ...
 ```
+
+- Column 1: `Список деталь укр` — part name (Ukrainian), matches T1/T2 part names
+- Column 2: `Ремонти` — slash-separated repair type names (Ukrainian, user-visible)
+- Separator is `/ ` (slash + space); backend splits by `/` and trims
+
+**These Ukrainian repair type names are what processors use in `requiredRepairTypes`.**
+The frontend drawer reads them from `tableData["repair_types"]["Ремонти"]` (available via the `lookup_all_tables` endpoint) and shows them as the action picker options. The selected value is passed as `repairAction` to processors.
+
+**This is NOT the same as T2 internal action codes** (`"repair"`, `"paint"`, etc.). The repair types from this file are descriptive Ukrainian strings like `"Ремонт без фарбування"`.
 
 **API Endpoint:**
 ```
 GET /api/v1/user/repair_types
 ```
+Returns all unique repair type name strings across all parts (for reference/validation).
 
-Returns unique repair type names from the CSV
+**Per-part repair types** are fetched via:
+```
+GET /api/v1/user/lookup_all_tables?car_class=A&car_type=sedan&part=Капот
+```
+Returns table data including a `repair_types` entry with the specific part's repair types.
 
 ---
 
@@ -776,6 +814,88 @@ console.log("Visual config:", partsVisual["Front bumper"]);
 
 ---
 
-**Last Updated:** 2026-03-25
+---
+
+## Deployment: Accessing & Fixing Data in Kubernetes
+
+### Pod & Data Location
+
+```bash
+# List running pods (dev namespace)
+kubectl get pods -n autolab-dev
+
+# Main backend pod name pattern: autolab-dev-autolab-api-0
+# Data lives at /app/data/ inside the pod
+
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- sh -c 'ls /app/data/'
+# → common/  users/
+
+# Find all t2.csv files (common + per-user)
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- sh -c \
+  'find /app/data -name "t2.csv"'
+# → /app/data/common/tables/t2.csv
+# → /app/data/users/alexgrek%2Ehq%40gmail%2Ecom/catalog/tables/t2.csv
+```
+
+**Note:** The pod has NO Python. Use `sed`, `grep`, `awk`, or `sh` for in-pod data fixes.
+
+### Checking Data Quality In-Pod
+
+```bash
+# Check for trailing period bug in body type columns
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- sh -c \
+  'grep -o "ХЕТЧБЕК 3 двери[^,\"]*" /app/data/common/tables/t2.csv | sort -u'
+
+# Verify fix applied
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- sh -c \
+  'grep -c "ХЕТЧБЕК 3 двери\." /app/data/common/tables/t2.csv || echo "CLEAN"'
+```
+
+### Applying CSV Fixes In-Pod (sed, no Python)
+
+```bash
+# Fix trailing period on ХЕТЧБЕК 3 двери. in ALL t2.csv files
+kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- sh -c '
+for f in /app/data/common/tables/t2.csv $(find /app/data/users -name "t2.csv" 2>/dev/null); do
+  sed -i "s/ХЕТЧБЕК 3 двери\./ХЕТЧБЕК 3 двери/g" "$f"
+  echo "Fixed: $f"
+done'
+```
+
+### Applying Fixes Locally (Python available)
+
+Use the script at `scripts/fix_t2_body_types.py`:
+```bash
+python3 scripts/fix_t2_body_types.py --dry-run   # preview
+python3 scripts/fix_t2_body_types.py              # apply
+```
+
+Local data directories that need fixing are listed in the script. All 4 copies of t2.csv exist locally in different data dirs.
+
+### Flushing Backend Cache After Data Fix
+
+The backend caches CSV files in memory. After fixing data in-pod:
+
+```bash
+# Restart the statefulset to flush cache
+kubectl rollout restart statefulset/autolab-dev-autolab-api -n autolab-dev
+
+# Wait for readiness
+kubectl rollout status statefulset/autolab-dev-autolab-api -n autolab-dev --timeout=60s
+```
+
+Alternatively, saving any file via the file editor triggers cache invalidation for that specific file without a restart.
+
+### Known Data Issues (Fixed)
+
+| Issue | Location | Fix Applied |
+|-------|----------|-------------|
+| `"ХЕТЧБЕК 3 двери."` trailing period in all `ТИП КУЗОВАn` columns | All `t2.csv` files | `sed -i "s/ХЕТЧБЕК 3 двери\./ХЕТЧБЕК 3 двери/g"` |
+| Wrong `requiredTables` name in processor | `Розібрати_зібрати_для_заміни.js` | Must use `"Арматурные работы"` not `"Работы арматурные"` |
+| `requiredRepairTypes` using T2 codes instead of Ukrainian names | Processor files | Use Ukrainian strings from `repair_types.csv` |
+
+---
+
+**Last Updated:** 2026-04-05
 **Expertise Level:** Data Architecture Expert
 **Scope:** Complete T1/T2/Processor ecosystem
