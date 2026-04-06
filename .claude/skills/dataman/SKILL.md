@@ -893,9 +893,34 @@ Alternatively, saving any file via the file editor triggers cache invalidation f
 | `"ХЕТЧБЕК 3 двери."` trailing period in all `ТИП КУЗОВАn` columns | All `t2.csv` files | `sed -i "s/ХЕТЧБЕК 3 двери\./ХЕТЧБЕК 3 двери/g"` |
 | Wrong `requiredTables` name in processor | `Розібрати_зібрати_для_заміни.js` | Must use `"Арматурные работы"` not `"Работы арматурные"` |
 | `requiredRepairTypes` using T2 codes instead of Ukrainian names | Processor files | Use Ukrainian strings from `repair_types.csv` |
+| `"Крило заднє праве"` — all 12 rows had empty `ТИП КУЗОВАn` columns | All `t2.csv` files | Fill columns with same body types as `"Крило заднє ліве"` rows (see below) |
+
+### Case Study: "Крило заднє праве" returns no data
+
+**Symptom:** Selecting "Крило заднє праве" (rear right fender) in the UI shows no parts/actions, while "Крило заднє ліве" (rear left fender) works correctly.
+
+**Root cause:** The 12 rows for `Крило заднє праве` in `t2.csv` had all 8 `ТИП КУЗОВАn` columns left empty. The backend filters T2 rows by matching any `ТИП КУЗОВАn` column against the requested body type — empty columns means no row ever matches, so zero results are returned for any body type.
+
+**How to diagnose:** `grep "Крило заднє праве" tables/t2.csv | head -2` — if rows start with `,,,,,,,,,Крило заднє праве,` (9 leading commas) the body type columns are missing.
+
+**Fix (Python, all 4 local copies):**
+```python
+import re
+REPLACEMENT = '"Рис.1 дв, ,  Рис.2дв.",ХЕТЧБЕК 3 двери,ХЕТЧБЕК 5 дверей,КУПЕ,ЛИФТБЭК 5 дверей,СЕДАН,УНИВЕРСАЛ,ВНЕДОРОЖНИК 3 дверный,ВНЕДОРОЖНИК 5 дверный,Крило заднє праве,'
+content = re.sub(r'^,{8},Крило заднє праве,', REPLACEMENT, content, flags=re.MULTILINE)
+```
+
+**Sync to cluster (common file only — no per-user override for this part):**
+```bash
+kubectl cp common/tables/t2.csv autolab-dev/autolab-dev-autolab-api-0:/app/data/common/tables/t2.csv
+kubectl rollout restart statefulset/autolab-dev-autolab-api -n autolab-dev
+kubectl rollout status statefulset/autolab-dev-autolab-api -n autolab-dev --timeout=60s
+```
+
+**General pattern:** Any part that appears in T2 with empty body type columns will be invisible in all body type views. When a right-side part (праве/правий) shows no data but its left-side mirror (ліве/лівий) works, this is the first thing to check.
 
 ---
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-06
 **Expertise Level:** Data Architecture Expert
 **Scope:** Complete T1/T2/Processor ecosystem

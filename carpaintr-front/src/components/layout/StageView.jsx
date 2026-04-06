@@ -245,32 +245,26 @@ function StageView({
         return;
       }
 
-      setIsFadingOut(true);
+      setPreviousStageIndex(activeStageIndex);
+      setActiveStageIndex(targetIndex);
 
-      setTimeout(() => {
-        setPreviousStageIndex(activeStageIndex);
-        setActiveStageIndex(targetIndex);
-
-        // Enable stages up to the target if moving forward
-        if (isMovingForward || targetIndex > activeStageIndex) {
-          setStagesState((prev) => {
-            const newState = [...prev];
-            for (let i = 0; i <= targetIndex; i++) {
-              if (newState[i]) {
-                newState[i].enabled = true;
-              }
+      // Enable stages up to the target if moving forward
+      if (isMovingForward || targetIndex > activeStageIndex) {
+        setStagesState((prev) => {
+          const newState = [...prev];
+          for (let i = 0; i <= targetIndex; i++) {
+            if (newState[i]) {
+              newState[i].enabled = true;
             }
-            return newState;
-          });
-        }
+          }
+          return newState;
+        });
+      }
 
-        // Update URL with stage name
-        if (!skipUrlUpdate) {
-          updateUrlParam("stage", stages[targetIndex].name);
-        }
-
-        setIsFadingOut(false);
-      }, animationDelay);
+      // Update URL with stage name
+      if (!skipUrlUpdate) {
+        updateUrlParam("stage", stages[targetIndex].name);
+      }
     },
     [activeStageIndex, animationDelay, isFadingOut, stages, stagesState],
   );

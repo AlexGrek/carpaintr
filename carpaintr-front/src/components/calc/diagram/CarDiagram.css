@@ -26,6 +26,22 @@
   max-width: 800px;
 }
 
+/* Reveal animations: fade in + slide toward center */
+@keyframes car-part-reveal-center {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes car-part-reveal-from-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes car-part-reveal-from-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* Base Car Part Styles */
 .car-part {
   position: absolute;
@@ -45,6 +61,7 @@
   font-weight: 500;
   text-align: center;
   padding: 2px;
+  animation: car-part-reveal-center 500ms ease-out both;
 }
 
 .car-part:hover {
@@ -258,6 +275,64 @@
   height: 70px;
   border-radius: 50%;
   z-index: 5;
+}
+
+/* --- Cascading reveal delays: center → sides, 0ms–500ms --- */
+
+/* Group 0 — roof (most central, appears first) */
+.roof { animation-delay: 0ms; }
+
+/* Group 1 — windshield & rear glass (100ms) */
+.windshield,
+.rear-glass { animation-delay: 100ms; }
+
+/* Group 2 — hood & trunk (200ms) */
+.hood,
+.trunk { animation-delay: 200ms; }
+
+/* Group 3 — bumpers, headlights, taillights (300ms) */
+.front-bumper,
+.rear-bumper { animation-delay: 300ms; }
+
+.headlight-left,
+.taillight-left {
+  animation-name: car-part-reveal-from-left;
+  animation-delay: 300ms;
+}
+.headlight-right,
+.taillight-right {
+  animation-name: car-part-reveal-from-right;
+  animation-delay: 300ms;
+}
+
+/* Group 4 — fenders, doors, side panels (400ms) */
+.front-fender-left,
+.rear-fender-left,
+.front-door-left,
+.rear-door-left,
+.side-panel-left {
+  animation-name: car-part-reveal-from-left;
+  animation-delay: 400ms;
+}
+.front-fender-right,
+.rear-fender-right,
+.front-door-right,
+.rear-door-right,
+.side-panel-right {
+  animation-name: car-part-reveal-from-right;
+  animation-delay: 400ms;
+}
+
+/* Group 5 — wheels (500ms, last to appear) */
+.wheel-front-left,
+.wheel-rear-left {
+  animation-name: car-part-reveal-from-left;
+  animation-delay: 500ms;
+}
+.wheel-front-right,
+.wheel-rear-right {
+  animation-name: car-part-reveal-from-right;
+  animation-delay: 500ms;
 }
 
 /* Context Menu Styles */

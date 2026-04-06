@@ -1,36 +1,38 @@
- 
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import "./CarPaintEstimator.css";
 import "./calc_translations";
 import StageView from "../layout/StageView";
 import { Car, CarFront, Paintbrush, Table2 } from "lucide-react";
 import CalcMainMenuStage from "./CalcMainMenuStage";
-// adjust path if different
+import CarSelectStage from "./CarSelectStage";
+import ColorSelectStage from "./ColorSelectStage";
+import BodyPartsStage from "./BodyPartsStage";
+import TableFinalStage from "./TableFinalStage";
 
 const stages = [
   {
     name: "carSelectStage",
     title: "Car select",
     icon: CarFront,
-    component: React.lazy(() => import("./CarSelectStage")),
+    component: CarSelectStage,
   },
   {
     name: "paintSelectStage",
     title: "Paint select",
     icon: Paintbrush,
-    component: React.lazy(() => import("./ColorSelectStage")),
+    component: ColorSelectStage,
   },
   {
     name: "bodyPartsSelectStage",
     title: "Body parts",
     icon: Car,
-    component: React.lazy(() => import("./BodyPartsStage")),
+    component: BodyPartsStage,
   },
   {
     name: "tableStage",
     title: "Finalize",
     icon: Table2,
-    component: React.lazy(() => import("./TableFinalStage")),
+    component: TableFinalStage,
   },
 ];
 
