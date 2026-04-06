@@ -106,8 +106,8 @@ export const EvaluationResultsTable = ({
           let item = table.result.find((obj) => obj.name === name);
           if (item) {
             item.price = parseFloat(value);
+            delete item.sum;
             setData(copy);
-            // updateSums(true);
           } else {
             toaster.push(
               <Message
@@ -146,8 +146,8 @@ export const EvaluationResultsTable = ({
           let item = table.result.find((obj) => obj.name === name);
           if (item) {
             item.estimation = parseFloat(value);
+            delete item.sum;
             setData(copy);
-            // updateSums(true);
           } else {
             toaster.push(
               <Message
