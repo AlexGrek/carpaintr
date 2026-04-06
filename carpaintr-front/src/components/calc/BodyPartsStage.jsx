@@ -97,13 +97,7 @@ const BodyPartsStage = ({
         setRepairQualityOptions(qualityData.options || []);
         setRepairQuality(qualityData.default || "");
 
-        // Show success message
-        toaster.push(
-          <Message type="success" showIcon closable>
-            <Trans>Data loaded successfully</Trans>
-          </Message>,
-          { placement: 'topCenter', duration: 2000 }
-        );
+
       } catch (error) {
         handleError(error, "Failed to fetch configuration data");
       } finally {
