@@ -3,7 +3,7 @@ version: "3"
 vars:
   # Docker Hub images
   HUB_API_IMAGE: "grekodocker/autolab-api"
-  HUB_PDF_IMAGE: "grekodocker/autolab-pdf"  # Now uses Playwright (lightweight)
+  HUB_PDF_IMAGE: "grekodocker/autolab-pdf" # Now uses Playwright (lightweight)
   TAG:
     sh: git rev-parse --short HEAD
   # Helm/Kubernetes
@@ -114,7 +114,7 @@ tasks:
     cmds:
       - task: prepull
         vars:
-          ENV: '{{.ENV}}'
+          ENV: "{{.ENV}}"
       - helm upgrade --install {{.REL}} {{.CHART_PATH}} --namespace {{.NS}} --create-namespace -f {{.CHART_PATH}}/{{.VALS}} --set image.tag={{.TAG}} --set pdfgen.image.tag={{.TAG}}
 
   deploy-dry-run:
@@ -353,6 +353,14 @@ tasks:
     cmds:
       - task: kill-dev
       - ./scripts/dev-watch.sh
+  dev-win:
+    desc: Start frontend and backend in development mode for Windows (kills stale servers first)
+    deps:
+      - task: frontend-deps
+        silent: true
+    cmds:
+      - task: kill-dev-win
+      - ./scripts/dev-watch-win.bat
 
   dev-browser:
     desc: Start frontend and backend in development mode and open browser
@@ -363,19 +371,14 @@ tasks:
       - task: kill-dev
       - sleep 3 && open http://localhost:5173 &
       - ./scripts/dev-watch.sh
-
-  dev-parallel-with-browser:
-    desc: Run frontend, backend, and open browser in parallel (no stale-kill)
+  dev-browser-win:
+    desc: Start frontend and backend in development mode and open browser for Windows
     deps:
-      - task: frontend
-      - task: backend
-      - task: open-browser
-
-  open-browser:
-    desc: Wait for dev servers to start, then open browser
+      - task: frontend-deps
+        silent: true
     cmds:
-      - sleep 3
-      - open http://localhost:5173
+      - task: kill-dev-win
+      - sleep 3 && start http://localhost:5173
 
   frontend-deps:
     desc: Install frontend dependencies if needed
@@ -480,13 +483,13 @@ tasks:
     desc: Reset dev database (autolab-dev namespace) - WARNING DESTRUCTIVE
     cmds:
       - task: db-reset
-        vars: {ENV: dev}
+        vars: { ENV: dev }
 
   db-reset-staging:
     desc: Reset staging database (autolab-staging namespace) - WARNING DESTRUCTIVE
     cmds:
       - task: db-reset
-        vars: {ENV: staging}
+        vars: { ENV: staging }
 
   db-reset-prod-force:
     desc: "DANGEROUS - Force reset production database (requires CONFIRM_PROD=yes)"
@@ -534,7 +537,7 @@ tasks:
     desc: Create manual backup of dev database
     cmds:
       - task: db-backup
-        vars: {ENV: dev}
+        vars: { ENV: dev }
 
   db-list-backups:
     desc: "List available backups (ENV=dev|staging|prod, default: dev)"
@@ -570,7 +573,7 @@ tasks:
     desc: List dev backups
     cmds:
       - task: db-list-backups
-        vars: {ENV: dev}
+        vars: { ENV: dev }
 
   db-restore:
     desc: "Restore database from backup (ENV=dev|staging|prod, BACKUP_FILE=filename)"
