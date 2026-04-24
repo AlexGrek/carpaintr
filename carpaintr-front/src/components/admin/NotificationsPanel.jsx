@@ -264,11 +264,11 @@ export default function NotificationsPanel() {
           hover
           bordered
           style={{ width: "100%", textAlign: "left" }}
-          rowClassName={(row) => (row.read ? "notification-row-read" : "")}
+          rowClassName={(row) => (row?.read ? "notification-row-read" : "")}
         >
           <Column width={80}>
             <HeaderCell>{str("Read")}</HeaderCell>
-            <Cell>{(row) => (row.read ? str("Yes") : str("No"))}</Cell>
+            <Cell>{(row) => (row?.read ? str("Yes") : str("No"))}</Cell>
           </Column>
           <Column width={180} resizable>
             <HeaderCell>{str("Email")}</HeaderCell>
@@ -280,11 +280,11 @@ export default function NotificationsPanel() {
           </Column>
           <Column flexGrow={1} resizable>
             <HeaderCell>{str("Body")}</HeaderCell>
-            <Cell>{(row) => trimText(row.body, 60)}</Cell>
+            <Cell>{(row) => trimText(row?.body, 60)}</Cell>
           </Column>
           <Column width={160}>
             <HeaderCell>{str("Date")}</HeaderCell>
-            <Cell>{(row) => formatDate(row.timestamp)}</Cell>
+            <Cell>{(row) => formatDate(row?.timestamp)}</Cell>
           </Column>
         </Table>
       </Panel>
