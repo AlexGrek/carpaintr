@@ -1,0 +1,301 @@
+/* CatalogPage */
+.catalog-page {
+  min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    #fff7ed 0%,
+    #ffedd5 15%,
+    #fed7aa 35%,
+    #fb923c 55%,
+    #f97316 75%,
+    #ea580c 100%
+  );
+  background-attachment: fixed;
+}
+
+.catalog-body {
+  padding-top: 56px;
+  padding-bottom: 2rem;
+}
+
+/* Hero */
+.catalog-hero {
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.catalog-hero-title {
+  font-family: inherit;
+  font-style: normal;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  letter-spacing: -0.02em;
+}
+
+/* Pill tabs */
+.catalog-tabs {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 2px;
+  backdrop-filter: blur(8px);
+}
+
+.catalog-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.catalog-tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.catalog-tab-btn.active {
+  color: #ea580c;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Content card */
+.catalog-card {
+  max-width: 960px;
+  margin: -1.5rem 1rem 0;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.06),
+    0 10px 20px -4px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+@media (min-width: 640px) {
+  .catalog-card {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.catalog-tab-content {
+  padding: 1.75rem 1.5rem;
+}
+
+/* ── CarDataDisplay ───────────────────────── */
+.car-data-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.car-data-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+}
+
+.car-data-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.car-data-sort-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.car-data-count {
+  font-size: 0.85rem;
+  color: #64748b;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+/* Model rows */
+.car-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.car-model-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  outline: 2px solid transparent;
+  cursor: default;
+  transition: box-shadow 0.18s ease, outline-color 0.18s ease;
+}
+
+.car-model-row:hover {
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.1);
+  outline-color: rgba(234, 88, 12, 0.3);
+}
+
+.car-model-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: capitalize;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.car-suv-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  background: #ea580c;
+  border-radius: 5px;
+  padding: 1px 6px;
+  letter-spacing: 0.04em;
+}
+
+.car-model-sep {
+  width: 1px;
+  height: 32px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 540px) {
+  .car-model-sep { display: none; }
+}
+
+.car-model-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.car-model-field-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.car-model-price {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.car-model-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+/* Empty state */
+.car-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.car-empty-state-icon {
+  width: 48px;
+  height: 48px;
+  color: #cbd5e1;
+}
+
+.car-empty-state h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+.car-empty-state p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Stats bar */
+.car-stats-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.car-stat {
+  text-align: center;
+}
+
+.car-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.car-stat-value.accent { color: #ea580c; }
+.car-stat-value.green  { color: #16a34a; }
+.car-stat-value.blue   { color: #2563eb; }
+
+.car-stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.car-stat-sep {
+  width: 1px;
+  height: 40px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* ── PartsCatalog ─────────────────────────── */
+.parts-catalog-wrap {
+  padding: 0;
+}
