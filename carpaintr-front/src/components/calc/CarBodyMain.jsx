@@ -62,6 +62,17 @@ registerTranslations("en", {
     "Failed to load table data": "Failed to load table data",
     "Retry": "Retry",
     "Loading table data...": "Loading table data...",
+    "Car Body": "Car Body",
+    "Class": "Class",
+    "Unknown": "Unknown",
+    "sedan": "sedan",
+    "wagon": "wagon",
+    "coupe": "coupe",
+    "liftback": "liftback",
+    "hatchback 5 doors": "hatchback 5 doors",
+    "hatchback 3 doors": "hatchback 3 doors",
+    "suv 3 doors": "suv 3 doors",
+    "suv 5 doors": "suv 5 doors",
 });
 
 registerTranslations("ua", {
@@ -106,6 +117,17 @@ registerTranslations("ua", {
     "Failed to load table data": "Не вдалося завантажити дані таблиці",
     "Retry": "Повторити",
     "Loading table data...": "Завантаження даних таблиці...",
+    "Car Body": "Кузов",
+    "Class": "Клас",
+    "Unknown": "Невідомо",
+    "sedan": "седан",
+    "wagon": "універсал",
+    "coupe": "купе",
+    "liftback": "ліфтбек",
+    "hatchback 5 doors": "хетчбек 5 дверей",
+    "hatchback 3 doors": "хетчбек 3 двері",
+    "suv 3 doors": "позашляховик 3 двері",
+    "suv 5 doors": "позашляховик 5 дверей",
 });
 
 const DAMAGE_LEVELS = [
@@ -620,7 +642,7 @@ const CarBodyMain = ({
 
     return (
         <Panel
-            header={`Car Body: ${body || 'Unknown'} (Class ${carClass || 'N/A'})`}
+            header={`${str("Car Body")}: ${str(body) || str('Unknown')} (${str("Class")} ${carClass || 'N/A'})`}
             className={className}
             style={{
                 ...style,
