@@ -33,7 +33,7 @@ export const styles = {
     justifyContent: "center",
     alignItems: "center",
     padding: "3px 0",
-    marginBottom: "20px",
+    marginBottom: "8px",
     borderBottom: `1px solid ${rsuiteColors.border}`,
     gap: "8px",
   },

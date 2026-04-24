@@ -35,7 +35,7 @@ const TopBar = () => {
   };
 
   return (
-    <Navbar>
+    <Navbar style={{ padding: "2px 16px", minHeight: "auto" }}>
       <Navbar.Header>
         <h3 style={{ margin: 0 }}>Carpaintr</h3>
       </Navbar.Header>

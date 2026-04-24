@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   width: 100%;
-  min-height: 56px;
+  min-height: 44px;
   padding: 0 20px;
   z-index: 400;
   background: transparent !important;
@@ -24,7 +24,7 @@
 
 .top-bar-dashboard :where(.rs-navbar-header, .rs-navbar-body, .rs-navbar-content) {
   padding: 0;
-  min-height: 56px;
+  min-height: 44px;
 }
 
 .top-bar-dashboard :where(.rs-dropdown) {

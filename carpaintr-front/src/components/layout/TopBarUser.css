@@ -7,12 +7,12 @@
 
 /* Reduce navbar height after RSuite upgrade */
 .top-bar-user {
-  padding: 8px 16px !important;
+  padding: 2px 16px !important;
   min-height: auto !important;
 }
 
 .top-bar-user :where(.rs-navbar-header, .rs-navbar-body, .rs-navbar-content) {
-  padding: 4px 0 !important;
+  padding: 2px 0 !important;
 }
 
 /* Ensure dropdown menu has high z-index to cover content */

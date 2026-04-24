@@ -42,7 +42,7 @@ const TopBarUser = () => {
     <Navbar
       appearance="inverse"
       className="top-bar-user fade-in-simple"
-      style={{ marginBottom: "18pt" }}
+      style={{ marginBottom: "8pt" }}
     >
       <Navbar.Brand
         style={{ margin: "0", padding: 0, paddingLeft: "8pt" }}

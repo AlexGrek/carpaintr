@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authFetchJson } from "../utils/authFetch";
 
-const POLL_INTERVAL_MS = 60 * 1000;
+const POLL_INTERVAL_MS = 15 * 1000;
 
 const NotificationCountContext = createContext({ unreadCount: 0 });
 

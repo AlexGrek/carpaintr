@@ -67,7 +67,7 @@ const CalcPage = () => {
   return (
     <div>
       <TopBarUser onNavigate={handleNavigation} />
-      <div style={{ maxWidth: "2000px", margin: "0 auto", padding: "1em 0" }}>
+      <div style={{ maxWidth: "2000px", margin: "0 auto", padding: "4px 0" }}>
         <CalcMain setChanges={setHasChanges} />
       </div>
     </div>
