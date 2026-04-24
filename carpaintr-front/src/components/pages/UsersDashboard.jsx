@@ -241,7 +241,6 @@ const DashboardNavigationButtons = ({ admin }) => {
                 onClick={() => setViewMode(key)}
               >
                 <Icon size={16} aria-hidden />
-                <span className="apps-view-toggle-btn-label">{label}</span>
               </button>
             ))}
           </div>

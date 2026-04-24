@@ -271,6 +271,10 @@ async fn main() -> tokio::io::Result<()> {
                     get(api::v1::calc::plugin_endpoints::get_all_plugins),
                 )
                 .route(
+                    "/processors_list",
+                    get(api::v1::calc::plugin_endpoints::list_processors),
+                )
+                .route(
                     "/lookup_all_tables",
                     get(api::v1::calc::data_endpoints::lookup_all_tables),
                 )

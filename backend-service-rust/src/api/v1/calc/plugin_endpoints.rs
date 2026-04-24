@@ -6,8 +6,10 @@ use axum::{
     extract::State,
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
+    Json,
 };
 use futures_util::future::try_join_all;
+use serde::Serialize;
 use tokio::fs;
 
 use crate::{
@@ -62,7 +64,7 @@ async fn bundle_plugins_for_user(
 }
 
 pub async fn get_all_plugins(
-    AuthenticatedUser(user_email): AuthenticatedUser, // Get user email from the authenticated user
+    AuthenticatedUser(user_email): AuthenticatedUser,
     State(app_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let bundle =
@@ -72,4 +74,32 @@ pub async fn get_all_plugins(
     let resp = (headers, bundle).into_response();
 
     Ok(resp)
+}
+
+#[derive(Serialize)]
+pub struct ProcessorEntry {
+    pub name: String,
+    pub source: String,
+}
+
+pub async fn list_processors(
+    AuthenticatedUser(user_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+) -> Result<Json<Vec<ProcessorEntry>>, AppError> {
+    let all_js_files =
+        utils::all_files_with_extension(&app_state.data_dir_path, &user_email, PROCS, &JS_EXT)
+            .await?;
+
+    let read_futures = all_js_files.into_iter().map(|path| async move {
+        let source = fs::read_to_string(&path).await?;
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string();
+        Ok::<_, io::Error>(ProcessorEntry { name, source })
+    });
+
+    let entries = try_join_all(read_futures).await?;
+    Ok(Json(entries))
 }

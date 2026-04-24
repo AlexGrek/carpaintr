@@ -32,7 +32,8 @@
       "Read(//Users/user/.claude/skills/dataman/**)",
       "Edit(/.claude/skills/dataman/**)",
       "Bash(rm -rf /Users/user/.claude/skills/dataman)",
-      "Read(//Users/user/.claude/skills/**)"
+      "Read(//Users/user/.claude/skills/**)",
+      "Bash(npm uninstall *)"
     ]
   }
 }

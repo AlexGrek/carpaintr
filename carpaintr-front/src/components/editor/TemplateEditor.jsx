@@ -11,10 +11,11 @@ import {
   Input,
   Modal,
 } from "rsuite";
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/mode-html";
-import "ace-builds/src-noconflict/theme-github";
+import CodeEditor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-markup";
+import "prismjs/themes/prism.css";
 import { authFetch } from "../../utils/authFetch";
 import { useLocale } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
@@ -305,27 +306,21 @@ export default function TemplateEditor({
                   Save As...
                 </Button>
               </ButtonGroup>
-              <AceEditor
-                mode="html"
-                theme="github"
-                name="template-editor"
-                width="100%"
-                height="400px"
+              <CodeEditor
                 value={templateHtml}
-                onChange={setTemplateHtml}
-                setOptions={{ useWorker: false }}
+                onValueChange={setTemplateHtml}
+                highlight={(code) => highlight(code, languages.markup, "markup")}
+                padding={12}
+                style={{ fontFamily: "monospace", fontSize: 13, minHeight: 400, background: "#f6f8fa", border: "1px solid #e2e8f0", borderRadius: 6 }}
               />
             </Tabs.Tab>
             <Tabs.Tab eventKey="sample" title="Sample">
-              <AceEditor
-                mode="json"
-                theme="github"
-                name="sample-editor"
-                width="100%"
-                height="400px"
+              <CodeEditor
                 value={sampleJson}
-                onChange={setSampleJson}
-                setOptions={{ useWorker: false }}
+                onValueChange={setSampleJson}
+                highlight={(code) => highlight(code, languages.json, "json")}
+                padding={12}
+                style={{ fontFamily: "monospace", fontSize: 13, minHeight: 400, background: "#f6f8fa", border: "1px solid #e2e8f0", borderRadius: 6 }}
               />
             </Tabs.Tab>
           </Tabs>

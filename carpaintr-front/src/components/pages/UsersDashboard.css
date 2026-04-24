@@ -10,7 +10,7 @@
     #f97316 75%,
     #ea580c 100%
   );
-  background-attachment: scroll;
+  background-attachment: fixed;
 }
 
 .users-dashboard-body {
@@ -202,13 +202,13 @@
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.2s ease, outline-color 0.2s ease;
+  outline: 2px solid transparent;
 }
 
 .app-card:hover {
-  transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(234, 88, 12, 0.12);
-  border-color: rgba(234, 88, 12, 0.35);
+  outline-color: rgba(234, 88, 12, 0.35);
 }
 
 .app-feature-icon {
@@ -296,9 +296,9 @@
 
 .features-grid.grid-view .app-card.compact-app-card:hover {
   background: #fff7ed;
-  border-radius: 14px;
-  border: 1px solid rgba(234, 88, 12, 0.2);
   box-shadow: 0 4px 12px rgba(234, 88, 12, 0.08);
+  outline-color: rgba(234, 88, 12, 0.2);
+  transform: none;
 }
 
 .features-grid.grid-view .app-card.compact-app-card .app-feature-icon {
