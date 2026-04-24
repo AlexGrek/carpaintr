@@ -450,22 +450,54 @@ Before writing code, ask: **"Will this redraw on cheap 3G in 16ms?"**
 
 **Supported languages:** English (en), Ukrainian (ua)
 
+### How It Works
+
+`TRANSLATIONS_BASIC` in `src/localization/LocaleContext.jsx` is a **single global hashtable** shared across the entire app. `registerTranslations()` merges entries into it at module load time. `str("key")` looks up the key in the current language and falls back to the key itself — so English works with zero entries.
+
+Because it is one flat hashtable, **every key is global**. A key registered in any component is visible everywhere. This also means duplicating a key across files is wasteful and the last writer wins silently.
+
+### ⚠️ NEVER duplicate a translation key
+
+Before adding any `registerTranslations` entry, search for the key first:
+
+```bash
+grep -r '"Loading\.\.\."' src/localization/ src/components/
+```
+
+- Already exists → use `str("key")` as-is, do **not** re-register it
+- Genuinely new and used in 2+ places → add it **once** to `TRANSLATIONS_BASIC` in `LocaleContext.jsx`
+- New and component-specific → add it **once** in that component's `registerTranslations()` only
+
+```javascript
+// ❌ WRONG — "Loading..." is already in TRANSLATIONS_BASIC
+registerTranslations("ua", {
+  "Loading...": "Завантаження...",  // duplicate — silent overwrite
+  "My Title": "Моя сторінка",
+});
+
+// ✅ CORRECT
+registerTranslations("ua", {
+  "My Title": "Моя сторінка",       // only what this component owns
+});
+```
+
+### Usage
+
 ```javascript
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
 
-// Register translations at module level
+// Module level — runs once on import
 registerTranslations("ua", {
   "Welcome": "Ласкаво просимо",
   "Submit": "Надіслати",
 });
 
-// Use in component
-const { str, currentLang, setLang } = useLocale();
+// Inside component
+const { str } = useLocale();
 
-// Render
-<Trans>Welcome</Trans>              // Simple inline
-<button>{str("Submit")}</button>    // Dynamic
+<Trans>Welcome</Trans>              // Simple inline JSX
+<button>{str("Submit")}</button>    // Dynamic / conditional
 ```
 
 **Auto-detection:** Company preference → browser locale → English fallback

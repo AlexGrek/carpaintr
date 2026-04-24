@@ -15,7 +15,6 @@ registerTranslations("ua", {
   "Document title: My notifications": "Мої сповіщення",
   "No notifications": "Немає сповіщень",
   "Failed to load notifications": "Не вдалося завантажити сповіщення",
-  "Loading...": "Завантаження...",
 });
 
 function formatDate(utc) {

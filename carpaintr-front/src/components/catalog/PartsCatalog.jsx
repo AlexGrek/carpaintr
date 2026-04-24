@@ -61,7 +61,7 @@ const PartsCatalog = () => {
         </Panel>
       )}
 
-      {loading && <Loader center content="Loading..." />}
+      {loading && <Loader center content={str("Loading...")} />}
 
       {!loading && (
         <>

@@ -49,7 +49,7 @@ const ProcessorsCatalog = () => {
       return next;
     });
 
-  if (loading) return <Loader center content="Loading..." />;
+  if (loading) return <Loader center content={str("Loading...")} />;
 
   return (
     <div className="fade-in-simple">

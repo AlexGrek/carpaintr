@@ -11,7 +11,6 @@ import NotifyMessage from "./layout/NotifyMessage";
 import SelectionInput from "./SelectionInput";
 
 registerTranslations("ua", {
-  "Loading...": "Завантаження...",
   "Error: ": "Помилка: ",
   "Message: ": "Повідомлення: ",
   Licenses: "Ліцензії",

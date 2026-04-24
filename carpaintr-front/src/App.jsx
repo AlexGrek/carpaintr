@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
 
 import { GlobalCallbacksProvider } from "./components/GlobalCallbacksContext.jsx";
@@ -70,7 +70,8 @@ function App() {
                   <Route path="/app/calc2/*" element={<CalcPageV2 />} />
                   <Route path="/app/admin/*" element={<AdminPage />} />
                   <Route path="/app/company" element={<CompanyInfoPage />} />
-                  <Route path="/app/catalog" element={<CatalogPage />} />
+                  <Route path="/app/catalog" element={<Navigate to="/app/catalog/cars" replace />} />
+                  <Route path="/app/catalog/:tab" element={<CatalogPage />} />
                   <Route path="/app/history" element={<HistoryPage />} />
                   <Route path="/app/aboutus" element={<AboutUsPage />} />
                   <Route path="/app/cabinet" element={<CabinetPage />} />

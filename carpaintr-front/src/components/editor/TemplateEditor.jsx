@@ -286,7 +286,7 @@ export default function TemplateEditor({
           </Notification>
         )}
         {isLoading ? (
-          <Loader center content="Loading..." />
+          <Loader center content={str("Loading...")} />
         ) : (
           <Tabs
             appearance="pills"

@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import TopBarUser from "../layout/TopBarUser";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { Loader } from "rsuite";
 import ErrorBoundary from "../../ErrorBoundary";
-import { registerTranslations } from "../../localization/LocaleContext";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
 import { Car, Code2, Layers, Database } from "lucide-react";
 import "./CatalogPage.css";
@@ -21,51 +22,49 @@ const CarCatalog = lazy(() => import("../catalog/CarCatalog"));
 const ProcessorsCatalog = lazy(() => import("../catalog/ProcessorsCatalog"));
 
 const TABS = [
-  { key: "tab1", label: "Cars",       icon: Car },
-  { key: "tab2", label: "Parts",      icon: Layers },
-  { key: "tab3", label: "Processors", icon: Code2 },
-  { key: "tab4", label: "Data",       icon: Database },
+  { slug: "cars",       label: "Cars",       icon: Car },
+  { slug: "parts",      label: "Parts",      icon: Layers },
+  { slug: "processors", label: "Processors", icon: Code2 },
+  { slug: "data",       label: "Data",       icon: Database },
 ];
 
 const CatalogPage = () => {
   useDocumentTitle("Document title: Catalog");
-  const [activeKey, setActiveKey] = useState("tab1");
-  const [loadedTabs, setLoadedTabs] = useState(new Set(["tab1"]));
+  const { tab = "cars" } = useParams();
+  const navigate = useNavigate();
+  const { str } = useLocale();
 
-  const handleSelect = (key) => {
-    setActiveKey(key);
-    setLoadedTabs((prev) => new Set([...prev, key]));
-  };
+  const activeSlug = TABS.some((t) => t.slug === tab) ? tab : "cars";
 
-  const renderContent = () => {
-    if (!loadedTabs.has(activeKey)) return null;
-    switch (activeKey) {
-      case "tab1":
+  const renderTabContent = (slug) => {
+    const loading = <Loader center content={str("Loading...")} />;
+    switch (slug) {
+      case "cars":
         return (
           <ErrorBoundary>
-            <Suspense fallback={<Loader center content="Loading..." />}>
+            <Suspense fallback={loading}>
               <CarCatalog />
             </Suspense>
           </ErrorBoundary>
         );
-      case "tab2":
+      case "parts":
         return (
           <ErrorBoundary>
-            <Suspense fallback={<Loader center content="Loading..." />}>
+            <Suspense fallback={loading}>
               <PartsCatalog />
             </Suspense>
           </ErrorBoundary>
         );
-      case "tab3":
+      case "processors":
         return (
           <ErrorBoundary>
-            <Suspense fallback={<Loader center content="Loading..." />}>
+            <Suspense fallback={loading}>
               <ProcessorsCatalog />
             </Suspense>
           </ErrorBoundary>
         );
-      case "tab4":
-        return <Suspense fallback={<Loader />}></Suspense>;
+      case "data":
+        return null;
       default:
         return null;
     }
@@ -78,14 +77,15 @@ const CatalogPage = () => {
         <div className="catalog-hero">
           <h1 className="catalog-hero-title"><Trans>Catalog</Trans></h1>
           <div className="catalog-tabs" role="tablist">
-            {TABS.map(({ key, label, icon: Icon }) => (
+            {TABS.map(({ slug, label, icon: Icon }) => (
               <button
-                key={key}
+                key={slug}
                 type="button"
                 role="tab"
-                aria-selected={activeKey === key}
-                className={`catalog-tab-btn${activeKey === key ? " active" : ""}`}
-                onClick={() => handleSelect(key)}
+                data-testid={`catalog-tab-${slug}`}
+                aria-selected={activeSlug === slug}
+                className={`catalog-tab-btn${activeSlug === slug ? " active" : ""}`}
+                onClick={() => navigate(`/app/catalog/${slug}`)}
               >
                 <Icon size={15} aria-hidden />
                 <Trans>{label}</Trans>
@@ -96,7 +96,7 @@ const CatalogPage = () => {
 
         <div className="catalog-card fade-in-simple">
           <div className="catalog-tab-content">
-            {renderContent()}
+            {renderTabContent(activeSlug)}
           </div>
         </div>
       </div>

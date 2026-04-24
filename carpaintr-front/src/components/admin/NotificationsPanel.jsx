@@ -42,7 +42,6 @@ registerTranslations("ua", {
   "Broadcast failed": "Розсилка не вдалася",
   "user@example.com (for single user only)":
     "user@example.com (лише для одного користувача)",
-  "Loading...": "Завантаження...",
   "Yes": "Так",
   "No": "Ні",
   "Email": "Email",

@@ -50,7 +50,7 @@ const AdminPage = () => {
   }, [navigate]);
 
   if (loading) {
-    return <Loader center content="Loading..." />;
+    return <Loader center content={str("Loading...")} />;
   }
 
   return (

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Loader, Panel, Button, Whisper, Tooltip } from "rsuite";
 import { authFetch } from "../utils/authFetch";
-import { useLocale } from "../localization/LocaleContext"; // Import useLocale and registerTranslations
-import { parseISO, intervalToDuration } from "date-fns"; // Import intervalToDuration
+import { useLocale } from "../localization/LocaleContext";
+import { parseISO, intervalToDuration } from "date-fns";
 
 const ServerLogs = () => {
   const [lines, setLines] = useState(100);
@@ -137,7 +137,7 @@ const ServerLogs = () => {
             </p>
           );
         })}
-        {loading && <Loader center content="Loading..." />}
+        {loading && <Loader center content={str("Loading...")} />}
         {!loading && log.length === 0 && <p>No logs to display.</p>}
       </div>
       <div style={{ marginTop: "10px", textAlign: "center" }}>

@@ -1,7 +1,6 @@
 import { registerTranslations } from "../../localization/LocaleContext";
 
 registerTranslations("ua", {
-  "Loading...": "Завантаження...",
   Models: "Моделі",
   "Type/Class": "Тип/Клас",
   "Select Make": "Виберіть марку",
