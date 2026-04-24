@@ -5,9 +5,11 @@ import {
   Message,
   useToaster,
   Input,
+  InputGroup,
   Container,
   Panel,
 } from "rsuite";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { resetCompanyInfo, authFetch } from "../../utils/authFetch";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -19,6 +21,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const toaster = useToaster();
   const navigate = useNavigate();
   const location = useLocation();
@@ -98,11 +101,20 @@ const LoginPage = () => {
           </Form.Group>
           <Form.Group>
             <Form.ControlLabel>Пароль</Form.ControlLabel>
-            <Input
-              type="password"
-              value={password}
-              onChange={(value) => setPassword(value)}
-            />
+            <InputGroup inside>
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(value) => setPassword(value)}
+                data-testid="login-password-input"
+              />
+              <InputGroup.Button
+                data-testid="login-password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </InputGroup.Button>
+            </InputGroup>
           </Form.Group>
           <Form.Group>
             {" "}

@@ -5,9 +5,11 @@ import {
   Message,
   useToaster,
   Input,
+  InputGroup,
   Container,
   Panel,
 } from "rsuite";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
@@ -17,6 +19,7 @@ const RegistrationPage = () => {
   const [password, setPassword] = useState("");
   const [invite, setInvite] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // rsuite toaster for displaying messages
   const toaster = useToaster();
@@ -101,15 +104,22 @@ const RegistrationPage = () => {
             {/* Input field for email, controlled by state */}
             <Input value={email} onChange={(value) => setEmail(value)} />
           </Form.Group>
-          {/* Form group for the password input */}
           <Form.Group>
             <Form.ControlLabel>Пароль</Form.ControlLabel>
-            {/* Input field for password, type="password" to mask input */}
-            <Input
-              type="password"
-              value={password}
-              onChange={(value) => setPassword(value)}
-            />
+            <InputGroup inside>
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(value) => setPassword(value)}
+                data-testid="register-password-input"
+              />
+              <InputGroup.Button
+                data-testid="register-password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </InputGroup.Button>
+            </InputGroup>
           </Form.Group>
           <Form.Group>
             <Form.ControlLabel>

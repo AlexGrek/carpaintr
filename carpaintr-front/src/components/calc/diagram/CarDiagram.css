@@ -5,12 +5,19 @@
 }
 
 /* Car Diagram Container */
+.car-scale-wrapper {
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+  width: 100%;
+}
+
 .car-container {
   position: relative;
   width: 450px;
   height: 800px;
   overflow: visible;
-  margin: 0 auto;
+  flex-shrink: 0;
   transform: scale(var(--car-scale));
   transform-origin: top center;
 }

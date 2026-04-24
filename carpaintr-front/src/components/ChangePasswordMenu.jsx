@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Form, Button, Schema, Message } from "rsuite";
+import { Form, Button, Schema, Message, InputGroup } from "rsuite";
+import { Eye, EyeOff } from "lucide-react";
 import { authFetch } from "../utils/authFetch";
 
 const { StringType } = Schema.Types;
@@ -21,6 +22,8 @@ const ChangePassword = () => {
   const [formError, setFormError] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
   const formRef = useRef();
 
   const handleSubmit = async () => {
@@ -82,20 +85,38 @@ const ChangePassword = () => {
         <Form.Stack layout="vertical">
           <Form.Group controlId="currentPassword">
             <Form.ControlLabel>Старий пароль</Form.ControlLabel>
-            <Form.Control
-              name="currentPassword"
-              type="password"
-              placeholder="Старий пароль"
-            />
+            <InputGroup inside>
+              <Form.Control
+                name="currentPassword"
+                type={showCurrent ? "text" : "password"}
+                placeholder="Старий пароль"
+                data-testid="change-password-current-input"
+              />
+              <InputGroup.Button
+                data-testid="change-password-current-toggle"
+                onClick={() => setShowCurrent((v) => !v)}
+              >
+                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+              </InputGroup.Button>
+            </InputGroup>
           </Form.Group>
 
           <Form.Group controlId="newPassword">
             <Form.ControlLabel>Новий пароль</Form.ControlLabel>
-            <Form.Control
-              name="newPassword"
-              type="password"
-              placeholder="Новий пароль"
-            />
+            <InputGroup inside>
+              <Form.Control
+                name="newPassword"
+                type={showNew ? "text" : "password"}
+                placeholder="Новий пароль"
+                data-testid="change-password-new-input"
+              />
+              <InputGroup.Button
+                data-testid="change-password-new-toggle"
+                onClick={() => setShowNew((v) => !v)}
+              >
+                {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+              </InputGroup.Button>
+            </InputGroup>
           </Form.Group>
 
           <Form.Group>

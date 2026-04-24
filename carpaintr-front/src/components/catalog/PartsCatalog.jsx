@@ -7,7 +7,6 @@ import { useMediaQuery } from "react-responsive";
 import PartLookup from "./PartLookup";
 import ObjectBrowser from "../utility/ObjectBrowser";
 import { ChevronRight, Layers } from "lucide-react";
-import Trans from "../../localization/Trans";
 
 const PartsCatalog = () => {
   const [parts, setParts] = useState([]);

@@ -176,6 +176,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
 
   return (
     <>
+      <div className="car-scale-wrapper">
       <div className="car-container" onClick={closeMenu}>
         {carParts.map((part) => {
           const selectedCount = getSelectedCountForZone(part.name);
@@ -191,6 +192,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
             />
           );
         })}
+      </div>
       </div>
       {menuState.visible && createPortal(
         <ContextMenu
