@@ -13,6 +13,7 @@ import {
     evaluate_processor,
     is_supported_repair_type,
     validate_requirements,
+    validate_null_tables,
 } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
@@ -480,6 +481,20 @@ const CarBodyMain = ({
                         status: 'skipped',
                         reason: 'missing_table',
                         detail: `Required table "${missingTable}" not found. Available: [${Object.keys(tdata).join(', ')}]`,
+                    });
+                    return;
+                }
+
+                // Check 1b: required tables loaded but null (fetch returned no data)?
+                const nullTable = validate_null_tables(proc, tdata);
+                if (nullTable !== null) {
+                    debugLogs.push({
+                        processorName: proc.name,
+                        category: proc.category,
+                        orderingNum: proc.orderingNum,
+                        status: 'error',
+                        reason: 'null_table',
+                        detail: `Table "${nullTable}" loaded but its data is null — the server returned no rows for this table. Required: [${proc.requiredTables.join(', ')}]`,
                     });
                     return;
                 }

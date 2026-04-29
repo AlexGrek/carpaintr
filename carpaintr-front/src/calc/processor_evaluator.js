@@ -163,10 +163,22 @@ export function evaluate_processor(processor, stuff) {
       error: null,
     };
   } catch (e) {
+    const allKeys = Object.keys(tableData || {});
+    const nullKeys = allKeys.filter((k) => tableData[k] == null);
+    const requiredMissing = (processor.requiredTables || []).filter(
+      (t) => !Object.hasOwn(tableData || {}, t) || tableData[t] == null,
+    );
+    const contextLines = [
+      e.toString(),
+      `  required tables : [${(processor.requiredTables || []).join(", ")}]`,
+      `  available tables: [${allKeys.join(", ")}]`,
+      nullKeys.length > 0 ? `  null tables     : [${nullKeys.join(", ")}]` : null,
+      requiredMissing.length > 0 ? `  missing/null req: [${requiredMissing.join(", ")}]` : null,
+    ].filter(Boolean);
     return {
       name: processor.name,
       result: null,
-      text: e.toString(),
+      text: contextLines.join("\n"),
       error: e,
     };
   }
@@ -175,6 +187,15 @@ export function evaluate_processor(processor, stuff) {
 export function validate_requirements(processor, tableData) {
   for (const table of processor.requiredTables) {
     if (!Object.hasOwn(tableData, table)) {
+      return table;
+    }
+  }
+  return null;
+}
+
+export function validate_null_tables(processor, tableData) {
+  for (const table of processor.requiredTables) {
+    if (Object.hasOwn(tableData, table) && tableData[table] == null) {
       return table;
     }
   }
