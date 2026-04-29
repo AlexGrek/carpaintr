@@ -33,7 +33,8 @@
       "Edit(/.claude/skills/dataman/**)",
       "Bash(rm -rf /Users/user/.claude/skills/dataman)",
       "Read(//Users/user/.claude/skills/**)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(git push *)"
     ]
   }
 }

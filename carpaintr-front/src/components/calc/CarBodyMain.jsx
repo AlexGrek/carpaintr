@@ -128,6 +128,7 @@ registerTranslations("ua", {
     "hatchback 3 doors": "хетчбек 3 двері",
     "suv 3 doors": "позашляховик 3 двері",
     "suv 5 doors": "позашляховик 5 дверей",
+    "No details, click \"...\" to add details": "Немає даних, натисніть «...» щоб додати деталі",
 });
 
 const DAMAGE_LEVELS = [
@@ -192,6 +193,7 @@ const CarBodyMain = ({
     const [fetchErrors, setFetchErrors] = useState({}); // { partName: errorMessage }
     const [showDebugMode, setShowDebugMode] = useState(false);
     const [evaluatorLogs, setEvaluatorLogs] = useState({}); // { partName: LogEntry[] }
+    const [partDebugOpen, setPartDebugOpen] = useState({}); // { partName: bool }
     const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
     const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
 
@@ -708,209 +710,165 @@ const CarBodyMain = ({
                             partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
                         />
 
-                        {/* Selected Items Table */}
+                        {/* Parts with Calculations */}
                         {selectedItems.length > 0 && (
                             <div style={{ marginTop: '20px', textAlign: 'left' }}>
-                                <h4 style={{ marginBottom: '0' }}>{str("Selected Parts")} ({selectedItems.length})</h4>
-
-                                <div style={{
-                                    marginTop: '10px',
-                                    borderRadius: '12px',
-                                    overflow: 'hidden',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                                    border: '1px solid #e5e7eb',
-                                }}>
-                                    <table style={{
-                                        width: '100%',
-                                        borderCollapse: 'collapse',
-                                        tableLayout: 'auto',
-                                    }}>
-                                        <thead>
-                                            <tr style={{
-                                                backgroundColor: '#f3f4f6',
-                                                color: '#374151',
-                                            }}>
-                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'left', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Name")}</th>
-                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'left', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Actions")}</th>
-                                                <th style={{ padding: isMobile ? '10px 8px' : '12px 16px', textAlign: 'center', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, letterSpacing: '0.3px' }}>{str("Damage Level")}</th>
-                                                <th style={{ padding: isMobile ? '10px 4px' : '12px 8px', textAlign: 'center', width: isMobile ? '70px' : '80px' }}></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {selectedItems.map((item, index) => {
-                                                const actionDisplay = item.selectedAction
-                                                    ? str(item.selectedAction)
-                                                    : '-';
-                                                const dmgLevel = DAMAGE_LEVELS.find(d => d.value === item.damageLevel);
-                                                const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
-                                                const gridMarked = gridFlat.filter(c => c > 0).length;
-                                                const gridTotal = gridFlat.length;
-                                                const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
-                                                const isEven = index % 2 === 0;
-                                                return (
-                                                    <tr
-                                                        key={index}
-                                                        onClick={() => handleShowDetails(item)}
-                                                        style={{
-                                                            cursor: 'pointer',
-                                                            transition: 'background-color 0.15s ease',
-                                                            backgroundColor: isEven ? '#fff' : '#f9fafb',
-                                                            borderBottom: '1px solid #f0f0f0',
-                                                        }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eef2ff'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isEven ? '#fff' : '#f9fafb'}
-                                                    >
-                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', fontSize: isMobile ? '12px' : '14px', fontWeight: 500 }}>{item.name}</td>
-                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', fontSize: isMobile ? '11px' : '13px', color: '#555' }}>{actionDisplay}</td>
-                                                        <td style={{ padding: isMobile ? '10px 8px' : '14px 16px', textAlign: 'center' }}>
-                                                            {item.damageLevelMode === 'grid' ? (
-                                                                <span style={{ fontSize: isMobile ? '11px' : '12px', color: gridMarked > 0 ? '#333' : '#999' }}>
-                                                                    {gridMarked > 0 ? `${gridMarked}/${gridTotal} - ${gridPct}%` : '-'}
-                                                                </span>
-                                                            ) : dmgLevel ? (
-                                                                <span style={{
-                                                                    display: 'inline-block',
-                                                                    padding: isMobile ? '2px 8px' : '3px 10px',
-                                                                    borderRadius: '12px',
-                                                                    backgroundColor: dmgLevel.color,
-                                                                    color: dmgLevel.value === 0 ? '#333' : '#fff',
-                                                                    fontSize: isMobile ? '11px' : '12px',
-                                                                    fontWeight: 600,
-                                                                    letterSpacing: '0.2px',
-                                                                }}>
-                                                                    {str(dmgLevel.label)}
-                                                                </span>
-                                                            ) : (
-                                                                <span style={{ color: '#bbb' }}>-</span>
-                                                            )}
-                                                        </td>
-                                                        <td style={{ padding: isMobile ? '8px 4px' : '10px 8px', textAlign: 'center' }}>
-                                                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
-                                                                    style={{
-                                                                        padding: isMobile ? '5px 7px' : '6px 8px',
-                                                                        backgroundColor: '#3b82f6',
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: '6px',
-                                                                        cursor: 'pointer',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        transition: 'opacity 0.15s',
-                                                                    }}
-                                                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                                                    title={str("Details")}
-                                                                >
-                                                                    <MoreHorizontal size={isMobile ? 14 : 16} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
-                                                                    style={{
-                                                                        padding: isMobile ? '5px 7px' : '6px 8px',
-                                                                        backgroundColor: '#ef4444',
-                                                                        color: 'white',
-                                                                        border: 'none',
-                                                                        borderRadius: '6px',
-                                                                        cursor: 'pointer',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        transition: 'opacity 0.15s',
-                                                                    }}
-                                                                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                                                                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                                                    title={str("Remove")}
-                                                                >
-                                                                    <Trash2 size={isMobile ? 14 : 16} />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Calculations Section */}
-                        {selectedItems.length > 0 && (
-                            <div style={{ marginTop: '30px', textAlign: 'left' }}>
-                                <h4 style={{ marginBottom: '12px' }}>{str("Calculations")}</h4>
-                                {selectedItems.map(item => {
-                                    const calcData = calculations?.[item.name];
+                                <h4 style={{ marginBottom: '8px' }}>{str("Selected Parts")} ({selectedItems.length})</h4>
+                                {selectedItems.map((item) => {
                                     const action = item.selectedAction || item.action;
+                                    const calcData = calculations?.[item.name];
                                     const fetchError = fetchErrors[item.name];
-                                    const isLoading = fetchingPartsRef.current.has(item.name) && !tableDataRepository[item.name] && !fetchError;
-                                    if (!action) {
-                                        return (
-                                            <div key={item.name} style={{ marginBottom: '12px', color: '#999', fontSize: '13px' }}>
-                                                <strong>{item.name}:</strong> {str("Select an action to calculate")}
-                                            </div>
-                                        );
-                                    }
-                                    if (fetchError) {
-                                        return (
-                                            <div key={item.name} style={{ marginBottom: '16px' }}>
-                                                <Message type="error" showIcon style={{ marginBottom: '6px' }}>
-                                                    <strong>{item.name}:</strong> {str("Failed to load table data")} — {fetchError}
-                                                </Message>
-                                                <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
-                                                    {str("Retry")}
-                                                </Button>
-                                            </div>
-                                        );
-                                    }
-                                    if (isLoading) {
-                                        return (
-                                            <div key={item.name} style={{ marginBottom: '12px', color: '#999', fontSize: '13px' }}>
-                                                <strong>{item.name}:</strong> {str("Loading table data...")}
-                                            </div>
-                                        );
-                                    }
+                                    const isItemLoading = fetchingPartsRef.current.has(item.name) && !tableDataRepository[item.name] && !fetchError;
                                     const hasCalcData = calcData && calcData.length > 0;
-                                    const partDebugLogs = showDebugMode ? evaluatorLogs[item.name] : null;
-                                    if (!hasCalcData && !partDebugLogs) return null;
-                                    return (
-                                        <div key={item.name} style={{ marginBottom: '28px' }}>
-                                            <h5 style={{ marginBottom: '8px' }}>
-                                                {item.name} — <span style={{ fontWeight: 'normal', color: '#555' }}>{str(action)}</span>
-                                            </h5>
-                                            {hasCalcData && (
-                                                <EvaluationResultsTable
-                                                    data={calcData}
-                                                    setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
-                                                    currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
-                                                    basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
-                                                    skipIncorrect={true}
-                                                />
+                                    const dmgLevel = DAMAGE_LEVELS.find(d => d.value === item.damageLevel);
+                                    const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
+                                    const gridMarked = gridFlat.filter(c => c > 0).length;
+                                    const gridTotal = gridFlat.length;
+                                    const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
+                                    const panelHeader = (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                                            <span style={{ fontWeight: 600, fontSize: '14px' }}>{item.name}</span>
+                                            {action && (
+                                                <span style={{ fontSize: '12px', color: '#555', backgroundColor: '#f0f4ff', padding: '1px 8px', borderRadius: '10px', flexShrink: 0 }}>
+                                                    {str(action)}
+                                                </span>
                                             )}
-                                            {partDebugLogs && (
-                                                <div style={{
-                                                    marginTop: hasCalcData ? '10px' : '0',
-                                                    borderLeft: '3px solid #d97706',
-                                                    backgroundColor: '#fffbeb',
-                                                    borderRadius: '0 4px 4px 0',
-                                                    padding: '8px 10px',
+                                            {item.damageLevelMode === 'grid' ? (
+                                                gridMarked > 0 && (
+                                                    <span style={{ fontSize: '11px', color: '#666', flexShrink: 0 }}>
+                                                        {gridMarked}/{gridTotal} ({gridPct}%)
+                                                    </span>
+                                                )
+                                            ) : (dmgLevel && dmgLevel.value > 0 ? (
+                                                <span style={{
+                                                    display: 'inline-block',
+                                                    padding: '1px 8px',
+                                                    borderRadius: '10px',
+                                                    backgroundColor: dmgLevel.color,
+                                                    color: '#fff',
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    flexShrink: 0,
                                                 }}>
-                                                    <details open>
-                                                        <summary style={{
-                                                            cursor: 'pointer',
+                                                    {str(dmgLevel.label)}
+                                                </span>
+                                            ) : null)}
+                                            <div
+                                                style={{ marginLeft: 'auto', display: 'flex', gap: '6px', flexShrink: 0 }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
+                                                    style={{
+                                                        padding: isMobile ? '4px 6px' : '5px 7px',
+                                                        backgroundColor: '#3b82f6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '5px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    title={str("Details")}
+                                                >
+                                                    <MoreHorizontal size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
+                                                    style={{
+                                                        padding: isMobile ? '4px 6px' : '5px 7px',
+                                                        backgroundColor: '#ef4444',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '5px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    title={str("Remove")}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+
+                                    return (
+                                        <Panel
+                                            key={item.name}
+                                            collapsible
+                                            defaultExpanded={true}
+                                            header={panelHeader}
+                                            style={{ marginBottom: '8px', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                                        >
+                                            <>
+                                                {fetchError ? (
+                                                    <div>
+                                                        <Message type="error" showIcon style={{ marginBottom: '6px' }}>
+                                                            {str("Failed to load table data")} — {fetchError}
+                                                        </Message>
+                                                        <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
+                                                            {str("Retry")}
+                                                        </Button>
+                                                    </div>
+                                                ) : isItemLoading ? (
+                                                    <div style={{ color: '#999', fontSize: '13px' }}>
+                                                        {str("Loading table data...")}
+                                                    </div>
+                                                ) : hasCalcData ? (
+                                                    <EvaluationResultsTable
+                                                        data={calcData}
+                                                        setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
+                                                        currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
+                                                        basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
+                                                        skipIncorrect={true}
+                                                    />
+                                                ) : (
+                                                    <div style={{ color: '#aaa', fontSize: '13px', fontStyle: 'italic', padding: '4px 0' }}>
+                                                        {str('No details, click "..." to add details')}
+                                                    </div>
+                                                )}
+                                                <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
+                                                    <button
+                                                        onClick={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                                                        style={{
+                                                            width: '20px',
+                                                            height: '20px',
                                                             fontSize: '12px',
-                                                            color: '#92400e',
-                                                            fontWeight: 600,
-                                                            marginBottom: '6px',
-                                                            userSelect: 'none',
-                                                        }}>
-                                                            🐛 {partDebugLogs.filter(l => l.status === 'applied').length} applied &nbsp;·&nbsp;
-                                                            {partDebugLogs.filter(l => l.status === 'skipped').length} skipped &nbsp;·&nbsp;
-                                                            {partDebugLogs.filter(l => l.status === 'error').length} errors
-                                                            &nbsp;({partDebugLogs.length} processors total)
-                                                        </summary>
+                                                            border: '1px solid #d1d5db',
+                                                            borderRadius: '50%',
+                                                            backgroundColor: partDebugOpen[item.name] ? '#eff6ff' : 'transparent',
+                                                            color: partDebugOpen[item.name] ? '#3b82f6' : '#9ca3af',
+                                                            cursor: 'pointer',
+                                                            lineHeight: 1,
+                                                            fontWeight: 700,
+                                                            padding: 0,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                        }}
+                                                        title="Show processor debug info"
+                                                    >
+                                                        ?
+                                                    </button>
+                                                </div>
+                                                {partDebugOpen[item.name] && evaluatorLogs[item.name] && (
+                                                    <div style={{
+                                                        marginTop: '8px',
+                                                        borderLeft: '3px solid #d97706',
+                                                        backgroundColor: '#fffbeb',
+                                                        borderRadius: '0 4px 4px 0',
+                                                        padding: '8px 10px',
+                                                    }}>
+                                                        <div style={{ fontSize: '11px', color: '#92400e', fontWeight: 600, marginBottom: '6px' }}>
+                                                            🐛&nbsp;
+                                                            {evaluatorLogs[item.name].filter(l => l.status === 'applied').length} applied &nbsp;·&nbsp;
+                                                            {evaluatorLogs[item.name].filter(l => l.status === 'skipped').length} skipped &nbsp;·&nbsp;
+                                                            {evaluatorLogs[item.name].filter(l => l.status === 'error').length} errors
+                                                            &nbsp;({evaluatorLogs[item.name].length} total)
+                                                        </div>
                                                         <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: '1.6' }}>
-                                                            {partDebugLogs.map((log, logIdx) => (
+                                                            {evaluatorLogs[item.name].map((log, logIdx) => (
                                                                 <div key={logIdx} style={{
                                                                     padding: '3px 6px',
                                                                     marginBottom: '2px',
@@ -953,10 +911,10 @@ const CarBodyMain = ({
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                    </details>
-                                                </div>
-                                            )}
-                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        </Panel>
                                     );
                                 })}
                             </div>
