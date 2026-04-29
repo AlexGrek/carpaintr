@@ -130,6 +130,8 @@ registerTranslations("ua", {
     "suv 3 doors": "позашляховик 3 двері",
     "suv 5 doors": "позашляховик 5 дверей",
     "No details, click \"...\" to add details": "Немає даних, натисніть «...» щоб додати деталі",
+    "Required table \"%s\" not found. Available: [%s]": "Обов'язкова таблиця \"%s\" не знайдена. Доступні: [%s]",
+    "Table \"%s\" loaded but data is null — server returned no rows. Required: [%s]": "Таблиця \"%s\" завантажена, але дані порожні — сервер не повернув рядків. Обов'язкові: [%s]",
 });
 
 const DAMAGE_LEVELS = [
@@ -480,7 +482,9 @@ const CarBodyMain = ({
                         orderingNum: proc.orderingNum,
                         status: 'skipped',
                         reason: 'missing_table',
-                        detail: `Required table "${missingTable}" not found. Available: [${Object.keys(tdata).join(', ')}]`,
+                        detail: str('Required table "%s" not found. Available: [%s]')
+                                .replace('%s', missingTable)
+                                .replace('%s', Object.keys(tdata).join(', ')),
                     });
                     return;
                 }
@@ -494,7 +498,9 @@ const CarBodyMain = ({
                         orderingNum: proc.orderingNum,
                         status: 'error',
                         reason: 'null_table',
-                        detail: `Table "${nullTable}" loaded but its data is null — the server returned no rows for this table. Required: [${proc.requiredTables.join(', ')}]`,
+                        detail: str('Table "%s" loaded but data is null — server returned no rows. Required: [%s]')
+                                .replace('%s', nullTable)
+                                .replace('%s', proc.requiredTables.join(', ')),
                     });
                     return;
                 }
@@ -814,7 +820,7 @@ const CarBodyMain = ({
                                             collapsible
                                             defaultExpanded={true}
                                             header={panelHeader}
-                                            style={{ marginBottom: '8px', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                                            style={{ marginBottom: '8px' }}
                                         >
                                             <>
                                                 {fetchError ? (
