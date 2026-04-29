@@ -142,6 +142,29 @@ const DAMAGE_LEVELS = [
     { value: 10, label: "Critical", color: "#722ed1" },
 ];
 
+function procToPath(name) {
+    return `procs/${name.replace(/ /g, '_')}.js`;
+}
+
+function tableToPath(name) {
+    return `tables/${name}.csv`;
+}
+
+function flattenFileTree(node, prefix = '') {
+    const result = new Set();
+    if (node?.Directory?.children) {
+        for (const child of node.Directory.children) {
+            if ('File' in child) {
+                result.add(prefix + child.File.name);
+            } else if ('Directory' in child) {
+                const sub = flattenFileTree(child, prefix + child.Directory.name + '/');
+                for (const p of sub) result.add(p);
+            }
+        }
+    }
+    return result;
+}
+
 const CarBodyMain = ({
     partsVisual,
     selectedParts,
@@ -197,8 +220,22 @@ const CarBodyMain = ({
     const [showDebugMode, setShowDebugMode] = useState(false);
     const [evaluatorLogs, setEvaluatorLogs] = useState({}); // { partName: LogEntry[] }
     const [partDebugOpen, setPartDebugOpen] = useState({}); // { partName: bool }
+    const [userFiles, setUserFiles] = useState(new Set());
     const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
     const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
+
+    // Fetch user file list once to determine User vs Common links in debug UI
+    useEffect(() => {
+        authFetch('/api/v1/editor/list_user_files')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) setUserFiles(flattenFileTree(data)); })
+            .catch(() => {});
+    }, []);
+
+    const getEditorUrl = useCallback((filePath) => {
+        const fs = userFiles.has(filePath) ? 'User' : 'Common';
+        return `/app/fileeditor?fs=${fs}&path=${encodeURIComponent(filePath)}`;
+    }, [userFiles]);
 
     // Ref to prevent infinite loop when syncing state
     const isInternalUpdate = useRef(false);
@@ -480,6 +517,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'skipped',
                         reason: 'missing_table',
                         detail: str('Required table "%s" not found. Available: [%s]')
@@ -496,6 +534,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'error',
                         reason: 'null_table',
                         detail: str('Table "%s" loaded but data is null — server returned no rows. Required: [%s]')
@@ -511,6 +550,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'skipped',
                         reason: 'unsupported_action',
                         detail: `Action "${action}" not in requiredRepairTypes: [${proc.requiredRepairTypes.join(', ')}]`,
@@ -544,6 +584,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'error',
                         reason: 'shouldRun_threw',
                         detail: `shouldRun() threw: ${shouldRunError}`,
@@ -556,6 +597,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'skipped',
                         reason: 'shouldRun_false',
                         detail: 'shouldRun() returned false',
@@ -570,6 +612,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'error',
                         reason: 'run_threw',
                         detail: result.text,
@@ -579,6 +622,7 @@ const CarBodyMain = ({
                         processorName: proc.name,
                         category: proc.category,
                         orderingNum: proc.orderingNum,
+                        tables: proc.requiredTables,
                         status: 'applied',
                         detail: `${result.result?.length ?? 0} row(s)`,
                         rows: result.result?.map(r => ({ name: r.name, estimation: r.estimation, tooltip: r.tooltip })),
@@ -906,7 +950,16 @@ const CarBodyMain = ({
                                                                     <span style={{ marginRight: '6px' }}>
                                                                         {log.status === 'applied' ? '✅' : log.status === 'error' ? '❌' : '⏭'}
                                                                     </span>
-                                                                    <strong>{log.processorName || '(unnamed)'}</strong>
+                                                                    <strong>
+                                                                        <a
+                                                                            href={getEditorUrl(procToPath(log.processorName || ''))}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}
+                                                                        >
+                                                                            {log.processorName || '(unnamed)'}
+                                                                        </a>
+                                                                    </strong>
                                                                     {log.category && (
                                                                         <span style={{ opacity: 0.6, marginLeft: '6px', fontWeight: 'normal' }}>
                                                                             [{log.category}#{log.orderingNum}]
@@ -915,6 +968,29 @@ const CarBodyMain = ({
                                                                     <span style={{ marginLeft: '8px', fontWeight: 'normal', opacity: 0.9 }}>
                                                                         {log.detail}
                                                                     </span>
+                                                                    {log.tables && log.tables.length > 0 && (
+                                                                        <div style={{ marginLeft: '28px', marginTop: '3px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                                                            {log.tables.map((tbl, ti) => (
+                                                                                <a
+                                                                                    key={ti}
+                                                                                    href={getEditorUrl(tableToPath(tbl))}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    style={{
+                                                                                        fontSize: '10px',
+                                                                                        backgroundColor: '#e0e7ff',
+                                                                                        color: '#3730a3',
+                                                                                        borderRadius: '3px',
+                                                                                        padding: '1px 5px',
+                                                                                        textDecoration: 'none',
+                                                                                        fontFamily: 'monospace',
+                                                                                    }}
+                                                                                >
+                                                                                    {tbl}
+                                                                                </a>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
                                                                     {log.rows && log.rows.length > 0 && (
                                                                         <div style={{ marginLeft: '28px', marginTop: '2px' }}>
                                                                             {log.rows.map((row, ri) => (
