@@ -65,6 +65,10 @@ registerTranslations("ua", {
   Condition: "Умова відображення",
   "Optional JS expression. If filled, wraps the row in an `if` block.":
     "Необов'язковий JS-вираз. Якщо заповнено, обгортає рядок у блок `if`.",
+  "Trace Table": "Таблиця (трасування)",
+  "Trace Field": "Поле (трасування)",
+  "Optional. Marks which table/field this row&apos;s value came from.":
+    "Необов'язково. Вказує, з якої таблиці/поля отримано значення цього рядка.",
   "Remove Clause": "Видалити рядок виводу",
   "Duplicate Clause": "Дублювати рядок виводу",
   "Add Row Clause": "Додати рядок виводу",
@@ -217,6 +221,8 @@ const ClauseListEditor = ({
       evaluate: "",
       tooltip: "",
       condition: "",
+      traceTable: "",
+      traceField: "",
     };
     onChange([...value, newClause]);
   };
@@ -237,6 +243,23 @@ const ClauseListEditor = ({
     onChange(
       value.map((clause) =>
         clause.id === id ? { ...clause, [field]: fieldValue } : clause,
+      ),
+    );
+  };
+
+  const handleEvaluatePick = (id, val) => {
+    const match = val && val.match(/^tableData\["([^"]+)"\]\["([^"]+)"\]$/);
+    onChange(
+      value.map((clause) =>
+        clause.id === id
+          ? {
+              ...clause,
+              evaluate: val,
+              ...(match
+                ? { traceTable: match[1], traceField: match[2] }
+                : {}),
+            }
+          : clause,
       ),
     );
   };
@@ -286,9 +309,7 @@ const ClauseListEditor = ({
                   tables.includes(item.label),
                 )}
                 value={clause.evaluate}
-                onChange={(val) =>
-                  handleClauseChange(clause.id, "evaluate", val)
-                }
+                onChange={(val) => handleEvaluatePick(clause.id, val)}
                 defaultExpandAll
               />
               <Form.HelpText>
@@ -322,6 +343,35 @@ const ClauseListEditor = ({
                 <Trans>
                   Optional JS expression. If filled, wraps the row in an `if`
                   block.
+                </Trans>
+              </Form.HelpText>
+            </Form.Group>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Trans>Trace Table</Trans>
+              </Form.ControlLabel>
+              <Form.Control
+                name="traceTable"
+                value={clause.traceTable || ""}
+                onChange={(val) =>
+                  handleClauseChange(clause.id, "traceTable", val)
+                }
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.ControlLabel>
+                <Trans>Trace Field</Trans>
+              </Form.ControlLabel>
+              <Form.Control
+                name="traceField"
+                value={clause.traceField || ""}
+                onChange={(val) =>
+                  handleClauseChange(clause.id, "traceField", val)
+                }
+              />
+              <Form.HelpText>
+                <Trans>
+                  Optional. Marks which table/field this row&apos;s value came from.
                 </Trans>
               </Form.HelpText>
             </Form.Group>
@@ -383,6 +433,8 @@ const ProcessorGenerator = () => {
         evaluate: 'tableData["t1"]["field1"]',
         tooltip: "Just mount part",
         condition: "",
+        traceTable: "t1",
+        traceField: "field1",
       },
       {
         id: nextId(),
@@ -390,6 +442,8 @@ const ProcessorGenerator = () => {
         evaluate: 'tableData["t1"]["field2"]',
         tooltip: "Just paint part",
         condition: 'repairAction == "Ремонт з зовнішнім фарбуванням"',
+        traceTable: "t1",
+        traceField: "field2",
       },
     ],
   });
@@ -433,7 +487,11 @@ const ProcessorGenerator = () => {
     const renderClauses = () => {
       return clauses
         .map((clause) => {
-          const rowObject = `{name: "${clause.name}", evaluate: ${clause.evaluate || "null"}, tooltip: "${clause.tooltip}"}`;
+          const traceStr =
+            clause.traceTable && clause.traceField
+              ? `, trace: traceRowToTable("${clause.traceTable}", "${clause.traceField}")`
+              : "";
+          const rowObject = `{name: "${clause.name}", evaluate: ${clause.evaluate || "null"}, tooltip: "${clause.tooltip}"${traceStr}}`;
           const pushStatement = `output.push(mkRow(${rowObject}));`;
 
           if (clause.condition && clause.condition.trim() !== "") {
@@ -452,7 +510,7 @@ const ProcessorGenerator = () => {
     run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing) => {
         // - init section -
         var output = [];
-        const { mkRow } = x;
+        const { mkRow, traceRowToTable } = x;
 
         // - check data section -
         // leave blank now, there are no data validation stages yet

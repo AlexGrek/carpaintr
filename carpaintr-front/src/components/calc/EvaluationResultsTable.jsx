@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Message, Panel, Stack, useToaster } from "rsuite";
 import "./EvaluationResultsTable.css";
 import Trans from "../../localization/Trans";
@@ -12,7 +12,51 @@ registerTranslations("ua", {
   Price: "Ціна",
   Sum: "Сума",
   Total: "Всього",
+  Source: "Джерело",
 });
+
+const TraceButton = ({ trace }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ position: "relative", display: "inline-block", marginLeft: "6px" }}>
+      <span
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        style={{
+          cursor: "pointer",
+          color: open ? "#1675e0" : "#aaa",
+          fontSize: "12px",
+          userSelect: "none",
+        }}
+        title="Show source"
+      >
+        ⓘ
+      </span>
+      {open && (
+        <span
+          style={{
+            position: "absolute",
+            left: "18px",
+            top: "-4px",
+            background: "#fff",
+            border: "1px solid #d9d9d9",
+            borderRadius: "6px",
+            padding: "4px 10px",
+            fontSize: "12px",
+            whiteSpace: "nowrap",
+            zIndex: 200,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+            color: "#333",
+          }}
+        >
+          <Trans>Source</Trans>:{" "}
+          <code style={{ fontSize: "11px" }}>
+            {trace.table} → {trace.field}
+          </code>
+        </span>
+      )}
+    </span>
+  );
+};
 
 export const EvaluationResultsTable = ({
   data,
@@ -242,7 +286,12 @@ export const EvaluationResultsTable = ({
                   return (
                     <tr key={i}>
                       <td className="evaluation-table-cell-numeric">{i + 1}</td>
-                      <td title={row.tooltip || ""}>{row.name}</td>
+                      <td title={row.tooltip || ""}>
+                        {row.name}
+                        {row.trace && row.trace.type === "table" && (
+                          <TraceButton trace={row.trace} />
+                        )}
+                      </td>
                       <td className="evaluation-table-cell-numeric">
                         <InlineEditWrapper
                           value={row.estimation}

@@ -49,15 +49,21 @@ const defaultRow = {
   name: "",
   evaluate: "",
   tooltip: "",
+  trace: null,
 };
 
 export function mkRow(obj) {
   return { ...defaultRow, ...obj };
 }
 
+export function traceRowToTable(table, field) {
+  return { type: "table", table, field };
+}
+
 export function make_sandbox() {
   return {
     mkRow: (obj) => mkRow(obj),
+    traceRowToTable: (table, field) => traceRowToTable(table, field),
   };
 }
 
