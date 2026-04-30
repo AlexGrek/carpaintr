@@ -34,7 +34,8 @@
       "Bash(rm -rf /Users/user/.claude/skills/dataman)",
       "Read(//Users/user/.claude/skills/**)",
       "Bash(npm uninstall *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(tar -xzf autolab-backup-20260430_092151.tar.gz -C work)"
     ]
   }
 }

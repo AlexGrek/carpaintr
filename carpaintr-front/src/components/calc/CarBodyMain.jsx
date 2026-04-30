@@ -880,6 +880,7 @@ const CarBodyMain = ({
                                                         currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
                                                         basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
                                                         skipIncorrect={true}
+                                                        getEditorUrl={getEditorUrl}
                                                     />
                                                 ) : (
                                                     <div style={{ color: '#aaa', fontSize: '13px', fontStyle: 'italic', padding: '4px 0' }}>

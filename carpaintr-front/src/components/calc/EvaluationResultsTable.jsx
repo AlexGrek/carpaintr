@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Message, Panel, Stack, useToaster } from "rsuite";
+import { Button, Message, Modal, Panel, Stack, useToaster } from "rsuite";
 import "./EvaluationResultsTable.css";
 import Trans from "../../localization/Trans";
 import { registerTranslations } from "../../localization/LocaleContext";
@@ -13,48 +13,70 @@ registerTranslations("ua", {
   Sum: "Сума",
   Total: "Всього",
   Source: "Джерело",
+  "Data source": "Джерело даних",
+  Table: "Таблиця",
+  Field: "Поле",
+  Close: "Закрити",
 });
 
-const TraceButton = ({ trace }) => {
-  const [open, setOpen] = useState(false);
+const TABLE_CHIP_STYLE = {
+  fontSize: "12px",
+  backgroundColor: "#e0e7ff",
+  color: "#3730a3",
+  borderRadius: "3px",
+  padding: "2px 6px",
+  textDecoration: "none",
+  fontFamily: "monospace",
+};
+
+const defaultGetEditorUrl = (filePath) =>
+  `/app/fileeditor?fs=Common&path=${encodeURIComponent(filePath)}`;
+
+const TraceButton = ({ trace, onOpen }) => (
+  <span
+    onClick={(e) => { e.stopPropagation(); onOpen(trace); }}
+    style={{
+      cursor: "pointer",
+      color: "#aaa",
+      fontSize: "12px",
+      userSelect: "none",
+      marginLeft: "6px",
+    }}
+    title="Show source"
+  >
+    ⓘ
+  </span>
+);
+
+const TraceModal = ({ trace, onClose, getEditorUrl }) => {
+  if (!trace) return null;
+  const tablePath = `tables/${trace.table}.csv`;
+  const editorUrl = getEditorUrl(tablePath);
   return (
-    <span style={{ position: "relative", display: "inline-block", marginLeft: "6px" }}>
-      <span
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        style={{
-          cursor: "pointer",
-          color: open ? "#1675e0" : "#aaa",
-          fontSize: "12px",
-          userSelect: "none",
-        }}
-        title="Show source"
-      >
-        ⓘ
-      </span>
-      {open && (
-        <span
-          style={{
-            position: "absolute",
-            left: "18px",
-            top: "-4px",
-            background: "#fff",
-            border: "1px solid #d9d9d9",
-            borderRadius: "6px",
-            padding: "4px 10px",
-            fontSize: "12px",
-            whiteSpace: "nowrap",
-            zIndex: 200,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-            color: "#333",
-          }}
-        >
-          <Trans>Source</Trans>:{" "}
-          <code style={{ fontSize: "11px" }}>
-            {trace.table} → {trace.field}
-          </code>
-        </span>
-      )}
-    </span>
+    <Modal open onClose={onClose} size="xs">
+      <Modal.Header>
+        <Modal.Title><Trans>Data source</Trans></Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div style={{ fontSize: "14px", lineHeight: "2" }}>
+          <div>
+            <strong><Trans>Table</Trans>:</strong>{" "}
+            <a href={editorUrl} target="_blank" rel="noopener noreferrer" style={TABLE_CHIP_STYLE}>
+              {trace.table}
+            </a>
+          </div>
+          <div>
+            <strong><Trans>Field</Trans>:</strong>{" "}
+            <code style={{ fontSize: "12px", backgroundColor: "#f5f5f5", padding: "1px 5px", borderRadius: "3px" }}>
+              {trace.field}
+            </code>
+          </div>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={onClose} appearance="subtle"><Trans>Close</Trans></Button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 
@@ -64,8 +86,10 @@ export const EvaluationResultsTable = ({
   currency = "",
   basePrice = 1,
   skipIncorrect = false,
+  getEditorUrl = defaultGetEditorUrl,
 }) => {
   const toaster = useToaster();
+  const [activeTrace, setActiveTrace] = useState(null);
 
   const getPrice = useCallback(
     (name) => {
@@ -228,6 +252,8 @@ export const EvaluationResultsTable = ({
   }
 
   return (
+    <>
+    <TraceModal trace={activeTrace} onClose={() => setActiveTrace(null)} getEditorUrl={getEditorUrl} />
     <Stack direction="column" spacing={20} alignItems="stretch">
       {data.filter(skipIncorrectData).map((entry, index) => {
         if (!entry || typeof entry !== "object") {
@@ -289,7 +315,7 @@ export const EvaluationResultsTable = ({
                       <td title={row.tooltip || ""}>
                         {row.name}
                         {row.trace && row.trace.type === "table" && (
-                          <TraceButton trace={row.trace} />
+                          <TraceButton trace={row.trace} onOpen={setActiveTrace} />
                         )}
                       </td>
                       <td className="evaluation-table-cell-numeric">
@@ -341,5 +367,6 @@ export const EvaluationResultsTable = ({
         );
       })}
     </Stack>
+    </>
   );
 };
