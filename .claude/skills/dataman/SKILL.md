@@ -717,9 +717,40 @@ console.log("Selected body type:", bodyType);
 console.log("Filtered rows:", t2_rows.filter(r => r["ТИП КУЗОВА"] === bodyType));
 ```
 
+### In-App Processor Debug Panel (Primary Debugging Tool)
+
+Each selected part in the body parts stage has a **"?" button** (bottom-right of the part panel) that opens a per-part debug panel showing exactly why each processor ran, was skipped, or failed.
+
+**Components:** `PartDebugPanel` and `ProcessorLogEntry` in `CarBodyMainDebug.jsx`
+
+**Each log entry shows:**
+- ✅ `applied` — processor ran and produced rows (green row)
+- ⏭ `skipped` — processor deliberately did not run (grey row)
+- ❌ `error` — processor crashed or a required table was null (red row)
+
+**Skip/error reasons:**
+| `reason` | Meaning | Fix |
+|----------|---------|-----|
+| `missing_table` | `requiredTables` key not found in loaded tableData | Check table name spelling vs filename (without extension) |
+| `null_table` | Table key present but server returned no rows for this part | Part has no matching rows in that table's CSV |
+| `unsupported_action` | `requiredRepairTypes` doesn't include the selected action | Add the Ukrainian repair type string to `requiredRepairTypes` |
+| `shouldRun_false` | `shouldRun()` returned false | Logic condition not met for this part/action |
+| `shouldRun_threw` | `shouldRun()` threw an exception | JavaScript error in the `shouldRun` function body |
+| `run_threw` | `run()` threw an exception | JavaScript error in the `run` function body; detail includes required/available/null table lists |
+
+**Clickable links in debug panel:**
+- **U / C badges** next to processor name → open `procs/` directory in file editor (User or Common fs) in a new tab
+- **Table chips** (indigo pills) → open the specific table CSV in file editor, linking to User fs if the user has overridden it, Common fs otherwise
+
+**Also available:** The ⚙️ button (top-right of the car diagram area) opens a global tech data panel (`TechDataPanel` in `CarBodyMainDebug.jsx`) showing company info, loaded processors, all fetched table data, and error log — useful for checking what data actually loaded.
+
+**State:** `evaluatorLogs` in `CarBodyMain` is always populated during evaluation (not gated on debug mode). It is keyed by part name and contains the full log array for that part.
+
 ### Processor Not Running
 
 **Symptom:** Processor appears in list but doesn't execute
+
+**First: open the "?" debug panel** for the affected part — it shows the exact reason per processor (see above).
 
 **Check RequiredTables:**
 ```javascript

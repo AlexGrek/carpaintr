@@ -19,6 +19,7 @@ import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
 import GridDraw from './GridDraw';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
+import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
 
 registerTranslations("en", {
@@ -141,14 +142,6 @@ const DAMAGE_LEVELS = [
     { value: 7, label: "Severe", color: "#f5222d" },
     { value: 10, label: "Critical", color: "#722ed1" },
 ];
-
-function procToPath(name) {
-    return `procs/${name.replace(/ /g, '_')}.js`;
-}
-
-function tableToPath(name) {
-    return `tables/${name}.csv`;
-}
 
 function flattenFileTree(node, prefix = '') {
     const result = new Set();
@@ -893,123 +886,12 @@ const CarBodyMain = ({
                                                         {str('No details, click "..." to add details')}
                                                     </div>
                                                 )}
-                                                <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
-                                                    <button
-                                                        onClick={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
-                                                        style={{
-                                                            width: '20px',
-                                                            height: '20px',
-                                                            fontSize: '12px',
-                                                            border: '1px solid #d1d5db',
-                                                            borderRadius: '50%',
-                                                            backgroundColor: partDebugOpen[item.name] ? '#eff6ff' : 'transparent',
-                                                            color: partDebugOpen[item.name] ? '#3b82f6' : '#9ca3af',
-                                                            cursor: 'pointer',
-                                                            lineHeight: 1,
-                                                            fontWeight: 700,
-                                                            padding: 0,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                        }}
-                                                        title="Show processor debug info"
-                                                    >
-                                                        ?
-                                                    </button>
-                                                </div>
-                                                {partDebugOpen[item.name] && evaluatorLogs[item.name] && (
-                                                    <div style={{
-                                                        marginTop: '8px',
-                                                        borderLeft: '3px solid #d97706',
-                                                        backgroundColor: '#fffbeb',
-                                                        borderRadius: '0 4px 4px 0',
-                                                        padding: '8px 10px',
-                                                    }}>
-                                                        <div style={{ fontSize: '11px', color: '#92400e', fontWeight: 600, marginBottom: '6px' }}>
-                                                            🐛&nbsp;
-                                                            {evaluatorLogs[item.name].filter(l => l.status === 'applied').length} applied &nbsp;·&nbsp;
-                                                            {evaluatorLogs[item.name].filter(l => l.status === 'skipped').length} skipped &nbsp;·&nbsp;
-                                                            {evaluatorLogs[item.name].filter(l => l.status === 'error').length} errors
-                                                            &nbsp;({evaluatorLogs[item.name].length} total)
-                                                        </div>
-                                                        <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: '1.6' }}>
-                                                            {evaluatorLogs[item.name].map((log, logIdx) => (
-                                                                <div key={logIdx} style={{
-                                                                    padding: '3px 6px',
-                                                                    marginBottom: '2px',
-                                                                    borderRadius: '3px',
-                                                                    backgroundColor:
-                                                                        log.status === 'applied' ? '#f0fdf4' :
-                                                                        log.status === 'error'   ? '#fef2f2' :
-                                                                        '#f3f4f6',
-                                                                    color:
-                                                                        log.status === 'applied' ? '#166534' :
-                                                                        log.status === 'error'   ? '#dc2626' :
-                                                                        '#6b7280',
-                                                                }}>
-                                                                    <span style={{ marginRight: '6px' }}>
-                                                                        {log.status === 'applied' ? '✅' : log.status === 'error' ? '❌' : '⏭'}
-                                                                    </span>
-                                                                    <strong>
-                                                                        <a
-                                                                            href={getEditorUrl(procToPath(log.processorName || ''))}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}
-                                                                        >
-                                                                            {log.processorName || '(unnamed)'}
-                                                                        </a>
-                                                                    </strong>
-                                                                    {log.category && (
-                                                                        <span style={{ opacity: 0.6, marginLeft: '6px', fontWeight: 'normal' }}>
-                                                                            [{log.category}#{log.orderingNum}]
-                                                                        </span>
-                                                                    )}
-                                                                    <span style={{ marginLeft: '8px', fontWeight: 'normal', opacity: 0.9 }}>
-                                                                        {log.detail}
-                                                                    </span>
-                                                                    {log.tables && log.tables.length > 0 && (
-                                                                        <div style={{ marginLeft: '28px', marginTop: '3px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                                                            {log.tables.map((tbl, ti) => (
-                                                                                <a
-                                                                                    key={ti}
-                                                                                    href={getEditorUrl(tableToPath(tbl))}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    style={{
-                                                                                        fontSize: '10px',
-                                                                                        backgroundColor: '#e0e7ff',
-                                                                                        color: '#3730a3',
-                                                                                        borderRadius: '3px',
-                                                                                        padding: '1px 5px',
-                                                                                        textDecoration: 'none',
-                                                                                        fontFamily: 'monospace',
-                                                                                    }}
-                                                                                >
-                                                                                    {tbl}
-                                                                                </a>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-                                                                    {log.rows && log.rows.length > 0 && (
-                                                                        <div style={{ marginLeft: '28px', marginTop: '2px' }}>
-                                                                            {log.rows.map((row, ri) => (
-                                                                                <div key={ri} style={{ fontSize: '10px', color: '#374151' }}>
-                                                                                    ↳ {row.name}: <strong>{row.estimation}</strong>
-                                                                                    {row.tooltip && (
-                                                                                        <span style={{ opacity: 0.5, marginLeft: '4px' }}>
-                                                                                            ({row.tooltip})
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                <PartDebugPanel
+                                                    logs={evaluatorLogs[item.name]}
+                                                    open={!!partDebugOpen[item.name]}
+                                                    onToggle={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                                                    getEditorUrl={getEditorUrl}
+                                                />
                                             </>
                                         </Panel>
                                     );
@@ -1018,161 +900,21 @@ const CarBodyMain = ({
                         )}
                     </>
                 ) : (
-                    // Technical data display
-                    <div style={{ textAlign: 'left' }}>
-                        {/* Error Messages */}
-                        {errors.length > 0 && (
-                            <div style={{ marginBottom: '20px' }}>
-                                {errors.map((err, idx) => (
-                                    <Message
-                                        key={idx}
-                                        type="error"
-                                        showIcon
-                                        style={{ marginBottom: '10px' }}
-                                    >
-                                        <strong>[{err.context}]</strong> {err.message}
-                                        <div style={{
-                                            fontSize: '11px',
-                                            marginTop: '5px',
-                                            fontFamily: 'monospace',
-                                            opacity: 0.8
-                                        }}>
-                                            {err.timestamp}
-                                        </div>
-                                    </Message>
-                                ))}
-                            </div>
-                        )}
-
-                        <Divider />
-
-                        <h5>Car Configuration</h5>
-                        <p><strong>Body Type:</strong> {body || 'Not set'}</p>
-                        <p><strong>Class:</strong> {carClass || 'Not set'}</p>
-                        <p><strong>Selected Parts:</strong> {selectedParts.length}</p>
-
-                        <h5 style={{ marginTop: '20px' }}>Parts Visual Config</h5>
-                        <ul>
-                            {Object.keys(partsVisual).map(partKey => (
-                                <li key={partKey}>
-                                    {partKey}: {partsVisual[partKey].image || 'no image'}
-                                    {partsVisual[partKey].mirrored && ' (mirrored)'}
-                                </li>
-                            ))}
-                        </ul>
-
-                        <Divider />
-
-                        {/* Fetched Data Display */}
-                        <h5>Fetched Data</h5>
-
-                        <details style={{ marginBottom: '15px' }}>
-                            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '5px' }}>
-                                Company Info {company && '✓'}
-                            </summary>
-                            <pre style={{
-                                background: '#f5f5f5',
-                                padding: '10px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                overflow: 'auto',
-                                maxHeight: '200px'
-                            }}>
-                                {JSON.stringify(company, null, 2)}
-                            </pre>
-                        </details>
-
-                        <details style={{ marginBottom: '15px' }}>
-                            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '5px' }}>
-                                Available Parts T1 ({availableParts.length}) {availableParts.length > 0 && '✓'}
-                            </summary>
-                            <pre style={{
-                                background: '#f5f5f5',
-                                padding: '10px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                overflow: 'auto',
-                                maxHeight: '200px'
-                            }}>
-                                {JSON.stringify(availableParts, null, 2)}
-                            </pre>
-                        </details>
-
-                        <details style={{ marginBottom: '15px' }}>
-                            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '5px' }}>
-                                Available Parts T2 ({availablePartsT2.length}) {availablePartsT2.length > 0 && '✓'}
-                            </summary>
-                            <pre style={{
-                                background: '#f5f5f5',
-                                padding: '10px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                overflow: 'auto',
-                                maxHeight: '200px'
-                            }}>
-                                {JSON.stringify(availablePartsT2, null, 2)}
-                            </pre>
-                        </details>
-
-                        <details style={{ marginBottom: '15px' }}>
-                            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '5px' }}>
-                                Processors ({processors.length}) {processors.length > 0 && '✓'}
-                            </summary>
-                            <pre style={{
-                                background: '#f5f5f5',
-                                padding: '10px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                overflow: 'auto',
-                                maxHeight: '200px'
-                            }}>
-                                {JSON.stringify(processors, null, 2)}
-                            </pre>
-                        </details>
-
-                        <Divider />
-
-                        <h5>Calculations</h5>
-                        <pre style={{
-                            background: '#f5f5f5',
-                            padding: '10px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontFamily: 'monospace',
-                            overflow: 'auto',
-                            maxHeight: '200px'
-                        }}>
-                            {JSON.stringify(calculations, null, 2)}
-                        </pre>
-
-                        {/* Debug-only test buttons — intentionally pass wrong types to verify prop plumbing */}
-                        <div style={{ marginTop: '20px' }}>
-                            <button
-                                onClick={() => onChange && onChange(['test_part'])}
-                                style={{ marginRight: '10px' }}
-                            >
-                                Test onChange
-                            </button>
-
-                            <button
-                                onClick={() => setCalculations && setCalculations({ test: 'value' })}
-                            >
-                                Test setCalculations
-                            </button>
-
-                            <button
-                                onClick={() => setErrors([])}
-                                style={{ marginLeft: '10px' }}
-                                disabled={errors.length === 0}
-                            >
-                                Clear Errors ({errors.length})
-                            </button>
-                        </div>
-                    </div>
+                    <TechDataPanel
+                        errors={errors}
+                        setErrors={setErrors}
+                        body={body}
+                        carClass={carClass}
+                        selectedParts={selectedParts}
+                        partsVisual={partsVisual}
+                        company={company}
+                        availableParts={availableParts}
+                        availablePartsT2={availablePartsT2}
+                        processors={processors}
+                        calculations={calculations}
+                        onChange={onChange}
+                        setCalculations={setCalculations}
+                    />
                 )}
             </div>
 
