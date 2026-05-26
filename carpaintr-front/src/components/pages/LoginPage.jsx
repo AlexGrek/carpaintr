@@ -89,11 +89,17 @@ const LoginPage = () => {
   return (
     <Container className="auth-page">
       <Panel className={`auth-panel${visible ? " auth-panel--visible" : ""}`} bordered>
-        <img
-          className="auth-logo fade-in-expand-simple"
-          src="/autolab_large_bw.png"
-          alt="CarPaintr Logo"
-        />{" "}
+        <Link
+          to="/"
+          className="auth-logo-link"
+          data-testid="auth-home-logo-link"
+        >
+          <img
+            className="auth-logo fade-in-expand-simple"
+            src="/autolab_large_bw.png"
+            alt="CarPaintr Logo"
+          />
+        </Link>
         <Form fluid>
           <Form.Group>
             <Form.ControlLabel>Електронна адреса</Form.ControlLabel>

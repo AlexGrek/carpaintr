@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Form,
   Button,
@@ -10,8 +10,10 @@ import {
   Panel,
 } from "rsuite";
 import { Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { authFetch } from "../../utils/authFetch";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import "./LoginPage.css";
 
 const RegistrationPage = () => {
   useDocumentTitle("Document title: Register");
@@ -20,89 +22,96 @@ const RegistrationPage = () => {
   const [invite, setInvite] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // rsuite toaster for displaying messages
+  const [visible, setVisible] = useState(false);
   const toaster = useToaster();
-  // react-router-dom hook for navigation
   const navigate = useNavigate();
 
-  // Handler for the registration button click
+  useEffect(() => {
+    let cancelled = false;
+    const checkAuth = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        if (!cancelled) setVisible(true);
+        return;
+      }
+      try {
+        const resp = await authFetch("/api/v1/getcompanyinfo");
+        if (!cancelled) {
+          if (resp.ok) {
+            navigate("/app/dashboard", { replace: true });
+          } else {
+            setVisible(true);
+          }
+        }
+      } catch {
+        if (!cancelled) setVisible(true);
+      }
+    };
+    checkAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
   const handleRegistration = async () => {
-    // Set loading state to true while the request is in progress
     setLoading(true);
     try {
-      // Make a POST request to the registration API endpoint
       const response = await fetch("/api/v1/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Send email and password in the request body as JSON
         body: JSON.stringify({
-          email: email,
-          password: password,
-          invite: invite,
+          email,
+          password,
+          invite,
         }),
       });
 
-      // Check if the response was successful (status code 2xx)
       if (!response.ok) {
-        // If not successful, parse the error response and throw an error
         const errorData = await response.json();
         throw new Error(
           errorData.message || "Registration failed. Please try again.",
         );
       }
 
-      // If registration is successful, display a success message
       toaster.push(
-        <Message type="success" header="Success">
-          Registration successful! You can now log in.
-        </Message>,
+        <Message type="success">Реєстрація успішна! Тепер ви можете увійти.</Message>,
         { placement: "topCenter" },
       );
-      // Navigate the user to the login page after successful registration
       navigate("/app/login");
     } catch (error) {
-      // Catch any errors during the fetch request or response handling
-      // Display an error message using the toaster
-      toaster.push(
-        <Message type="error" header="Error">
-          {error.message}
-        </Message>,
-        { placement: "topCenter" },
-      );
+      toaster.push(<Message type="error">{error.message}</Message>, {
+        placement: "topCenter",
+      });
     } finally {
-      // Set loading state back to false after the request is complete ( चाहे success हो या failure)
       setLoading(false);
     }
   };
 
   return (
-    // Container to center the form on the page
     <Container className="auth-page">
-      {/* Panel to give a bordered look to the form area */}
       <Panel
-        className="fade-in-simple"
-        style={{
-          maxWidth: 400,
-          margin: "auto",
-          padding: "2rem",
-          marginTop: "8em",
-          backgroundColor: "white",
-        }}
+        className={`auth-panel${visible ? " auth-panel--visible" : ""}`}
         bordered
       >
-        {/* rsuite Form component with fluid layout */}
-        <Form fluid>
+        <Link
+          to="/"
+          className="auth-logo-link"
+          data-testid="auth-home-logo-link"
+        >
           <img
+            className="auth-logo fade-in-expand-simple"
             src="/autolab_large_bw.png"
             alt="CarPaintr Logo"
-            height="200pt"
           />
-          {/* Form group for the email input */}
+        </Link>
+        <Form fluid>
           <Form.Group>
             <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
-            {/* Input field for email, controlled by state */}
-            <Input value={email} onChange={(value) => setEmail(value)} />
+            <Input
+              data-testid="register-email-input"
+              value={email}
+              onChange={setEmail}
+            />
           </Form.Group>
           <Form.Group>
             <Form.ControlLabel>Пароль</Form.ControlLabel>
@@ -123,23 +132,38 @@ const RegistrationPage = () => {
           </Form.Group>
           <Form.Group>
             <Form.ControlLabel>
-              Код запрошення (необов'язково)
+              Код запрошення (необов&apos;язково)
             </Form.ControlLabel>
-            {/* Input field for password, type="password" to mask input */}
-            <Input value={invite} onChange={(value) => setInvite(value)} />
+            <Input
+              data-testid="register-invite-input"
+              value={invite}
+              onChange={setInvite}
+            />
           </Form.Group>
-          {/* Form group for the registration button */}
           <Form.Group>
-            {/* Button to trigger the registration process */}
             <Button
+              data-testid="register-submit-button"
               appearance="primary"
               onClick={handleRegistration}
               loading={loading}
+              block
             >
               Зареєструватися
             </Button>
           </Form.Group>
         </Form>
+        <div style={{ marginTop: "16pt", textAlign: "center" }}>
+          <Link
+            to="/app/login"
+            style={{ marginRight: "20px" }}
+            data-testid="register-login-link"
+          >
+            Увійти
+          </Link>
+          <Link to="/" data-testid="register-home-link">
+            ← Назад на головну
+          </Link>
+        </div>
       </Panel>
     </Container>
   );

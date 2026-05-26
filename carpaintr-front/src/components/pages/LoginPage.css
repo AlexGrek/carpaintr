@@ -24,8 +24,14 @@
   transform: translateY(0);
 }
 
+.auth-logo-link {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 1.5rem;
+  line-height: 0;
+}
+
 .auth-logo {
   display: block;
-  margin: 0 auto 1.5rem;
   height: 100px;
 }
