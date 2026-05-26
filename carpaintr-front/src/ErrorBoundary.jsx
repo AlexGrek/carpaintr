@@ -64,6 +64,7 @@ class ErrorBoundary extends React.Component {
             <ErrorMessage
               errorTitle="Critical failure"
               errorText={this.state.error?.toString()}
+              showSettingsButton={false}
             />
             <p className="fade-in-simple" style={{ marginTop: "42px" }}>
               <ButtonGroup>

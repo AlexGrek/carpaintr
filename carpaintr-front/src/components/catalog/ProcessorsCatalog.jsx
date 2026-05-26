@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import ErrorMessage from "../layout/ErrorMessage";
 import { Loader } from "rsuite";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
@@ -21,6 +23,7 @@ const ProcessorsCatalog = () => {
   const [errorTitle, setErrorTitle] = useState("");
   const [expanded, setExpanded] = useState(new Set());
   const { str } = useLocale();
+  const navigate = useNavigate();
 
   const handleError = useCallback(
     (reason) => {
@@ -34,13 +37,14 @@ const ProcessorsCatalog = () => {
   useEffect(() => {
     authFetch("/api/v1/user/processors_list")
       .then((r) => {
+        if (handleLicenseForbidden(navigate, r)) return;
         if (!r.ok) throw new Error(`HTTP error ${r.status}`);
         return r.json();
       })
       .then(setProcessors)
       .catch(handleError)
       .finally(() => setLoading(false));
-  }, [handleError]);
+  }, [handleError, navigate]);
 
   const toggle = (name) =>
     setExpanded((prev) => {

@@ -4,6 +4,7 @@ import { useLocale } from "../../localization/LocaleContext";
 import { useNavigate } from "react-router-dom";
 import { isArray, isObjectLike } from "lodash";
 import { authFetch, authFetchYaml } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import ErrorMessage from "../layout/ErrorMessage";
 import { Button, Input, Loader, Modal, SelectPicker } from "rsuite";
 import SelectionInput from "../SelectionInput";
@@ -129,10 +130,8 @@ const VehicleSelect = React.memo(
     useEffect(() => {
       authFetch("/api/v1/user/carmakes")
         .then((response) => {
-          if (response.status === 403) {
-            // navigate("/cabinet");
-            handleError("ERROR");
-            return null; // Stop here, don't try to parse JSON
+          if (handleLicenseForbidden(navigate, response)) {
+            return null;
           }
           if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);

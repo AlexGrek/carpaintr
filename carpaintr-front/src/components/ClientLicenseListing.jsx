@@ -16,7 +16,7 @@ const ClientLicenseListing = () => {
           throw new Error(`Error: ${response.statusText}`);
         }
         const data = await response.json();
-        setLicenses(Object.values(data));
+        setLicenses(Array.isArray(data) ? data : Object.values(data ?? {}));
       } catch (err) {
         setError(err.message);
       } finally {

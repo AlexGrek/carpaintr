@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLocale } from "../../localization/LocaleContext";
 import { authFetch } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import ErrorMessage from "../layout/ErrorMessage";
 import { Loader, Modal, Panel, PanelGroup, Tag } from "rsuite";
 import { useMediaQuery } from "react-responsive";
@@ -17,6 +19,7 @@ const PartsCatalog = () => {
   const [chosenPart, setChosenPart] = useState(null);
   const [activeTab, setActiveTab] = useState("t1");
   const { str } = useLocale();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,7 +36,7 @@ const PartsCatalog = () => {
     const fetchParts = (url, onSuccess) =>
       authFetch(url)
         .then((r) => {
-          if (r.status === 403) { handleError("ERROR"); return null; }
+          if (handleLicenseForbidden(navigate, r)) return null;
           if (!r.ok) throw new Error(`HTTP error ${r.status}`);
           return r.json();
         })
@@ -45,7 +48,7 @@ const PartsCatalog = () => {
       setPartsT2(d.data);
       setPartsT2Errors(d.errors);
     });
-  }, [handleError]);
+  }, [handleError, navigate]);
 
   const loading = parts.length === 0 && partsT2.length === 0;
 

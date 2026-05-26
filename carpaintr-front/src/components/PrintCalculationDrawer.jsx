@@ -1,5 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Drawer,
   Button,
@@ -16,6 +17,7 @@ import {
 import { useMediaQuery } from "react-responsive";
 import { useLocale } from "../localization/LocaleContext";
 import { authFetch } from "../utils/authFetch";
+import { handleLicenseForbidden } from "../utils/licenseRedirect";
 // Added for Generate Preview button
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
@@ -430,6 +432,7 @@ const PrintCalculationDrawer = React.memo(
   }) => {
     const toaster = useToaster();
     const { str } = useLocale();
+    const navigate = useNavigate();
     const isMobile = useMediaQuery({ maxWidth: 767 });
     const [selectedDocuments, setSelectedDocuments] = useState([]);
     const [templates, setTemplates] = useState([]);
@@ -450,8 +453,7 @@ const PrintCalculationDrawer = React.memo(
       async (endpoint, setter) => {
         try {
           const response = await authFetch(endpoint);
-          if (response.status === 403) {
-            showMessage("error", "Unauthorized");
+          if (handleLicenseForbidden(navigate, response)) {
             return;
           }
           if (!response.ok) {
@@ -474,7 +476,7 @@ const PrintCalculationDrawer = React.memo(
           showMessage("error", err.toString());
         }
       },
-      [showMessage, str],
+      [navigate, showMessage, str],
     );
 
     useEffect(() => {

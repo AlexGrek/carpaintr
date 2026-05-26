@@ -48,6 +48,9 @@ const HistoryPage = lazy(
 const AboutUsPage = lazy(
   () => import("./components/pages/AboutUsPage.jsx"),
 );
+const LicenseStatusPage = lazy(
+  () => import("./components/pages/LicenseStatusPage.jsx"),
+);
 
 function App() {
   useVersionCheck();
@@ -75,6 +78,7 @@ function App() {
                   <Route path="/app/history" element={<HistoryPage />} />
                   <Route path="/app/aboutus" element={<AboutUsPage />} />
                   <Route path="/app/cabinet" element={<CabinetPage />} />
+                  <Route path="/app/license" element={<LicenseStatusPage />} />
                   <Route path="/app/fileeditor" element={<FileEditorPage />} />
                   <Route path="/app/dashboard" element={<UsersDashboard />} />
                   <Route path="/app/wip" element={<WipPage />} />

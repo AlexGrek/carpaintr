@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import TopBarUser from "../layout/TopBarUser";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { Divider, SelectPicker } from "rsuite";
@@ -8,6 +9,7 @@ import {
 } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
 import { authFetch } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import ErrorMessage from "../layout/ErrorMessage";
 import { toRsuiteList } from "../../utils/utils";
 import TemplateEditor from "../editor/TemplateEditor";
@@ -31,6 +33,7 @@ const TemplatesPage = () => {
   const [selectedSample, setSelectedSample] = useState(null);
 
   const { str } = useLocale();
+  const navigate = useNavigate();
 
   const handleError = useCallback(
     (reason) => {
@@ -45,8 +48,7 @@ const TemplatesPage = () => {
     async (endpoint, setter) => {
       try {
         const response = await authFetch(endpoint);
-        if (response.status === 403) {
-          handleError("Unauthorized");
+        if (handleLicenseForbidden(navigate, response)) {
           return;
         }
         if (!response.ok) {
@@ -58,7 +60,7 @@ const TemplatesPage = () => {
         handleError(err);
       }
     },
-    [handleError],
+    [handleError, navigate],
   );
 
   const handleTemplateNewName = useCallback(

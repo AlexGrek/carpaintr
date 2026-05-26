@@ -260,7 +260,11 @@ const LicenseManager = ({ userEmail }) => {
           <Loader />
         </p>
       )}
-      <ErrorMessage errorText={error} onClose={() => setError(null)} />
+      <ErrorMessage
+        errorText={error}
+        onClose={() => setError(null)}
+        showSettingsButton={false}
+      />
       <NotifyMessage text={message} />
 
       {/* Generate New License Form */}

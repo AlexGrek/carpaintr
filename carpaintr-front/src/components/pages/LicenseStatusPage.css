@@ -1,0 +1,86 @@
+.license-status-page {
+  min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    #fffcf9 0%,
+    #fff8f3 35%,
+    #fff3eb 70%,
+    #ffe6d4 100%
+  );
+  background-attachment: fixed;
+}
+
+.license-status-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+}
+
+.license-status-hero {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.license-status-hero h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.35rem;
+}
+
+.license-status-hero p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.license-status-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 24px rgba(234, 88, 12, 0.08);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.license-status-card--inactive {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: rgba(254, 242, 242, 0.92);
+}
+
+.license-status-card--active {
+  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(240, 253, 244, 0.92);
+}
+
+.license-status-badge-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.license-status-detail {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.license-status-detail strong {
+  color: #0f172a;
+}
+
+.license-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.license-status-licenses h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
+}

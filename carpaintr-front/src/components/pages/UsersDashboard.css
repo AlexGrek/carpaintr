@@ -1,14 +1,13 @@
-/* UsersDashboard - full-page orange gradient, no white under transparent top bar */
+/* UsersDashboard - soft light peach gradient, no white under transparent top bar */
 .users-dashboard-page {
   min-height: 100vh;
   background: linear-gradient(
     160deg,
-    #fff7ed 0%,
-    #ffedd5 15%,
-    #fed7aa 35%,
-    #fb923c 55%,
-    #f97316 75%,
-    #ea580c 100%
+    #fffcf9 0%,
+    #fff8f3 30%,
+    #fff3eb 60%,
+    #ffede0 85%,
+    #ffe6d4 100%
   );
   background-attachment: fixed;
 }

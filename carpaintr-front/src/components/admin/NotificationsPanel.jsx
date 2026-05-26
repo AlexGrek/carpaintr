@@ -179,7 +179,7 @@ export default function NotificationsPanel() {
 
   return (
     <div style={{ width: "100%" }}>
-      <ErrorMessage errorText={error} />
+      <ErrorMessage errorText={error} showSettingsButton={false} />
       {successMessage && (
         <Message type="success" closable onClose={() => setSuccessMessage(null)}>
           {successMessage}

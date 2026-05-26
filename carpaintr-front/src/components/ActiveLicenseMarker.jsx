@@ -1,45 +1,28 @@
-import { useEffect, useState } from "react";
-import { Loader, Message, useToaster } from "rsuite";
-import { authFetch, handleAuthResponse } from "../utils/authFetch";
-import "./ActiveLicenseMarker.css";
+import { useCallback } from "react";
+import { Loader } from "rsuite";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
-import { useLocale } from "../localization/LocaleContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  useLocale,
+  registerTranslations,
+} from "../localization/LocaleContext";
+import Trans from "../localization/Trans";
+import { useActiveLicense } from "../hooks/useActiveLicense";
+import { LICENSE_STATUS_PATH } from "../routes/paths";
+import "./ActiveLicenseMarker.css";
+
+registerTranslations("ua", {
+  "License status": "Статус ліцензії",
+});
 
 const ActiveLicenseMarker = () => {
-  const [licenseStatus, setLicenseStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const toaster = useToaster();
+  const { licenseStatus, loading, error } = useActiveLicense();
   const { str } = useLocale();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    const fetchLicenses = async () => {
-      try {
-        const response = await authFetch("/api/v1/getactivelicense");
-        // On 401 the session is invalid: handleAuthResponse clears the token
-        // and redirects to login, preventing a login↔dashboard redirect loop.
-        // 403 means forbidden (e.g. no license) — not an auth failure, no redirect.
-        if (response.status === 401 && handleAuthResponse(response, navigate, location)) {
-          return;
-        }
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setLicenseStatus(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLicenses();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const goToLicenseStatus = useCallback(() => {
+    navigate(LICENSE_STATUS_PATH);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -50,15 +33,18 @@ const ActiveLicenseMarker = () => {
   }
 
   if (error) {
-    console.log(error);
-    toaster.push(
-      <Message type="error" closable>{`${str("Error")}: ${error}`}</Message>,
-    );
+    console.error(error);
   }
 
   if (licenseStatus == null) {
     return (
-      <div className="license-tag">
+      <button
+        type="button"
+        className="license-tag license-tag--clickable"
+        onClick={goToLicenseStatus}
+        data-testid="license-status-marker"
+        aria-label={str("License status")}
+      >
         <ShieldAlert
           size={16}
           style={{
@@ -67,27 +53,47 @@ const ActiveLicenseMarker = () => {
             transform: "translateY(-2px)",
           }}
         />
-      </div>
+        <Trans>License status</Trans>
+      </button>
     );
   }
 
+  const active =
+    licenseStatus.has_active_license && licenseStatus.license != null;
+  const label =
+    active && licenseStatus.license
+      ? `Ліцензія активна (днів: ${licenseStatus.license.days_left + 1})`
+      : "Ліцензія неактивна";
+
   return (
-    <div
-      className="license-tag"
-      color={licenseStatus["has_active_license"] ? "green" : "red"}
+    <button
+      type="button"
+      className={`license-tag license-tag--clickable ${active ? "license-tag--active" : "license-tag--inactive"}`}
+      onClick={goToLicenseStatus}
+      data-testid="license-status-marker"
+      aria-label={str("License status")}
     >
-      <ShieldCheck
-        size={16}
-        style={{
-          display: "inline-block",
-          marginRight: "4pt",
-          transform: "translateY(-2px)",
-        }}
-      />
-      {licenseStatus["has_active_license"]
-        ? `Ліцензія активна (днів: ${licenseStatus.license.days_left + 1})`
-        : "Ліцензія неактивна"}
-    </div>
+      {active ? (
+        <ShieldCheck
+          size={16}
+          style={{
+            display: "inline-block",
+            marginRight: "4pt",
+            transform: "translateY(-2px)",
+          }}
+        />
+      ) : (
+        <ShieldAlert
+          size={16}
+          style={{
+            display: "inline-block",
+            marginRight: "4pt",
+            transform: "translateY(-2px)",
+          }}
+        />
+      )}
+      {label}
+    </button>
   );
 };
 

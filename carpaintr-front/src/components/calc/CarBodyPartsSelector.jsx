@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Divider, Panel, PanelGroup, Tabs } from "rsuite";
 import SelectionInput from "../SelectionInput";
 import { useMediaQuery } from "react-responsive";
-import { authFetch, getOrFetchCompanyInfo } from "../../utils/authFetch"; // Assuming authFetch is used, not authFetchYaml
+import { authFetch, getOrFetchCompanyInfo } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import "./CarBodyPartsSelector.css";
 import { useLocale } from "../../localization/LocaleContext";
 import ErrorMessage from "../layout/ErrorMessage";
@@ -45,6 +47,7 @@ const CarBodyPartsSelector = ({
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
   const { str } = useLocale();
+  const navigate = useNavigate();
   const [errorText, setErrorText] = useState(null);
   const [errorTitle, setErrorTitle] = useState("");
 
@@ -125,6 +128,7 @@ const CarBodyPartsSelector = ({
 
     authFetch("/api/v1/user/processors_bundle")
       .then((response) => {
+        if (handleLicenseForbidden(navigate, response)) return;
         if (!response.ok) {
           throw new Error(`Failed to fetch plugin bundle: ${response.status}`);
         }
@@ -141,8 +145,7 @@ const CarBodyPartsSelector = ({
 
     authFetch(`/api/v1/user/carparts/${carClass}/${body}`)
       .then((response) => {
-        // No navigation logic here, this component should not dictate routing.
-        // If 403 occurs, authFetch should handle it (e.g., redirect to login).
+        if (handleLicenseForbidden(navigate, response)) return;
         if (!response.ok) {
           console.error(`HTTP error ${response.status}`);
           // Optionally, handle specific errors or show user feedback
@@ -162,6 +165,7 @@ const CarBodyPartsSelector = ({
 
     authFetch(`/api/v1/user/carparts_t2/${carClass}/${body}`)
       .then((response) => {
+        if (handleLicenseForbidden(navigate, response)) return;
         if (!response.ok) {
           console.error(`HTTP error ${response.status}`);
           // Optionally, handle specific errors or show user feedback
@@ -178,7 +182,7 @@ const CarBodyPartsSelector = ({
         console.error("Error fetching car parts:", err);
         handleError("Error fetching car parts: " + err);
       });
-  }, [body, carClass, handleError]); // Dependencies for API fetch
+  }, [body, carClass, handleError, navigate]);
 
   // Helper to generate initial grid data
   const generateInitialGrid = useCallback((visual) => {
@@ -209,8 +213,7 @@ const CarBodyPartsSelector = ({
       });
       authFetch(`/api/v1/user/lookup_all_tables?${params}`)
         .then((response) => {
-          // No navigation logic here, this component should not dictate routing.
-          // If 403 occurs, authFetch should handle it (e.g., redirect to login).
+          if (handleLicenseForbidden(navigate, response)) return;
           if (!response.ok) {
             console.error(`HTTP error ${response.status}`);
             // Optionally, handle specific errors or show user feedback
@@ -243,7 +246,7 @@ const CarBodyPartsSelector = ({
         });
       return [];
     },
-    [body, carClass, handleError, tableDataRepository],
+    [body, carClass, handleError, navigate, tableDataRepository],
   );
 
   useEffect(() => {

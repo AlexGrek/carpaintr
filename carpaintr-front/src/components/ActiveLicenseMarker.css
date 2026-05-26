@@ -7,4 +7,31 @@
   padding: 3pt 12pt;
   color: rgba(0, 0, 0, 0.73);
   animation: fadePopIn 0.2s ease-out forwards;
+  border: none;
+  font-family: inherit;
+}
+
+.license-tag--clickable {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.license-tag--clickable:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.license-tag--clickable:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 2px;
+}
+
+.license-tag--active {
+  background-color: rgba(220, 252, 231, 0.95);
+}
+
+.license-tag--inactive {
+  background-color: rgba(254, 226, 226, 0.95);
 }

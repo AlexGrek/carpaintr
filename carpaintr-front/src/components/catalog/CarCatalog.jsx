@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   useLocale,
   registerTranslations,
 } from "../../localization/LocaleContext";
 import { authFetch } from "../../utils/authFetch";
+import { handleLicenseForbidden } from "../../utils/licenseRedirect";
 import ErrorMessage from "../layout/ErrorMessage";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import SelectionInput from "../SelectionInput";
@@ -23,6 +25,7 @@ const CarCatalog = () => {
   const [models, setModels] = useState({});
   const [selectedMake, setSelectedMake] = useState(null);
   const { str } = useLocale();
+  const navigate = useNavigate();
 
   const handleError = useCallback(
     (reason) => {
@@ -37,10 +40,8 @@ const CarCatalog = () => {
   useEffect(() => {
     authFetch("/api/v1/user/carmakes")
       .then((response) => {
-        if (response.status === 403) {
-          // navigate("/cabinet");
-          handleError("ERROR");
-          return null; // Stop here, don't try to parse JSON
+        if (handleLicenseForbidden(navigate, response)) {
+          return null;
         }
         if (!response.ok) {
           throw new Error(`HTTP error ${response.status}`);
@@ -51,7 +52,7 @@ const CarCatalog = () => {
         if (data) setMakes(data); // Only set if data was parsed
       })
       .catch(handleError);
-  }, [handleError]);
+  }, [handleError, navigate]);
 
   useEffect(() => {
     setModels([]);

@@ -2,13 +2,20 @@ import { Message, Divider, HStack, Button } from "rsuite";
 import { useNavigate } from "react-router-dom";
 import Trans from "../../localization/Trans";
 import { isString } from "lodash";
+import { LICENSE_STATUS_PATH } from "../../routes/paths";
+import { registerTranslations } from "../../localization/LocaleContext";
+
+registerTranslations("ua", {
+  "License status": "Статус ліцензії",
+});
 
 const ErrorMessage = ({
   errorText,
   errorTitle = "Error",
   onClose = null,
   showSettingsButton = true,
-  settingsPath = "/app/cabinet",
+  settingsPath = LICENSE_STATUS_PATH,
+  settingsLabel = "License status",
   className = "pop-in-simple",
 }) => {
   const navigate = useNavigate();
@@ -49,7 +56,7 @@ const ErrorMessage = ({
       <HStack justifyContent="flex-end" style={{ width: "100%" }}>
         {showSettingsButton && (
           <Button size="sm" appearance="link" onClick={handleSettingsClick}>
-            <Trans>Settings</Trans>
+            <Trans>{settingsLabel}</Trans>
           </Button>
         )}
         <Button size="sm" appearance="primary" onClick={handleClose}>

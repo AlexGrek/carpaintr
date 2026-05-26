@@ -250,7 +250,7 @@ const ManageUsers = () => {
 
   return (
     <div>
-      <ErrorMessage errorText={error} />
+      <ErrorMessage errorText={error} showSettingsButton={false} />
       {loading && <Loader />}
       <Drawer
         open={licenseEditorOpen}
@@ -329,7 +329,7 @@ const ManageUsers = () => {
             }}
           >
             {passwordError && (
-              <ErrorMessage errorText={passwordError} />
+              <ErrorMessage errorText={passwordError} showSettingsButton={false} />
             )}
             <div style={{ display: "flex", gap: 8 }}>
               <Input
