@@ -2,6 +2,36 @@
 /* RSuite v6 CSS Variable Overrides */
 
 :root {
+  /* Border radius scale — much rounder controls (default md was 6px) */
+  --rs-radius-xs: 0.375rem;
+  --rs-radius-sm: 0.625rem;
+  --rs-radius-md: 1rem;
+  --rs-radius-lg: 1.25rem;
+  --rs-radius-xl: 1.5rem;
+  --rs-radius-2xl: 1.75rem;
+  --rs-radius-3xl: 2.25rem;
+  --rs-radius-4xl: 2.75rem;
+
+  /* Component-specific radius (inherit from scale above) */
+  --rs-input-border-radius: var(--rs-radius-lg);
+  --rs-input-group-border-radius: var(--rs-radius-lg);
+  --rs-panel-border-radius: var(--rs-radius-xl);
+  --rs-message-border-radius: var(--rs-radius-lg);
+  --rs-notify-border-radius: var(--rs-radius-lg);
+  --rs-picker-popup-border-radius: var(--rs-radius-xl);
+  --rs-popover-border-radius: var(--rs-radius-lg);
+  --rs-calendar-border-radius: var(--rs-radius-xl);
+  --rs-tag-border-radius: var(--rs-radius-md);
+  --rs-tooltip-border-radius: var(--rs-radius-md);
+  --rs-radio-group-picker-border-radius: var(--rs-radius-lg);
+  --rs-radio-tile-border-radius: var(--rs-radius-lg);
+  --rs-segmented-control-border-radius: var(--rs-radius-lg);
+  --rs-segmented-control-indicator-border-radius: calc(var(--rs-radius-lg) - 2px);
+  --rs-segmented-control-pill-indicator-border-radius: var(--rs-radius-lg);
+  --rs-stat-border-radius: var(--rs-radius-lg);
+  --rs-tree-node-label-border-radius: var(--rs-radius-md);
+  --rs-progress-line-radius: var(--rs-radius-md);
+
   /* Primary colors - from custom-theme.less */
   --rs-primary-500: #e23b1a;
   --rs-primary-600: #c63215; /* Darker shade for hover */
@@ -38,7 +68,7 @@
   background-color: rgba(255, 255, 255, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  border-radius: 6px; /* Default RSuite border-radius */
+  border-radius: var(--rs-radius-xl);
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
@@ -52,6 +82,21 @@
 .rs-drawer-header {
   padding: 15pt;
   padding-left: 40pt;
+}
+
+/* Buttons, inputs, pickers — ensure base controls use the larger scale */
+.rs-btn,
+.rs-input,
+.rs-picker-toggle,
+.rs-dropdown-toggle,
+.rs-checkbox-checker label,
+.rs-radio-checker label {
+  border-radius: var(--rs-radius-lg);
+}
+
+.rs-modal-content,
+.rs-panel {
+  border-radius: var(--rs-radius-xl);
 }
 
 /* Ghost button styling */
