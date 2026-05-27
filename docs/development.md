@@ -40,6 +40,9 @@ This guide covers local development setup and workflows for Carpaintr (Autolab).
 git clone https://github.com/AlexGrek/carpaintr.git
 cd carpaintr
 
+# First time (or after updating repo data/): sync tables, cars, processors, etc.
+task dev-data
+
 # Start full development environment (frontend + backend)
 task dev
 ```
@@ -499,6 +502,7 @@ task --list              # Show all available tasks
 
 # Development
 task dev                 # Start frontend + backend
+task dev-data            # Sync data/common → backend-service-rust/data (run once / after data updates)
 task frontend            # Start frontend only
 task backend             # Start backend only
 

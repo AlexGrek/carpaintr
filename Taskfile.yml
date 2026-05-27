@@ -406,6 +406,11 @@ tasks:
     cmds:
       - cargo watch -x run
 
+  dev-data:
+    desc: Sync repo data/common into backend-service-rust/data for local dev
+    cmds:
+      - ./scripts/load-dev-data.sh
+
   kill-dev:
     desc: Kill all stale dev servers (backend :8080, frontend :5173)
     cmds:
