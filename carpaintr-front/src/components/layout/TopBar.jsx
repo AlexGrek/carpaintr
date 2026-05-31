@@ -47,7 +47,7 @@ const TopBar = () => {
             <>
               {isLoggedIn ? (
                 <Stack>
-                  <Nav.Item onClick={() => navigate("/app/calc")}>
+                  <Nav.Item onClick={() => navigate("/app/calc2")}>
                     Calculate
                   </Nav.Item>
                   <Nav.Item onClick={handleLogout}>Logout</Nav.Item>

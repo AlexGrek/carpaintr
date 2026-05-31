@@ -7,6 +7,7 @@ const MenuPickerV2 = ({
   onSelect,
   value = null,
   style = {},
+  testId,
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -157,7 +158,11 @@ const MenuPickerV2 = ({
   };
 
   return (
-    <div className="pop-in-simple" style={{ ...styles.container, ...style }}>
+    <div
+      className="pop-in-simple"
+      style={{ ...styles.container, ...style }}
+      data-testid={testId}
+    >
       {label && <div style={styles.label}>{label}</div>}
       <div style={styles.menuWrapper}>
         <div style={styles.menuContainer}>
@@ -172,6 +177,9 @@ const MenuPickerV2 = ({
                   handleItemSelect(item);
                 }
               }}
+              data-testid={
+                testId ? `${testId}-option-${String(item.value)}` : undefined
+              }
               // onMouseEnter={(e) => {
               //   if (isExpanded && !isAnimating) {
               //     e.target.style.backgroundColor = '#f8f9fa';

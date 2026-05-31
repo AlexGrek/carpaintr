@@ -7,7 +7,7 @@ const TRANSLATIONS_BASIC = {
   ua: {
     "Document title: Dashboard": "Панель",
     "Document title: Calculation": "Розрахунок",
-    "Document title: Customization": "Персоналізація",
+    "Document title: Data Editor": "Редактор даних",
     "Document title: Catalog": "Каталог",
     "Document title: Templates": "Шаблони документів",
     "Document title: Your organization": "Ваша організація",

@@ -5,7 +5,7 @@ import ProcessorGenerator from "../editor/ProcessGenerator";
 const CreateProcPage = () => {
   useDocumentTitle("Document title: Create processor");
   return (
-    <div>
+    <div data-testid="create-proc-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

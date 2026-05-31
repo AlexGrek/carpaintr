@@ -77,7 +77,7 @@ const TemplatesPage = () => {
   }, [fetchList]);
 
   return (
-    <div>
+    <div data-testid="templates-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

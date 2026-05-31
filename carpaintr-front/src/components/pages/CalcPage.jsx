@@ -65,7 +65,7 @@ const CalcPage = () => {
   );
 
   return (
-    <div>
+    <div data-testid="calc-v1-page">
       <TopBarUser onNavigate={handleNavigation} />
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
         <CarPaintEstimator setChanges={setHasChanges} />

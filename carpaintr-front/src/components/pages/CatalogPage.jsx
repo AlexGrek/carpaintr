@@ -20,6 +20,7 @@ registerTranslations("ua", {
 const PartsCatalog = lazy(() => import("../catalog/PartsCatalog"));
 const CarCatalog = lazy(() => import("../catalog/CarCatalog"));
 const ProcessorsCatalog = lazy(() => import("../catalog/ProcessorsCatalog"));
+const DataCatalog = lazy(() => import("../catalog/DataCatalog"));
 
 const TABS = [
   { slug: "cars",       label: "Cars",       icon: Car },
@@ -64,14 +65,20 @@ const CatalogPage = () => {
           </ErrorBoundary>
         );
       case "data":
-        return null;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={loading}>
+              <DataCatalog />
+            </Suspense>
+          </ErrorBoundary>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="catalog-page">
+    <div className="catalog-page" data-testid="catalog-page">
       <TopBarUser />
       <div className="catalog-body">
         <div className="catalog-hero">

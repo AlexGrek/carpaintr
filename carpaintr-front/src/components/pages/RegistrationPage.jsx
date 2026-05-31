@@ -88,7 +88,7 @@ const RegistrationPage = () => {
   };
 
   return (
-    <Container className="auth-page">
+    <Container className="auth-page" data-testid="register-page">
       <Panel
         className={`auth-panel${visible ? " auth-panel--visible" : ""}`}
         bordered

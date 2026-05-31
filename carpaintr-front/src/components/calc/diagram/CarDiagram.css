@@ -77,6 +77,34 @@
   color: black;
 }
 
+.car-part-disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  color: rgba(55, 65, 81, 0.9);
+  border: 2px dashed rgba(75, 85, 99, 0.7);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(156, 163, 175, 0.18),
+      rgba(156, 163, 175, 0.18) 8px,
+      rgba(229, 231, 235, 0.24) 8px,
+      rgba(229, 231, 235, 0.24) 16px
+    );
+}
+
+.car-part-disabled:hover {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(156, 163, 175, 0.18),
+      rgba(156, 163, 175, 0.18) 8px,
+      rgba(229, 231, 235, 0.24) 8px,
+      rgba(229, 231, 235, 0.24) 16px
+    );
+  color: rgba(55, 65, 81, 0.9);
+  z-index: auto;
+}
+
 /* Central Body Parts */
 .front-bumper {
   top: 0px;

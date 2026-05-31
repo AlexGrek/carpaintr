@@ -13,6 +13,11 @@ import {
 
 const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], onClose, onSelect }, ref) => {
   const isMobile = useMediaQuery({ maxWidth: 767 });
+  const toTestIdValue = (value) =>
+    String(value)
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-_]/g, "");
 
   // Create set of selected item names for O(1) lookup
   const selectedNamesSet = new Set(selectedItems.map(item => item.name));
@@ -53,6 +58,7 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
         className={`context-menu ${isMobile ? "context-menu-mobile" : ""} fade-in-simple-fast`}
         style={menuStyle}
         ref={ref}
+        data-testid="calc-car-part-context-menu"
       >
         <div className="context-menu-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>
@@ -61,6 +67,7 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
           {isMobile && (
             <button
               onClick={onClose}
+              data-testid="calc-car-part-context-menu-close"
               style={{
                 background: "none",
                 border: "none",
@@ -98,6 +105,7 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
                   e.stopPropagation();
                   onSelect(item);
                 }}
+                data-testid={`calc-car-part-menu-item-${toTestIdValue(item.name)}`}
               >
                 {isSelected ? (
                   <Check size={16} style={{ flexShrink: 0, color: "#16a34a" }} />
@@ -124,6 +132,7 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
                   e.stopPropagation();
                   toggleGroup(groupName);
                 }}
+                data-testid={`calc-car-part-menu-group-${toTestIdValue(groupName)}`}
               >
                 {expandedGroups[groupName] ? (
                   <>
@@ -161,6 +170,7 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
                           e.stopPropagation();
                           onSelect(item);
                         }}
+                        data-testid={`calc-car-part-menu-item-${toTestIdValue(item.name)}`}
                       >
                         {isSelected ? (
                           <Check size={14} style={{ flexShrink: 0, color: "#16a34a" }} />

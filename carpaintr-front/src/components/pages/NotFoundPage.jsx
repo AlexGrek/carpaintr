@@ -22,7 +22,7 @@ const NotFoundPage = () => {
   useDocumentTitle("Document title: Page Not Found");
 
   return (
-    <Container className="not-found-page">
+    <Container className="not-found-page" data-testid="not-found-page">
       <Panel className="not-found-panel" bordered>
         <div className="not-found-content">
           {/* Broken Car Illustration */}

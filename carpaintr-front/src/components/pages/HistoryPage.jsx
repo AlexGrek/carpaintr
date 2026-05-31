@@ -4,7 +4,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 const HistoryPage = () => {
   useDocumentTitle("Document title: History");
   return (
-    <div>
+    <div data-testid="history-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

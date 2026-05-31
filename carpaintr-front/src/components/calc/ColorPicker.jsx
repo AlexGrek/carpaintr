@@ -74,13 +74,14 @@ const ColorPicker = React.memo(({ setColor, selectedColor }) => {
   const displayColors = baseColors.rows;
 
   return (
-    <div style={{ marginTop: '20px' }}>
+    <div style={{ marginTop: '20px' }} data-testid="calc-color-picker">
       {displayColors.map((subgrid, index) => (
         <ColorGrid
           key={index}
           colors={subgrid}
           selectedColor={selectedColor}
           onChange={setColor}
+          testIdPrefix={`calc-color-grid-${index}`}
         />
       ))}
     </div>

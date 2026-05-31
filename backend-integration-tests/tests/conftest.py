@@ -1,16 +1,22 @@
-"""
-Pytest fixtures for backend integration tests.
-"""
+"""Shared fixtures for carpaintr backend integration tests."""
+
 import os
-from typing import Dict, Optional
-import pytest
+from typing import Dict, Iterator, Optional
+
 import httpx
+import pytest
 from dotenv import load_dotenv
 
-# Load environment variables
+from .helpers import login_user, register_user
+from .pdfgen_mock import PdfGenMockClient, PdfGenMockServer, resolve_mock_base_url
+from .seed_users import (
+    SEED_USER_COUNT,
+    bootstrap_admin_credentials,
+    ensure_all_seed_users_sync,
+)
+
 load_dotenv()
 
-# Configuration
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
 API_BASE_PATH = os.getenv("API_BASE_PATH", "/api/v1")
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
@@ -64,51 +70,6 @@ def test_admin_credentials() -> Dict[str, str]:
     }
 
 
-async def register_user(
-    client: httpx.AsyncClient,
-    email: str,
-    password: str,
-    company_name: str = "Test Company",
-) -> Optional[Dict]:
-    """
-    Helper function to register a new user.
-    Returns the response JSON if successful, None otherwise.
-    """
-    response = await client.post(
-        "/register",
-        json={
-            "email": email,
-            "password": password,
-            "company_name": company_name,
-        },
-    )
-    if response.status_code in (200, 201):
-        return response.json()
-    return None
-
-
-async def login_user(
-    client: httpx.AsyncClient,
-    email: str,
-    password: str,
-) -> Optional[str]:
-    """
-    Helper function to log in a user.
-    Returns the JWT token if successful, None otherwise.
-    """
-    response = await client.post(
-        "/login",
-        json={
-            "email": email,
-            "password": password,
-        },
-    )
-    if response.status_code == 200:
-        data = response.json()
-        return data.get("token")
-    return None
-
-
 async def ensure_user_registered(
     client: httpx.AsyncClient,
     email: str,
@@ -118,7 +79,76 @@ async def ensure_user_registered(
     """
     Ensure a user is registered. Attempts to register, ignores if already exists.
     """
-    await register_user(client, email, password, company_name)
+    response = await register_user(client, email, password, company_name)
+    if response.status_code == 200:
+        return
+    if response.status_code == 409:
+        token = await login_user(client, email, password)
+        if token:
+            return
+        pytest.fail(f"User {email} exists but login failed")
+    pytest.fail(f"Failed to register {email}: {response.status_code} {response.text}")
+
+
+@pytest.fixture(scope="session")
+def session_http_client(request_timeout: int) -> Iterator[httpx.Client]:
+    """Session-scoped synchronous client for seeding and populate."""
+    with httpx.Client(
+        base_url=f"{BACKEND_BASE_URL}{API_BASE_PATH}",
+        timeout=request_timeout,
+        follow_redirects=True,
+    ) as client:
+        yield client
+
+
+@pytest.fixture(scope="session", autouse=True)
+def seeded_users(
+    session_http_client: httpx.Client,
+    backend_health_check,
+) -> list[dict]:
+    """Ensure seed users ``user1@example.com`` … ``user{N}@example.com`` exist (all tests)."""
+    # Bootstrap admin always licensed; seed users licensed only when newly created here.
+    return ensure_all_seed_users_sync(
+        client=session_http_client,
+        license_on_create=True,
+    )
+
+
+@pytest.fixture
+def bootstrap_admin() -> dict:
+    """Bootstrap admin (``admin@admin.com`` / ``admin123``), ensured by ``seeded_users``."""
+    return bootstrap_admin_credentials()
+
+
+@pytest.fixture
+def seed_user(seeded_users: list[dict]) -> dict:
+    """First seed user (``user1@example.com`` / ``test1``)."""
+    return seeded_users[0]
+
+
+@pytest.fixture
+async def seed_user_token(http_client: httpx.AsyncClient, seed_user: dict) -> str:
+    """JWT for ``user1@example.com`` (seed pool is ensured before tests run)."""
+    token = await login_user(http_client, seed_user["email"], seed_user["password"])
+    if not token:
+        pytest.fail(f"Failed to obtain token for seed user: {seed_user['email']}")
+    return token
+
+
+@pytest.fixture
+async def seed_authenticated_client(
+    base_url: str,
+    request_timeout: int,
+    seed_user_token: str,
+) -> httpx.AsyncClient:
+    """Authenticated client for ``user1@example.com``."""
+    async with httpx.AsyncClient(
+        base_url=base_url,
+        timeout=request_timeout,
+        headers={"Authorization": f"Bearer {seed_user_token}"},
+        follow_redirects=True,
+    ) as client:
+        yield client
 
 
 @pytest.fixture
@@ -254,6 +284,32 @@ async def generate_license(admin_authenticated_client: httpx.AsyncClient):
         )
 
     return _generate
+
+
+@pytest.fixture(scope="session")
+def pdfgen_mock() -> Iterator[PdfGenMockServer | PdfGenMockClient]:
+    """PDF service mock — external daemon from ``task itests`` or in-process fallback."""
+    external_url = resolve_mock_base_url()
+    if external_url:
+        yield PdfGenMockClient(external_url)
+        return
+
+    server = PdfGenMockServer()
+    server.start()
+    server.wait_healthy()
+    os.environ.setdefault("PDFGEN_MOCK_URL", server.base_url)
+    yield server
+    server.stop()
+
+
+@pytest.fixture(scope="session")
+def pdfgen_mock_configured() -> None:
+    """Skip PDF tests when backend was not started with the mock wired in."""
+    if os.environ.get("CARPAINTR_ITEST_SKIP_PDF") == "1":
+        pytest.skip(
+            "PDF tests skipped: backend was already running without PDF_GEN_URL_POST. "
+            "Stop it and run `task itests` for full coverage."
+        )
 
 
 @pytest.fixture(scope="session")

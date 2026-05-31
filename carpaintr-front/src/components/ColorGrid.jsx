@@ -1,6 +1,12 @@
 import "./ColorGrid.css";
 
-const ColorGrid = ({ colors, selectedColor, onChange }) => {
+const ColorGrid = ({ colors, selectedColor, onChange, testIdPrefix = "color-grid" }) => {
+  const toTestIdValue = (value) =>
+    String(value)
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-_]/g, "");
+
   const renderColor = (color) => {
     const { hex, name_eng, name_ukr } = color;
     return (
@@ -8,6 +14,7 @@ const ColorGrid = ({ colors, selectedColor, onChange }) => {
         key={name_ukr}
         className={`color-card fade-in-simple ${selectedColor === name_ukr ? "selected-card" : ""}`}
         onClick={() => onChange(selectedColor === name_ukr ? null : name_ukr)}
+        data-testid={`${testIdPrefix}-color-${toTestIdValue(name_eng || name_ukr)}`}
       >
         <div className="color-preview" style={{ backgroundColor: hex }}></div>
         <div className="label">
@@ -33,6 +40,7 @@ const ColorGrid = ({ colors, selectedColor, onChange }) => {
           ? "color-grid-container"
           : "color-grid-container-selected"
       }
+      data-testid={`${testIdPrefix}-container`}
     >
       {selectedColor == null ? colors.map(renderColor) : renderSelectedColor()}
     </div>

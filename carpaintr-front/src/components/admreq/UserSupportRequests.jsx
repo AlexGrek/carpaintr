@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Drawer } from "rsuite";
 import "./UserSupportRequests.css";
-import { authFetch } from "../../utils/authFetch";
+import { authFetchJson } from "../../utils/authFetch";
 import SupportTicketView from "../support/SupportTicketView";
 import { useMediaQuery } from "react-responsive";
 import Trans from "../../localization/Trans";
@@ -21,11 +21,13 @@ export default function UserSupportRequests() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const loadRequests = () =>
+    authFetchJson("/api/v1/user/support_requests")
+      .then((data) => setRequests(Array.isArray(data) ? data : []))
+      .catch(() => setRequests([]));
+
   useEffect(() => {
-    authFetch("/api/v1/user/support_requests")
-      .then((res) => res.json())
-      .then(setRequests)
-      .catch(() => alert("Failed to load support requests"));
+    loadRequests();
   }, []);
 
   const trim = (str, len) =>
@@ -42,10 +44,7 @@ export default function UserSupportRequests() {
   const closeDrawer = () => {
     setDrawerOpen(false);
     setSelectedTicket(null);
-    authFetch("/api/v1/user/support_requests")
-      .then((res) => res.json())
-      .then(setRequests)
-      .catch(() => alert("Failed to load support requests"));
+    loadRequests();
   };
 
   return (

@@ -37,8 +37,9 @@ registerTranslations("ua", {
   "AI Analytics": "Аналітика ШІ",
   Catalog: "Каталог",
   "All data": "Доступні дані",
-  Customization: "Персоналізація",
-  "Customize everything": "Глибокі налаштування",
+  "Data Editor": "Редактор даних",
+  "Browse cars, parts and processors":
+    "Перегляд автомобілів, запчастин та процесорів",
   "Your organization": "Ваша організація",
   "Manage access and licensing": "Керування доступом та ліцензуванням",
   "Available apps": "Доступні програми",
@@ -56,7 +57,7 @@ registerTranslations("ua", {
 
 const UsersDashboard = () => {
   return (
-    <div className="users-dashboard-page">
+    <div className="users-dashboard-page" data-testid="dashboard-page">
       <TopBarDashboard />
       <div className="users-dashboard-body">
         <Dashboard />
@@ -161,54 +162,63 @@ const DashboardNavigationButtons = ({ admin }) => {
 
   const features = [
     {
+      id: "calc2",
       icon: <DraftingCompass />,
       title: str("Calculation"),
       description: str("Price estimation calculator"),
       link: "/app/calc2",
     },
     {
+      id: "fileeditor",
       icon: <FileCode />,
-      title: str("Customization"),
-      description: str("Customize everything"),
+      title: str("Data Editor"),
+      description: str("All data"),
       link: "/app/fileeditor",
     },
     {
+      id: "catalog",
       icon: <ScanBarcode />,
       title: str("Catalog"),
-      description: str("All data"),
+      description: str("Browse cars, parts and processors"),
       link: "/app/catalog",
     },
     {
+      id: "templates",
       icon: <FileText />,
       title: str("Templates"),
       description: str("Customize templates"),
       link: "/app/templates",
     },
     {
+      id: "cabinet",
       icon: <Cog />,
       title: str("Your organization"),
       description: str("Manage access and licensing"),
       link: "/app/cabinet",
     },
     {
+      id: "notifications",
       icon: <Bell />,
       title: str("My notifications"),
       description: str("Your messages and alerts"),
       link: "/app/notifications",
     },
     {
+      id: "wip-tasks",
       icon: <FileCheck />,
       title: str("Task Tracking"),
       description: "🚧 " + str("Under construction") + " 🚧",
       link: "/app/wip",
     },
     {
+      id: "wip-ai",
       icon: <BrainCircuit />,
       title: str("AI Analytics"),
       description: "🚧 " + str("Under construction") + " 🚧",
       link: "/app/wip",
     },
     {
+      id: "admin",
       icon: <Biohazard />,
       title: str("Admin Area"),
       description: str("Control everything"),
@@ -237,6 +247,7 @@ const DashboardNavigationButtons = ({ admin }) => {
                 role="tab"
                 aria-selected={viewMode === key}
                 aria-label={label}
+                data-testid={`dashboard-view-mode-${key}`}
                 className={`apps-view-toggle-btn ${viewMode === key ? "active" : ""}`}
                 onClick={() => setViewMode(key)}
               >
@@ -250,7 +261,8 @@ const DashboardNavigationButtons = ({ admin }) => {
             if (viewMode === "grid") {
               return (
                 <AppCardCompact
-                  key={index}
+                  key={feature.id}
+                  id={feature.id}
                   icon={feature.icon}
                   title={feature.title}
                   link={feature.link}
@@ -260,7 +272,8 @@ const DashboardNavigationButtons = ({ admin }) => {
             } else {
               return (
                 <AppCard
-                  key={index}
+                  key={feature.id}
+                  id={feature.id}
                   icon={feature.icon}
                   title={feature.title}
                   description={feature.description}
@@ -276,16 +289,18 @@ const DashboardNavigationButtons = ({ admin }) => {
   );
 };
 
-const AppCard = ({ icon, title, description, link, isHidden }) => {
+const AppCard = ({ id, icon, title, description, link, isHidden }) => {
   const nav = useNavigate();
   if (isHidden) {
     return <></>;
   }
+  const testId = `dashboard-app-${id}`;
   return (
     <div
       className="app-card"
       style={{ cursor: "pointer" }}
       onClick={() => nav(link)}
+      data-testid={testId}
     >
       <div className="app-feature-icon">{icon}</div>
       <div>
@@ -296,16 +311,18 @@ const AppCard = ({ icon, title, description, link, isHidden }) => {
   );
 };
 
-const AppCardCompact = ({ icon, title, link, isHidden }) => {
+const AppCardCompact = ({ id, icon, title, link, isHidden }) => {
   const nav = useNavigate();
   if (isHidden) {
     return <></>;
   }
+  const testId = `dashboard-app-${id}`;
   return (
     <div
       className="app-card compact-app-card"
       style={{ cursor: "pointer" }}
       onClick={() => nav(link)}
+      data-testid={testId}
     >
       <div className="app-feature-icon">{icon}</div>
       <h3>{title}</h3>

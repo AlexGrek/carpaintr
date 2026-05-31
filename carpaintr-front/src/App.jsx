@@ -19,7 +19,6 @@ const LoginPage = lazy(() => import("./components/pages/LoginPage.jsx"));
 const RegistrationPage = lazy(
   () => import("./components/pages/RegistrationPage.jsx"),
 );
-const CalcPage = lazy(() => import("./components/pages/CalcPage.jsx"));
 const CalcPageV2 = lazy(() => import("./components/pages/CalcPageV2.jsx"));
 const AdminPage = lazy(() => import("./components/pages/AdminPage.jsx"));
 const CompanyInfoPage = lazy(
@@ -69,7 +68,10 @@ function App() {
                   {/* All application routes under /app */}
                   <Route path="/app/login" element={<LoginPage />} />
                   <Route path="/app/register" element={<RegistrationPage />} />
-                  <Route path="/app/calc" element={<CalcPage />} />
+                  <Route
+                    path="/app/calc"
+                    element={<Navigate to="/app/calc2" replace />}
+                  />
                   <Route path="/app/calc2/*" element={<CalcPageV2 />} />
                   <Route path="/app/admin/*" element={<AdminPage />} />
                   <Route path="/app/company" element={<CompanyInfoPage />} />

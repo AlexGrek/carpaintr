@@ -58,7 +58,13 @@ const styles = {
   },
 };
 
-export function CreateCard({ onClick, className, style, text = "Створити новий" }) {
+export function CreateCard({
+  onClick,
+  className,
+  style,
+  text = "Створити новий",
+  dataTestId,
+}) {
   const [isHovered, setIsHovered] = React.useState(false);
 
   const cardStyle = {
@@ -84,6 +90,7 @@ export function CreateCard({ onClick, className, style, text = "Створити
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      data-testid={dataTestId}
     >
       <div style={iconStyle}>
         <Plus size={32} color="orangered" strokeWidth={2.5} />

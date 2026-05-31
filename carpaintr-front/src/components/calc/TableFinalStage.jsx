@@ -94,6 +94,7 @@ const TableFinalStage = ({
                 onClick={onMoveBack}
                 color="red"
                 appearance="ghost"
+                data-testid="calc-final-stage-back-button"
               >
                 <Trans>Back</Trans>
               </IconButton>
@@ -102,6 +103,7 @@ const TableFinalStage = ({
                   onClick={() => handleSave()}
                   color="blue"
                   appearance="primary"
+                  data-testid="calc-final-stage-save-button"
                 >
                   <Trans>Save</Trans>
                 </Button>
@@ -110,6 +112,7 @@ const TableFinalStage = ({
                   color="green"
                   appearance="primary"
                   style={{ marginLeft: "6pt" }}
+                  data-testid="calc-final-stage-print-button"
                 >
                   <Trans>Print</Trans>
                 </Button>
@@ -129,11 +132,16 @@ const TableFinalStage = ({
                 value={orderDate}
                 onChange={setOrderDate}
                 placeholder={str("Select date")}
+                data-testid="calc-final-order-date-input"
               />
               <p>
                 <Trans>Order number</Trans>
               </p>
-              <Input onChange={setOrderNumber} value={orderNumber} />
+              <Input
+                onChange={setOrderNumber}
+                value={orderNumber}
+                data-testid="calc-final-order-number-input"
+              />
             </section>
             <Panel header={str("Tables")}>
               {stageData.calculations &&

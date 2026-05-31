@@ -69,7 +69,7 @@ const CreateUser = () => {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
       {error && (
         <Message type="error" showIcon>
           {error}

@@ -12,7 +12,7 @@ use crate::{
     middleware::AuthenticatedUser,
     models::{
         invite::GenerateInviteRequest, license_requests::GenerateLicenseRequest, AdminStatus,
-        ManageUserRequest,
+        BulkCreateUsersRequest, BulkCreateUsersResponse, ManageUserRequest, User,
     },
     state::AppState,
     utils::{delete_user_data_gracefully, user_personal_directory_from_email},
@@ -28,6 +28,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::Write;
 use std::sync::Arc;
+use uuid::Uuid;
 use zip::write::FileOptions;
 use zip::ZipWriter;
 
@@ -155,6 +156,43 @@ pub async fn get_user_license_handler(
         .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
         .body(jwt)
         .unwrap())
+}
+
+/// Create many user accounts in one request (admin only). Skips emails that already exist.
+pub async fn bulk_create_users(
+    AuthenticatedUser(_admin_email): AuthenticatedUser,
+    State(app_state): State<Arc<AppState>>,
+    Json(request): Json<BulkCreateUsersRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let mut created = Vec::new();
+    let mut skipped = Vec::new();
+
+    for entry in request.users {
+        let email = entry.email.trim().to_string();
+        if email.is_empty() {
+            continue;
+        }
+
+        if app_state.db.find_user_by_email(&email)?.is_some() {
+            skipped.push(email);
+            continue;
+        }
+
+        let hashed_password = app_state.auth.hash_password(&entry.password)?;
+        let user = User {
+            id: Uuid::new_v4(),
+            email: email.clone(),
+            password_hash: hashed_password,
+        };
+
+        match app_state.db.insert_user(&user) {
+            Ok(()) => created.push(email),
+            Err(AppError::UserExists) => skipped.push(email),
+            Err(err) => return Err(err),
+        }
+    }
+
+    Ok(Json(BulkCreateUsersResponse { created, skipped }))
 }
 
 // Existing handler to list all users by email (admin only)

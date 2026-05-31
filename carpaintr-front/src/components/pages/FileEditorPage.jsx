@@ -23,9 +23,9 @@ const filesystemConfigs = [
 ];
 
 const FileEditorPage = () => {
-  useDocumentTitle("Document title: Customization");
+  useDocumentTitle("Document title: Data Editor");
   return (
-    <div>
+    <div data-testid="fileeditor-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

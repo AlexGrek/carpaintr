@@ -20,6 +20,7 @@ const SelectionInput = ({
   labels = null,
   labelFunction = null,
   mode = "bubbles",
+  dataTestId,
 }) => {
   const handleSelect = (value) => {
     if (onChange) onChange(value);
@@ -51,7 +52,7 @@ const SelectionInput = ({
   };
   if (mode === "bubbles")
     return (
-      <HStack wrap className="selection-input">
+      <HStack wrap className="selection-input" data-testid={dataTestId}>
         {name && <span>{name}:</span>}
         {!selectedValue ? (
           <div className="button-container">
@@ -67,6 +68,11 @@ const SelectionInput = ({
                       className="fade-in-selection"
                       style={{ animationDelay: `${index * 0.02}s` }} // Staggered animation
                       onClick={() => handleSelect(value)}
+                      data-testid={
+                        dataTestId
+                          ? `${dataTestId}-option-${String(value)}`
+                          : undefined
+                      }
                     >
                       {getLabel(value)}
                     </Button>
@@ -87,6 +93,7 @@ const SelectionInput = ({
               icon={<GridIcon />}
               appearance="subtle"
               onClick={handleEdit}
+              data-testid={dataTestId ? `${dataTestId}-reset` : undefined}
             />
           </div>
         )}
@@ -108,6 +115,7 @@ const SelectionInput = ({
         data={data}
         onChange={handleSelect}
         searchable={data.length > 4}
+        data-testid={dataTestId}
       />
     );
   }

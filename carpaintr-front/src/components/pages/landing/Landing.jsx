@@ -97,11 +97,11 @@ const Header = () => {
           </li>
         </ul>
         <div className="auth-buttons">
-          <a href="/app/login" className="login-btn">
+          <a href="/app/login" className="login-btn" data-testid="landing-login-link">
             {isMobile && <LogIn size={18} />}
             <Trans>Log In</Trans>
           </a>
-          <a href="/app/register" className="cta-btn">
+          <a href="/app/register" className="cta-btn" data-testid="landing-register-link">
             {isMobile && <UserPlus size={18} />}
             <Trans>Join</Trans>
           </a>
@@ -401,7 +401,7 @@ const AutoLabLanding = () => {
   }, []);
 
   return (
-    <div className="autolab-landing">
+    <div className="autolab-landing" data-testid="landing-page">
       <Header />
       <Hero />
       <Features />

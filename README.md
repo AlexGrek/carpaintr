@@ -10,11 +10,16 @@ A car paint calculation and management system with automated backups, user authe
 # Install Task runner
 go install github.com/go-task/task/v3/cmd/task@latest
 
+# First time (or after updating repo data/): sync bundled tables & catalog data
+task dev-data
+
 # Start development environment (frontend + backend)
 task dev
 ```
 
-Access the application at http://localhost:3000
+Access the application at http://localhost:5173 (Vite default; API proxied to :8080)
+
+**Fresh local database:** `task reset` wipes Sled + user files and re-syncs `data/common`. Use `task reset POPULATE=1` to also create 30 seed logins (`user1@example.com` / `test1`, …).
 
 ## Documentation
 
@@ -88,29 +93,52 @@ carpaintr/
 task dev
 
 # Individual services
-task frontend          # Vite dev server on :3000
+task frontend          # Vite dev server on :5173 (see carpaintr-front vite config)
 task backend           # Rust API on :8080
+
+# Sync bundled app data into backend-service-rust/data/common
+task dev-data
 ```
 
-**Frontend:** http://localhost:3000 (proxies API to :8080)
+**Frontend:** http://localhost:5173 (proxies API to :8080)  
 **Backend API:** http://localhost:8080
+
+### Local Dev Data & Seed Users
+
+```bash
+task reset               # Stop dev servers; wipe Sled DB + data/users; re-sync data/common
+task reset POPULATE=1    # Same, then register 30 seed users (backend started briefly)
+task populate            # Register seed users (starts backend if needed); license bootstrap admin + **new** seed users
+task populate:licenses # Force licenses for bootstrap admin + all 30 seed users (including existing)
+task kill-dev            # Kill stale processes on :8080 / :5173
+```
+
+**Accounts** (via `task populate`, uses `POST /admin/users/bulk`):
+- Bootstrap admin: `admin@admin.com` / `admin123` (must be in `admins.txt`)
+- Seed users: `user1@example.com` … `user30@example.com` / `test1` … `test30`
+- New seed users automatically receive a license; users that already exist are not modified
 
 ### Run Tests
 
 ```bash
-# Integration tests (pytest)
-task test              # All tests
+# Full integration test run (recommended): PDF mock + backend if needed
+task itests
+
+# Pytest only (backend must already be on :8080)
+task test              # All tests (~40+, parallel via pytest-xdist)
 task test:auth         # Authentication tests
-task test:admin        # Admin functionality tests
+task test:admin        # Admin tests
 task test:license      # License management tests
+task test:pdf          # PDF/HTML generation (needs backend started via task itests)
 task test:cov          # With coverage report
+task test:check        # Verify backend is reachable
 
 # Frontend linting
 cd carpaintr-front && npm run lint
 cd carpaintr-front && npm run lint:fix
 ```
 
-See [Development Guide](docs/development.md) for detailed testing documentation.
+Integration tests live in `backend-integration-tests/` (pytest + httpx + **uv**). See [backend-integration-tests/README.md](backend-integration-tests/README.md) and [Development Guide](docs/development.md#integration-testing).
 
 ### Available Tasks
 
@@ -123,8 +151,17 @@ task --list            # Show all available tasks
 | **Development** | `task dev` | Start frontend + backend |
 | | `task frontend` | Start frontend dev server |
 | | `task backend` | Start backend with hot reload |
-| **Testing** | `task test` | Run integration tests |
+| | `task dev-data` | Sync `data/common` → `backend-service-rust/data/common` |
+| | `task reset` | Wipe local Sled DB + user files; re-sync common data |
+| | `task reset POPULATE=1` | Reset + register seed users `user1`…`user30` |
+| | `task populate` | Register seed users; license bootstrap admin + new seed users |
+| | `task populate:licenses` | Force licenses for bootstrap admin + all 30 seed users |
+| | `task kill-dev` | Kill processes on :8080 / :5173 |
+| **Testing** | `task itests` | Full itest flow: PDF mock, backend, pytest, teardown |
+| | `task test` | Run integration tests (backend must be up) |
+| | `task test:auth` / `test:admin` / `test:license` / `test:pdf` | Filter by marker |
 | | `task test:cov` | Run tests with coverage |
+| | `task test:check` | Check backend health |
 | **Docker** | `task docker-build` | Build all Docker images |
 | | `task docker-push` | Push images to registry |
 | | `task redeploy` | Build, push, restart k8s pods |
@@ -233,7 +270,7 @@ helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
 ```
 
 **Three-service architecture:**
-1. **Frontend** (React/Vite) - User interface on :3000
+1. **Frontend** (React/Vite) - User interface on :5173
 2. **Backend API** (Axum/Rust) - REST API on :8080
 3. **PDF Service** (Flask/Python) - PDF generation on :5000
 
@@ -247,7 +284,7 @@ helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
 - ✅ **PDF Generation** - HTML to PDF rendering
 - ✅ **Automated Backups** - Kubernetes CronJob with configurable retention
 - ✅ **i18n Support** - English and Ukrainian localization
-- ✅ **Integration Tests** - Comprehensive pytest test suite
+- ✅ **Integration Tests** - pytest + uv suite (`task itests`), PDF mock, 30 seed users
 
 ## Environment Variables
 
@@ -301,6 +338,10 @@ npm install
 
 # Tests failing
 task test:check                  # Verify backend is running
+task itests                      # Starts backend + PDF mock automatically
+
+# Stale or corrupt local data
+task reset POPULATE=1            # Clean Sled + user dirs + seed accounts
 ```
 
 ### Deployment Issues

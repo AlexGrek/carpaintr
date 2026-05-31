@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 pub enum FixAction {
     #[serde(rename = "replace")]
     Replace { replacement: String },
+    #[serde(rename = "normalize_whitespace")]
+    NormalizeWhitespace,
     #[serde(rename = "no_action")]
     NoAction,
 }
@@ -32,6 +34,7 @@ impl ValidationRule {
             FixAction::Replace { replacement } => {
                 other.replace(&self.matcher, replacement).to_string()
             }
+            FixAction::NormalizeWhitespace => other.split_whitespace().collect::<Vec<_>>().join(" "),
             FixAction::NoAction => other.to_string(),
         }
     }
@@ -48,10 +51,23 @@ pub fn make_basic_validation_rules() -> Vec<ValidationRule> {
         },
         ValidationRule {
             matcher: "  ".to_string(),
-            key: None,
-            fix_action: FixAction::Replace {
-                replacement: " ".to_string(),
-            },
+            key: Some("Список деталь укр".to_string()),
+            fix_action: FixAction::NormalizeWhitespace,
+        },
+        ValidationRule {
+            matcher: "  ".to_string(),
+            key: Some("зона".to_string()),
+            fix_action: FixAction::NormalizeWhitespace,
+        },
+        ValidationRule {
+            matcher: "  ".to_string(),
+            key: Some("деталь 1".to_string()),
+            fix_action: FixAction::NormalizeWhitespace,
+        },
+        ValidationRule {
+            matcher: "  ".to_string(),
+            key: Some("деталь 2".to_string()),
+            fix_action: FixAction::NormalizeWhitespace,
         },
         ValidationRule {
             matcher: "5дв.".to_string(),

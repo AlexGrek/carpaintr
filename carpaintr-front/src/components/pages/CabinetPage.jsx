@@ -34,7 +34,7 @@ const CabinetPage = () => {
   );
 
   return (
-    <div>
+    <div data-testid="cabinet-page">
       <TopBarUser />
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
         <Panel>

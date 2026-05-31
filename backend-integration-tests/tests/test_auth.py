@@ -123,23 +123,13 @@ class TestLogin:
     async def test_login_valid_credentials(
         self,
         http_client: httpx.AsyncClient,
-        test_user_credentials: Dict[str, str],
+        seed_user: Dict[str, str],
         backend_health_check,
     ):
-        """Test login with valid credentials returns a token."""
-        # Ensure user exists
-        await http_client.post(
-            "/register",
-            json={
-                **test_user_credentials,
-                "company_name": "Test Company",
-            },
-        )
-
-        # Now login
+        """Test login with seed user credentials (user1@example.com / test1)."""
         response = await http_client.post(
             "/login",
-            json=test_user_credentials,
+            json={"email": seed_user["email"], "password": seed_user["password"]},
         )
 
         assert response.status_code == 200, (

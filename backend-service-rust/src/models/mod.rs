@@ -116,6 +116,23 @@ pub enum ManageUserRequest {
     ChangePassword { email: String, data: String },
 }
 
+#[derive(Debug, Deserialize)]
+pub struct BulkCreateUserEntry {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BulkCreateUsersRequest {
+    pub users: Vec<BulkCreateUserEntry>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BulkCreateUsersResponse {
+    pub created: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
 // Add the new license generation request structs here
 pub mod license_requests {
     use super::*;

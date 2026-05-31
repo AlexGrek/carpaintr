@@ -647,6 +647,29 @@ Clear all in-memory caches.
 
 ---
 
+### `POST /api/v1/admin/users/bulk`
+Create many user accounts in one request. Skips emails that already exist.
+
+**Request:**
+```json
+{
+  "users": [
+    { "email": "user1@example.com", "password": "test1" },
+    { "email": "user2@example.com", "password": "test2" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "created": ["user1@example.com"],
+  "skipped": ["user2@example.com"]
+}
+```
+
+---
+
 ### `POST /api/v1/admin/manageuser`
 Delete a user or change their password.
 

@@ -81,14 +81,28 @@ fn validate_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str
 }
 
 fn fix_table_value(validators: &Vec<ValidationRule>, value: &str, key: &str) -> Option<String> {
+    let mut updated = value.to_string();
+    let mut changed = false;
+
     for validator in validators {
-        if validator.does_apply(value, key) {
-            return Some(validator.apply(value).trim().to_string());
+        if validator.does_apply(&updated, key) {
+            let next = validator.apply(&updated);
+            if next != updated {
+                updated = next;
+                changed = true;
+            }
         }
     }
-    if has_leading_or_trailing_whitespace(value) {
-        return Some(value.trim().to_string());
+
+    if has_leading_or_trailing_whitespace(&updated) {
+        updated = updated.trim().to_string();
+        changed = true;
     }
+
+    if changed {
+        return Some(updated);
+    }
+
     None
 }
 
@@ -386,6 +400,8 @@ pub async fn lookup_part_in_table_any_type(
 
 #[cfg(test)]
 mod tests {
+    use crate::calc::constants::CAR_PART_DETAIL_UKR_FIELD;
+    use crate::models::table_validation::make_basic_validation_rules;
     use crate::utils::filesystem::merge_directories;
 
     use super::*;
@@ -445,5 +461,25 @@ mod tests {
         merged_filenames.sort();
 
         assert_eq!(merged_filenames, vec!["file1.txt"]);
+    }
+
+    #[test]
+    fn test_fix_table_value_collapses_internal_whitespace_for_part_names() {
+        let rules = make_basic_validation_rules();
+        let value = "Двері  задні   праві";
+
+        let fixed = fix_table_value(&rules, value, CAR_PART_DETAIL_UKR_FIELD);
+
+        assert_eq!(fixed, Some("Двері задні праві".to_string()));
+    }
+
+    #[test]
+    fn test_fix_table_value_applies_multiple_rules_in_single_pass() {
+        let rules = make_basic_validation_rules();
+        let value = "Двері  багажніка 5дв.";
+
+        let fixed = fix_table_value(&rules, value, CAR_PART_DETAIL_UKR_FIELD);
+
+        assert_eq!(fixed, Some("Двері багажника 5 дверей".to_string()));
     }
 }

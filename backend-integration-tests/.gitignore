@@ -51,3 +51,4 @@ Thumbs.db
 # Test artifacts
 test-results/
 .tox/
+.uv-sync.stamp

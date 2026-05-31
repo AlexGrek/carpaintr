@@ -1,6 +1,8 @@
 version: "3"
 
 vars:
+  ITESTS_DIR: ./backend-integration-tests
+  BACKEND_DIR: ./backend-service-rust
   # Docker Hub images
   HUB_API_IMAGE: "grekodocker/autolab-api"
   HUB_PDF_IMAGE: "grekodocker/autolab-pdf" # Now uses Playwright (lightweight)
@@ -415,20 +417,170 @@ tasks:
     desc: Kill all stale dev servers (backend :8080, frontend :5173)
     cmds:
       - echo "Stopping stale dev servers..."
-      - lsof -ti :8080 | xargs kill -9 2>/dev/null && echo "  Killed stale backend (:8080)" || echo "  No stale backend on :8080"
-      - lsof -ti :5173 | xargs kill -9 2>/dev/null && echo "  Killed stale frontend (:5173)" || echo "  No stale frontend on :5173"
-      - pkill -f "cargo.watch" 2>/dev/null && echo "  Killed cargo-watch" || true
+      - ./scripts/reset-local-dev-kill.sh
       - echo "Done."
 
-  # Integration testing tasks
+  reset:
+    desc: Reset local dev DB (Sled) and user files; re-sync data/common (POPULATE=1 to register seed users)
+    cmds:
+      - chmod +x ./scripts/reset-local-dev.sh ./scripts/reset-local-dev-kill.sh
+      - POPULATE={{.POPULATE | default "0"}} ./scripts/reset-local-dev.sh
+
+  # Integration testing tasks (pytest + uv, see backend-integration-tests/)
+  itests:
+    desc: Run integration tests (starts backend if needed, tears down after)
+    cmd: |
+      #!/usr/bin/env bash
+      set -e
+
+      STARTED_BACKEND=0
+      STARTED_PDF_MOCK=0
+      REPLACED_EXISTING_BACKEND=0
+      BACKEND_ALREADY_UP=0
+
+      echo "==> Checking Python dependencies (backend-integration-tests)..."
+      if [ ! -f "{{.ITESTS_DIR}}/.uv-sync.stamp" ] \
+        || [ "{{.ITESTS_DIR}}/uv.lock" -nt "{{.ITESTS_DIR}}/.uv-sync.stamp" ] \
+        || [ "{{.ITESTS_DIR}}/pyproject.toml" -nt "{{.ITESTS_DIR}}/.uv-sync.stamp" ]; then
+        echo "    Syncing dependencies..."
+        (cd {{.ITESTS_DIR}} && uv sync --frozen)
+        touch "{{.ITESTS_DIR}}/.uv-sync.stamp"
+      else
+        echo "    Dependencies already synced (lockfile unchanged)"
+      fi
+
+      if ! [ -f /tmp/carpaintr-pdfgen-mock.pid ] \
+        || ! kill -0 "$(cat /tmp/carpaintr-pdfgen-mock.pid)" 2>/dev/null; then
+        echo "==> Starting PDF generation mock..."
+        rm -f /tmp/carpaintr-pdfgen-mock.pid /tmp/carpaintr-pdfgen-mock.port /tmp/carpaintr-pdfgen-mock.url
+        PDF_MOCK_LOG=/tmp/carpaintr-pdfgen-mock.log
+        (cd {{.ITESTS_DIR}} && uv run python -m tests.run_pdfgen_mock > "$PDF_MOCK_LOG" 2>&1 &)
+        for i in $(seq 1 30); do
+          if [ -f /tmp/carpaintr-pdfgen-mock.url ]; then
+            break
+          fi
+          sleep 0.2
+        done
+        if [ ! -f /tmp/carpaintr-pdfgen-mock.url ]; then
+          echo "ERROR: PDF mock did not start. Log:"
+          tail -20 "$PDF_MOCK_LOG" 2>/dev/null || true
+          exit 1
+        fi
+        STARTED_PDF_MOCK=1
+        export PDF_GEN_URL_POST="$(cat /tmp/carpaintr-pdfgen-mock.url)"
+        export PDFGEN_MOCK_URL="${PDF_GEN_URL_POST%/generate}"
+        echo "    PDF mock at $PDFGEN_MOCK_URL"
+      else
+        echo "==> PDF mock already running"
+        export PDF_GEN_URL_POST="$(cat /tmp/carpaintr-pdfgen-mock.url)"
+        export PDFGEN_MOCK_URL="${PDF_GEN_URL_POST%/generate}"
+      fi
+
+      if curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+        echo "==> Backend already running on :8080"
+        BACKEND_ALREADY_UP=1
+        export CARPAINTR_ITEST_SKIP_PDF=1
+        echo "    PDF output tests will be skipped (restart via task itests for full coverage)"
+      else
+        echo "==> Building backend..."
+        (cd {{.BACKEND_DIR}} && cargo build)
+
+        for round in $(seq 1 40); do
+          PIDS="$(lsof -ti TCP:8080 -sTCP:LISTEN 2>/dev/null || true)"
+          [ -z "$PIDS" ] && break
+          REPLACED_EXISTING_BACKEND=1
+          if [ "$round" -eq 1 ]; then
+            echo "==> Freeing port 8080 (pid(s): $(echo "$PIDS" | tr '\n' ' ' | sed 's/ $//'))..."
+            for pid in $PIDS; do kill "$pid" 2>/dev/null || true; done
+          else
+            for pid in $PIDS; do kill -9 "$pid" 2>/dev/null || true; done
+          fi
+          sleep 0.2
+        done
+
+        echo "==> Starting backend (PDF_GEN_URL_POST=$PDF_GEN_URL_POST)..."
+        pushd {{.BACKEND_DIR}} > /dev/null
+        PDF_GEN_URL_POST="$PDF_GEN_URL_POST" cargo run > /tmp/carpaintr-api.log 2>&1 &
+        echo $! > /tmp/carpaintr-api.pid
+        popd > /dev/null
+        STARTED_BACKEND=1
+
+        echo -n "    Waiting for backend"
+        for i in $(seq 1 60); do
+          if curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+            echo " ready"
+            break
+          fi
+          printf "."
+          sleep 1
+        done
+
+        if ! curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+          echo ""
+          echo "ERROR: backend did not start within 60s. Last logs:"
+          tail -30 /tmp/carpaintr-api.log
+          exit 1
+        fi
+      fi
+
+      EXIT_CODE=0
+      (cd {{.ITESTS_DIR}} && uv run pytest) || EXIT_CODE=$?
+
+      if [ "$STARTED_BACKEND" = "1" ]; then
+        echo "==> Stopping backend..."
+        kill "$(cat /tmp/carpaintr-api.pid)" 2>/dev/null || true
+        rm -f /tmp/carpaintr-api.pid
+      fi
+      if [ "$REPLACED_EXISTING_BACKEND" = "1" ]; then
+        echo "==> Note: a previously running process on :8080 was replaced for this itest run."
+      fi
+      if [ "$STARTED_PDF_MOCK" = "1" ]; then
+        echo "==> Stopping PDF mock..."
+        kill "$(cat /tmp/carpaintr-pdfgen-mock.pid)" 2>/dev/null || true
+        rm -f /tmp/carpaintr-pdfgen-mock.pid /tmp/carpaintr-pdfgen-mock.port /tmp/carpaintr-pdfgen-mock.url
+      fi
+
+      exit "$EXIT_CODE"
+
+  populate:
+    desc: Register 30 seed users; starts backend if needed (license admin + new users)
+    cmds:
+      - task: dev-data
+      - chmod +x ./scripts/populate-seed-users.sh ./scripts/lib/dev-stack-common.sh
+      - bash ./scripts/populate-seed-users.sh
+
+  populate:licenses:
+    desc: Force-generate licenses for all 30 seed users (starts backend if needed)
+    cmds:
+      - chmod +x ./scripts/populate-seed-users.sh ./scripts/lib/dev-stack-common.sh
+      - bash ./scripts/populate-seed-users.sh --licenses-only
+
+  check-dev:
+    desc: Verify backend (:8080) and frontend (:3000) are reachable
+    cmds:
+      - chmod +x ./scripts/ensure-dev-stack.sh ./scripts/cypress-e2e.sh
+      - bash ./scripts/ensure-dev-stack.sh --check
+
+  ensure-dev:
+    desc: Start backend and frontend if not already running (leaves them running)
+    cmds:
+      - chmod +x ./scripts/ensure-dev-stack.sh ./scripts/cypress-e2e.sh
+      - bash ./scripts/ensure-dev-stack.sh
+
+  cypress:
+    desc: Ensure dev stack + seed users, run all Cypress E2E tests (real API)
+    cmds:
+      - chmod +x ./scripts/ensure-dev-stack.sh ./scripts/cypress-e2e.sh
+      - bash ./scripts/cypress-e2e.sh
+
   test:setup:
-    desc: Setup integration test environment
+    desc: Setup integration test environment (uv sync)
     dir: backend-integration-tests
     cmds:
-      - task setup
+      - task sync
 
   test:
-    desc: Run integration tests
+    desc: Run integration tests (backend must be running)
     dir: backend-integration-tests
     cmds:
       - task test

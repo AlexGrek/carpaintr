@@ -1,120 +1,81 @@
 # Backend Integration Tests
 
-Integration test suite for the carpaintr backend service using pytest and httpx.
+Integration test suite for the carpaintr / Autolab backend API, using **pytest**, **httpx**, and **uv** (same layout as `consensual_family/itests-py`).
 
 ## Quick Start
 
 ```bash
+# From repo root — starts backend if needed, runs tests, tears down
+task itests
+
+# Or manually (backend must be on :8080)
 cd backend-integration-tests
-
-# Auto-setup (installs uv, creates venv, installs dependencies)
-task setup
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Run all tests
-task test
-
-# Run with coverage
-task test:cov
+uv sync
+uv run pytest -v
 ```
-
-## Features
-
-- ✅ **Auto-setup** - Dependencies install automatically with `task setup`
-- ✅ **Smart fixtures** - Reusable auth clients and tokens for all tests
-- ✅ **Async/await** - Modern Python async testing with httpx
-- ✅ **Task integration** - Run from project root with `task test`
-- ✅ **Coverage reports** - HTML reports with `task test:cov`
-- ✅ **Fast execution** - ~10 seconds for full test suite
 
 ## Prerequisites
 
-- Python 3.11 or higher
-- [uv](https://github.com/astral-sh/uv) package manager (auto-checked by Taskfile)
-- Backend service running at `http://localhost:8080`
+| Requirement | Version |
+|-------------|---------|
+| Python | ≥ 3.11 |
+| [uv](https://docs.astral.sh/uv/) | recent |
+| Backend | `http://localhost:8080` (or use `task itests`) |
 
-## Common Commands
+Admin tests expect `test_admin@example.com` in `backend-service-rust/admins.txt` (already listed there).
+
+## Commands
+
+From `backend-integration-tests/`:
 
 ```bash
-task setup             # Setup environment (run once)
-task test              # Run all tests
-task test:auth         # Auth tests only
-task test:admin        # Admin tests only
-task test:license      # License tests only
-task test:cov          # With coverage report
-task check-backend     # Verify backend is running
-task clean             # Clean up generated files
-task --list            # Show all available tasks
+task sync           # uv sync (cached via .uv-sync.stamp)
+task test           # all tests (4 workers via pytest-xdist)
+task test:auth      # -m auth
+task test:admin     # -m admin
+task test:license   # -m license
+task test:serial    # single process (debugging)
+task test:cov       # coverage (serial)
+task check-backend  # curl health endpoint
 ```
 
-## Current Test Coverage
+From repo root:
 
-**24 passing tests** covering:
-- User registration (valid/invalid data, duplicate emails)
-- User login (valid/invalid credentials)
-- Admin status checking (admin vs regular users)
-- JWT token validation
-- Protected endpoint access
-- License generation (admin-only, by days, with/without level)
-- License cache invalidation (admin-only)
+```bash
+task itests         # full orchestration
+task test           # pytest only (backend must already run)
+task test:auth
+task test:cov
+```
 
-## Documentation
-
-- **[Setup Guide](docs/setup.md)** - Detailed installation and configuration
-- **[Authentication Flow](docs/authentication.md)** - Understanding the two-step auth process
-- **[Fixtures Reference](docs/fixtures.md)** - Available fixtures and usage examples
-- **[Deployment](docs/deployment.md)** - Docker data sync behavior and rsync details
-
-## Project Structure
+## Project Layout
 
 ```
 backend-integration-tests/
-├── README.md               # This file
-├── pyproject.toml          # Project config and dependencies
-├── Taskfile.yml            # Task automation
-├── .env.example            # Example environment config
-├── docs/                   # Detailed documentation
-│   ├── setup.md
-│   ├── authentication.md
-│   ├── fixtures.md
-│   └── deployment.md
-└── tests/
-    ├── conftest.py         # Shared fixtures
-    ├── test_auth.py        # Authentication tests
-    └── test_license.py     # License management tests
+├── pyproject.toml      # deps + pytest config
+├── uv.lock             # pinned versions (commit this)
+├── Taskfile.yml
+├── .env.example
+├── tests/
+│   ├── README.md
+│   ├── conftest.py     # fixtures
+│   ├── helpers.py
+│   ├── test_health.py
+│   ├── test_auth.py
+│   ├── test_license.py
+│   └── test_license_protection.py
+└── docs/               # detailed guides
 ```
 
-## Quick Example
+## Writing Tests
 
 ```python
 import pytest
 
 @pytest.mark.integration
 async def test_my_endpoint(authenticated_client):
-    """Test with authenticated user."""
     response = await authenticated_client.get("/user/some_endpoint")
     assert response.status_code == 200
-    data = response.json()
-    assert "expected_field" in data
 ```
 
-## Troubleshooting
-
-**Backend not running?**
-```bash
-task check-backend  # Verify backend is accessible
-```
-
-**Authentication failures?**
-- Check that `backend-service-rust/admins.txt` contains `test_admin@example.com`
-- Verify `.env` configuration matches backend setup
-
-**Need more details?**
-- See [Setup Guide](docs/setup.md) for detailed troubleshooting
-- Check backend logs for authentication errors
-
-## Additional Resources
-
-- [pytest documentation](https://docs.pytest.org/)
-- [httpx documentation](https://www.python-httpx.org/)
-- [uv documentation](https://github.com/astral-sh/uv)
+See [tests/README.md](tests/README.md) and [docs/fixtures.md](docs/fixtures.md).

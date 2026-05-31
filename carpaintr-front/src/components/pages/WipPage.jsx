@@ -5,7 +5,7 @@ import Trans from "../../localization/Trans";
 const WipPage = () => {
   useDocumentTitle("Document title: Under construction");
   return (
-    <div>
+    <div data-testid="wip-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

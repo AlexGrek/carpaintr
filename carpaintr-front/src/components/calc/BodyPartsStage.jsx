@@ -193,6 +193,7 @@ const BodyPartsStage = ({
                 onClick={onMoveBack}
                 color="red"
                 appearance="ghost"
+                data-testid="calc-body-parts-stage-back-button"
               >
                 <Trans>Back</Trans>
               </IconButton>
@@ -201,6 +202,7 @@ const BodyPartsStage = ({
                 disabled={selectedParts === null || selectedParts.length === 0}
                 color="green"
                 appearance="primary"
+                data-testid="calc-body-parts-stage-accept-button"
               >
                 <Trans>Accept</Trans>
               </Button>
@@ -214,6 +216,7 @@ const BodyPartsStage = ({
               value={repairQuality}
               label={str("Repair quality")}
               style={{ width: "100%" }}
+              testId="calc-repair-quality-picker"
             />
             <CarBodyMain
               partsVisual={partsVisual}

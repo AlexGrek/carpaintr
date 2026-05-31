@@ -51,7 +51,7 @@ const LicenseStatusPage = () => {
   const license = licenseStatus?.license;
 
   return (
-    <div className="license-status-page">
+    <div className="license-status-page" data-testid="license-page">
       <TopBarUser />
       <div className="license-status-body fade-in-simple">
         <header className="license-status-hero">

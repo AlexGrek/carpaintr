@@ -92,7 +92,14 @@ pub async fn admin_check_middleware(
 }
 
 /// Paths that require JWT but must not be license-protected.
-const LICENSE_EXEMPT_PATHS: &[&str] = &["/notifications/unread-count"];
+const LICENSE_EXEMPT_PATHS: &[&str] = &[
+    "/notifications/unread-count",
+    "/api/v1/user/support_request_submit",
+    "/api/v1/user/support_requests",
+    "/api/v1/user/support_request",
+    "/api/v1/user/support_message",
+    "/api/v1/user/attach",
+];
 
 pub async fn license_expiry_middleware(
     AuthenticatedUser(user_email): AuthenticatedUser,

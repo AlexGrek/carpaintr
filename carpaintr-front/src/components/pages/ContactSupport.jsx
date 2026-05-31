@@ -6,7 +6,7 @@ import UserSupportRequests from "../admreq/UserSupportRequests";
 const ContactSupport = () => {
   useDocumentTitle("Document title: Contact Support");
   return (
-    <div>
+    <div data-testid="report-page">
       <TopBarUser />
       <div
         className="fade-in-simple"

@@ -70,7 +70,12 @@ const RenderUnsaved = ({ dataString, onLoadData }) => {
         </div>
         <CarCard data={data} style={{ width: "100%", boxShadow: "none", border: "none", padding: 0 }} />
         <div style={{ marginTop: 14 }}>
-          <Button appearance="primary" onClick={() => onLoadData(data)} style={{ width: "100%" }}>
+          <Button
+            appearance="primary"
+            onClick={() => onLoadData(data)}
+            style={{ width: "100%" }}
+            data-testid="calc-main-resume-previous-button"
+          >
             <Trans>Continue</Trans>
           </Button>
         </div>
@@ -94,7 +99,10 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
     <div style={styles.sampleStage}>
       <div className="fade-in-simple">
         <div style={cardContainerStyle}>
-          <CreateCard onClick={() => onNext()} />
+          <CreateCard
+            onClick={() => onNext()}
+            dataTestId="calc-main-create-new-button"
+          />
 
           {unsaved && <RenderUnsaved dataString={unsaved} onLoadData={onLoad} />}
 
@@ -102,6 +110,7 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
             appearance="ghost"
             onClick={() => setDrawerOpen(true)}
             style={openProjectBtnStyle}
+            data-testid="calc-main-open-project-button"
           >
             <FolderOpen size={16} />
             <Trans>Open project</Trans>
@@ -115,6 +124,7 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         style={{ maxHeight: "75vh" }}
+        data-testid="calc-main-open-project-drawer"
       >
         <Drawer.Header>
           <Drawer.Title>

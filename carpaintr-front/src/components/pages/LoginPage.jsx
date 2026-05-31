@@ -13,10 +13,17 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { resetCompanyInfo, authFetch } from "../../utils/authFetch";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import "./LoginPage.css";
+
+registerTranslations("ua", {
+  "Unauthorized: Incorrect username or password.":
+    "Невірна електронна адреса або пароль.",
+});
 
 const LoginPage = () => {
   useDocumentTitle("Document title: Sign in");
+  const { str } = useLocale();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -66,7 +73,7 @@ const LoginPage = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        throw new Error("Unauthorized: Incorrect username or password.");
+        throw new Error(str("Unauthorized: Incorrect username or password."));
       }
 
       if (!response.ok) throw new Error("Login failed. Please try again.");
@@ -78,16 +85,17 @@ const LoginPage = () => {
         navigate(redirect);
       }
     } catch (error) {
-      toaster.push(<Message type="error">{error.message}</Message>, {
-        placement: "topCenter",
-      });
+      toaster.push(
+        <Message type="error">{str(error.message)}</Message>,
+        { placement: "topCenter" },
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container className="auth-page">
+    <Container className="auth-page" data-testid="login-page">
       <Panel className={`auth-panel${visible ? " auth-panel--visible" : ""}`} bordered>
         <Link
           to="/"
@@ -103,7 +111,11 @@ const LoginPage = () => {
         <Form fluid>
           <Form.Group>
             <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
-            <Input value={username} onChange={(value) => setUsername(value)} />
+            <Input
+              value={username}
+              onChange={(value) => setUsername(value)}
+              data-testid="login-email-input"
+            />
           </Form.Group>
           <Form.Group>
             <Form.ControlLabel>Пароль</Form.ControlLabel>
@@ -129,6 +141,7 @@ const LoginPage = () => {
               onClick={handleLogin}
               loading={loading}
               block
+              data-testid="login-submit-button"
             >
               Увійти{" "}
             </Button>
@@ -136,10 +149,16 @@ const LoginPage = () => {
         </Form>
         {/* Footer links */}
         <div style={{ marginTop: "16pt", textAlign: "center" }}>
-          <Link to="/app/register" style={{ marginRight: "20px" }}>
+          <Link
+            to="/app/register"
+            style={{ marginRight: "20px" }}
+            data-testid="login-register-link"
+          >
             Реєстрація
           </Link>
-          <Link to="/">← Назад на головну</Link>
+          <Link to="/" data-testid="login-back-home-link">
+            ← Назад на головну
+          </Link>
         </div>
       </Panel>
     </Container>

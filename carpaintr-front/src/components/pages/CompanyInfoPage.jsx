@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader } from "rsuite";
-import { getCompanyInfo } from "../../utils/authFetch";
+import { getOrFetchCompanyInfo } from "../../utils/authFetch";
 import LicenseInfoTable from "../LicenseInfoTable";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { dump } from "js-yaml";
@@ -14,29 +14,42 @@ const CompanyInfoPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchCompanyInfoNow = async () => {
       try {
-        const data = getCompanyInfo();
+        const data = await getOrFetchCompanyInfo();
+        if (cancelled) return;
         setCompanyInfo(data);
-        setCompanyInfoRaw(dump(data));
+        setCompanyInfoRaw(data ? dump(data) : "");
       } catch (error) {
         console.error(error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchCompanyInfoNow();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
-    return <Loader center content={str("Loading...")} />;
+    return (
+      <div data-testid="company-info-page">
+        <Loader center content={str("Loading...")} />
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
+    <div
+      data-testid="company-info-page"
+      style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
+    >
       <LicenseInfoTable companyInfo={companyInfo} />
-      <code>{companyInfoRaw}</code>
+      {companyInfoRaw ? <code>{companyInfoRaw}</code> : null}
     </div>
   );
 };

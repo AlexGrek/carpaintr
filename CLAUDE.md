@@ -21,6 +21,16 @@ task dev
 task frontend          # Vite dev server (proxies /api to localhost:8080)
 task backend           # cargo watch -x run
 
+# Local data (first run / after data/ updates)
+task dev-data          # rsync data/common → backend-service-rust/data/common
+
+# Reset local dev state (Sled DB + per-user files; keeps/re-syncs common catalog)
+task reset             # Wipe data/sled_db, data/users, data/deleted_users
+task reset POPULATE=1  # Reset + register seed users user1@example.com … user30
+task populate          # Register seed users; starts backend if needed
+task populate:licenses # Force licenses for all 30 seed users (starts backend if needed)
+task kill-dev          # Kill stale :8080 / :5173 / cargo-watch
+
 # Frontend linting
 cd carpaintr-front && npm run lint
 cd carpaintr-front && npm run lint:fix
@@ -130,65 +140,84 @@ kubectl get secret autolab-api-secret -n <namespace> -o jsonpath='{.data}' | jq 
 
 ## Integration Testing
 
-A comprehensive pytest-based integration test suite is available in `backend-integration-tests/`.
+pytest + httpx + **uv** suite in `backend-integration-tests/` (layout similar to `consensual_family/itests-py`).
 
 ### Quick Start
 
 ```bash
-# Run all integration tests (auto-installs dependencies)
+# Recommended: sync deps, start PDF mock + backend if needed, run pytest, teardown
+task itests
+
+# Pytest only (backend must already listen on :8080)
 task test
-
-# Run specific test categories
-task test:auth         # Authentication tests
-task test:admin        # Admin-specific tests
-task test:license      # License management tests
-task test:cov          # With coverage report
-
-# Check if backend is running
-task test:check
+task test:auth         # -m auth
+task test:admin        # -m admin
+task test:license      # -m license
+task test:pdf          # PDF/HTML via pdfgen mock (use task itests for full coverage)
+task test:cov          # Coverage (serial)
+task test:check        # curl health endpoint
 ```
+
+**Note:** If a backend is already running on `:8080` without `PDF_GEN_URL_POST` pointing at the test mock, `task itests` skips `@pytest.mark.pdf` tests. Stop the backend and run `task itests` for the full suite.
 
 ### Test Environment Setup
 
-The test suite uses `uv` (modern Python package manager) and automatically sets up a virtual environment on first run:
-
 ```bash
-# First time setup (if not using task commands)
 cd backend-integration-tests
-task setup             # Creates venv, installs dependencies
-source .venv/bin/activate
-
-# Or let test commands auto-setup
-task test              # Will run setup if needed
+uv sync                # Install deps (commit uv.lock)
+uv run pytest -v       # Manual run
+task populate          # Register seed users (from repo root: task populate)
 ```
 
-**Requirements:**
-- Python 3.11+
-- `uv` package manager (install: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Backend running at `localhost:8080`
+**Requirements:** Python 3.11+, [uv](https://docs.astral.sh/uv/), backend at `http://localhost:8080` (or use `task itests`).
+
+### PDF Generation Mock
+
+`backend-integration-tests/tests/pdfgen_mock.py` — minimal HTTP server implementing `POST /generate/pdf`, `POST /generate/html`, `GET /health`. `task itests` starts it via `tests/run_pdfgen_mock.py` and sets `PDF_GEN_URL_POST` on the backend process.
+
+Introspection: `GET /_mock/requests`, `POST /_mock/reset`.
+
+### Seed Users
+
+`tests/seed_users.py` — bootstrap admin `admin@admin.com` / `admin123`, then seed users `user{n}@example.com` / `test{n}` (`n` = 1…30) via **`POST /admin/users/bulk`**. **Licenses** are generated for the bootstrap admin on every populate and for seed users **newly created** in that run (existing seed users unchanged).
+
+- **`task populate`** — ensure admin + bulk-create seed users + license bootstrap admin and new seed users (default)
+- **`task populate:licenses`** — issue licenses for bootstrap admin and all 30 seed users (including existing)
+- **Session autouse fixture `seeded_users`** — ensures pool exists before every test run
+- Fixtures: `seed_user`, `seed_user_token`, `seed_authenticated_client`
 
 ### Test Structure
 
 ```
 backend-integration-tests/
+├── pyproject.toml           # uv + pytest config (package = false)
+├── uv.lock
+├── Taskfile.yml             # sync, test, populate, check-backend
 ├── tests/
-│   ├── conftest.py          # Reusable fixtures (auth, clients, etc.)
-│   ├── test_auth.py         # Authentication & admin tests
-│   ├── test_license.py      # License management tests
-│   └── test_example_*.py    # Additional test examples
-├── pyproject.toml           # Dependencies & pytest config
-├── Taskfile.yml             # Test tasks
-└── README.md                # Detailed documentation
+│   ├── conftest.py          # Fixtures (auth, seeded_users, pdfgen_mock)
+│   ├── seed_users.py        # Seed pool + ensure_* helpers
+│   ├── populate_users.py    # CLI for task populate
+│   ├── pdfgen_mock.py       # PDF service mock
+│   ├── run_pdfgen_mock.py   # Daemon for task itests
+│   ├── test_auth.py
+│   ├── test_license.py
+│   ├── test_license_protection.py
+│   ├── test_pdf_generation.py
+│   ├── test_seeded_users.py
+│   └── test_health.py
+└── README.md
 ```
 
 ### Key Fixtures (in `conftest.py`)
 
-- **`http_client`** - Unauthenticated async HTTP client
-- **`authenticated_client`** - Auto-authenticated test user client
-- **`admin_authenticated_client`** - Auto-authenticated admin client
-- **`test_user_token`** / **`test_admin_token`** - JWT tokens
-- **`generate_license`** - Helper function to generate licenses (requires admin auth)
-- **`backend_health_check`** - Ensures backend is running before tests
+- **`http_client`** — Unauthenticated async HTTP client
+- **`authenticated_client`** / **`admin_authenticated_client`** — JWT clients
+- **`seeded_users`** (autouse) — Ensures `user1`…`user30` exist
+- **`seed_user`** / **`seed_authenticated_client`** — First seed user
+- **`test_user_token`** / **`test_admin_token`** — Legacy test accounts (`test_user@example.com`, `test_admin@example.com`)
+- **`generate_license`** — Admin helper to issue licenses
+- **`pdfgen_mock`** — Attach to running PDF mock (or start in-process)
+- **`backend_health_check`** — Exit early if backend is down
 
 ### Authentication Flow (Important)
 
@@ -264,7 +293,22 @@ task test:cov          # Run with coverage report
 # Opens htmlcov/index.html for detailed coverage analysis
 ```
 
-For more details, see `backend-integration-tests/README.md`.
+For more details, see `backend-integration-tests/README.md` and `backend-integration-tests/tests/README.md`.
+
+## Local Dev Reset
+
+**Script:** `scripts/reset-local-dev.sh` (via `task reset`)
+
+Wipes (paths under `backend-service-rust/`, honouring `config.env`):
+
+- `data/sled_db` — Sled database
+- `data/users/` — per-user catalogs, calculations, attachments
+- `data/deleted_users/` — soft-deleted user trees
+- `data/frontend_failure_reports.log`, `application.log`
+
+Re-syncs **`data/common/`** from repo `data/common/` via `scripts/load-dev-data.sh`. Does **not** remove bundled catalog source in the repo.
+
+`POPULATE=1` runs `task populate` (starts backend if needed) to register seed accounts.
 
 ## Architecture Overview
 
@@ -528,7 +572,9 @@ Flask service using WeasyPrint for HTML→PDF conversion. Receives calculation d
 
 ## Database
 
-Sled embedded key-value store at `/data/sled_db`. No migrations - schema is implicit in key patterns like `users::{id}`, `licenses::{email}`, `calculations::{user_id}::{calc_id}`.
+Sled embedded key-value store at `backend-service-rust/data/sled_db` locally (`DATABASE_URL=data/sled_db`). No migrations — schema is implicit in key patterns like `users::{email}`, etc.
+
+Per-user files live under `data/users/{encoded_email}/` (catalog, attachments, saved calculations). **`task reset`** clears DB + user trees for local dev.
 
 ## Environment Variables (Backend)
 

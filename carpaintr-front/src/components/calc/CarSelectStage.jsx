@@ -94,7 +94,7 @@ const CarSelectStage = ({
   const { str } = useLocale();
 
   return (
-    <div style={styles.sampleStage}>
+    <div style={styles.sampleStage} data-testid="calc-car-select-stage">
       <div
         style={{ ...styles.sampleStageInner, opacity: fadeOutStarted ? 0 : 1 }}
       >
@@ -105,6 +105,7 @@ const CarSelectStage = ({
               disabled={carClass === null || bodyType === null || year === null}
               color="green"
               appearance="primary"
+              data-testid="calc-car-stage-accept-button"
             >
               <Trans>Accept</Trans>
             </Button>
@@ -136,22 +137,26 @@ const CarSelectStage = ({
                 value={make}
                 onChange={setMake}
                 placeholder={str("Car brand")}
+                data-testid="calc-car-make-input"
               ></Input>
               <Input
                 value={model}
                 onChange={setModel}
                 placeholder={str("Car model")}
+                data-testid="calc-car-model-input"
               ></Input>
               <br />
               <Input
                 value={licensePlate}
                 onChange={setLicensePlate}
                 placeholder={str("License plate (optional)")}
+                data-testid="calc-car-license-plate-input"
               ></Input>
               <Input
                 value={VIN}
                 onChange={setVIN}
                 placeholder={str("VIN (optional)")}
+                data-testid="calc-car-vin-input"
               ></Input>
               <br />
               <Input
@@ -160,6 +165,7 @@ const CarSelectStage = ({
                 value={notes}
                 onChange={setNotes}
                 placeholder={str("Notes")}
+                data-testid="calc-car-notes-input"
               ></Input>
             </div>
           )}

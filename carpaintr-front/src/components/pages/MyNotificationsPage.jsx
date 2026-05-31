@@ -69,7 +69,7 @@ const MyNotificationsPage = () => {
   }, [str]);
 
   return (
-    <div>
+    <div data-testid="notifications-page">
       <TopBarUser />
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}>
         <Panel>

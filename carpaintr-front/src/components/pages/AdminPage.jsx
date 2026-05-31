@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
-import { Breadcrumb, Message, Loader } from "rsuite";
-import { useNavigate } from "react-router-dom";
+import {
+  Breadcrumb,
+  Button,
+  Loader,
+  Message,
+  Panel,
+  Stack,
+  Tag,
+} from "rsuite";
+import { Link, useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import AdminTools from "../AdminTools";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -15,10 +23,20 @@ registerTranslations("ua", {
   "Admin Page": "Панель адміністратора",
   Home: "Головна сторінка",
   Dashboard: "Додатки",
+  "Admin control center": "Центр керування адміністратора",
+  "Secure access confirmed": "Безпечний доступ підтверджено",
+  "Control users, licenses, files and support requests from one workspace.":
+    "Керуйте користувачами, ліцензіями, файлами та запитами підтримки з одного місця.",
+  "Quick actions": "Швидкі дії",
+  "Manage users": "Керування користувачами",
+  "Support requests": "Запити підтримки",
+  "Admin workspace": "Робочий простір адміністратора",
+  "Open tools and manage backend operations.":
+    "Відкрийте інструменти та керуйте операціями бекенда.",
 });
 
 const AdminPage = () => {
-  const [adminStatus, setAdminStatus] = useState("");
+  const [adminStatus, setAdminStatus] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -35,11 +53,11 @@ const AdminPage = () => {
         }
 
         const data = await response.json();
-        setAdminStatus(JSON.stringify(data, null, 2)); // Format JSON for display
+        setAdminStatus(data);
       } catch (error) {
         setError(error.message);
         setTimeout(() => {
-          navigate("/"); // Redirect to root after 5 seconds
+          navigate("/");
         }, 5000);
       } finally {
         setLoading(false);
@@ -47,41 +65,113 @@ const AdminPage = () => {
     };
 
     fetchAdminStatus();
-  }, [navigate]);
+  }, [navigate, str]);
 
   if (loading) {
-    return <Loader center content={str("Loading...")} />;
+    return (
+      <div style={{ minHeight: "50vh", display: "grid", placeItems: "center" }}>
+        <Loader size="lg" content={str("Loading...")} />
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      {error ? (
-        <Message type="error" showIcon>
-          <h4>{error}</h4>
-        </Message>
-      ) : (
-        <>
-          <div className="police-line"></div>
-          <h3>
-            <code>
-              <Trans>Admin Page</Trans>
-            </code>
-          </h3>
-          <AppVersionBadge />
+    <div style={{ padding: "20px 16px 40px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gap: 16 }}>
+        <Panel bordered shaded>
+          <Stack
+            justifyContent="space-between"
+            alignItems="flex-start"
+            wrap
+            spacing={12}
+            style={{ marginBottom: 12 }}
+          >
+            <div>
+              <h2 style={{ margin: "0 0 6px 0" }}>
+                <Trans>Admin control center</Trans>
+              </h2>
+              <p style={{ margin: 0, opacity: 0.75 }}>
+                <Trans>
+                  Control users, licenses, files and support requests from one workspace.
+                </Trans>
+              </p>
+            </div>
+            <Stack spacing={8} wrap>
+              <Tag color={error ? "red" : "green"}>
+                {error ? error : str("Secure access confirmed")}
+              </Tag>
+              <AppVersionBadge />
+            </Stack>
+          </Stack>
+
           <Breadcrumb>
-            <Breadcrumb.Item href="/">
+            <Breadcrumb.Item as={Link} to="/">
               <Trans>Home</Trans>
             </Breadcrumb.Item>
-            <Breadcrumb.Item href="/app/dashboard">
+            <Breadcrumb.Item as={Link} to="/app/dashboard">
               <Trans>Dashboard</Trans>
             </Breadcrumb.Item>
             <Breadcrumb.Item active>
               <Trans>Admin Page</Trans>
             </Breadcrumb.Item>
           </Breadcrumb>
-          <AdminTools className="fade-in-simple" />
-        </>
-      )}
+        </Panel>
+
+        {error ? (
+          <Message type="error" showIcon>
+            <h4>{error}</h4>
+          </Message>
+        ) : (
+          <>
+            <Panel bordered>
+              <Stack justifyContent="space-between" wrap spacing={10}>
+                <strong>
+                  <Trans>Quick actions</Trans>
+                </strong>
+                <Stack spacing={8} wrap>
+                  <Button
+                    appearance="primary"
+                    as={Link}
+                    to="manage-users"
+                    data-testid="admin-quick-manage-users"
+                  >
+                    <Trans>Manage users</Trans>
+                  </Button>
+                  <Button
+                    appearance="ghost"
+                    as={Link}
+                    to="requests"
+                    data-testid="admin-quick-support-requests"
+                  >
+                    <Trans>Support requests</Trans>
+                  </Button>
+                </Stack>
+              </Stack>
+            </Panel>
+
+            <Panel
+              bordered
+              header={
+                <div>
+                  <strong>
+                    <Trans>Admin workspace</Trans>
+                  </strong>
+                  {adminStatus && (
+                    <span style={{ marginLeft: 8, opacity: 0.65 }}>
+                      {str("Secure access confirmed")}
+                    </span>
+                  )}
+                </div>
+              }
+            >
+              <p style={{ marginTop: 0, opacity: 0.7 }}>
+                <Trans>Open tools and manage backend operations.</Trans>
+              </p>
+              <AdminTools className="fade-in-simple" />
+            </Panel>
+          </>
+        )}
+      </div>
     </div>
   );
 };

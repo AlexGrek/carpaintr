@@ -1,14 +1,13 @@
-/* CatalogPage */
+/* CatalogPage — same soft peach gradient as UsersDashboard */
 .catalog-page {
   min-height: 100vh;
   background: linear-gradient(
     160deg,
-    #fff7ed 0%,
-    #ffedd5 15%,
-    #fed7aa 35%,
-    #fb923c 55%,
-    #f97316 75%,
-    #ea580c 100%
+    #fffcf9 0%,
+    #fff8f3 30%,
+    #fff3eb 60%,
+    #ffede0 85%,
+    #ffe6d4 100%
   );
   background-attachment: fixed;
 }
@@ -32,20 +31,18 @@
   font-style: normal;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #fff;
+  color: #0f172a;
   margin: 0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   letter-spacing: -0.02em;
 }
 
-/* Pill tabs */
+/* Pill tabs — matches dashboard view toggle */
 .catalog-tabs {
   display: inline-flex;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 14px;
+  background: #f1f5f9;
+  border-radius: 12px;
   padding: 4px;
   gap: 2px;
-  backdrop-filter: blur(8px);
 }
 
 .catalog-tab-btn {
@@ -57,15 +54,15 @@
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  color: #64748b;
   background: transparent;
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
 
 .catalog-tab-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .catalog-tab-btn.active {

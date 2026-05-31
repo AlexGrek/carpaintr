@@ -161,6 +161,7 @@ async fn main() -> tokio::io::Result<()> {
                 .route("/cache_status", get(api::v1::admin::get_cache_status))
                 .route("/cache_clear_all", post(api::v1::admin::clear_all_cache))
                 .route("/manageuser", post(api::v1::admin::manage_user))
+                .route("/users/bulk", post(api::v1::admin::bulk_create_users))
                 .route("/impersonate", post(api::v1::auth::impersonate))
                 .route(
                     "/attachment_list",

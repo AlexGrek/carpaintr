@@ -148,7 +148,9 @@ python app.py
 
 ```bash
 # Run all integration tests
-task test
+task itests            # Start backend if needed, run pytest, tear down
+
+task test              # pytest only (backend must already be running)
 
 # Run specific test categories
 task test:auth         # Authentication tests
@@ -175,7 +177,9 @@ Comprehensive pytest-based test suite in `backend-integration-tests/`.
 
 **Quick start:**
 ```bash
-task test              # Runs all tests (auto-setup on first run)
+cd backend-integration-tests && uv sync
+task itests            # Full flow from repo root
+# or: task test        # pytest only when backend is already up
 ```
 
 **Test structure:**
@@ -503,6 +507,10 @@ task --list              # Show all available tasks
 # Development
 task dev                 # Start frontend + backend
 task dev-data            # Sync data/common → backend-service-rust/data (run once / after data updates)
+task reset               # Wipe local Sled DB + data/users + data/deleted_users; re-sync common data
+task reset POPULATE=1    # Same, then register seed users (user1@example.com / test1, …)
+task populate            # Register seed users (starts backend if needed); license admin + new seed users
+task populate:licenses  # Force licenses for bootstrap admin + all 30 seed users (starts backend if needed)
 task frontend            # Start frontend only
 task backend             # Start backend only
 

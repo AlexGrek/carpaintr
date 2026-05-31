@@ -243,12 +243,17 @@ const VehicleSelect = React.memo(
                 selectedValue={selectedMake}
                 onChange={handleMakeSelect}
                 placeholder={str("Select Make")}
+                dataTestId="calc-vehicle-make-select"
               />
               <br />
               {!selectedMake && !selectedModel && (
                 <p>
                   Оберіть модель автомобіля або{" "}
-                  <a href="#" onClick={() => setSelectModelMode(false)}>
+                  <a
+                    href="#"
+                    onClick={() => setSelectModelMode(false)}
+                    data-testid="calc-vehicle-switch-to-class-mode-link"
+                  >
                     вкажіть тип вручну
                   </a>
                   .
@@ -262,6 +267,7 @@ const VehicleSelect = React.memo(
                   values={modelOptions}
                   onChange={handleModelSelect}
                   placeholder={str("Select Model")}
+                    dataTestId="calc-vehicle-model-select"
                 />
               )}
               <br />
@@ -273,6 +279,7 @@ const VehicleSelect = React.memo(
                   values={labels(bodyTypes)}
                   onChange={setBodyType}
                   placeholder={str("Select Body Type")}
+                  dataTestId="calc-vehicle-body-type-select"
                 />
               )}
             </div>
@@ -281,14 +288,22 @@ const VehicleSelect = React.memo(
             <>
               <p>
                 Оберіть тип автомобіля або{" "}
-                <a href="#" onClick={() => setSelectModelMode(true)}>
+                  <a
+                    href="#"
+                    onClick={() => setSelectModelMode(true)}
+                    data-testid="calc-vehicle-switch-to-model-mode-link"
+                  >
                   модель
                 </a>
                 .
               </p>
               <p>
                 Спробувати{" "}
-                <a href="#" onClick={() => setVinDecoderOpen(true)}>
+                <a
+                  href="#"
+                  onClick={() => setVinDecoderOpen(true)}
+                  data-testid="calc-vehicle-open-vin-decoder-link"
+                >
                   декодувати VIN код
                 </a>
                 .
@@ -296,6 +311,7 @@ const VehicleSelect = React.memo(
               <Modal
                 open={vinDecoderOpen}
                 onClose={() => setVinDecoderOpen(false)}
+                data-testid="calc-vehicle-vin-decoder-modal"
               >
                 <Modal.Header>Декодер VIN (на стадії розробки)</Modal.Header>
                 <Modal.Body>
@@ -303,11 +319,13 @@ const VehicleSelect = React.memo(
                     value={vin}
                     onChange={setVin}
                     placeholder="VIN"
+                    data-testid="calc-vehicle-vin-input"
                   ></Input>
                   <Button
                     appearance="primary"
                     disabled={vin.length != 17 || vinDecoderLoading}
                     onClick={handleVinDecode}
+                    data-testid="calc-vehicle-vin-decode-button"
                   >
                     Декодувати
                   </Button>
@@ -318,6 +336,7 @@ const VehicleSelect = React.memo(
                   <Button
                     appearance="subtle"
                     onClick={() => setVinDecoderOpen(false)}
+                    data-testid="calc-vehicle-vin-close-button"
                   >
                     Закрити
                   </Button>
@@ -332,6 +351,7 @@ const VehicleSelect = React.memo(
                 onSelect={setCarClass}
                 value={carclass}
                 label={str("CLASS")}
+                testId="calc-vehicle-class-picker"
               />
               <br />
               {carclass && (
@@ -340,6 +360,7 @@ const VehicleSelect = React.memo(
                   onSelect={setBodyType}
                   value={selectedBodyType}
                   label={str("BODY TYPE")}
+                  testId="calc-vehicle-body-type-picker"
                 />
               )}
             </div>
@@ -362,6 +383,7 @@ const VehicleSelect = React.memo(
             value={year}
             placeholder={str("Year of manufacture")}
             searchable={false}
+            data-testid="calc-vehicle-year-select"
           />
         )}
       </div>

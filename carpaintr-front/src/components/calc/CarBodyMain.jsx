@@ -173,6 +173,14 @@ const CarBodyMain = ({
     const { str } = useLocale();
     const [company, setCompany] = useState(null);
     const [showTechData, setShowTechData] = useState(false);
+    const toTestIdValue = useCallback(
+        (value) =>
+            String(value)
+                .toLowerCase()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-_]/g, ""),
+        []
+    );
 
     const mapVisual = useCallback((partName) => {
         if (partName && partsVisual[partName]) {
@@ -715,6 +723,7 @@ const CarBodyMain = ({
             {/* Debug mode toggle button */}
             <button
                 onClick={() => setShowDebugMode(prev => !prev)}
+                data-testid="calc-body-debug-toggle-button"
                 style={{
                     position: 'absolute',
                     top: '10px',
@@ -739,6 +748,7 @@ const CarBodyMain = ({
             {/* Settings cog button */}
             <button
                 onClick={() => setShowTechData(!showTechData)}
+                data-testid="calc-body-tech-data-toggle-button"
                 style={{
                     position: 'absolute',
                     top: '10px',
@@ -817,6 +827,7 @@ const CarBodyMain = ({
                                             >
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
+                                                    data-testid={`calc-body-part-details-button-${toTestIdValue(item.name)}`}
                                                     style={{
                                                         padding: isMobile ? '4px 6px' : '5px 7px',
                                                         backgroundColor: '#3b82f6',
@@ -833,6 +844,7 @@ const CarBodyMain = ({
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
+                                                    data-testid={`calc-body-part-remove-button-${toTestIdValue(item.name)}`}
                                                     style={{
                                                         padding: isMobile ? '4px 6px' : '5px 7px',
                                                         backgroundColor: '#ef4444',
@@ -924,6 +936,7 @@ const CarBodyMain = ({
                 open={drawerOpen}
                 onClose={handleDrawerSave}
                 size={isMobile ? 'full' : 'lg'}
+                data-testid="calc-body-part-details-drawer"
             >
                 <Drawer.Header>
                     <Drawer.Title>{drawerPartDetails?.name || str("Part Details")}</Drawer.Title>
@@ -932,6 +945,7 @@ const CarBodyMain = ({
                             onClick={handleDrawerCancel}
                             appearance="subtle"
                             startIcon={<X size={18} />}
+                            data-testid="calc-body-part-details-cancel-button"
                         >
                             {!isMobile && str("Cancel")}
                         </Button>
@@ -940,6 +954,7 @@ const CarBodyMain = ({
                             appearance="primary"
                             color="green"
                             startIcon={<Check size={18} />}
+                            data-testid="calc-body-part-details-save-button"
                         >
                             {!isMobile && str("Save")}
                         </Button>
@@ -988,6 +1003,7 @@ const CarBodyMain = ({
                                             value={editedPart.action}
                                             onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
                                             style={{ maxWidth: '100%' }}
+                                            testId="calc-body-part-action-picker"
                                         />
                                     </div>
                                 );
@@ -1026,6 +1042,7 @@ const CarBodyMain = ({
                                                     <button
                                                         key={value}
                                                         onClick={() => setEditedPart(prev => ({ ...prev, damageLevel: value }))}
+                                                        data-testid={`calc-body-part-damage-level-${value}`}
                                                         style={{
                                                             flex: '1 1 auto',
                                                             minWidth: '60px',
@@ -1078,6 +1095,7 @@ const CarBodyMain = ({
                                             original: e.target.checked
                                         }))}
                                         style={{ marginRight: '8px', width: '16px', height: '16px' }}
+                                        data-testid="calc-body-part-original-checkbox"
                                     />
                                     <span>{str("Original Part")}</span>
                                 </label>
@@ -1094,6 +1112,7 @@ const CarBodyMain = ({
                                             replace: e.target.checked
                                         }))}
                                         style={{ marginRight: '8px', width: '16px', height: '16px' }}
+                                        data-testid="calc-body-part-replace-checkbox"
                                     />
                                     <span>{str("Replace Part")}</span>
                                 </label>
@@ -1135,6 +1154,7 @@ const CarBodyMain = ({
                 open={deleteConfirmOpen}
                 onClose={() => setDeleteConfirmOpen(false)}
                 size="xs"
+                data-testid="calc-body-part-delete-modal"
             >
                 <Modal.Header>
                     <Modal.Title>{str("Confirm Deletion")}</Modal.Title>
@@ -1148,10 +1168,19 @@ const CarBodyMain = ({
                     )}
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={handleConfirmDelete} appearance="primary" color="red">
+                    <Button
+                        onClick={handleConfirmDelete}
+                        appearance="primary"
+                        color="red"
+                        data-testid="calc-body-part-delete-confirm-button"
+                    >
                         {str("Remove")}
                     </Button>
-                    <Button onClick={() => setDeleteConfirmOpen(false)} appearance="subtle">
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        appearance="subtle"
+                        data-testid="calc-body-part-delete-cancel-button"
+                    >
                         {str("Cancel")}
                     </Button>
                 </Modal.Footer>

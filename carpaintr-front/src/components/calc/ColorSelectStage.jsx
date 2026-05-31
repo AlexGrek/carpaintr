@@ -63,6 +63,7 @@ const ColorSelectStage = ({
                 onClick={onMoveBack}
                 color="red"
                 appearance="ghost"
+                data-testid="calc-color-stage-back-button"
               >
                 <Trans>Back</Trans>
               </IconButton>
@@ -71,6 +72,7 @@ const ColorSelectStage = ({
                 disabled={paintType === null || color === null}
                 color="green"
                 appearance="primary"
+                data-testid="calc-color-stage-accept-button"
               >
                 <Trans>Accept</Trans>
               </Button>
@@ -90,6 +92,7 @@ const ColorSelectStage = ({
               selectedValue={paintType}
               onChange={setPaintType}
               placeholder={str("Select paint type")}
+              dataTestId="calc-paint-type-select"
             />
           </VStack>
         </BottomStickyLayout>

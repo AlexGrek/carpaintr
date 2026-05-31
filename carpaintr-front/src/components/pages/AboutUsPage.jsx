@@ -4,7 +4,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 const AboutUsPage = () => {
   useDocumentTitle("Document title: About us");
   return (
-    <div>
+    <div data-testid="about-page">
       <TopBarUser />
       <div
         className="fade-in-simple"
