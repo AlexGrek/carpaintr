@@ -28,5 +28,6 @@ markers = [
     "admin: Admin-specific tests",
     "license: License management tests",
     "pdf: PDF/HTML generation (requires PDF mock)",
+    "calc: Calculation flow tests (data discovery, storage, PDF generation)",
     "integration: Integration tests requiring running backend",
 ]

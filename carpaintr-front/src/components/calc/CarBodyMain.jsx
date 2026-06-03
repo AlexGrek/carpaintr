@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Divider, Panel, Message, Drawer, Modal, Button, Tabs } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
-import { Check, X, MoreHorizontal, Trash2, Bug } from 'lucide-react';
+import { Check, X, MoreHorizontal, Trash2, Bug, ChevronRight, ChevronDown } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import {
@@ -59,6 +59,9 @@ registerTranslations("en", {
     "Severe": "Severe",
     "Critical": "Critical",
     "cells": "cells",
+    "tables": "tables",
+    "total": "total",
+    "nothing": "nothing",
     "Calculations": "Calculations",
     "Select an action to calculate": "Select an action to calculate",
     "Failed to load table data": "Failed to load table data",
@@ -114,6 +117,9 @@ registerTranslations("ua", {
     "Severe": "Сильне",
     "Critical": "Критичне",
     "cells": "клітинок",
+    "tables": "табл.",
+    "total": "разом",
+    "nothing": "немає даних",
     "Calculations": "Розрахунки",
     "Select an action to calculate": "Виберіть дію для розрахунку",
     "Failed to load table data": "Не вдалося завантажити дані таблиці",
@@ -222,6 +228,7 @@ const CarBodyMain = ({
     const [evaluatorLogs, setEvaluatorLogs] = useState({}); // { partName: LogEntry[] }
     const [partDebugOpen, setPartDebugOpen] = useState({}); // { partName: bool }
     const [userFiles, setUserFiles] = useState(new Set());
+    const [collapsedParts, setCollapsedParts] = useState({});
     const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
     const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
 
@@ -793,120 +800,145 @@ const CarBodyMain = ({
                                     const gridMarked = gridFlat.filter(c => c > 0).length;
                                     const gridTotal = gridFlat.length;
                                     const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
-                                    const panelHeader = (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                                            <span style={{ fontWeight: 600, fontSize: '14px' }}>{item.name}</span>
-                                            {action && (
-                                                <span style={{ fontSize: '12px', color: '#555', backgroundColor: '#f0f4ff', padding: '1px 8px', borderRadius: '10px', flexShrink: 0 }}>
-                                                    {str(action)}
-                                                </span>
-                                            )}
-                                            {item.damageLevelMode === 'grid' ? (
-                                                gridMarked > 0 && (
-                                                    <span style={{ fontSize: '11px', color: '#666', flexShrink: 0 }}>
-                                                        {gridMarked}/{gridTotal} ({gridPct}%)
-                                                    </span>
-                                                )
-                                            ) : (dmgLevel && dmgLevel.value > 0 ? (
-                                                <span style={{
-                                                    display: 'inline-block',
-                                                    padding: '1px 8px',
-                                                    borderRadius: '10px',
-                                                    backgroundColor: dmgLevel.color,
-                                                    color: '#fff',
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
-                                                    flexShrink: 0,
-                                                }}>
-                                                    {str(dmgLevel.label)}
-                                                </span>
-                                            ) : null)}
-                                            <div
-                                                style={{ marginLeft: 'auto', display: 'flex', gap: '6px', flexShrink: 0 }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
-                                                    data-testid={`calc-body-part-details-button-${toTestIdValue(item.name)}`}
-                                                    style={{
-                                                        padding: isMobile ? '4px 6px' : '5px 7px',
-                                                        backgroundColor: '#3b82f6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '5px',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                    }}
-                                                    title={str("Details")}
-                                                >
-                                                    <MoreHorizontal size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
-                                                    data-testid={`calc-body-part-remove-button-${toTestIdValue(item.name)}`}
-                                                    style={{
-                                                        padding: isMobile ? '4px 6px' : '5px 7px',
-                                                        backgroundColor: '#ef4444',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '5px',
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                    }}
-                                                    title={str("Remove")}
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
+                                    const isCollapsed = collapsedParts[item.name] !== false;
+                                    const basePrice = company?.pricing_preferences?.norm_price?.amount ?? 1;
+                                    const currency = company?.pricing_preferences?.norm_price?.currency ?? '';
+                                    const validTables = hasCalcData
+                                        ? calcData.filter(e => e && typeof e === 'object' && Array.isArray(e.result))
+                                        : [];
+                                    const calcTotal = validTables.reduce((acc, entry) =>
+                                        acc + entry.result.reduce((a, row) => a + row.estimation * (row.price ?? basePrice), 0), 0);
 
                                     return (
-                                        <Panel
+                                        <div
                                             key={item.name}
-                                            collapsible
-                                            defaultExpanded={true}
-                                            header={panelHeader}
-                                            style={{ marginBottom: '8px' }}
+                                            style={{ marginBottom: '8px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}
                                         >
-                                            <>
-                                                {fetchError ? (
-                                                    <div>
-                                                        <Message type="error" showIcon style={{ marginBottom: '6px' }}>
-                                                            {str("Failed to load table data")} — {fetchError}
-                                                        </Message>
-                                                        <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
-                                                            {str("Retry")}
-                                                        </Button>
+                                            {/* Collapsible header */}
+                                            <div
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    padding: isMobile ? '8px 10px' : '8px 12px',
+                                                    cursor: 'pointer', backgroundColor: '#fafafa',
+                                                    userSelect: 'none', minWidth: 0,
+                                                }}
+                                                onClick={() => setCollapsedParts(prev => ({ ...prev, [item.name]: !isCollapsed }))}
+                                            >
+                                                <span style={{ color: '#aaa', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                                                    {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                                                </span>
+                                                <span style={{ fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>{item.name}</span>
+                                                {action && (
+                                                    <span style={{ fontSize: '12px', color: '#555', backgroundColor: '#f0f4ff', padding: '1px 8px', borderRadius: '10px', flexShrink: 0 }}>
+                                                        {str(action)}
+                                                    </span>
+                                                )}
+                                                {item.damageLevelMode === 'grid' ? (
+                                                    gridMarked > 0 && (
+                                                        <span style={{ fontSize: '11px', color: '#666', flexShrink: 0 }}>
+                                                            {gridMarked}/{gridTotal} ({gridPct}%)
+                                                        </span>
+                                                    )
+                                                ) : (dmgLevel && dmgLevel.value > 0 ? (
+                                                    <span style={{
+                                                        display: 'inline-block', padding: '1px 8px', borderRadius: '10px',
+                                                        backgroundColor: dmgLevel.color, color: '#fff',
+                                                        fontSize: '11px', fontWeight: 600, flexShrink: 0,
+                                                    }}>
+                                                        {str(dmgLevel.label)}
+                                                    </span>
+                                                ) : null)}
+
+                                                {/* Summary shown only when collapsed */}
+                                                <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    {isCollapsed && (
+                                                        fetchError ? (
+                                                            <span style={{ fontSize: '12px', color: '#ef4444' }}>!</span>
+                                                        ) : isItemLoading ? (
+                                                            <span style={{ fontSize: '12px', color: '#aaa' }}>…</span>
+                                                        ) : validTables.length > 0 ? (
+                                                            <span style={{ fontSize: '12px', color: '#555' }}>
+                                                                {validTables.length} {str("tables")} · {calcTotal.toFixed(2)} {currency}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>
+                                                                {str("nothing")}
+                                                            </span>
+                                                        )
+                                                    )}
+                                                    <div
+                                                        style={{ display: 'flex', gap: '6px' }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
+                                                            data-testid={`calc-body-part-details-button-${toTestIdValue(item.name)}`}
+                                                            style={{
+                                                                padding: isMobile ? '4px 6px' : '5px 7px',
+                                                                backgroundColor: '#3b82f6', color: 'white',
+                                                                border: 'none', borderRadius: '5px', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center',
+                                                            }}
+                                                            title={str("Details")}
+                                                        >
+                                                            <MoreHorizontal size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
+                                                            data-testid={`calc-body-part-remove-button-${toTestIdValue(item.name)}`}
+                                                            style={{
+                                                                padding: isMobile ? '4px 6px' : '5px 7px',
+                                                                backgroundColor: '#ef4444', color: 'white',
+                                                                border: 'none', borderRadius: '5px', cursor: 'pointer',
+                                                                display: 'flex', alignItems: 'center',
+                                                            }}
+                                                            title={str("Remove")}
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
                                                     </div>
-                                                ) : isItemLoading ? (
-                                                    <div style={{ color: '#999', fontSize: '13px' }}>
-                                                        {str("Loading table data...")}
-                                                    </div>
-                                                ) : hasCalcData ? (
-                                                    <EvaluationResultsTable
-                                                        data={calcData}
-                                                        setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
-                                                        currency={company?.pricing_preferences?.norm_price?.currency ?? ''}
-                                                        basePrice={company?.pricing_preferences?.norm_price?.amount ?? 1}
-                                                        skipIncorrect={true}
+                                                </span>
+                                            </div>
+
+                                            {/* Expanded content */}
+                                            {!isCollapsed && (
+                                                <div style={{ padding: '10px 12px' }}>
+                                                    {fetchError ? (
+                                                        <div>
+                                                            <Message type="error" showIcon style={{ marginBottom: '6px' }}>
+                                                                {str("Failed to load table data")} — {fetchError}
+                                                            </Message>
+                                                            <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
+                                                                {str("Retry")}
+                                                            </Button>
+                                                        </div>
+                                                    ) : isItemLoading ? (
+                                                        <div style={{ color: '#999', fontSize: '13px' }}>
+                                                            {str("Loading table data...")}
+                                                        </div>
+                                                    ) : hasCalcData ? (
+                                                        <EvaluationResultsTable
+                                                            data={calcData}
+                                                            setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
+                                                            currency={currency}
+                                                            basePrice={basePrice}
+                                                            skipIncorrect={true}
+                                                            getEditorUrl={getEditorUrl}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ color: '#aaa', fontSize: '13px', fontStyle: 'italic', padding: '4px 0' }}>
+                                                            {str('No details, click "..." to add details')}
+                                                        </div>
+                                                    )}
+                                                    <PartDebugPanel
+                                                        logs={evaluatorLogs[item.name]}
+                                                        open={!!partDebugOpen[item.name]}
+                                                        onToggle={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
                                                         getEditorUrl={getEditorUrl}
                                                     />
-                                                ) : (
-                                                    <div style={{ color: '#aaa', fontSize: '13px', fontStyle: 'italic', padding: '4px 0' }}>
-                                                        {str('No details, click "..." to add details')}
-                                                    </div>
-                                                )}
-                                                <PartDebugPanel
-                                                    logs={evaluatorLogs[item.name]}
-                                                    open={!!partDebugOpen[item.name]}
-                                                    onToggle={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
-                                                    getEditorUrl={getEditorUrl}
-                                                />
-                                            </>
-                                        </Panel>
+                                                </div>
+                                            )}
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -1084,7 +1116,8 @@ const CarBodyMain = ({
                             </div>
                             )}
 
-                            {/* Original Part Checkbox */}
+                            {/* Original Part Checkbox — only visible when Replace Part is checked */}
+                            {editedPart.replace && (
                             <div style={{ marginTop: '15px', marginBottom: '15px' }}>
                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                     <input
@@ -1100,6 +1133,7 @@ const CarBodyMain = ({
                                     <span>{str("Original Part")}</span>
                                 </label>
                             </div>
+                            )}
 
                             {/* Replace Part Checkbox */}
                             <div style={{ marginTop: '15px', marginBottom: '15px' }}>
