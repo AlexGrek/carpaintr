@@ -812,6 +812,7 @@ const CarBodyMain = ({
                                     return (
                                         <div
                                             key={item.name}
+                                            data-testid={`calc-body-part-item-${toTestIdValue(item.name)}`}
                                             style={{ marginBottom: '8px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}
                                         >
                                             {/* Collapsible header */}

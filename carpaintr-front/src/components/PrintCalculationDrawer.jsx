@@ -329,6 +329,7 @@ const PrintDocumentGenerator = React.memo(
               loading={loadingPreview}
               disabled={loadingDownload}
               startIcon={<File />}
+              data-testid="print-generate-preview-button"
             >
               <Trans>Generate Preview</Trans>
             </Button>
@@ -338,6 +339,7 @@ const PrintDocumentGenerator = React.memo(
               loading={loadingDownload}
               disabled={loadingPreview}
               startIcon={<FileDown />}
+              data-testid="print-download-pdf-button"
             >
               <Trans>Download PDF</Trans>
             </Button>
@@ -353,6 +355,7 @@ const PrintDocumentGenerator = React.memo(
               <iframe
                 title="Document Preview"
                 className="pop-in-simple"
+                data-testid="print-html-preview-iframe"
                 style={{
                   width: "100%",
                   minHeight: "500px",
@@ -410,6 +413,7 @@ const DocumentSelector = ({
           onChange={(value, checked) =>
             handleCheckboxChange(doc.value, checked)
           }
+          data-testid={`print-template-checkbox-${doc.value}`}
         >
           {doc.label}
         </Checkbox>
@@ -489,7 +493,8 @@ const PrintCalculationDrawer = React.memo(
         placement={isMobile ? "top" : "right"}
         open={show}
         onClose={onClose}
-        style={{ overflowY: "auto" }} // Make drawer content scrollable
+        style={{ overflowY: "auto" }}
+        data-testid="print-calculation-drawer"
       >
         <Drawer.Header>
           <Drawer.Title>

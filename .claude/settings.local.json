@@ -36,7 +36,9 @@
       "Bash(npm uninstall *)",
       "Bash(git push *)",
       "Bash(tar -xzf autolab-backup-20260430_092151.tar.gz -C work)",
-      "Bash(.venv/bin/pytest --collect-only -q -m calc)"
+      "Bash(.venv/bin/pytest --collect-only -q -m calc)",
+      "Bash(xargs ps -p)",
+      "Bash(npx cypress *)"
     ]
   }
 }

@@ -8,6 +8,23 @@ import unusedImports from "eslint-plugin-unused-imports";
 export default [
   { ignores: ["dist"] },
   {
+    files: ["cypress/**/*.{js,jsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        cy: "readonly",
+        Cypress: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        before: "readonly",
+        beforeEach: "readonly",
+        after: "readonly",
+        afterEach: "readonly",
+        expect: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: 2020,
