@@ -20,6 +20,7 @@ load_dotenv()
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
 API_BASE_PATH = os.getenv("API_BASE_PATH", "/api/v1")
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
+PDF_GEN_URL = os.getenv("PDF_GEN_URL", "http://localhost:5000")
 
 TEST_USER_EMAIL = os.getenv("TEST_USER_EMAIL", "test_user@example.com")
 TEST_USER_PASSWORD = os.getenv("TEST_USER_PASSWORD", "testpassword123")
@@ -284,6 +285,48 @@ async def generate_license(admin_authenticated_client: httpx.AsyncClient):
         )
 
     return _generate
+
+
+@pytest.fixture
+async def licensed_client(
+    base_url: str,
+    request_timeout: int,
+    test_user_token: str,
+    test_user_credentials: Dict[str, str],
+    admin_authenticated_client: httpx.AsyncClient,
+) -> httpx.AsyncClient:
+    """
+    Authenticated client with a valid 30-day license for the test user.
+    License generation is idempotent — safe to call on every test.
+    """
+    await generate_license_for_user(
+        admin_authenticated_client,
+        test_user_credentials["email"],
+        days=30,
+    )
+    async with httpx.AsyncClient(
+        base_url=base_url,
+        timeout=request_timeout,
+        headers={"Authorization": f"Bearer {test_user_token}"},
+        follow_redirects=True,
+    ) as client:
+        yield client
+
+
+@pytest.fixture(scope="session")
+def pdf_service_available() -> bool:
+    """Return True if the PDF generation service is reachable."""
+    try:
+        response = httpx.get(f"{PDF_GEN_URL}/health", timeout=3)
+        return response.status_code < 500
+    except Exception:
+        pass
+    # Fall back to a POST probe — WeasyPrint service may not have /health
+    try:
+        httpx.post(f"{PDF_GEN_URL}/generate", json={}, timeout=3)
+        return True
+    except Exception:
+        return False
 
 
 @pytest.fixture(scope="session")

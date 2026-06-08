@@ -15,6 +15,7 @@ export default [
         ...globals.mocha,
         cy: "readonly",
         Cypress: "readonly",
+        expect: "readonly",
       },
     },
   },

@@ -143,11 +143,11 @@ const TableFinalStage = ({
                 data-testid="calc-final-order-number-input"
               />
             </section>
-            <Panel header={str("Tables")}>
+            <Panel header={str("Tables")} data-testid="calc-final-tables-panel">
               {stageData.calculations &&
                 Object.keys(stageData.calculations).map((key) => {
                   return (
-                    <div key={key}>
+                    <div key={key} data-testid={`calc-final-table-${key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
                       <Divider />
                       <HStack>
                         <Shapes />

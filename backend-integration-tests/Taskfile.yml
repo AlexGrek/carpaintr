@@ -48,6 +48,12 @@ tasks:
     cmds:
       - uv run pytest -m pdf
 
+  test:calc:
+    desc: "Run calculation flow tests only (requires backend; PDF tests also need pdf_backend)"
+    deps: [setup]
+    cmds:
+      - "{{.PYTEST}} -v -m calc"
+
   test:integration:
     desc: "Run tests marked integration"
     deps: [sync]

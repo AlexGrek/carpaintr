@@ -68,7 +68,7 @@ async fn main() -> tokio::io::Result<()> {
     let log_file_path = env::var("LOG_FILE_PATH").unwrap_or_else(|_| "application.log".to_string());
     let data_dir_path = env::var("DATA_DIR_PATH").unwrap_or_else(|_| "data".to_string());
     let pdf_gen_api_url_post =
-        env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "localhost:5000/generate".to_string());
+        env::var("PDF_GEN_URL_POST").unwrap_or_else(|_| "http://localhost:5000/generate".to_string());
     let license_cache_size: u64 = env::var("LICENSE_CACHE_SIZE")
         .unwrap_or_else(|_| "100".to_string())
         .parse()
