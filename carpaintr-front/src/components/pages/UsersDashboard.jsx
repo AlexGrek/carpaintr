@@ -257,7 +257,7 @@ const DashboardNavigationButtons = ({ admin }) => {
           </div>
         </div>
         <div className={`features-grid ${viewMode}-view`}>
-          {features.map((feature, index) => {
+          {features.map((feature) => {
             if (viewMode === "grid") {
               return (
                 <AppCardCompact

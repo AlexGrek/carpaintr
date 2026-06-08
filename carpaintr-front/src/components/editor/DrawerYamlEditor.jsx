@@ -50,8 +50,6 @@ function YamlNodeEditor({ node, path, onChange }) {
     );
   }
 
-  const key = path[path.length - 1];
-
   return (
     <Stack spacing={10} style={{ padding: "4px 0" }} vertical>
       <Form>

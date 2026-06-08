@@ -16,5 +16,5 @@ export function useDocumentTitle(titleKey) {
     return () => {
       document.title = APP_NAME;
     };
-  }, [titleKey, currentLang]);
+  }, [titleKey, currentLang, str]);
 }

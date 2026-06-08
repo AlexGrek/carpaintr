@@ -8,6 +8,23 @@ import unusedImports from "eslint-plugin-unused-imports";
 export default [
   { ignores: ["dist"] },
   {
+    files: ["cypress/**/*.{js,jsx}", "cypress.config.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.mocha,
+        cy: "readonly",
+        Cypress: "readonly",
+      },
+    },
+  },
+  {
+    files: ["vite.config.js"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: 2020,
@@ -36,7 +53,19 @@ export default [
       "react/jsx-no-target-blank": "off",
       "react-refresh/only-export-components": [
         "warn",
-        { allowConstantExport: true },
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "useGlobalCallbacks",
+            "useNotificationCount",
+            "buildCarSubcomponentsFromT2",
+            "partClassNames",
+            "styles",
+            "registerTranslations",
+            "useLocale",
+            "useDocumentTitle",
+          ],
+        },
       ],
       "react/prop-types": "off",
       "no-unused-vars": "off",

@@ -21,7 +21,7 @@ const CurrentDateDisplay = React.memo(() => {
         setSeasonDetails(JSON.stringify(data));
       })
       .catch(console.error);
-  }, []);
+  }, [str]);
 
   return (
     <div>

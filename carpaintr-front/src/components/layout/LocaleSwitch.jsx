@@ -1,7 +1,7 @@
 import { SelectPicker } from "rsuite";
 import { useLocale } from "../../localization/LocaleContext";
 
-export default LocaleSwitch = () => {
+const LocaleSwitch = () => {
   const { currentLang, setLang } = useLocale();
 
   const data = [
@@ -33,3 +33,5 @@ export default LocaleSwitch = () => {
     />
   );
 };
+
+export default LocaleSwitch;

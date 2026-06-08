@@ -170,6 +170,11 @@ tasks:
       - task: release
       - task: deploy-dev
 
+  ship:
+    desc: Build, push, and deploy to dev (shorthand for redeploy-dev)
+    cmds:
+      - task: redeploy-dev
+
   redeploy-staging:
     desc: Build, push, and deploy to staging
     cmds:

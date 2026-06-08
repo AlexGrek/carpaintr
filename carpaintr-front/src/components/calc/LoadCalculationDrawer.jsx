@@ -82,7 +82,7 @@ const LoadCalculationDrawer = React.memo(({ show, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [str]);
+  }, []);
 
   useEffect(() => {
     if (show) {

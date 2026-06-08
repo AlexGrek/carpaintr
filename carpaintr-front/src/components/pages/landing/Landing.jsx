@@ -116,7 +116,6 @@ const Hero = () => {
   const [companyName, setCompanyName] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { setLocale } = useLocale();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const doFetchCompanyInfo = async () => {
@@ -138,7 +137,7 @@ const Hero = () => {
     };
 
     doFetchCompanyInfo();
-  }, []);
+  }, [setLocale]);
 
   return (
     <section className="hero">
@@ -202,7 +201,6 @@ const FeatureCard = ({ icon, title, description }) => {
 };
 
 const Features = () => {
-  const { str } = useLocale();
   const features = [
     {
       icon: "📐",

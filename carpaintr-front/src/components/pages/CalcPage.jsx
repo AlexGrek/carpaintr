@@ -30,7 +30,7 @@ const CalcPage = () => {
       }
     };
 
-    const handlePopState = (e) => {
+    const handlePopState = (_e) => {
       if (hasChanges) {
         const shouldLeave = confirmNavigation();
         if (!shouldLeave) {

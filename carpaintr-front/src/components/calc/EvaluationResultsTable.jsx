@@ -92,7 +92,7 @@ export const EvaluationResultsTable = ({
   const [activeTrace, setActiveTrace] = useState(null);
 
   const getPrice = useCallback(
-    (name) => {
+    (_name) => {
       return basePrice;
     },
     [basePrice],

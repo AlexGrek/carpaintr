@@ -77,8 +77,7 @@ const wmiData = {
  * This is a standardized system. Note that letters I, O, Q, U, Z and number 0 are not used.
  * The cycle repeats every 30 years.
  */
-const yearData = {
-  // 1980-2009
+const yearData1980 = {
   A: "1980",
   B: "1981",
   C: "1982",
@@ -109,7 +108,9 @@ const yearData = {
   7: "2007",
   8: "2008",
   9: "2009",
-  // 2010-2039
+};
+
+const yearData2010 = {
   A: "2010",
   B: "2011",
   C: "2012",
@@ -132,6 +133,20 @@ const yearData = {
   X: "2029",
   Y: "2030",
 };
+
+/** VIN year codes repeat every 30 years; pick the cycle closest to today. */
+function decodeVinYear(yearChar) {
+  const older = yearData1980[yearChar];
+  const newer = yearData2010[yearChar];
+  if (!older && !newer) return null;
+  if (!older) return newer;
+  if (!newer) return older;
+
+  const currentYear = new Date().getFullYear();
+  const olderDiff = Math.abs(parseInt(older, 10) - currentYear);
+  const newerDiff = Math.abs(parseInt(newer, 10) - currentYear);
+  return olderDiff <= newerDiff ? older : newer;
+}
 
 /**
  * Attempts to decode a Vehicle Identification Number (VIN).
@@ -189,7 +204,7 @@ export async function tryDecodeVin(vin) {
   const yearChar = vinUpper.charAt(9);
 
   const guessedMake = wmiData[wmi] || wmiData[wmi2] || null;
-  const guessedYear = yearData[yearChar] || null;
+  const guessedYear = decodeVinYear(yearChar);
 
   // Only return a result if we can at least identify the make.
   if (guessedMake) {

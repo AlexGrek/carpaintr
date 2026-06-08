@@ -3,16 +3,16 @@ import { isNumber } from "lodash";
 export const defaultProcessor = {
   name: "",
   run: (
-    x,
-    carPart,
-    tableData,
-    repairAction,
-    files,
-    carClass,
-    carBodyType,
-    carYear,
-    carModel,
-    paint,
+    _x,
+    _carPart,
+    _tableData,
+    _repairAction,
+    _files,
+    _carClass,
+    _carBodyType,
+    _carYear,
+    _carModel,
+    _paint,
   ) => {
     // - init section =
     var output = [];
@@ -22,16 +22,16 @@ export const defaultProcessor = {
   },
   requiredTables: [],
   shouldRun: (
-    x,
-    carPart,
-    tableData,
-    repairAction,
-    files,
-    carClass,
-    carBodyType,
-    carYear,
-    carModel,
-    paint,
+    _x,
+    _carPart,
+    _tableData,
+    _repairAction,
+    _files,
+    _carClass,
+    _carBodyType,
+    _carYear,
+    _carModel,
+    _paint,
   ) => {
     return true;
   },
@@ -41,9 +41,6 @@ export const defaultProcessor = {
   orderingNum: 0,
 };
 
-function sortProcessorsByOrderingNum(processors) {
-  processors.sort((a, b) => a.orderingNum - b.orderingNum);
-}
 
 const defaultRow = {
   name: "",
@@ -246,7 +243,7 @@ function applyRedefinitions(redefinitions, input) {
 
   return input.replace(regex, (match, inner) => {
     const key = inner.toLowerCase().trim();
-    if (redefinitions.hasOwnProperty(key)) {
+    if (Object.hasOwn(redefinitions, key)) {
       // Replace only the inside, keep original delimiters
       const start = match[0];
       const end = match[match.length - 1];

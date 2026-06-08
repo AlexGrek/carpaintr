@@ -53,7 +53,7 @@ const LanguageMenu = () => {
 
   const save = useCallback(async (value) => {
     const pushAsync = async () => {
-      const data = await authFetch("/api/v1/updatecompanyinfo", {
+      await authFetch("/api/v1/updatecompanyinfo", {
         method: "POST",
         body: JSON.stringify(value),
         headers: {

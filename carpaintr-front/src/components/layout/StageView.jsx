@@ -118,15 +118,15 @@ const replaceUrlParam = (key, value) => {
 function StageView({
   stages,
   initialState = {},
-  animationDelay = 300,
+  animationDelay: _animationDelay = 300,
   onSave = null,
 }) {
-  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isFadingOut] = useState(false);
   const [stageData, setStageDataState] = useState(initialState);
   const { str } = useLocale();
 
   // Get initial stage from URL or default to 0
-  const getStageFromUrl = () => {
+  const getStageFromUrl = useCallback(() => {
     const params = getUrlParams();
     const stageParam = params.get("stage");
 
@@ -145,7 +145,7 @@ function StageView({
     }
 
     return 0;
-  };
+  }, [stages]);
 
   const [activeStageIndex, setActiveStageIndex] = useState(getStageFromUrl);
   const [previousStageIndex, setPreviousStageIndex] = useState(null);
@@ -189,28 +189,6 @@ function StageView({
       console.debug('Preload attempt failed, component will load on demand:', error);
     }
   }, [activeStageIndex, stages]);
-
-  // Effect to handle URL changes (including back/forward buttons)
-  useEffect(() => {
-    const handlePopState = () => {
-      const newStageIndex = getStageFromUrl();
-      if (newStageIndex !== activeStageIndex) {
-        handleMoveToInternal(newStageIndex, { skipUrlUpdate: true });
-      }
-    };
-
-    // Set initial URL if no stage parameter exists
-    const params = getUrlParams();
-    if (!params.has("stage")) {
-      replaceUrlParam("stage", stages[0].name);
-    }
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [stages, activeStageIndex]);
 
   /**
    * Updates the shared state. Merges new data with existing data.
@@ -266,8 +244,30 @@ function StageView({
         updateUrlParam("stage", stages[targetIndex].name);
       }
     },
-    [activeStageIndex, animationDelay, isFadingOut, stages, stagesState],
+    [activeStageIndex, isFadingOut, stages, stagesState],
   );
+
+  // Effect to handle URL changes (including back/forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const newStageIndex = getStageFromUrl();
+      if (newStageIndex !== activeStageIndex) {
+        handleMoveToInternal(newStageIndex, { skipUrlUpdate: true });
+      }
+    };
+
+    // Set initial URL if no stage parameter exists
+    const params = getUrlParams();
+    if (!params.has("stage")) {
+      replaceUrlParam("stage", stages[0].name);
+    }
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [stages, activeStageIndex, getStageFromUrl, handleMoveToInternal]);
 
   const handleMoveTo = (targetIndex) => {
     if (!stagesState[targetIndex]?.enabled) {

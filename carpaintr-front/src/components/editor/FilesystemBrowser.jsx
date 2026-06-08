@@ -191,7 +191,7 @@ const FilesystemBrowser = ({ filesystems }) => {
     // if (pathFromUrl) {
     //     setCurrentPath(pathFromUrl);
     // }
-  }, []); // Runs only on mount
+  }, [filesystems, searchParams]);
 
   // Effect 2: Sync component state back to URL query parameters
   useEffect(() => {

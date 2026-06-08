@@ -23,111 +23,12 @@ import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
 import { File, FileDown } from "lucide-react";
 
-// Calculation Summary Preview Component (renamed from PrintPreview)
-const CalculationSummaryPreview = React.memo(({ calculationData }) => {
-  const { str } = useLocale();
-
-  if (!calculationData) {
-    return (
-      <Message type="info" showIcon>
-        <Trans>No data to preview.</Trans>
-      </Message>
-    );
-  }
-
-  return (
-    <div className="p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <p>
-            <strong>
-              <Trans>Make</Trans>:
-            </strong>{" "}
-            {calculationData.make || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Model</Trans>:
-            </strong>{" "}
-            {calculationData.model || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Year</Trans>:
-            </strong>{" "}
-            {calculationData.year || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Car Class</Trans>:
-            </strong>{" "}
-            {calculationData.carClass || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Body Type</Trans>:
-            </strong>{" "}
-            {calculationData.bodyType || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Color</Trans>:
-            </strong>{" "}
-            {calculationData.color || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Paint type</Trans>:
-            </strong>{" "}
-            {calculationData.paintType || str("N/A")}
-          </p>
-        </div>
-        <div>
-          <p>
-            <strong>
-              <Trans>License plate</Trans>:
-            </strong>{" "}
-            {calculationData.licensePlate || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>VIN</Trans>:
-            </strong>{" "}
-            {calculationData.VIN || str("N/A")}
-          </p>
-          <p>
-            <strong>
-              <Trans>Notes</Trans>:
-            </strong>{" "}
-            {calculationData.notes || str("N/A")}
-          </p>
-        </div>
-      </div>
-      <h5 className="text-lg font-semibold mt-6 mb-2">
-        <Trans>Selected Body Parts</Trans>
-      </h5>
-      {calculationData.selectedParts &&
-      calculationData.selectedParts.length > 0 ? (
-        <ul className="list-disc list-inside">
-          {calculationData.selectedParts.map((part, index) => (
-            <li key={index}>{part}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>
-          <Trans>No body parts selected.</Trans>
-        </p>
-      )}
-    </div>
-  );
-});
-
 // Print Document Generator Component
 const PrintDocumentGenerator = React.memo(
   ({
     name,
     calculationData,
-    partsData,
+    partsData: _partsData,
     carData,
     orderData,
     paintData,

@@ -19,7 +19,7 @@ const ChangePassword = () => {
     currentPassword: "",
     newPassword: "",
   });
-  const [formError, setFormError] = useState({});
+  const [, setFormError] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [showCurrent, setShowCurrent] = useState(false);

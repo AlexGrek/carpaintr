@@ -25,14 +25,18 @@ const AttachmentList = ({ attachments }) => {
 
   useEffect(() => {
     attachments.forEach(async (id) => {
-      if (metas[id]) return;
-
       try {
         const res = await authFetch(`/api/v1/user/attachment_meta/${id}`);
         const meta = await res.json();
-        setMetas((prev) => ({ ...prev, [id]: { meta } }));
+        setMetas((prev) => {
+          if (prev[id]) return prev;
+          return { ...prev, [id]: { meta } };
+        });
       } catch {
-        setMetas((prev) => ({ ...prev, [id]: { error: true } }));
+        setMetas((prev) => {
+          if (prev[id]) return prev;
+          return { ...prev, [id]: { error: true } };
+        });
       }
     });
   }, [attachments]);
@@ -40,13 +44,12 @@ const AttachmentList = ({ attachments }) => {
   const handlePreview = async (id) => {
     const entry = metas[id];
     if (!entry || !entry.meta) return;
-    const { fileName, size } = entry.meta;
+    const { fileName } = entry.meta;
 
     try {
       const res = await authFetch(`/api/v1/user/attachment/${id}`);
       const blob = await res.blob();
 
-      const ext = fileName.split(".").pop().toLowerCase();
       const isImg = isImage(fileName);
       const isTxt = !isImg && !isPDF(fileName) && !isArchive(fileName);
 
@@ -71,7 +74,7 @@ const AttachmentList = ({ attachments }) => {
           blob,
         });
       }
-    } catch (e) {
+    } catch {
       alert("Failed to load preview");
     }
   };

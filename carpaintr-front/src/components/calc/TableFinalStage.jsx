@@ -22,13 +22,13 @@ import { capitalizeFirstLetter } from "../../utils/utils";
 import NotifyMessage from "../layout/NotifyMessage";
 
 const TableFinalStage = ({
-  title,
-  index,
-  onMoveForward,
+  title: _title,
+  index: _index,
+  onMoveForward: _onMoveForward,
   onMoveBack,
   fadeOutStarted,
-  children,
-  onMoveTo,
+  children: _children,
+  onMoveTo: _onMoveTo,
   stageData,
   setStageData,
 }) => {

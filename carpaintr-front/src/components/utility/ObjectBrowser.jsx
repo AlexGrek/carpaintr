@@ -115,7 +115,7 @@ const JsonViewer = ({
         </span>
       </div>
       <div className={`json-children ${isExpanded ? "expanded-content" : ""}`}>
-        {keys.map((key, index) => (
+        {keys.map((key) => (
           <div key={key} className="json-item">
             <span className="json-key">{key}</span>
             <JsonViewer

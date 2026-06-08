@@ -8,13 +8,13 @@ import { useSearchParams } from "react-router-dom";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 
 const CarSelectStage = ({
-  title,
-  index,
+  title: _title,
+  index: _index,
   onMoveForward,
-  onMoveBack,
+  onMoveBack: _onMoveBack,
   fadeOutStarted,
-  children,
-  onMoveTo,
+  children: _children,
+  onMoveTo: _onMoveTo,
   stageData,
   setStageData,
 }) => {

@@ -9,13 +9,13 @@ import BottomStickyLayout from "../layout/BottomStickyLayout";
 import ColorPicker from "./ColorPicker";
 
 const ColorSelectStage = ({
-  title,
-  index,
+  title: _title,
+  index: _index,
   onMoveForward,
   onMoveBack,
   fadeOutStarted,
-  children,
-  onMoveTo,
+  children: _children,
+  onMoveTo: _onMoveTo,
   stageData,
   setStageData,
 }) => {

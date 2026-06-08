@@ -32,7 +32,7 @@ import {
   registerTranslations,
 } from "../../localization/LocaleContext";
 import Trans from "../../localization/Trans";
-import TableEditorChatGPT from "./TableEditorChatGPT";
+import SpreadsheetEditor from "./SpreadsheetEditor";
 import YamlItemsEditorDrawer from "./YamlItemsEditorDrawer";
 import { isArrayLike } from "lodash";
 
@@ -954,7 +954,7 @@ const FileEditor = ({
                       <Trans>Validate</Trans>
                     </Button>
                   )}
-                  <TableEditorChatGPT
+                  <SpreadsheetEditor
                     open={tableEditorOpen}
                     onClose={() => setTableEditorOpen(false)}
                     onSave={async (value) => {

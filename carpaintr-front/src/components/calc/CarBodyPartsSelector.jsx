@@ -261,7 +261,7 @@ const CarBodyPartsSelector = ({
         });
       }
     }
-  }, [tableDataRepository]);
+  }, [tableDataRepository, drawerCurrentPart]);
 
   // Handler for selecting a new part from the dropdown
   const handlePartSelect = useCallback(
@@ -372,12 +372,12 @@ const CarBodyPartsSelector = ({
         }
         return `Data not ready (${missing} is missing): ${JSON.stringify(tdata, null, 2)}`;
       });
-      setCalculations({
-        ...calculations,
+      setCalculations((prev) => ({
+        ...prev,
         [drawerCurrentPart.name]: processorsEvaluated.filter(
           (item) => typeof item !== "string",
         ),
-      });
+      }));
     }
   }, [
     drawerCurrentPart,

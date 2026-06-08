@@ -1,31 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Drawer, Button } from "rsuite";
 import { AddOutline } from "@rsuite/icons";
 import jsyaml from "js-yaml";
 import NamedItemEditor from "./NamedItemEditor";
 import ErrorMessage from "../layout/ErrorMessage";
-import { useLocale } from "../../localization/LocaleContext";
 import "./styles.css";
 import { useMediaQuery } from "react-responsive";
 
 // The main drawer component that manages the overall state.
 const YamlItemsEditorDrawer = ({ onClose, isOpen, value, onChange }) => {
   const [editedData, setEditedData] = useState(null);
-  const { str } = useLocale();
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
   const [errorText, setErrorText] = useState(null);
-  const [errorTitle, setErrorTitle] = useState("");
-
-  const handleError = useCallback(
-    (reason) => {
-      console.error(reason);
-      const title = str("Error");
-      setErrorText(reason);
-      setErrorTitle(title);
-    },
-    [str],
-  );
 
   const handleClose = () => {
     onClose();
@@ -68,7 +55,7 @@ const YamlItemsEditorDrawer = ({ onClose, isOpen, value, onChange }) => {
   const handleNameChange = (oldName, newName) => {
     if (
       !newName.trim() ||
-      (newName !== oldName && editedData.hasOwnProperty(newName))
+      (newName !== oldName && Object.hasOwn(editedData, newName))
     ) {
       setErrorText(`Item name cannot be empty or a duplicate.`);
       return;
@@ -117,7 +104,6 @@ const YamlItemsEditorDrawer = ({ onClose, isOpen, value, onChange }) => {
         <ErrorMessage
           errorText={errorText}
           onClose={() => setErrorText(null)}
-          title={errorTitle}
         />
         {editedData &&
           Object.entries(editedData).map(([name, itemValue]) => (

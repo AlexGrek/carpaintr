@@ -1,5 +1,5 @@
 // CommitHistoryDrawer.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Drawer, Button, List, Placeholder, Modal, Message } from "rsuite";
 import { useMediaQuery } from "react-responsive";
 import { authFetch } from "../../utils/authFetch";
@@ -41,14 +41,7 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const { str } = useLocale(); // Destructure str from useLocale
 
-  useEffect(() => {
-    if (show) {
-      setMsg(null);
-      fetchCommits();
-    }
-  }, [show]);
-
-  const fetchCommits = async () => {
+  const fetchCommits = useCallback(async () => {
     setLoading(true);
     try {
       const response = await authFetch("/api/v1/editor/list_commits");
@@ -65,7 +58,14 @@ const CommitHistoryDrawer = ({ show, onClose, onRevert }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [str]);
+
+  useEffect(() => {
+    if (show) {
+      setMsg(null);
+      fetchCommits();
+    }
+  }, [show, fetchCommits]);
 
   const handleRevertClick = (hash) => {
     setSelectedCommitHash(hash);

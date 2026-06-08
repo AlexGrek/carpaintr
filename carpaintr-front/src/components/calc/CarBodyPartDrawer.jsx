@@ -24,9 +24,9 @@ const CarBodyPartDrawer = ({
   mapVisual,
   outsideRepairZoneOptions,
   setCalculations, // Pass this down
-  processors, // Pass this down
-  carClass, // Pass this down
-  body, // Pass this down
+  processors: _processors,
+  carClass: _carClass,
+  body: _body,
   onSetIsCalculating,
 }) => {
   const [drawerTab, setDrawerTab] = useState(0);

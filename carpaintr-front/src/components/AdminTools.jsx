@@ -32,7 +32,7 @@ const FilesystemBrowser = lazy(() => import("./editor/FilesystemBrowser"));
 const ServerStatus = lazy(() => import("./ServerStatus"));
 
 // Custom Nav.Item component wrapped in React.memo for performance
-const NavLink = React.memo(({ children, to, ...props }) => {
+const NavLink = React.memo(function NavLink({ children, to, ...props }) {
   const resolved = useResolvedPath(to);
   const match = useMatch({ path: resolved.pathname, end: true });
 
@@ -44,7 +44,11 @@ const NavLink = React.memo(({ children, to, ...props }) => {
 });
 
 // Custom Dropdown.Item component wrapped in React.memo for performance
-const DropdownNavLink = React.memo(({ children, to, ...props }) => {
+const DropdownNavLink = React.memo(function DropdownNavLink({
+  children,
+  to,
+  ...props
+}) {
   const resolved = useResolvedPath(to);
   const match = useMatch({ path: resolved.pathname, end: true });
 

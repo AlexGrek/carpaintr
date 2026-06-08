@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Panel, Container } from "rsuite";
 import { Home, Wrench } from "lucide-react";
 import Trans from "../../localization/Trans";
-import { useLocale, registerTranslations } from "../../localization/LocaleContext";
+import { registerTranslations } from "../../localization/LocaleContext";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import "./NotFoundPage.css";
 
@@ -18,7 +18,6 @@ registerTranslations("ua", {
 
 const NotFoundPage = () => {
   const navigate = useNavigate();
-  const { str } = useLocale();
   useDocumentTitle("Document title: Page Not Found");
 
   return (
@@ -74,7 +73,7 @@ const NotFoundPage = () => {
             </p>
             <p className="error-details">
               <Trans>
-                The page you're looking for doesn't exist or has been moved.
+                The page you&apos;re looking for doesn&apos;t exist or has been moved.
               </Trans>
             </p>
           </div>

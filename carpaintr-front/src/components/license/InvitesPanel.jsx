@@ -54,7 +54,7 @@ function InvitesPanel() {
     usage_policy: "UseOnce",
     usage_limit: 1,
   });
-  const [formError, setFormError] = useState({});
+  const [, setFormError] = useState({});
   const formRef = useRef();
 
   // Fetch active invites on component mount
@@ -66,7 +66,7 @@ function InvitesPanel() {
         const response = await authFetchJson(API.list);
         setActiveInvites(response);
         // Alert.success('Active invites loaded successfully!');
-      } catch (err) {
+      } catch {
         setError("Failed to fetch active invites.");
         // Alert.error('Failed to fetch active invites.');
       } finally {
