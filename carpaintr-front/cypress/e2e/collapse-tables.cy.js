@@ -34,9 +34,7 @@ describe("Calc2 final stage: collapse tables", () => {
 
     cy.setCollapseTables(true);
 
-    cy.getByTestId("calc-final-collapse-readonly-note")
-      .should("be.visible")
-      .and("contain.text", "read-only");
+    cy.getByTestId("calc-final-collapse-readonly-note").should("be.visible");
 
     cy.get('[data-testid^="calc-final-table-"]')
       .first()

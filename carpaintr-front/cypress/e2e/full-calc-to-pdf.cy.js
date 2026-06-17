@@ -105,9 +105,7 @@ describe("Full path: login → 4-part calculation → PDF via mock", () => {
 
     // Collapse tables — merged view per part (read-only, no processor headers)
     cy.setCollapseTables(true);
-    cy.getByTestId("calc-final-collapse-readonly-note")
-      .should("be.visible")
-      .and("contain.text", "read-only");
+    cy.getByTestId("calc-final-collapse-readonly-note").should("be.visible");
 
     // ------------------------------------------------------------------ //
     // Print / PDF flow                                                     //

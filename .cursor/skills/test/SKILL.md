@@ -314,6 +314,8 @@ User endpoints under test: `POST /user/generate_pdf_table`, `POST /user/generate
 
 ## Cypress E2E
 
+**Cypress-focused runbook (ports, PDF mock, k8s dev, source map):** [`.cursor/skills/tester/SKILL.md`](../tester/SKILL.md).
+
 ### Policies
 
 1. **Real API only** — no `cy.intercept` mocks for happy-path flows.

@@ -196,7 +196,10 @@ function StageView({
    */
   const handleSetStageData = (newData) => {
     setStageDataState((prevData) => {
-      const updated = { ...prevData, ...newData };
+      const updated =
+        typeof newData === "function"
+          ? newData(prevData)
+          : { ...prevData, ...newData };
       if (onSave != null) {
         onSave(updated);
       }
