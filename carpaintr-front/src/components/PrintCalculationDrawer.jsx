@@ -22,12 +22,18 @@ import { handleLicenseForbidden } from "../utils/licenseRedirect";
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
 import { File, FileDown } from "lucide-react";
+import {
+  buildTotalTables,
+  totalTablesForTemplate,
+} from "../calc/collapseTables";
 
 // Print Document Generator Component
 const PrintDocumentGenerator = React.memo(
   ({
     name,
     calculationData,
+    collapseTables = false,
+    totalTables = {},
     partsData: _partsData,
     carData,
     orderData,
@@ -57,12 +63,20 @@ const PrintDocumentGenerator = React.memo(
     );
 
     const buildRequestPayload = useCallback(() => {
+      const calcForTemplate = collapseTables
+        ? totalTablesForTemplate(
+            Object.keys(totalTables || {}).length > 0
+              ? totalTables
+              : buildTotalTables(calculationData),
+          )
+        : calculationData;
+
       return {
         calculation: {
           car: carData,
           paint: paintData,
           order: orderData,
-          calc: calculationData,
+          calc: calcForTemplate,
         },
         metadata: {
           order_number: orderNumber || null,
@@ -76,6 +90,8 @@ const PrintDocumentGenerator = React.memo(
       paintData,
       orderData,
       calculationData,
+      collapseTables,
+      totalTables,
       orderNumber,
       orderNotes,
       customTemplateContent,
@@ -330,6 +346,8 @@ const PrintCalculationDrawer = React.memo(
     show,
     onClose,
     calculationData,
+    collapseTables = false,
+    totalTables = {},
     partsData,
     carData,
     orderData,
@@ -417,6 +435,8 @@ const PrintCalculationDrawer = React.memo(
                   name={doc}
                   paintData={paintData}
                   calculationData={calculationData}
+                  collapseTables={collapseTables}
+                  totalTables={totalTables}
                   carData={carData}
                   partsData={partsData}
                   orderData={orderData}

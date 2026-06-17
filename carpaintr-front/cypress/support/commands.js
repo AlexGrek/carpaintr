@@ -133,3 +133,79 @@ Cypress.Commands.add("ensureVehicleClassPickerMode", () => {
   });
   cy.getByTestId("calc-vehicle-class-picker", { timeout: 20000 }).should("be.visible");
 });
+
+/**
+ * Navigate calc2 wizard through body-parts stage to the final tables stage.
+ * Selects class B, first body/year, color, paint type, and several body parts.
+ */
+Cypress.Commands.add("reachCalcFinalStage", () => {
+  cy.getByTestId("dashboard-app-calc2").should("be.visible").click();
+  cy.url({ timeout: 20000 }).should("include", "/app/calc2");
+  cy.openNewCalculation();
+  cy.ensureVehicleClassPickerMode();
+
+  cy.getByTestId("calc-vehicle-class-picker-option-B").click();
+  cy.get('[data-testid^="calc-vehicle-body-type-picker-option-"]')
+    .should("have.length.at.least", 1)
+    .first()
+    .click();
+  cy.getByTestId("calc-vehicle-year-select").click();
+  cy.get(".rs-picker-select-menu-item").first().click();
+  cy.getByTestId("calc-car-stage-accept-button").should("not.be.disabled").click();
+
+  cy.getByTestId("calc-color-picker", { timeout: 20000 }).should("be.visible");
+  cy.get(
+    '[data-testid^="calc-color-grid-"][data-testid*="-color-"]:not([data-testid$="-container"])',
+  )
+    .should("have.length.at.least", 1)
+    .first()
+    .click();
+  cy.getByTestId("calc-paint-type-select-option-simple").click();
+  cy.getByTestId("calc-color-stage-accept-button")
+    .should("not.be.disabled")
+    .click();
+
+  cy.getByTestId("calc-car-part-hood", { timeout: 20000 }).should("be.visible");
+  cy.selectPartWithAction("calc-car-part-hood");
+  cy.selectPartWithAction("calc-car-part-frontBumper");
+  cy.selectPartWithAction("calc-car-part-rearBumper");
+  cy.selectPartWithAction("calc-car-part-frontFenderLeft");
+
+  cy.get('[data-testid^="calc-body-part-item-"]', { timeout: 15000 }).should(
+    "have.length.at.least",
+    3,
+  );
+
+  cy.getByTestId("calc-body-parts-stage-accept-button")
+    .should("not.be.disabled")
+    .click();
+
+  cy.getByTestId("calc-final-order-date-input", { timeout: 20000 }).should(
+    "be.visible",
+  );
+  cy.getByTestId("calc-final-tables-panel", { timeout: 20000 }).should(
+    "be.visible",
+  );
+  cy.get('[data-testid^="calc-final-table-"]', { timeout: 20000 }).should(
+    "have.length.at.least",
+    1,
+  );
+});
+
+/** Toggle the final-stage collapse-tables checkbox to the desired state. */
+Cypress.Commands.add("setCollapseTables", (checked) => {
+  const input = cy
+    .getByTestId("calc-final-collapse-tables-checkbox")
+    .should("be.visible")
+    .find('input[type="checkbox"]');
+
+  if (checked) {
+    input.check({ force: true });
+  } else {
+    input.uncheck({ force: true });
+  }
+
+  cy.getByTestId("calc-final-collapse-tables-checkbox")
+    .find('input[type="checkbox"]')
+    .should(checked ? "be.checked" : "not.be.checked");
+});

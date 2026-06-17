@@ -103,6 +103,12 @@ describe("Full path: login → 4-part calculation → PDF via mock", () => {
       3
     );
 
+    // Collapse tables — merged view per part (read-only, no processor headers)
+    cy.setCollapseTables(true);
+    cy.getByTestId("calc-final-collapse-readonly-note")
+      .should("be.visible")
+      .and("contain.text", "read-only");
+
     // ------------------------------------------------------------------ //
     // Print / PDF flow                                                     //
     // ------------------------------------------------------------------ //
@@ -122,7 +128,15 @@ describe("Full path: login → 4-part calculation → PDF via mock", () => {
       .click();
 
     // -- HTML preview (mock returns minimal HTML — just verify 200 and iframe appears) --
-    cy.intercept("POST", "/api/v1/user/generate_html_table").as("htmlGen");
+    cy.intercept("POST", "/api/v1/user/generate_html_table", (req) => {
+      const calc = req.body?.calculation?.calc;
+      if (calc) {
+        Object.values(calc).forEach((sections) => {
+          expect(sections).to.have.length(1);
+          expect(sections[0].name).to.be.undefined;
+        });
+      }
+    }).as("htmlGen");
     cy.getByTestId("print-generate-preview-button", { timeout: 10000 })
       .should("be.visible")
       .click();

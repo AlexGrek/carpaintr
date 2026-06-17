@@ -135,3 +135,7 @@ Route → testid mapping: `cypress/support/app-routes.js`.
 | `calc-final-stage-print-button` | Print |
 | `calc-final-order-date-input` | Order date |
 | `calc-final-order-number-input` | Order number |
+| `calc-final-tables-panel` | Tables panel |
+| `calc-final-collapse-tables-checkbox` | Collapse tables |
+| `calc-final-collapse-readonly-note` | Read-only info when collapsed |
+| `calc-final-table-{slug}` | Per-part table section |

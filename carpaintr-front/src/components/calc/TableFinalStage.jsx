@@ -1,11 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Button,
+  Checkbox,
   DatePicker,
   Divider,
   HStack,
   IconButton,
   Input,
+  Message,
   Panel,
 } from "rsuite";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
@@ -15,11 +17,12 @@ import BottomStickyLayout from "../layout/BottomStickyLayout";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import PrintCalculationDrawer from "../PrintCalculationDrawer";
 import { Shapes } from "lucide-react";
-import { cloneDeep } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 import { authFetch } from "../../utils/authFetch";
 import { useLocale } from "../../localization/LocaleContext";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import NotifyMessage from "../layout/NotifyMessage";
+import { buildTotalTables } from "../../calc/collapseTables";
 
 const TableFinalStage = ({
   title: _title,
@@ -35,8 +38,10 @@ const TableFinalStage = ({
   const [printDrawerOpen, setPrintDrawerOpen] = useState(false);
   const { str } = useLocale();
   const [orderNumber, setOrderNumber] = useState("0");
-  // Default orderDate = Today
   const [orderDate, setOrderDate] = useState(new Date());
+  const collapseTables = stageData.collapseTables ?? false;
+  const totalTables = stageData.totalTables ?? {};
+
   const showMessage = useCallback(
     (type, message) => {
       setN(`${str(capitalizeFirstLetter(type))} ${message}`);
@@ -45,6 +50,28 @@ const TableFinalStage = ({
   );
 
   const [n, setN] = useState(null);
+
+  useEffect(() => {
+    if (!stageData.calculations) return;
+    const next = buildTotalTables(stageData.calculations);
+    setStageData((prev) => {
+      if (isEqual(prev.totalTables, next)) {
+        return prev;
+      }
+      return { ...prev, totalTables: next };
+    });
+  }, [stageData.calculations, setStageData]);
+
+  const handleCollapseTablesChange = useCallback(
+    (_value, checked) => {
+      setStageData((prev) => ({
+        ...prev,
+        collapseTables: checked,
+        totalTables: buildTotalTables(prev.calculations || {}),
+      }));
+    },
+    [setStageData],
+  );
 
   const handleSave = useCallback(async () => {
     const dataToSave = cloneDeep(stageData);
@@ -144,27 +171,62 @@ const TableFinalStage = ({
               />
             </section>
             <Panel header={str("Tables")} data-testid="calc-final-tables-panel">
+              <Checkbox
+                checked={collapseTables}
+                onChange={handleCollapseTablesChange}
+                data-testid="calc-final-collapse-tables-checkbox"
+                style={{ marginBottom: "12px" }}
+              >
+                <Trans>Collapse tables</Trans>
+              </Checkbox>
+              {collapseTables && (
+                <Message
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: "12px", textAlign: "left" }}
+                  data-testid="calc-final-collapse-readonly-note"
+                >
+                  <Trans>
+                    Collapsed view is read-only. Uncheck to edit individual
+                    table rows.
+                  </Trans>
+                </Message>
+              )}
               {stageData.calculations &&
                 Object.keys(stageData.calculations).map((key) => {
+                  const collapsedTable = totalTables[key];
+                  const tableData =
+                    collapseTables && collapsedTable
+                      ? [collapsedTable]
+                      : stageData.calculations[key];
+
                   return (
-                    <div key={key} data-testid={`calc-final-table-${key.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+                    <div
+                      key={key}
+                      data-testid={`calc-final-table-${key.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`}
+                    >
                       <Divider />
                       <HStack>
                         <Shapes />
                         <h4>{key}</h4>
                       </HStack>
                       <EvaluationResultsTable
-                        data={stageData.calculations[key]}
-                        setData={(value) => {
-                          setStageData({
-                            ...stageData,
-                            calculations: {
-                              ...stageData.calculations,
-                              [key]: value,
-                            },
-                          });
-                        }}
+                        data={tableData}
+                        setData={
+                          collapseTables
+                            ? null
+                            : (value) => {
+                                setStageData({
+                                  ...stageData,
+                                  calculations: {
+                                    ...stageData.calculations,
+                                    [key]: value,
+                                  },
+                                });
+                              }
+                        }
                         skipIncorrect={true}
+                        hideTableHeaders={collapseTables}
                       />
                     </div>
                   );
@@ -177,6 +239,8 @@ const TableFinalStage = ({
           onClose={() => setPrintDrawerOpen(false)}
           partsData={stageData.parts || []}
           calculationData={stageData.calculations || {}}
+          collapseTables={collapseTables}
+          totalTables={totalTables}
           orderData={{ orderNumber, orderDate }}
           carData={stageData["car"]}
           paintData={stageData["paint"]}

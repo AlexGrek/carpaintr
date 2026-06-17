@@ -86,6 +86,7 @@ export const EvaluationResultsTable = ({
   currency = "",
   basePrice = 1,
   skipIncorrect = false,
+  hideTableHeaders = false,
   getEditorUrl = defaultGetEditorUrl,
 }) => {
   const toaster = useToaster();
@@ -286,7 +287,7 @@ export const EvaluationResultsTable = ({
 
         return (
           <div key={index} style={{ width: "100%", marginBottom: "10px" }}>
-            <h4>{entry.name}</h4>
+            {!hideTableHeaders && entry.name && <h4>{entry.name}</h4>}
             <table className="evaluation-table modern">
               <thead>
                 <tr>
