@@ -29,6 +29,11 @@ const TABLE_CHIP_STYLE = {
   fontFamily: "monospace",
 };
 
+const toNumber = (value) => {
+  const n = parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
 const defaultGetEditorUrl = (filePath) =>
   `/app/fileeditor?fs=Common&path=${encodeURIComponent(filePath)}`;
 
@@ -136,7 +141,7 @@ export const EvaluationResultsTable = ({
                   // console.log(item)
                   item.price = getPrice(item.name);
                   // console.log(item.price)
-                  const sum = item.estimation * item.price;
+                  const sum = toNumber(item.estimation) * toNumber(item.price);
                   acc += sum;
                   item.sum = sum.toFixed(2);
                   // console.log(item.sum)
@@ -309,7 +314,7 @@ export const EvaluationResultsTable = ({
               <tbody>
                 {entry.result.map((row, i) => {
                   const price = row.price ?? basePrice;
-                  const sum = (row.estimation * price).toFixed(2);
+                  const sum = (toNumber(row.estimation) * toNumber(price)).toFixed(2);
                   return (
                     <tr key={i}>
                       <td className="evaluation-table-cell-numeric">{i + 1}</td>
@@ -354,7 +359,7 @@ export const EvaluationResultsTable = ({
                         {entry.result
                           .reduce((acc, row) => {
                             const price = row.price ?? basePrice;
-                            return acc + row.estimation * price;
+                            return acc + toNumber(row.estimation) * toNumber(price);
                           }, 0)
                           .toFixed(2)}
                       </b>{" "}
