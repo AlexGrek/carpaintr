@@ -5,6 +5,9 @@ import {
   collapsePartTables,
   buildTotalTables,
   totalTablesForTemplate,
+  toRealNumber,
+  sanitizeTableEntry,
+  sanitizeCalcForTemplate,
 } from "./collapseTables.js";
 
 describe("isValidTableEntry", () => {
@@ -89,5 +92,62 @@ describe("totalTablesForTemplate", () => {
     const calc = totalTablesForTemplate(totalTables);
     assert.deepEqual(calc.Hood, [totalTables.Hood]);
     assert.equal(calc.Hood[0].name, undefined);
+  });
+});
+
+describe("toRealNumber", () => {
+  it("returns 0 for unfilled values", () => {
+    assert.equal(toRealNumber(null), 0);
+    assert.equal(toRealNumber(undefined), 0);
+    assert.equal(toRealNumber(""), 0);
+    assert.equal(toRealNumber("Unfilled"), 0);
+    assert.equal(toRealNumber(NaN), 0);
+  });
+
+  it("parses numeric values", () => {
+    assert.equal(toRealNumber(3), 3);
+    assert.equal(toRealNumber("4.5"), 4.5);
+  });
+});
+
+describe("sanitizeTableEntry", () => {
+  it("replaces unfilled numeric fields with zeroes and recomputes sum/total", () => {
+    const table = {
+      name: "p1",
+      result: [
+        { name: "a", estimation: null, price: 2 },
+        { name: "b", estimation: 3, price: undefined },
+      ],
+      total: null,
+    };
+
+    const sanitized = sanitizeTableEntry(table);
+    assert.equal(sanitized.result[0].estimation, 0);
+    assert.equal(sanitized.result[0].sum, 0);
+    // price missing falls back to basePrice (1)
+    assert.equal(sanitized.result[1].price, 1);
+    assert.equal(sanitized.result[1].sum, 3);
+    assert.equal(sanitized.total, 3);
+  });
+
+  it("leaves non-table entries unchanged", () => {
+    assert.equal(sanitizeTableEntry("error"), "error");
+  });
+});
+
+describe("sanitizeCalcForTemplate", () => {
+  it("never produces null numeric fields across all parts", () => {
+    const calc = {
+      Hood: [{ name: "p1", result: [{ name: "a", estimation: undefined }] }],
+    };
+
+    const sanitized = sanitizeCalcForTemplate(calc);
+    assert.equal(sanitized.Hood[0].result[0].estimation, 0);
+    assert.equal(sanitized.Hood[0].result[0].sum, 0);
+    assert.equal(sanitized.Hood[0].total, 0);
+  });
+
+  it("returns empty object for invalid input", () => {
+    assert.deepEqual(sanitizeCalcForTemplate(null), {});
   });
 });

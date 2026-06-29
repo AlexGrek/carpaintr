@@ -1,6 +1,11 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import TopBarUser from "../layout/TopBarUser";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import FilesystemBrowser from "../editor/FilesystemBrowser";
+import { useActiveLicense } from "../../hooks/useActiveLicense";
+import { redirectToLicenseStatus } from "../../utils/licenseRedirect";
+import ComponentLoadingPage from "../layout/ComponentLoadingPage";
 
 const filesystemConfigs = [
   {
@@ -24,6 +29,18 @@ const filesystemConfigs = [
 
 const FileEditorPage = () => {
   useDocumentTitle("Document title: Data Editor");
+  const navigate = useNavigate();
+  const { licenseStatus, loading } = useActiveLicense();
+
+  useEffect(() => {
+    if (!loading && licenseStatus && !licenseStatus.has_active_license) {
+      redirectToLicenseStatus(navigate);
+    }
+  }, [loading, licenseStatus, navigate]);
+
+  if (loading) return <ComponentLoadingPage />;
+  if (!licenseStatus?.has_active_license) return null;
+
   return (
     <div data-testid="fileeditor-page">
       <TopBarUser />

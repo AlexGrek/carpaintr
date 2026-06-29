@@ -3,7 +3,6 @@ import {
   Form,
   Button,
   Message,
-  useToaster,
   Input,
   InputGroup,
   Container,
@@ -11,7 +10,7 @@ import {
 } from "rsuite";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { resetCompanyInfo, authFetch } from "../../utils/authFetch";
+import { resetCompanyInfo, authFetch, logout } from "../../utils/authFetch";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import "./LoginPage.css";
@@ -19,6 +18,8 @@ import "./LoginPage.css";
 registerTranslations("ua", {
   "Unauthorized: Incorrect username or password.":
     "Невірна електронна адреса або пароль.",
+  "Login failed. Please try again.":
+    "Не вдалося увійти. Спробуйте ще раз.",
 });
 
 const LoginPage = () => {
@@ -29,7 +30,9 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const toaster = useToaster();
+  // Persistent inline error (key into translations). Toasts are too easy to
+  // miss on mobile, so login feedback stays on screen until the next attempt.
+  const [errorKey, setErrorKey] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,6 +68,11 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     setLoading(true);
+    setErrorKey(null);
+    // The user is actively (re)authenticating, so drop any stale token first.
+    // This prevents a half-authenticated state where a later mount/refresh
+    // bounces to the dashboard and then back to login on the next 401.
+    logout();
     try {
       const response = await fetch("/api/v1/login", {
         method: "POST",
@@ -73,22 +81,26 @@ const LoginPage = () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        throw new Error(str("Unauthorized: Incorrect username or password."));
+        setErrorKey("Unauthorized: Incorrect username or password.");
+        return;
       }
 
-      if (!response.ok) throw new Error("Login failed. Please try again.");
+      if (!response.ok) {
+        setErrorKey("Login failed. Please try again.");
+        return;
+      }
 
       const data = await response.json();
-      if (data.token) {
-        localStorage.setItem("authToken", data.token);
-        resetCompanyInfo();
-        navigate(redirect);
+      if (!data?.token) {
+        setErrorKey("Login failed. Please try again.");
+        return;
       }
-    } catch (error) {
-      toaster.push(
-        <Message type="error">{str(error.message)}</Message>,
-        { placement: "topCenter" },
-      );
+
+      localStorage.setItem("authToken", data.token);
+      resetCompanyInfo();
+      navigate(redirect);
+    } catch {
+      setErrorKey("Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -108,12 +120,25 @@ const LoginPage = () => {
             alt="CarPaintr Logo"
           />
         </Link>
+        {errorKey && (
+          <Message
+            type="error"
+            showIcon
+            className="auth-error"
+            data-testid="login-error"
+          >
+            {str(errorKey)}
+          </Message>
+        )}
         <Form fluid>
           <Form.Group>
             <Form.ControlLabel>Електронна адреса</Form.ControlLabel>
             <Input
               value={username}
-              onChange={(value) => setUsername(value)}
+              onChange={(value) => {
+                setUsername(value);
+                setErrorKey(null);
+              }}
               data-testid="login-email-input"
             />
           </Form.Group>
@@ -123,7 +148,10 @@ const LoginPage = () => {
               <Input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(value) => setPassword(value)}
+                onChange={(value) => {
+                  setPassword(value);
+                  setErrorKey(null);
+                }}
                 data-testid="login-password-input"
               />
               <InputGroup.Button

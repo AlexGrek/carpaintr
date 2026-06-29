@@ -24,6 +24,10 @@
   transform: translateY(0);
 }
 
+.auth-error {
+  margin-bottom: 1rem;
+}
+
 .auth-logo-link {
   display: block;
   width: fit-content;

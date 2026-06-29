@@ -15,17 +15,24 @@ import {
   Checkbox,
 } from "rsuite";
 import { useMediaQuery } from "react-responsive";
-import { useLocale } from "../localization/LocaleContext";
+import { useLocale, registerTranslations } from "../localization/LocaleContext";
 import { authFetch } from "../utils/authFetch";
 import { handleLicenseForbidden } from "../utils/licenseRedirect";
 // Added for Generate Preview button
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
-import { File, FileDown } from "lucide-react";
+import { File, FileDown, Braces } from "lucide-react";
 import {
   buildTotalTables,
   totalTablesForTemplate,
+  sanitizeCalcForTemplate,
 } from "../calc/collapseTables";
+
+registerTranslations("ua", {
+  "Show JSON payload": "Показати JSON-дані",
+  "Hide JSON payload": "Сховати JSON-дані",
+  "Generation JSON payload": "JSON-дані для генерації",
+});
 
 // Print Document Generator Component
 const PrintDocumentGenerator = React.memo(
@@ -49,6 +56,7 @@ const PrintDocumentGenerator = React.memo(
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [clickedPreview, setClickedPreview] = useState(false);
     const [loadingDownload, setLoadingDownload] = useState(false);
+    const [showPayload, setShowPayload] = useState(false);
 
     const showMessage = useCallback(
       (type, message) => {
@@ -63,13 +71,17 @@ const PrintDocumentGenerator = React.memo(
     );
 
     const buildRequestPayload = useCallback(() => {
-      const calcForTemplate = collapseTables
+      const rawCalc = collapseTables
         ? totalTablesForTemplate(
             Object.keys(totalTables || {}).length > 0
               ? totalTables
               : buildTotalTables(calculationData),
           )
         : calculationData;
+
+      // Treat unfilled cells as zeroes so the template engine never receives
+      // a null where a real number is required.
+      const calcForTemplate = sanitizeCalcForTemplate(rawCalc);
 
       return {
         calculation: {
@@ -260,8 +272,42 @@ const PrintDocumentGenerator = React.memo(
             >
               <Trans>Download PDF</Trans>
             </Button>
+            <Button
+              appearance="subtle"
+              onClick={() => setShowPayload((prev) => !prev)}
+              startIcon={<Braces />}
+              data-testid="print-toggle-payload-button"
+            >
+              {showPayload ? (
+                <Trans>Hide JSON payload</Trans>
+              ) : (
+                <Trans>Show JSON payload</Trans>
+              )}
+            </Button>
           </Stack>
         </Form>
+        {showPayload && (
+          <Panel
+            header={str("Generation JSON payload")}
+            bordered
+            style={{ marginTop: "10pt", textAlign: "left" }}
+            data-testid="print-payload-panel"
+          >
+            <pre
+              data-testid="print-payload-json"
+              style={{
+                maxHeight: "400px",
+                overflow: "auto",
+                fontSize: "12px",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                margin: 0,
+              }}
+            >
+              {JSON.stringify(buildRequestPayload(), null, 2)}
+            </pre>
+          </Panel>
+        )}
         {clickedPreview && (
           <>
             <Divider>
