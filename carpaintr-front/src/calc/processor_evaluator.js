@@ -137,6 +137,9 @@ export function evaluate_processor(processor, stuff) {
       pricing,
     );
     let processedRows = resultRows.map((item) => {
+      // Substitute placeholders like «деталь»/«Деталь» with the actual part
+      // name for every row, whether or not it has an evaluate expression.
+      const name = process_name_string(item.name, stuff);
       if (!isEmptyOrWhitespace(item.evaluate)) {
         // evaluate!
         console.log("evaluating", item.evaluate.replace(",", "."));
@@ -148,10 +151,10 @@ export function evaluate_processor(processor, stuff) {
         return {
           ...item,
           estimation: estimation,
-          name: process_name_string(item.name, stuff),
+          name,
         };
       }
-      return item;
+      return { ...item, name };
     });
     return {
       name: processor.name,

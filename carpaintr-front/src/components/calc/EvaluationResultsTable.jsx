@@ -5,6 +5,7 @@ import Trans from "../../localization/Trans";
 import { registerTranslations } from "../../localization/LocaleContext";
 import { cloneDeep, isArray, isArrayLike, isString } from "lodash";
 import InlineEditWrapper from "../layout/InlineEditWrapper";
+import { isUnfilledRow, isZeroSumRow } from "../../calc/collapseTables";
 
 registerTranslations("ua", {
   Name: "Найменування",
@@ -314,9 +315,15 @@ export const EvaluationResultsTable = ({
               <tbody>
                 {entry.result.map((row, i) => {
                   const price = row.price ?? basePrice;
+                  const unfilled = isUnfilledRow(row);
+                  const excluded = isZeroSumRow(row, basePrice);
                   const sum = (toNumber(row.estimation) * toNumber(price)).toFixed(2);
                   return (
-                    <tr key={i}>
+                    <tr
+                      key={i}
+                      style={excluded ? { color: "#aaa" } : undefined}
+                      data-excluded={excluded ? "true" : undefined}
+                    >
                       <td className="evaluation-table-cell-numeric">{i + 1}</td>
                       <td title={row.tooltip || ""}>
                         {row.name}
@@ -326,7 +333,8 @@ export const EvaluationResultsTable = ({
                       </td>
                       <td className="evaluation-table-cell-numeric">
                         <InlineEditWrapper
-                          value={row.estimation}
+                          value={unfilled ? "" : row.estimation}
+                          placeholder="-"
                           onChange={(value) =>
                             handleEstimationChange(entry.name, row.name, value)
                           }
@@ -342,7 +350,9 @@ export const EvaluationResultsTable = ({
                           style={{ minWidth: 60 }}
                         />
                       </td>
-                      <td className="evaluation-table-cell-numeric">{sum}</td>
+                      <td className="evaluation-table-cell-numeric">
+                        {unfilled ? "-" : sum}
+                      </td>
                     </tr>
                   );
                 })}

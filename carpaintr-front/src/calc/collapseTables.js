@@ -23,9 +23,44 @@ export function toRealNumber(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * A row is "unfilled" when its estimation is not a real number (e.g. the
+ * literal "Unfilled" placeholder, null, undefined or ""). Unfilled rows show a
+ * "-" in the estimation cell that the user can click to fill in.
+ * @param {*} row
+ * @returns {boolean}
+ */
+export function isUnfilledRow(row) {
+  return !Number.isFinite(parseFloat(row?.estimation));
+}
+
+/**
+ * Compute a row's sum (estimation × price, with `basePrice` as the price
+ * fallback). Unfilled/empty numeric fields count as zero.
+ * @param {*} row
+ * @param {number} [basePrice=1]
+ * @returns {number}
+ */
+export function rowSum(row, basePrice = 1) {
+  const price = row?.price == null ? basePrice : row.price;
+  return toRealNumber(row?.estimation) * toRealNumber(price);
+}
+
+/**
+ * A row is excluded (greyed out, dropped from totals and from the generated
+ * document) when its sum is zero — whether because it is unfilled or because
+ * its estimation/price evaluate to zero. Filling a value so the sum is no
+ * longer zero re-activates the row.
+ * @param {*} row
+ * @param {number} [basePrice=1]
+ * @returns {boolean}
+ */
+export function isZeroSumRow(row, basePrice = 1) {
+  return rowSum(row, basePrice) === 0;
+}
+
 function rowTotal(row, basePrice = 1) {
-  const price = row.price == null ? basePrice : row.price;
-  return toRealNumber(row.estimation) * toRealNumber(price);
+  return rowSum(row, basePrice);
 }
 
 /**
@@ -97,13 +132,18 @@ export function sanitizeTableEntry(table, basePrice = 1) {
   }
 
   let total = 0;
-  const result = table.result.map((row) => {
-    const estimation = toRealNumber(row.estimation);
-    const price = row.price == null ? basePrice : toRealNumber(row.price);
-    const sum = estimation * price;
-    total += sum;
-    return { ...row, estimation, price, sum };
-  });
+  const result = table.result
+    .map((row) => {
+      const estimation = toRealNumber(row.estimation);
+      const price = row.price == null ? basePrice : toRealNumber(row.price);
+      const sum = estimation * price;
+      return { ...row, estimation, price, sum };
+    })
+    // Zero-sum rows (unfilled or evaluating to zero) are not rendered in the
+    // generated document.
+    .filter((row) => row.sum !== 0);
+
+  total = result.reduce((acc, row) => acc + row.sum, 0);
 
   return { ...table, result, total };
 }

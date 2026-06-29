@@ -6,6 +6,9 @@ import {
   buildTotalTables,
   totalTablesForTemplate,
   toRealNumber,
+  isUnfilledRow,
+  rowSum,
+  isZeroSumRow,
   sanitizeTableEntry,
   sanitizeCalcForTemplate,
 } from "./collapseTables.js";
@@ -110,23 +113,56 @@ describe("toRealNumber", () => {
   });
 });
 
+describe("isUnfilledRow", () => {
+  it("flags rows whose estimation is not a real number", () => {
+    assert.equal(isUnfilledRow({ estimation: "Unfilled" }), true);
+    assert.equal(isUnfilledRow({ estimation: null }), true);
+    assert.equal(isUnfilledRow({ estimation: undefined }), true);
+    assert.equal(isUnfilledRow({ estimation: "" }), true);
+    assert.equal(isUnfilledRow({}), true);
+  });
+
+  it("treats numeric estimations (including 0) as filled", () => {
+    assert.equal(isUnfilledRow({ estimation: 0 }), false);
+    assert.equal(isUnfilledRow({ estimation: 0.3 }), false);
+    assert.equal(isUnfilledRow({ estimation: "2.5" }), false);
+  });
+});
+
+describe("rowSum / isZeroSumRow", () => {
+  it("computes estimation × price with basePrice fallback", () => {
+    assert.equal(rowSum({ estimation: 2, price: 5 }), 10);
+    assert.equal(rowSum({ estimation: 3 }, 4), 12);
+    assert.equal(rowSum({ estimation: "Unfilled", price: 100 }), 0);
+  });
+
+  it("flags zero-sum rows (unfilled, zero estimation, or zero price)", () => {
+    assert.equal(isZeroSumRow({ estimation: "Unfilled", price: 100 }), true);
+    assert.equal(isZeroSumRow({ estimation: 0, price: 100 }), true);
+    assert.equal(isZeroSumRow({ estimation: 5, price: 0 }), true);
+    assert.equal(isZeroSumRow({ estimation: 0.3, price: 100 }), false);
+  });
+});
+
 describe("sanitizeTableEntry", () => {
-  it("replaces unfilled numeric fields with zeroes and recomputes sum/total", () => {
+  it("drops zero-sum rows and recomputes sum/total from the rest", () => {
     const table = {
       name: "p1",
       result: [
-        { name: "a", estimation: null, price: 2 },
-        { name: "b", estimation: 3, price: undefined },
+        { name: "a", estimation: "Unfilled", price: 2 }, // unfilled → sum 0
+        { name: "b", estimation: 3, price: undefined }, // price → basePrice 1
+        { name: "c", estimation: 0, price: 100 }, // zero estimation → sum 0
+        { name: "d", estimation: 5, price: 0 }, // zero price → sum 0
       ],
       total: null,
     };
 
     const sanitized = sanitizeTableEntry(table);
-    assert.equal(sanitized.result[0].estimation, 0);
-    assert.equal(sanitized.result[0].sum, 0);
-    // price missing falls back to basePrice (1)
-    assert.equal(sanitized.result[1].price, 1);
-    assert.equal(sanitized.result[1].sum, 3);
+    // Only the non-zero-sum row "b" survives.
+    assert.equal(sanitized.result.length, 1);
+    assert.equal(sanitized.result[0].name, "b");
+    assert.equal(sanitized.result[0].price, 1);
+    assert.equal(sanitized.result[0].sum, 3);
     assert.equal(sanitized.total, 3);
   });
 
@@ -136,15 +172,24 @@ describe("sanitizeTableEntry", () => {
 });
 
 describe("sanitizeCalcForTemplate", () => {
-  it("never produces null numeric fields across all parts", () => {
+  it("removes unfilled rows and never produces null numeric fields", () => {
     const calc = {
-      Hood: [{ name: "p1", result: [{ name: "a", estimation: undefined }] }],
+      Hood: [
+        {
+          name: "p1",
+          result: [
+            { name: "a", estimation: undefined },
+            { name: "b", estimation: 2, price: 5 },
+          ],
+        },
+      ],
     };
 
     const sanitized = sanitizeCalcForTemplate(calc);
-    assert.equal(sanitized.Hood[0].result[0].estimation, 0);
-    assert.equal(sanitized.Hood[0].result[0].sum, 0);
-    assert.equal(sanitized.Hood[0].total, 0);
+    assert.equal(sanitized.Hood[0].result.length, 1);
+    assert.equal(sanitized.Hood[0].result[0].name, "b");
+    assert.equal(sanitized.Hood[0].result[0].sum, 10);
+    assert.equal(sanitized.Hood[0].total, 10);
   });
 
   it("returns empty object for invalid input", () => {

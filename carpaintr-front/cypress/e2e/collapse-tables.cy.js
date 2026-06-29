@@ -24,12 +24,14 @@ describe("Calc2 final stage: collapse tables", () => {
 
   it("highlights the Collapsed mode on the switch by default", () => {
     cy.getByTestId("calc-final-mode-collapsed").should(
-      "have.class",
-      "rs-btn-primary",
+      "have.attr",
+      "data-appearance",
+      "primary",
     );
     cy.getByTestId("calc-final-mode-detailed").should(
-      "not.have.class",
-      "rs-btn-primary",
+      "not.have.attr",
+      "data-appearance",
+      "primary",
     );
   });
 

@@ -195,7 +195,16 @@ Cypress.Commands.add("reachCalcFinalStage", () => {
 /** Switch the final-stage table view between collapsed and detailed modes. */
 Cypress.Commands.add("setCollapseTables", (checked) => {
   const mode = checked ? "collapsed" : "detailed";
-  cy.getByTestId(`calc-final-mode-${mode}`).click({ force: true });
+  cy.getByTestId(`calc-final-mode-${mode}`).scrollIntoView().click();
+  // Wait for the actual mode change to take effect: the read-only note is
+  // shown only in collapsed mode.
+  cy.getByTestId("calc-final-collapse-readonly-note").should(
+    checked ? "be.visible" : "not.exist",
+  );
   // The active mode is highlighted via the primary appearance.
-  cy.getByTestId(`calc-final-mode-${mode}`).should("have.class", "rs-btn-primary");
+  cy.getByTestId(`calc-final-mode-${mode}`).should(
+    "have.attr",
+    "data-appearance",
+    "primary",
+  );
 });
