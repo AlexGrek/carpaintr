@@ -19,6 +19,7 @@ import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import MenuPickerV2 from '../layout/MenuPickerV2';
 import GridDraw from './GridDraw';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
+import { toRealNumber } from '../../calc/collapseTables';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
 
@@ -807,7 +808,7 @@ const CarBodyMain = ({
                                         ? calcData.filter(e => e && typeof e === 'object' && Array.isArray(e.result))
                                         : [];
                                     const calcTotal = validTables.reduce((acc, entry) =>
-                                        acc + entry.result.reduce((a, row) => a + row.estimation * (row.price ?? basePrice), 0), 0);
+                                        acc + entry.result.reduce((a, row) => a + toRealNumber(row.estimation) * toRealNumber(row.price ?? basePrice), 0), 0);
 
                                     return (
                                         <div

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Button,
+  ButtonGroup,
   DatePicker,
   Divider,
   HStack,
@@ -8,8 +9,6 @@ import {
   Input,
   Message,
   Panel,
-  Radio,
-  RadioGroup,
 } from "rsuite";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { styles } from "../layout/StageView";
@@ -177,21 +176,27 @@ const TableFinalStage = ({
               />
             </section>
             <Panel header={str("Tables")} data-testid="calc-final-tables-panel">
-              <RadioGroup
-                inline
-                appearance="picker"
-                value={collapseTables ? "collapsed" : "detailed"}
-                onChange={handleTableModeChange}
+              <ButtonGroup
                 data-testid="calc-final-mode-switch"
                 style={{ marginBottom: "12px" }}
               >
-                <Radio value="collapsed" data-testid="calc-final-mode-collapsed">
+                <Button
+                  appearance={collapseTables ? "primary" : "default"}
+                  active={collapseTables}
+                  onClick={() => handleTableModeChange("collapsed")}
+                  data-testid="calc-final-mode-collapsed"
+                >
                   <Trans>Collapsed</Trans>
-                </Radio>
-                <Radio value="detailed" data-testid="calc-final-mode-detailed">
+                </Button>
+                <Button
+                  appearance={!collapseTables ? "primary" : "default"}
+                  active={!collapseTables}
+                  onClick={() => handleTableModeChange("detailed")}
+                  data-testid="calc-final-mode-detailed"
+                >
                   <Trans>Detailed</Trans>
-                </Radio>
-              </RadioGroup>
+                </Button>
+              </ButtonGroup>
               {collapseTables && (
                 <Message
                   type="info"

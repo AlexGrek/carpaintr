@@ -22,13 +22,15 @@ describe("Calc2 final stage: collapse tables", () => {
     cy.reachCalcFinalStage();
   });
 
-  it("selects the Collapsed mode on the switch by default", () => {
-    cy.getByTestId("calc-final-mode-collapsed")
-      .find('input[type="radio"]')
-      .should("be.checked");
-    cy.getByTestId("calc-final-mode-detailed")
-      .find('input[type="radio"]')
-      .should("not.be.checked");
+  it("highlights the Collapsed mode on the switch by default", () => {
+    cy.getByTestId("calc-final-mode-collapsed").should(
+      "have.class",
+      "rs-btn-primary",
+    );
+    cy.getByTestId("calc-final-mode-detailed").should(
+      "not.have.class",
+      "rs-btn-primary",
+    );
   });
 
   it("defaults to collapsed view with read-only note and merged tables", () => {

@@ -195,10 +195,7 @@ Cypress.Commands.add("reachCalcFinalStage", () => {
 /** Switch the final-stage table view between collapsed and detailed modes. */
 Cypress.Commands.add("setCollapseTables", (checked) => {
   const mode = checked ? "collapsed" : "detailed";
-  cy.getByTestId(`calc-final-mode-${mode}`)
-    .find('input[type="radio"]')
-    .check({ force: true });
-  cy.getByTestId(`calc-final-mode-${mode}`)
-    .find('input[type="radio"]')
-    .should("be.checked");
+  cy.getByTestId(`calc-final-mode-${mode}`).click({ force: true });
+  // The active mode is highlighted via the primary appearance.
+  cy.getByTestId(`calc-final-mode-${mode}`).should("have.class", "rs-btn-primary");
 });
