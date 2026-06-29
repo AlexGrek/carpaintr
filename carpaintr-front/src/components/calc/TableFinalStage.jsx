@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Button,
-  Checkbox,
   DatePicker,
   Divider,
   HStack,
@@ -9,6 +8,8 @@ import {
   Input,
   Message,
   Panel,
+  Radio,
+  RadioGroup,
 } from "rsuite";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { styles } from "../layout/StageView";
@@ -19,10 +20,15 @@ import PrintCalculationDrawer from "../PrintCalculationDrawer";
 import { Shapes } from "lucide-react";
 import { cloneDeep, isEqual } from "lodash";
 import { authFetch } from "../../utils/authFetch";
-import { useLocale } from "../../localization/LocaleContext";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import NotifyMessage from "../layout/NotifyMessage";
 import { buildTotalTables } from "../../calc/collapseTables";
+
+registerTranslations("ua", {
+  Collapsed: "Згорнуто",
+  Detailed: "Детально",
+});
 
 const TableFinalStage = ({
   title: _title,
@@ -39,7 +45,7 @@ const TableFinalStage = ({
   const { str } = useLocale();
   const [orderNumber, setOrderNumber] = useState("0");
   const [orderDate, setOrderDate] = useState(new Date());
-  const collapseTables = stageData.collapseTables ?? false;
+  const collapseTables = stageData.collapseTables ?? true;
   const totalTables = stageData.totalTables ?? {};
 
   const showMessage = useCallback(
@@ -62,11 +68,11 @@ const TableFinalStage = ({
     });
   }, [stageData.calculations, setStageData]);
 
-  const handleCollapseTablesChange = useCallback(
-    (_value, checked) => {
+  const handleTableModeChange = useCallback(
+    (value) => {
       setStageData((prev) => ({
         ...prev,
-        collapseTables: checked,
+        collapseTables: value === "collapsed",
         totalTables: buildTotalTables(prev.calculations || {}),
       }));
     },
@@ -171,14 +177,21 @@ const TableFinalStage = ({
               />
             </section>
             <Panel header={str("Tables")} data-testid="calc-final-tables-panel">
-              <Checkbox
-                checked={collapseTables}
-                onChange={handleCollapseTablesChange}
-                data-testid="calc-final-collapse-tables-checkbox"
+              <RadioGroup
+                inline
+                appearance="picker"
+                value={collapseTables ? "collapsed" : "detailed"}
+                onChange={handleTableModeChange}
+                data-testid="calc-final-mode-switch"
                 style={{ marginBottom: "12px" }}
               >
-                <Trans>Collapse tables</Trans>
-              </Checkbox>
+                <Radio value="collapsed" data-testid="calc-final-mode-collapsed">
+                  <Trans>Collapsed</Trans>
+                </Radio>
+                <Radio value="detailed" data-testid="calc-final-mode-detailed">
+                  <Trans>Detailed</Trans>
+                </Radio>
+              </RadioGroup>
               {collapseTables && (
                 <Message
                   type="info"

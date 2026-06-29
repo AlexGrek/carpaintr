@@ -73,7 +73,7 @@ EXIT_CODE=0
 if [ "$MODE" = "licenses-only" ]; then
   (cd "$ITESTS_DIR" && uv run python -m tests.populate_licenses) || EXIT_CODE=$?
 else
-  (cd "$ITESTS_DIR" && uv run python -m tests.populate_users "${POPULATE_EXTRA_ARGS[@]}") || EXIT_CODE=$?
+  (cd "$ITESTS_DIR" && uv run python -m tests.populate_users ${POPULATE_EXTRA_ARGS[@]+"${POPULATE_EXTRA_ARGS[@]}"}) || EXIT_CODE=$?
 fi
 
 exit "$EXIT_CODE"

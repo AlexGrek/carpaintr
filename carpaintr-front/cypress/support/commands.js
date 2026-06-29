@@ -192,20 +192,13 @@ Cypress.Commands.add("reachCalcFinalStage", () => {
   );
 });
 
-/** Toggle the final-stage collapse-tables checkbox to the desired state. */
+/** Switch the final-stage table view between collapsed and detailed modes. */
 Cypress.Commands.add("setCollapseTables", (checked) => {
-  const input = cy
-    .getByTestId("calc-final-collapse-tables-checkbox")
-    .should("be.visible")
-    .find('input[type="checkbox"]');
-
-  if (checked) {
-    input.check({ force: true });
-  } else {
-    input.uncheck({ force: true });
-  }
-
-  cy.getByTestId("calc-final-collapse-tables-checkbox")
-    .find('input[type="checkbox"]')
-    .should(checked ? "be.checked" : "not.be.checked");
+  const mode = checked ? "collapsed" : "detailed";
+  cy.getByTestId(`calc-final-mode-${mode}`)
+    .find('input[type="radio"]')
+    .check({ force: true });
+  cy.getByTestId(`calc-final-mode-${mode}`)
+    .find('input[type="radio"]')
+    .should("be.checked");
 });
