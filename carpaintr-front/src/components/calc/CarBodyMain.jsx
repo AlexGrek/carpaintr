@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Divider, Panel, Message, Drawer, Modal, Button, Tabs } from 'rsuite';
+import { Divider, Panel, Message, Drawer, Modal, Button, Tabs, Loader } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
 import { Check, X, MoreHorizontal, Trash2, Bug, ChevronRight, ChevronDown } from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
@@ -79,6 +79,7 @@ registerTranslations("en", {
     "hatchback 3 doors": "hatchback 3 doors",
     "suv 3 doors": "suv 3 doors",
     "suv 5 doors": "suv 5 doors",
+    "Loading car parts...": "Loading car parts...",
 });
 
 registerTranslations("ua", {
@@ -140,6 +141,7 @@ registerTranslations("ua", {
     "No details, click \"...\" to add details": "Немає даних, натисніть «...» щоб додати деталі",
     "Required table \"%s\" not found. Available: [%s]": "Обов'язкова таблиця \"%s\" не знайдена. Доступні: [%s]",
     "Table \"%s\" loaded but data is null — server returned no rows. Required: [%s]": "Таблиця \"%s\" завантажена, але дані порожні — сервер не повернув рядків. Обов'язкові: [%s]",
+    "Loading car parts...": "Завантаження деталей авто...",
 });
 
 const DAMAGE_LEVELS = [
@@ -215,6 +217,11 @@ const CarBodyMain = ({
     const [errors, setErrors] = useState([]);
     const [availableParts, setAvailableParts] = useState([]);
     const [availablePartsT2, setAvailablePartsT2] = useState([]);
+    // True while T1/T2/processors are being (re)fetched for the current carClass+body.
+    // Every diagram part looks identical whether it genuinely has no data for this body
+    // type or the T2 fetch just hasn't resolved yet (buildCarSubcomponentsFromT2([]) is
+    // indistinguishable from a real empty result) - this flag lets the UI tell them apart.
+    const [isDiagramDataLoading, setIsDiagramDataLoading] = useState(true);
     const [processors, setProcessors] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -683,9 +690,10 @@ const CarBodyMain = ({
         setEvaluatorLogs({});
         lastEvaluatedRef.current = {};
         fetchingPartsRef.current = new Set();
+        setIsDiagramDataLoading(true);
 
         // Fetch processors bundle
-        fetchData(
+        const processorsPromise = fetchData(
             '/api/v1/user/processors_bundle',
             'Processors Bundle',
             (code) => {
@@ -701,18 +709,24 @@ const CarBodyMain = ({
         );
 
         // Fetch car parts (T1)
-        fetchData(
+        const t1Promise = fetchData(
             `/api/v1/user/carparts/${carClass}/${body}`,
             'Car Parts T1',
             (data) => setAvailableParts(data)
         );
 
         // Fetch car parts (T2)
-        fetchData(
+        const t2Promise = fetchData(
             `/api/v1/user/carparts_t2/${carClass}/${body}`,
             'Car Parts T2',
             (data) => setAvailablePartsT2(data)
         );
+
+        // fetchData swallows its own errors (routed to handleError), so this always
+        // resolves - the diagram becomes interactive whether the fetches succeeded or not.
+        Promise.all([processorsPromise, t1Promise, t2Promise]).then(() => {
+            setIsDiagramDataLoading(false);
+        });
 
     }, [body, carClass, handleError, fetchData]);
 
@@ -780,11 +794,29 @@ const CarBodyMain = ({
             <div style={{ padding: '4pt', textAlign: 'center', width: '100%' }}>
                 {!showTechData ? (
                     <>
-                        <CarDiagram
-                            selectedItems={selectedItems}
-                            onSelect={handleDiagramSelect}
-                            partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <CarDiagram
+                                selectedItems={selectedItems}
+                                onSelect={handleDiagramSelect}
+                                partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
+                            />
+                            {isDiagramDataLoading && (
+                                <div
+                                    data-testid="calc-car-diagram-loading"
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: 'rgba(255, 255, 255, 0.6)',
+                                        zIndex: 20,
+                                    }}
+                                >
+                                    <Loader size="md" content={str("Loading car parts...")} />
+                                </div>
+                            )}
+                        </div>
 
                         {/* Parts with Calculations */}
                         {selectedItems.length > 0 && (

@@ -36,7 +36,11 @@ describe("Main path: login -> dashboard -> calculation input", () => {
     );
     cy.getByTestId("calc-color-stage-accept-button").click();
 
-    cy.getByTestId("calc-car-part-hood", { timeout: 20000 }).should("be.visible").click();
+    cy.getByTestId("calc-car-part-hood", { timeout: 20000 }).should("be.visible");
+    // Parts render (and look clickable) before T1/T2/processors finish loading; wait
+    // for the loading overlay to clear so the click lands on a diagram that actually has data.
+    cy.get('[data-testid="calc-car-diagram-loading"]', { timeout: 20000 }).should("not.exist");
+    cy.getByTestId("calc-car-part-hood").click();
     cy.getByTestId("calc-car-part-context-menu").should("be.visible");
     cy.get('[data-testid^="calc-car-part-menu-item-"]').first().click();
 

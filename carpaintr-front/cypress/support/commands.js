@@ -166,6 +166,9 @@ Cypress.Commands.add("reachCalcFinalStage", () => {
     .click();
 
   cy.getByTestId("calc-car-part-hood", { timeout: 20000 }).should("be.visible");
+  // Parts render (and look clickable) before T1/T2/processors finish loading; wait
+  // for the loading overlay to clear so clicks land on a diagram that actually has data.
+  cy.get('[data-testid="calc-car-diagram-loading"]', { timeout: 20000 }).should("not.exist");
   cy.selectPartWithAction("calc-car-part-hood");
   cy.selectPartWithAction("calc-car-part-frontBumper");
   cy.selectPartWithAction("calc-car-part-rearBumper");
