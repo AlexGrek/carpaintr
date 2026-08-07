@@ -240,9 +240,19 @@ class TestCalculationStorage:
 
         response = await licensed_client.get("/user/calculationstore/list")
         assert response.status_code == 200
-        items = response.json()
-        assert isinstance(items, list)
-        assert len(items) > 0
+        summary = response.json()
+        # Endpoint returns a FileSummary (see backend-service-rust/src/utils/filesystem.rs),
+        # bucketing files by recency for the load-calculation UI - not a flat list.
+        assert isinstance(summary, dict)
+        for key in ("all_files", "modified_last_24h", "modified_1w_excl_24h", "older_than_1w"):
+            assert key in summary
+            assert isinstance(summary[key], list)
+        assert len(summary["all_files"]) > 0
+        # A calculation saved moments ago must show up in the "last 24h" bucket.
+        assert len(summary["modified_last_24h"]) > 0
+        for entry in summary["all_files"]:
+            assert "name" in entry
+            assert "modified" in entry
 
     async def test_retrieve_saved_calculation(
         self,
