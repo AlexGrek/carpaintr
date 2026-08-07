@@ -28,6 +28,7 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 - **[Development Guide](docs/development.md)** - Setup, workflow, testing, code organization
 - **[Deployment Guide](docs/deployment.md)** - Docker, Kubernetes, Helm, CI/CD
 - **[Backup & Restore](docs/backup.md)** - Automated backups, restore procedures, disaster recovery
+- **[Known Issues](known-issues.md)** - Tracked, reproducible problems not yet fixed
 
 ## Project Structure
 
@@ -45,6 +46,7 @@ carpaintr/
 ├── data/                       # Initial data for deployment
 ├── Taskfile.yml                # Task runner configuration
 ├── CLAUDE.md                   # AI assistant project instructions
+├── known-issues.md             # Tracked, reproducible problems not yet fixed
 └── README.md                   # This file
 ```
 

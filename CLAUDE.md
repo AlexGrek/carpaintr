@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [Backup & Restore](docs/backup.md) - Automated backups, restore procedures
 - [Secrets Management](docs/secrets-management.md) - JWT & license secret initialization
 - [API Documentation](docs/api.md) - Full REST API reference (all endpoints, request/response shapes, auth layers)
+- [Known Issues](known-issues.md) - Tracked, reproducible problems not yet fixed. Check before investigating a bug — it may already be documented.
 
 ## Build & Development Commands
 
