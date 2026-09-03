@@ -11,7 +11,11 @@ import {
   isZeroSumRow,
   sanitizeTableEntry,
   sanitizeCalcForTemplate,
+  isMaterialRow,
+  sortWorkRows,
+  buildCategoryTables,
 } from "./collapseTables.js";
+import { UNCATEGORIZED } from "./workCategories.js";
 
 describe("isValidTableEntry", () => {
   it("accepts object with result array", () => {
@@ -194,5 +198,197 @@ describe("sanitizeCalcForTemplate", () => {
 
   it("returns empty object for invalid input", () => {
     assert.deepEqual(sanitizeCalcForTemplate(null), {});
+  });
+});
+
+describe("isMaterialRow", () => {
+  it("treats a non-empty unit as the material marker", () => {
+    assert.equal(isMaterialRow({ name: "Фарба", unit: "л" }), true);
+    assert.equal(isMaterialRow({ name: "Грунт", unit: "мл" }), true);
+  });
+
+  it("treats missing/blank units as labour", () => {
+    assert.equal(isMaterialRow({ name: "Зняти" }), false);
+    assert.equal(isMaterialRow({ name: "Зняти", unit: "" }), false);
+    assert.equal(isMaterialRow({ name: "Зняти", unit: "   " }), false);
+    assert.equal(isMaterialRow(null), false);
+  });
+});
+
+describe("sortWorkRows", () => {
+  it("orders labour by orderingNum", () => {
+    const rows = [
+      { name: "paint", orderingNum: 1600 },
+      { name: "remove", orderingNum: 100 },
+      { name: "weld", orderingNum: 700 },
+    ];
+
+    assert.deepEqual(
+      sortWorkRows(rows).map((r) => r.name),
+      ["remove", "weld", "paint"],
+    );
+  });
+
+  it("pushes materials after all labour, whatever their orderingNum", () => {
+    const rows = [
+      { name: "лак", orderingNum: 1600, unit: "л" },
+      { name: "polish", orderingNum: 1750 },
+      { name: "remove", orderingNum: 100 },
+    ];
+
+    assert.deepEqual(
+      sortWorkRows(rows).map((r) => r.name),
+      ["remove", "polish", "лак"],
+    );
+  });
+
+  it("is stable within one processor and does not mutate the input", () => {
+    const rows = [
+      { name: "b", orderingNum: 100 },
+      { name: "a", orderingNum: 100 },
+    ];
+    const sorted = sortWorkRows(rows);
+
+    assert.deepEqual(sorted.map((r) => r.name), ["b", "a"]);
+    assert.deepEqual(rows.map((r) => r.name), ["b", "a"]);
+    assert.notEqual(sorted, rows);
+  });
+
+  it("treats a missing orderingNum as 0 so it sorts first", () => {
+    const rows = [{ name: "late", orderingNum: 500 }, { name: "unnumbered" }];
+
+    assert.deepEqual(
+      sortWorkRows(rows).map((r) => r.name),
+      ["unnumbered", "late"],
+    );
+  });
+});
+
+describe("collapsePartTables ordering", () => {
+  it("reorders rows across processors by orderingNum, materials last", () => {
+    const tables = [
+      {
+        name: "Фарбування",
+        result: [
+          { name: "paint", orderingNum: 1600, estimation: 1, price: 10 },
+          { name: "лак", orderingNum: 1600, unit: "л", estimation: 1, price: 10 },
+        ],
+      },
+      {
+        name: "Зняти для ремонту",
+        result: [{ name: "remove", orderingNum: 100, estimation: 1, price: 10 }],
+      },
+    ];
+
+    const collapsed = collapsePartTables(tables);
+    assert.deepEqual(
+      collapsed.result.map((r) => r.name),
+      ["remove", "paint", "лак"],
+    );
+    // Reordering must not change the money.
+    assert.equal(collapsed.total, 30);
+  });
+});
+
+describe("buildCategoryTables", () => {
+  const calculations = {
+    Hood: [
+      {
+        name: "Зняти для ремонту",
+        result: [
+          { name: "remove hood", category: "arm", orderingNum: 100, estimation: 2, price: 10 },
+        ],
+      },
+      {
+        name: "Фарбування",
+        result: [
+          { name: "paint hood", category: "paint", orderingNum: 1600, estimation: 3, price: 10 },
+          { name: "лак hood", category: "paint", orderingNum: 1600, unit: "л", estimation: 1, price: 5 },
+        ],
+      },
+    ],
+    Bumper: [
+      {
+        name: "Зняти для ремонту",
+        result: [
+          { name: "remove bumper", category: "arm", orderingNum: 100, estimation: 1, price: 10 },
+        ],
+      },
+    ],
+  };
+
+  it("groups rows across parts and returns categories in trade order", () => {
+    const byCategory = buildCategoryTables(calculations);
+    assert.deepEqual(Object.keys(byCategory), ["arm", "paint"]);
+  });
+
+  it("stamps each row with the part it came from", () => {
+    const byCategory = buildCategoryTables(calculations);
+    assert.deepEqual(
+      byCategory.arm.result.map((r) => r.part),
+      ["Hood", "Bumper"],
+    );
+  });
+
+  it("totals per category", () => {
+    const byCategory = buildCategoryTables(calculations);
+    assert.equal(byCategory.arm.total, 30); // 2×10 + 1×10
+    assert.equal(byCategory.paint.total, 35); // 3×10 + 1×5
+  });
+
+  it("keeps materials last within a category", () => {
+    const byCategory = buildCategoryTables(calculations);
+    assert.deepEqual(
+      byCategory.paint.result.map((r) => r.name),
+      ["paint hood", "лак hood"],
+    );
+  });
+
+  it("preserves the grand total across the regrouping", () => {
+    const byPart = buildTotalTables(calculations);
+    const byCategory = buildCategoryTables(calculations);
+    const sum = (tables) =>
+      Object.values(tables).reduce((acc, t) => acc + t.total, 0);
+
+    assert.equal(sum(byCategory), sum(byPart));
+  });
+
+  it("falls back to basePrice like the by-part view", () => {
+    const byCategory = buildCategoryTables(
+      { Hood: [{ name: "p", result: [{ name: "a", category: "arm", estimation: 2 }] }] },
+      7,
+    );
+    assert.equal(byCategory.arm.total, 14);
+  });
+
+  it("collects rows with a missing or legacy category into a stable last bucket", () => {
+    const byCategory = buildCategoryTables({
+      Hood: [
+        {
+          name: "p",
+          result: [
+            { name: "legacy", category: "General", estimation: 1, price: 3 },
+            { name: "blank", estimation: 1, price: 2 },
+            { name: "known", category: "paint", estimation: 1, price: 1 },
+          ],
+        },
+      ],
+    });
+
+    // Nothing vanishes, and the unknown bucket sorts after the known ones.
+    assert.deepEqual(Object.keys(byCategory), ["paint", UNCATEGORIZED]);
+    assert.equal(byCategory[UNCATEGORIZED].result.length, 2);
+    assert.equal(byCategory[UNCATEGORIZED].total, 5);
+  });
+
+  it("skips invalid entries and returns {} for invalid input", () => {
+    const byCategory = buildCategoryTables({
+      Hood: ["processor error", { name: "p", result: [{ name: "a", category: "arm", estimation: 1, price: 4 }] }],
+      Bumper: "not an array",
+    });
+
+    assert.deepEqual(Object.keys(byCategory), ["arm"]);
+    assert.equal(byCategory.arm.total, 4);
+    assert.deepEqual(buildCategoryTables(null), {});
   });
 });

@@ -20,6 +20,6 @@
     requiredTables: ["Таблица 1"],
     requiredRepairTypes: ["Заміна  оригінал деталь з фарбуванням","Заміна Не оригінал деталь з фарбуванням"],
     requiredFiles: [],
-    category: "General",
+    category: "extra",
     orderingNum: 1810
 })

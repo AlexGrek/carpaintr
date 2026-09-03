@@ -106,6 +106,28 @@
             font-size: 11px;
             margin: 10px 0 5px 0;
         }
+
+        .vehicle-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 24px;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+
+        .vehicle-info p {
+            margin: 2px 0;
+        }
+
+        .vehicle-info strong {
+            display: inline-block;
+            min-width: 110px;
+        }
+
+        .order-notes {
+            margin-bottom: 16px;
+            font-size: 11px;
+        }
     </style>
 </head>
 
@@ -124,6 +146,49 @@
             </div>
         </div>
     </div>
+
+    {% set car = data.calculation.car %}
+    {% set paint = data.calculation.paint %}
+    {% if car or paint %}
+    <div class="vehicle-info">
+        {% if car.make %}
+        <p><strong>Марка:</strong> {{ car.make }}</p>
+        {% endif %}
+        {% if car.model %}
+        <p><strong>Модель:</strong> {{ car.model }}</p>
+        {% endif %}
+        {% if car.year %}
+        <p><strong>Рік:</strong> {{ car.year }}</p>
+        {% endif %}
+        {% if car.carClass %}
+        <p><strong>Клас:</strong> {{ car.carClass }}</p>
+        {% endif %}
+        {% if car.bodyType %}
+        <p><strong>Тип кузова:</strong> {{ car.bodyType }}</p>
+        {% endif %}
+        {% if car.licensePlate %}
+        <p><strong>Держ. номер:</strong> {{ car.licensePlate }}</p>
+        {% endif %}
+        {% if car.VIN or car.vin %}
+        <p><strong>VIN:</strong> {{ car.VIN or car.vin }}</p>
+        {% endif %}
+        {% if paint and paint.color %}
+        <p><strong>Колір:</strong> {{ paint.color }}</p>
+        {% endif %}
+        {% if paint and paint.paintType %}
+        <p><strong>Тип фарби:</strong> {{ paint.paintType }}</p>
+        {% endif %}
+        {% if car.notes %}
+        <p><strong>Примітки:</strong> {{ car.notes }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if data.metadata.order_notes %}
+    <div class="order-notes">
+        <strong>Примітки до замовлення:</strong> {{ data.metadata.order_notes }}
+    </div>
+    {% endif %}
 
     <div class="calc-section">
         {% for section_name, section_data in data.calculation.calc.items() %}

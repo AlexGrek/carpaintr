@@ -18,6 +18,6 @@
     requiredTables: ["нормы ремонта на 1 квадрат"],
     requiredRepairTypes: ["Ремонт з зовнішнім фарбуванням","Ремонт з фарбуваням 2 сторони"],
     requiredFiles: [],
-    category: "General",
+    category: "paint",
     orderingNum: 1300
 })

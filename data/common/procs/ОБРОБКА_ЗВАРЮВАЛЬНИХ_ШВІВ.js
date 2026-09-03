@@ -18,6 +18,6 @@
     requiredTables: ["Обробка зварювальних швів"],
     requiredRepairTypes: ["Заміна  оригінал деталь з фарбуванням","Заміна Не оригінал деталь з фарбуванням"],
     requiredFiles: [],
-    category: "General",
+    category: "body",
     orderingNum: 700
 })

@@ -325,8 +325,8 @@ Frontend (React/Vite)  →  Backend API (Axum/Rust)  →  PDF Service (Flask/Pyt
 Axum-based REST API with Sled embedded database.
 
 **Key directories:**
-- `src/api/v1/` - Route handlers organized by feature (auth, user, admin, editor, calc/)
-- `src/auth/` - JWT creation/validation, admin check
+- `src/api/v1/` - Route handlers organized by feature (auth, user, admin, editor, calc/, notifications, support)
+- `src/auth/` - JWT creation/validation, admin check, invite codes (`invite.rs`)
 - `src/middleware/` - jwt_auth, admin_check, license_expiry middlewares
 - `src/db/` - Sled database operations (users, requests, attachments)
 - `src/calc/` - Business logic for car paint calculations
@@ -567,9 +567,9 @@ All application routes are under `/app/*`. The root `/` is the marketing landing
 
 When adding navigation links or routes, always use `/app/` prefix for application pages. See `ROUTING-CHANGES.md` for the full route mapping.
 
-### PDF Backend (`pdf_backend/`)
+### PDF Backend (`pdf_backend_playwright/`)
 
-Flask service using WeasyPrint for HTML→PDF conversion. Receives calculation data from main backend, renders Jinja2 templates, returns PDF bytes.
+Flask service using Playwright/Chromium for HTML→PDF conversion (lightweight, multi-arch replacement for the legacy WeasyPrint-based `pdf_backend/`, still built via `task build-pdfgen-legacy`). Receives calculation data from main backend, renders Jinja2 templates, returns PDF bytes. Manages browser lifecycle with an idle-timeout shutdown (`BROWSER_IDLE_TIMEOUT`, default 180s) — see [known-issues.md](known-issues.md) for a related reliability bug on cold browser starts.
 
 ## Database
 
@@ -579,8 +579,8 @@ Per-user files live under `data/users/{encoded_email}/` (catalog, attachments, s
 
 ## Environment Variables (Backend)
 
-Key variables: `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PATH`, `PDF_GEN_URL_POST`, `ADMIN_FILE_PATH`
+Key variables: `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PATH`, `PDF_GEN_URL_POST`, `ADMIN_FILE_PATH`, `LOG_FILE_PATH`, `LICENSE_CACHE_SIZE` (default `100`), `DEFAULT_CURRENCY` (default `грн`)
 
 ## Deployment
 
-Multi-stage Docker build: Node builds frontend → Rust compiles backend with static files → Debian slim runtime. Deployed to k3s via Helm chart or raw manifests in `k8s-deploy/`.
+Multi-stage Docker build: Node builds frontend → Rust compiles backend with static files → Debian slim runtime. Deployed to k3s via Helm chart (`autolab-chart/`).

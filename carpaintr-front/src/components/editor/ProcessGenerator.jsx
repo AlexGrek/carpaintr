@@ -23,6 +23,7 @@ import {
   Divider,
   HStack,
   InputPicker,
+  SelectPicker,
   TreePicker,
   useToaster,
   Drawer,
@@ -39,6 +40,10 @@ import {
 } from "lucide-react";
 import { authFetch, authFetchJson } from "../../utils/authFetch";
 import Trans from "../../localization/Trans";
+import {
+  WORK_CATEGORIES,
+  workCategoryOptions,
+} from "../../calc/workCategories";
 import {
   registerTranslations,
   useLocale,
@@ -420,7 +425,7 @@ const ProcessorGenerator = () => {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "demo_processor",
-    category: "General",
+    category: "arm",
     orderingNum: 100,
     requiredTables: ["t1"],
     requiredRepairTypes: [],
@@ -635,7 +640,21 @@ ${renderClauses()}
             <Form.ControlLabel>
               <Trans>Category</Trans>
             </Form.ControlLabel>
-            <Form.Control name="category" />
+            <Form.Control
+              name="category"
+              accepter={SelectPicker}
+              data={workCategoryOptions(str)}
+              cleanable={false}
+              searchable={false}
+              block
+              style={{ width: "100%" }}
+            />
+            <Form.HelpText>
+              <Trans>
+                Which trade performs this work. Determines the work order it is
+                printed on.
+              </Trans>
+            </Form.HelpText>
           </Form.Group>
 
           <Form.Group>
@@ -837,7 +856,10 @@ ${renderClauses()}
   const { StringType, NumberType, ArrayType } = Schema.Types;
   const formModel = Schema.Model({
     name: StringType().isRequired("Processor name is required."),
-    category: StringType(),
+    category: StringType().isOneOf(
+      WORK_CATEGORIES,
+      "Pick one of the four work categories.",
+    ),
     orderingNum: NumberType(),
     requiredTables: ArrayType(),
     shouldRunCondition: StringType(),

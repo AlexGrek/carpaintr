@@ -20,6 +20,6 @@
     requiredTables: [],
     requiredRepairTypes: ["Ремонт з зовнішнім фарбуванням","Ремонт з фарбуваням 2 сторони"],
     requiredFiles: [],
-    category: "General",
+    category: "extra",
     orderingNum: 1820
 })

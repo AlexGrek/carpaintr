@@ -21,17 +21,27 @@ import { handleLicenseForbidden } from "../utils/licenseRedirect";
 // Added for Generate Preview button
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
-import { File, FileDown, Braces } from "lucide-react";
+import { File, FileDown, Braces, Sheet } from "lucide-react";
 import {
   buildTotalTables,
   totalTablesForTemplate,
   sanitizeCalcForTemplate,
 } from "../calc/collapseTables";
+import { downloadCalculationExcel } from "../calc/excelExport";
 
 registerTranslations("ua", {
   "Show JSON payload": "Показати JSON-дані",
   "Hide JSON payload": "Сховати JSON-дані",
   "Generation JSON payload": "JSON-дані для генерації",
+  "Download Excel": "Завантажити Excel",
+  "Excel file downloaded successfully!": "Файл Excel успішно завантажено!",
+  "Failed to build Excel file:": "Не вдалося створити файл Excel:",
+  Calculation: "Розрахунок",
+  "Work / Material": "Робота / Матеріал",
+  "Norm-hours": "Нормо-години",
+  Unit: "Од.",
+  Subtotal: "Разом за категорією",
+  "Grand total": "Загалом",
 });
 
 // Print Document Generator Component
@@ -56,6 +66,7 @@ const PrintDocumentGenerator = React.memo(
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [clickedPreview, setClickedPreview] = useState(false);
     const [loadingDownload, setLoadingDownload] = useState(false);
+    const [loadingExcel, setLoadingExcel] = useState(false);
     const [showPayload, setShowPayload] = useState(false);
 
     const showMessage = useCallback(
@@ -197,6 +208,28 @@ const PrintDocumentGenerator = React.memo(
       }
     }, [buildRequestPayload, showMessage, str]);
 
+    const handleDownloadExcel = useCallback(async () => {
+      setLoadingExcel(true);
+      try {
+        // Always built from the raw per-part calculations: the Excel sheet is
+        // grouped by category, not by the on-screen collapsed/detailed choice.
+        await downloadCalculationExcel({
+          calculations: calculationData,
+          str,
+          fileName: `calculation_${orderNumber || Date.now()}.xlsx`,
+        });
+        showMessage("success", str("Excel file downloaded successfully!"));
+      } catch (error) {
+        console.error("Error building Excel file:", error);
+        showMessage(
+          "error",
+          `${str("Failed to build Excel file:")} ${error.message}`,
+        );
+      } finally {
+        setLoadingExcel(false);
+      }
+    }, [calculationData, orderNumber, showMessage, str]);
+
     return (
       <div
         style={{ margin: "auto", maxWidth: "560px", paddingTop: "5pt" }}
@@ -271,6 +304,16 @@ const PrintDocumentGenerator = React.memo(
               data-testid="print-download-pdf-button"
             >
               <Trans>Download PDF</Trans>
+            </Button>
+            <Button
+              appearance="ghost"
+              onClick={handleDownloadExcel}
+              loading={loadingExcel}
+              disabled={loadingPreview || loadingDownload}
+              startIcon={<Sheet />}
+              data-testid="print-download-excel-button"
+            >
+              <Trans>Download Excel</Trans>
             </Button>
             <Button
               appearance="subtle"

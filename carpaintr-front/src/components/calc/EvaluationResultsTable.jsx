@@ -9,6 +9,7 @@ import { isUnfilledRow, isZeroSumRow } from "../../calc/collapseTables";
 
 registerTranslations("ua", {
   Name: "Найменування",
+  Part: "Деталь",
   Estimation: "Оцінка",
   Price: "Ціна",
   Sum: "Сума",
@@ -93,6 +94,9 @@ export const EvaluationResultsTable = ({
   basePrice = 1,
   skipIncorrect = false,
   hideTableHeaders = false,
+  // In the by-category view the part is no longer the enclosing heading, so it
+  // has to become a cell. Off by default, leaving the by-part views unchanged.
+  showPartColumn = false,
   getEditorUrl = defaultGetEditorUrl,
 }) => {
   const toaster = useToaster();
@@ -298,9 +302,14 @@ export const EvaluationResultsTable = ({
               <thead>
                 <tr>
                   <th style={{ width: "25px" }}>#</th>
-                  <th style={{ width: "88%" }}>
+                  <th style={{ width: showPartColumn ? "68%" : "88%" }}>
                     <Trans>Name</Trans>
                   </th>
+                  {showPartColumn && (
+                    <th style={{ width: "20%" }}>
+                      <Trans>Part</Trans>
+                    </th>
+                  )}
                   <th>
                     <Trans>Estimation</Trans>
                   </th>
@@ -331,6 +340,7 @@ export const EvaluationResultsTable = ({
                           <TraceButton trace={row.trace} onOpen={setActiveTrace} />
                         )}
                       </td>
+                      {showPartColumn && <td>{row.part || ""}</td>}
                       <td className="evaluation-table-cell-numeric">
                         <InlineEditWrapper
                           value={unfilled ? "" : row.estimation}
@@ -358,7 +368,7 @@ export const EvaluationResultsTable = ({
                 })}
                 <tr className="total-row">
                   <td
-                    colSpan={4}
+                    colSpan={showPartColumn ? 5 : 4}
                     style={{ textAlign: "right", fontWeight: "bold" }}
                   >
                     <Trans>Total</Trans>:

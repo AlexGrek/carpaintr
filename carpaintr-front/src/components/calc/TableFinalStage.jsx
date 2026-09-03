@@ -22,12 +22,20 @@ import { authFetch } from "../../utils/authFetch";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import NotifyMessage from "../layout/NotifyMessage";
-import { buildTotalTables } from "../../calc/collapseTables";
+import { buildTotalTables, buildCategoryTables } from "../../calc/collapseTables";
+import { WORK_CATEGORY_LABELS } from "../../calc/workCategories";
 
 registerTranslations("ua", {
   Collapsed: "Згорнуто",
   Detailed: "Детально",
+  "By category": "За категоріями",
+  "Category view is read-only. Switch to Detailed to edit individual table rows.":
+    "Перегляд за категоріями доступний лише для читання. Перейдіть до «Детально», щоб редагувати рядки.",
 });
+
+const MODE_COLLAPSED = "collapsed";
+const MODE_DETAILED = "detailed";
+const MODE_BY_CATEGORY = "byCategory";
 
 const TableFinalStage = ({
   title: _title,
@@ -44,8 +52,16 @@ const TableFinalStage = ({
   const { str } = useLocale();
   const [orderNumber, setOrderNumber] = useState("0");
   const [orderDate, setOrderDate] = useState(new Date());
-  const collapseTables = stageData.collapseTables ?? true;
+  // `tableMode` supersedes the older `collapseTables` boolean, which is still
+  // written (and read as the fallback) so saved calculations and the print
+  // drawer keep working unchanged.
+  const tableMode =
+    stageData.tableMode ??
+    ((stageData.collapseTables ?? true) ? MODE_COLLAPSED : MODE_DETAILED);
+  const collapseTables = tableMode === MODE_COLLAPSED;
+  const byCategory = tableMode === MODE_BY_CATEGORY;
   const totalTables = stageData.totalTables ?? {};
+  const categoryTables = stageData.categoryTables ?? {};
 
   const showMessage = useCallback(
     (type, message) => {
@@ -58,12 +74,20 @@ const TableFinalStage = ({
 
   useEffect(() => {
     if (!stageData.calculations) return;
-    const next = buildTotalTables(stageData.calculations);
+    const nextTotals = buildTotalTables(stageData.calculations);
+    const nextCategories = buildCategoryTables(stageData.calculations);
     setStageData((prev) => {
-      if (isEqual(prev.totalTables, next)) {
+      if (
+        isEqual(prev.totalTables, nextTotals) &&
+        isEqual(prev.categoryTables, nextCategories)
+      ) {
         return prev;
       }
-      return { ...prev, totalTables: next };
+      return {
+        ...prev,
+        totalTables: nextTotals,
+        categoryTables: nextCategories,
+      };
     });
   }, [stageData.calculations, setStageData]);
 
@@ -71,8 +95,11 @@ const TableFinalStage = ({
     (value) => {
       setStageData((prev) => ({
         ...prev,
-        collapseTables: value === "collapsed",
+        tableMode: value,
+        // Kept in sync for the print drawer and previously saved calculations.
+        collapseTables: value === MODE_COLLAPSED,
         totalTables: buildTotalTables(prev.calculations || {}),
+        categoryTables: buildCategoryTables(prev.calculations || {}),
       }));
     },
     [setStageData],
@@ -183,18 +210,26 @@ const TableFinalStage = ({
                 <Button
                   appearance={collapseTables ? "primary" : "default"}
                   active={collapseTables}
-                  onClick={() => handleTableModeChange("collapsed")}
+                  onClick={() => handleTableModeChange(MODE_COLLAPSED)}
                   data-testid="calc-final-mode-collapsed"
                 >
                   <Trans>Collapsed</Trans>
                 </Button>
                 <Button
-                  appearance={!collapseTables ? "primary" : "default"}
-                  active={!collapseTables}
-                  onClick={() => handleTableModeChange("detailed")}
+                  appearance={tableMode === MODE_DETAILED ? "primary" : "default"}
+                  active={tableMode === MODE_DETAILED}
+                  onClick={() => handleTableModeChange(MODE_DETAILED)}
                   data-testid="calc-final-mode-detailed"
                 >
                   <Trans>Detailed</Trans>
+                </Button>
+                <Button
+                  appearance={byCategory ? "primary" : "default"}
+                  active={byCategory}
+                  onClick={() => handleTableModeChange(MODE_BY_CATEGORY)}
+                  data-testid="calc-final-mode-by-category"
+                >
+                  <Trans>By category</Trans>
                 </Button>
               </ButtonGroup>
               {collapseTables && (
@@ -210,7 +245,43 @@ const TableFinalStage = ({
                   </Trans>
                 </Message>
               )}
-              {stageData.calculations &&
+              {byCategory && (
+                <Message
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: "12px", textAlign: "left" }}
+                  data-testid="calc-final-category-readonly-note"
+                >
+                  <Trans>
+                    Category view is read-only. Switch to Detailed to edit
+                    individual table rows.
+                  </Trans>
+                </Message>
+              )}
+              {byCategory &&
+                Object.keys(categoryTables).map((category) => (
+                  <div
+                    key={category}
+                    data-testid={`calc-final-category-${category}`}
+                  >
+                    <Divider />
+                    <HStack>
+                      <Shapes />
+                      <h4>
+                        {str(WORK_CATEGORY_LABELS[category] ?? category)}
+                      </h4>
+                    </HStack>
+                    <EvaluationResultsTable
+                      data={[categoryTables[category]]}
+                      setData={null}
+                      skipIncorrect={true}
+                      hideTableHeaders={true}
+                      showPartColumn={true}
+                    />
+                  </div>
+                ))}
+              {!byCategory &&
+                stageData.calculations &&
                 Object.keys(stageData.calculations).map((key) => {
                   const collapsedTable = totalTables[key];
                   const tableData =

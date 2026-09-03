@@ -602,6 +602,18 @@ tasks:
     cmds:
       - task test:admin
 
+  test:license:
+    desc: Run license management integration tests
+    dir: backend-integration-tests
+    cmds:
+      - task test:license
+
+  test:pdf:
+    desc: Run PDF/HTML generation integration tests
+    dir: backend-integration-tests
+    cmds:
+      - task test:pdf
+
   test:cov:
     desc: Run integration tests with coverage
     dir: backend-integration-tests

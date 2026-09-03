@@ -47,6 +47,15 @@ const defaultRow = {
   evaluate: "",
   tooltip: "",
   trace: null,
+  // Work category and sort order, stamped from the owning processor in
+  // `evaluate_processor` — grouping views and the Excel export read them off
+  // the row, since a row outlives the processor object it came from.
+  category: "",
+  orderingNum: 0,
+  // Set on material rows ("л", "мл", ...). An empty `unit` means labour; this
+  // is what separates materials from work in the grouped views and gives the
+  // Excel export its Unit column.
+  unit: "",
 };
 
 export function mkRow(obj) {
@@ -136,6 +145,13 @@ export function evaluate_processor(processor, stuff) {
       paint,
       pricing,
     );
+    // Rows are carried verbatim into stageData.calculations, the saved
+    // calculation JSON and the print payload, so stamping the processor's
+    // category/order here is what makes them reachable by every consumer.
+    const provenance = {
+      category: processor.category ?? "",
+      orderingNum: processor.orderingNum ?? 0,
+    };
     let processedRows = resultRows.map((item) => {
       // Substitute placeholders like «деталь»/«Деталь» with the actual part
       // name for every row, whether or not it has an evaluate expression.
@@ -150,17 +166,19 @@ export function evaluate_processor(processor, stuff) {
         }
         return {
           ...item,
+          ...provenance,
           estimation: estimation,
           name,
         };
       }
-      return { ...item, name };
+      return { ...item, ...provenance, name };
     });
     return {
       name: processor.name,
       result: processedRows,
       text: resultRows.map(JSON.stringify).join(";"),
       error: null,
+      ...provenance,
     };
   } catch (e) {
     const allKeys = Object.keys(tableData || {});

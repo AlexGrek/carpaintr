@@ -18,6 +18,6 @@
     requiredTables: ["Арматурные работы"],
     requiredRepairTypes: ["Заміна Не оригінал деталь з фарбуванням","Заміна  оригінал деталь з фарбуванням","Заміна без фарбування"],
     requiredFiles: [],
-    category: "General",
+    category: "arm",
     orderingNum: 400
 })

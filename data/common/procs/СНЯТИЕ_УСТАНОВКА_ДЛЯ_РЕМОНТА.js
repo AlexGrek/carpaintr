@@ -21,6 +21,6 @@
     requiredTables: ["Арматурные работы"],
     requiredRepairTypes: ["Ремонт без фарбування","Розтонування фарби","Ремонт з фарбуваням 2 сторони","Ремонт з зовнішнім фарбуванням"],
     requiredFiles: [],
-    category: "General",
+    category: "arm",
     orderingNum: 100
 })

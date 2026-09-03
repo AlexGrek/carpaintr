@@ -16,6 +16,6 @@
     requiredTables: ["Таблица 1"],
     requiredRepairTypes: ["Полірування"],
     requiredFiles: [],
-    category: "General",
+    category: "extra",
     orderingNum: 1750
 })

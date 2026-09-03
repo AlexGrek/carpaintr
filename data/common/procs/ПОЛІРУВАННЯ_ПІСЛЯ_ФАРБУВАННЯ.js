@@ -29,6 +29,6 @@
         "Ремонт з фарбуваням 2 сторони"
     ],
     requiredFiles: [],
-    category: "General",
+    category: "paint",
     orderingNum: 1700
 })

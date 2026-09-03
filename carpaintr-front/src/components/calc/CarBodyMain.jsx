@@ -700,7 +700,14 @@ const CarBodyMain = ({
                 try {
                     const sandbox = { exports: {}, ...make_sandbox_extensions() };
                     new Function("exports", code)(sandbox.exports);
-                    const plugins = sandbox.exports.default.map((p) => verify_processor(p));
+                    // The bundle arrives in filesystem read order, which is
+                    // platform-dependent. Sort by orderingNum once, here, so
+                    // every downstream consumer (evaluation results, collapsed
+                    // and by-category views, print payload) sees the works in
+                    // the sequence they are actually performed in.
+                    const plugins = sandbox.exports.default
+                        .map((p) => verify_processor(p))
+                        .sort((a, b) => (a.orderingNum ?? 0) - (b.orderingNum ?? 0));
                     setProcessors(plugins);
                 } catch (error) {
                     handleError('Processors Bundle Processing', error);

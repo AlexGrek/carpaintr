@@ -33,6 +33,6 @@
         "Ремонт без фарбування"
     ],
     requiredFiles: [],
-    category: "General",
+    category: "body",
     orderingNum: 600
 })

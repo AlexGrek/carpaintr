@@ -1,6 +1,9 @@
 /**
- * Merge per-processor calculation tables into one collapsed table per part.
+ * Merge per-processor calculation tables into one collapsed table per part,
+ * or regroup every part's rows by work category.
  */
+
+import { categoryRank, normalizeCategory } from "./workCategories.js";
 
 export function isValidTableEntry(entry) {
   return (
@@ -64,7 +67,34 @@ function rowTotal(row, basePrice = 1) {
 }
 
 /**
- * Collapse an array of processor tables into a single merged table.
+ * A row is a material (paint, lacquer, primer, ...) rather than labour when it
+ * carries a unit of measure. Materials are listed after all labour rows.
+ * @param {*} row
+ * @returns {boolean}
+ */
+export function isMaterialRow(row) {
+  return typeof row?.unit === "string" && row.unit.trim() !== "";
+}
+
+/**
+ * Order rows the way the works are actually performed: labour first (by the
+ * processor's `orderingNum`), then materials. `Array.prototype.sort` is stable,
+ * so rows emitted by the same processor keep the order the processor wrote
+ * them in.
+ * @param {Array} rows
+ * @returns {Array} a new, sorted array
+ */
+export function sortWorkRows(rows) {
+  return [...rows].sort((a, b) => {
+    const materialDiff = Number(isMaterialRow(a)) - Number(isMaterialRow(b));
+    if (materialDiff !== 0) return materialDiff;
+    return (a?.orderingNum ?? 0) - (b?.orderingNum ?? 0);
+  });
+}
+
+/**
+ * Collapse an array of processor tables into a single merged table, ordered by
+ * `orderingNum` with material rows pushed to the end.
  * @param {Array} tables - per-processor entries from calculations[partName]
  * @param {number} [basePrice=1]
  * @returns {{ result: Array, total: number }}
@@ -74,13 +104,59 @@ export function collapsePartTables(tables, basePrice = 1) {
     return { result: [], total: 0 };
   }
 
-  const result = tables
-    .filter(isValidTableEntry)
-    .flatMap((entry) => entry.result);
+  const result = sortWorkRows(
+    tables.filter(isValidTableEntry).flatMap((entry) => entry.result),
+  );
 
   const total = result.reduce((acc, row) => acc + rowTotal(row, basePrice), 0);
 
   return { result, total };
+}
+
+/**
+ * Regroup every part's rows by work category instead of by part.
+ *
+ * Each row is stamped with the part it came from (`part`), since in this view
+ * the part is a column rather than the enclosing heading. Categories are
+ * returned in trade order (arm → body → paint → extra, uncategorised last) and
+ * rows within a category follow `sortWorkRows`.
+ *
+ * @param {Record<string, Array>} calculations
+ * @param {number} [basePrice=1]
+ * @returns {Record<string, { result: Array, total: number }>}
+ */
+export function buildCategoryTables(calculations, basePrice = 1) {
+  if (!calculations || typeof calculations !== "object") {
+    return {};
+  }
+
+  const grouped = new Map();
+
+  for (const [partName, tables] of Object.entries(calculations)) {
+    if (!Array.isArray(tables)) continue;
+    for (const entry of tables.filter(isValidTableEntry)) {
+      for (const row of entry.result) {
+        const category = normalizeCategory(row?.category);
+        if (!grouped.has(category)) grouped.set(category, []);
+        grouped.get(category).push({ ...row, part: partName });
+      }
+    }
+  }
+
+  const ordered = [...grouped.keys()].sort(
+    (a, b) => categoryRank(a) - categoryRank(b),
+  );
+
+  return Object.fromEntries(
+    ordered.map((category) => {
+      const result = sortWorkRows(grouped.get(category));
+      const total = result.reduce(
+        (acc, row) => acc + rowTotal(row, basePrice),
+        0,
+      );
+      return [category, { result, total }];
+    }),
+  );
 }
 
 /**

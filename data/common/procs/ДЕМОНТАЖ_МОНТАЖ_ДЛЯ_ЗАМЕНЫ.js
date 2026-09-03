@@ -19,6 +19,6 @@
     requiredTables: ["Работы рихтовочніе демонтаж монтаж"],
     requiredRepairTypes: ["Заміна Не оригінал деталь з фарбуванням","Заміна  оригінал деталь з фарбуванням","Заміна без фарбування"],
     requiredFiles: [],
-    category: "General",
+    category: "body",
     orderingNum: 500
 })

@@ -25,6 +25,6 @@
     requiredTables: ["нормы ремонта на 1 квадрат"],
     requiredRepairTypes: ["Ремонт з зовнішнім фарбуванням","Ремонт з фарбуваням 2 сторони","Ремонт без фарбування"],
     requiredFiles: [],
-    category: "General",
+    category: "body",
     orderingNum: 1200
 })

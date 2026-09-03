@@ -28,6 +28,8 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 - **[Development Guide](docs/development.md)** - Setup, workflow, testing, code organization
 - **[Deployment Guide](docs/deployment.md)** - Docker, Kubernetes, Helm, CI/CD
 - **[Backup & Restore](docs/backup.md)** - Automated backups, restore procedures, disaster recovery
+- **[Secrets Management](docs/secrets-management.md)** - JWT & license secret initialization
+- **[API Documentation](docs/api.md)** - Full REST API reference
 - **[Known Issues](known-issues.md)** - Tracked, reproducible problems not yet fixed
 
 ## Project Structure
@@ -36,13 +38,16 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 carpaintr/
 ├── backend-service-rust/       # Rust backend API (Axum + Sled)
 ├── carpaintr-front/            # React frontend (Vite + TypeScript)
-├── pdf_backend/                # PDF generation service (Flask + WeasyPrint)
+├── pdf_backend_playwright/     # PDF generation service (Flask + Playwright, current)
+├── pdf_backend/                # Legacy PDF service (Flask + WeasyPrint)
 ├── backend-integration-tests/  # pytest integration test suite
 ├── autolab-chart/              # Helm chart for Kubernetes deployment
 ├── docs/                       # Documentation
+│   ├── api.md
 │   ├── backup.md
 │   ├── deployment.md
-│   └── development.md
+│   ├── development.md
+│   └── secrets-management.md
 ├── data/                       # Initial data for deployment
 ├── Taskfile.yml                # Task runner configuration
 ├── CLAUDE.md                   # AI assistant project instructions
@@ -66,10 +71,11 @@ carpaintr/
 - **Routing**: React Router DOM
 - **i18n**: English & Ukrainian
 
-### PDF Service (`pdf_backend/`)
+### PDF Service (`pdf_backend_playwright/`)
 - **Framework**: Flask (Python)
-- **PDF Engine**: WeasyPrint (HTML to PDF)
+- **PDF Engine**: Playwright/Chromium (HTML to PDF, browser-based rendering)
 - **Templates**: Jinja2
+- Lightweight, multi-arch replacement for the legacy WeasyPrint service (`pdf_backend/`, still built as `task build-pdfgen-legacy`)
 
 ## Prerequisites
 
@@ -167,7 +173,10 @@ task --list            # Show all available tasks
 | **Docker** | `task docker-build` | Build all Docker images |
 | | `task docker-push` | Push images to registry |
 | | `task redeploy` | Build, push, restart k8s pods |
-| **Deployment** | `task deploy-service` | Deploy to Kubernetes |
+| **Deployment** | `task deploy ENV=dev\|staging\|prod` | Helm deploy to environment (default: dev) |
+| | `task deploy-dev` / `deploy-staging` / `deploy-prod` | Deploy to a specific environment |
+| | `task db-backup ENV=dev\|staging\|prod` | Manual database backup |
+| | `task db-list-backups ENV=dev\|staging\|prod` | List available backups |
 
 ## Deployment
 
@@ -279,11 +288,13 @@ helm upgrade autolab ./autolab-chart/autolab-chart/autolab \
 ## Key Features
 
 - ✅ **User Authentication** - JWT-based with bcrypt password hashing
-- ✅ **Admin System** - Configurable admin users with elevated permissions
-- ✅ **License Management** - Generate and validate user licenses
+- ✅ **Admin System** - Configurable admin users with elevated permissions, including user impersonation
+- ✅ **License Management** - Generate and validate user licenses, plus admin-generated invite codes for signup
 - ✅ **Calculation Engine** - Car paint calculation with T2 tables
 - ✅ **File Management** - Editor with git-like commit system
-- ✅ **PDF Generation** - HTML to PDF rendering
+- ✅ **PDF Generation** - HTML to PDF rendering (Playwright/Chromium)
+- ✅ **Notifications** - In-app notifications (admin send/broadcast, user "My notifications" page)
+- ✅ **Support Requests** - In-app support ticketing (user submission, admin inbox)
 - ✅ **Automated Backups** - Kubernetes CronJob with configurable retention
 - ✅ **i18n Support** - English and Ukrainian localization
 - ✅ **Integration Tests** - pytest + uv suite (`task itests`), PDF mock, 30 seed users
@@ -301,6 +312,8 @@ Backend configuration (see [deployment.md](docs/deployment.md) for details):
 | `ADMIN_FILE_PATH` | Admin users file | `/var/secrets/admins.txt` |
 | `PDF_GEN_URL_POST` | PDF service endpoint | `http://autolab-pdfgen/generate` |
 | `LOG_FILE_PATH` | Application log file | `/app/data/application.log` |
+| `LICENSE_CACHE_SIZE` | Max entries in the license validation cache | `100` |
+| `DEFAULT_CURRENCY` | Default currency symbol for money values | `грн` |
 
 ## CI/CD
 

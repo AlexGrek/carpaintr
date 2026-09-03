@@ -22,6 +22,12 @@ const TRANSLATIONS_BASIC = {
     "Document title: About us": "Про нас",
     "Document title: Page Not Found": "Сторінку не знайдено",
     "Under construction": "У розробці",
+    // Work categories (keys in src/calc/workCategories.js)
+    "Assembly works": "Арматурні роботи",
+    "Body works": "Рихтувальні роботи",
+    "Paint works": "Малярні роботи",
+    "Additional works": "Додаткові роботи",
+    Uncategorized: "Без категорії",
     "No new notifications": "Сповіщення відсутні",
     "User info": "Користувач",
     Settings: "Налаштування",

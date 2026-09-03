@@ -23,6 +23,6 @@
     requiredTables: ["Нормы материалов и работ для покраски"],
     requiredRepairTypes: ["Ремонт з зовнішнім фарбуванням","Ремонт з фарбуваням 2 сторони"],
     requiredFiles: [],
-    category: "General",
+    category: "paint",
     orderingNum: 1500
 })
