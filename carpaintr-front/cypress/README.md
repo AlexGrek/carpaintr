@@ -26,6 +26,9 @@ This will:
 | `authenticated-routes.cy.js` | Direct visit to each `/app/*` route (+ 404) |
 | `dashboard-apps.cy.js` | Dashboard app cards + license marker |
 | `catalog-tabs.cy.js` | Catalog tab switching |
+| `collapse-tables.cy.js` | Final-stage collapsed/detailed table mode + print payload shape |
+| `full-calc-to-pdf.cy.js` | Full wizard (4+ parts) → HTML preview → PDF download via mock |
+| `table-value-propagation.cy.js` | Uploads a per-user norm-hours table override, verifies the resulting calculation (collapsed view, by-category view, print payload) changes to match — proves table edits actually reach the final result, not just that the code path exists |
 
 Route list is centralized in `cypress/support/app-routes.js`.
 

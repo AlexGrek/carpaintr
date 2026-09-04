@@ -97,7 +97,7 @@ When a phase goes red, identify the failure category before reaching for a fix. 
 | Symptom | Likely cause | Investigate via |
 |---|---|---|
 | Wrong HTTP status/body, auth/license logic wrong, Rust panic, endpoint 404s that should exist | Backend logic bug | **`backend` skill** |
-| Endpoint returns empty/wrong rows for a valid class+body+part combo, T1/T2 CSV structurally wrong, processor `requiredTables`/`requiredRepairTypes` mismatch, missing catalog rows | Data/catalog gap | **`dataman` skill** |
+| Endpoint returns empty/wrong rows for a valid class+body+part combo, T1/T2 CSV structurally wrong, processor `requiredTables`/`requiredRepairTypes` mismatch, missing catalog rows | Data/catalog gap | **`dataman` skill**. `cypress/e2e/table-value-propagation.cy.js` is the standing regression check that a table edit actually reaches the calculated result — run it first when a table-driven number looks wrong |
 | Element never renders/updates, click has no effect, wrong data-testid, race condition, state not syncing, works differently under network latency | Frontend bug | **`frontend` skill** |
 | Assertion expects an old response shape/UI that legitimately changed on purpose (check git log / recent commits for the endpoint or component) | Stale test | Fix the test directly — but confirm the behavior change was intentional first, don't assume |
 

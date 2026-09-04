@@ -807,6 +807,7 @@ console.log("Visual config:", partsVisual["Front bumper"]);
 | `carpaintr-front/src/calc/processor_evaluator.js` | Processor execution & validation |
 | `carpaintr-front/src/components/calc/CarBodyMain.jsx` | T2 rendering & processor execution |
 | `carpaintr-front/src/components/calc/BodyPartsStage.jsx` | Global config loading |
+| `carpaintr-front/cypress/e2e/table-value-propagation.cy.js` | E2E regression check: uploads a one-row per-user override of a norm-hours table, runs a real calculation, and asserts the result changes to match — the test to run (or extend) when in doubt about whether a table edit actually reaches the final calculated output |
 
 ---
 

@@ -62,6 +62,58 @@ Cypress.Commands.add("ensureSeedUserLicensed", (userIndex) => {
   });
 });
 
+/**
+ * Get a bearer token for a seed user via direct API login (no UI).
+ * Used for setup/teardown requests (e.g. uploading a per-user table
+ * override) that shouldn't go through the browser session.
+ */
+Cypress.Commands.add("getAuthToken", (userIndex) => {
+  const { email, password } = seedCredentials(
+    userIndex != null ? Number(userIndex) : undefined,
+  );
+  return cy
+    .request({ method: "POST", url: "/api/v1/login", body: { email, password } })
+    .then((resp) => resp.body.token);
+});
+
+/**
+ * Upload a file to a user's catalog via the editor API
+ * (`POST /api/v1/editor/upload_user_file/{path}`), which expects
+ * multipart/form-data. `cy.request` has no native multipart support, so the
+ * body is hand-built with an explicit boundary.
+ */
+Cypress.Commands.add(
+  "uploadUserFile",
+  ({ token, path, content, filename = "file.csv", mimeType = "text/csv" }) => {
+    const boundary = `----cypressBoundary${Date.now()}`;
+    const body =
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="file"; filename="${filename}"\r\n` +
+      `Content-Type: ${mimeType}\r\n\r\n` +
+      `${content}\r\n` +
+      `--${boundary}--\r\n`;
+    return cy.request({
+      method: "POST",
+      url: `/api/v1/editor/upload_user_file/${encodeURIComponent(path)}`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+  },
+);
+
+/** Delete a per-user catalog file (teardown after a table-override test). */
+Cypress.Commands.add("deleteUserFile", ({ token, path }) => {
+  return cy.request({
+    method: "DELETE",
+    url: `/api/v1/editor/delete_user_file/${encodeURIComponent(path)}`,
+    headers: { Authorization: `Bearer ${token}` },
+    failOnStatusCode: false,
+  });
+});
+
 /** Log in via UI as a populated seed user (requires backend + licenses). */
 Cypress.Commands.add("loginAsSeedUser", (userIndex) => {
   const { email, password } = seedCredentials(
@@ -121,6 +173,43 @@ Cypress.Commands.add("selectPartWithAction", (partTestId) => {
     cy.getByTestId("calc-body-part-details-save-button").should("not.exist");
   });
 });
+
+/**
+ * Like `selectPartWithAction`, but deterministic: picks the context-menu item
+ * matching `subComponentName` exactly (not "first available") and assigns
+ * `actionValue` exactly (not "first available"). Needed whenever a test
+ * depends on which specific processor/table row ends up evaluated — e.g.
+ * asserting a norm-hours value sourced from a specific table cell.
+ *
+ * Context-menu item testids are built from a slugifier that strips
+ * non-ASCII characters (see `toTestIdValue` in ContextMenu.jsx), so Cyrillic
+ * part names collide there — matching by the rendered text instead.
+ */
+Cypress.Commands.add(
+  "selectSpecificPartAction",
+  (partTestId, subComponentName, actionValue) => {
+    const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    cy.get(`[data-testid="${partTestId}"]`).click();
+    cy.getByTestId("calc-car-part-context-menu").should("be.visible");
+    cy.getByTestId("calc-car-part-context-menu")
+      .contains("span", new RegExp(`^${escapeRegExp(subComponentName)}$`))
+      .click();
+    cy.get("body").type("{esc}");
+
+    cy.get('[data-testid^="calc-body-part-details-button-"]', { timeout: 10000 })
+      .last()
+      .click();
+
+    cy.getByTestId("calc-body-part-action-picker", { timeout: 10000 }).should(
+      "be.visible",
+    );
+    cy.get(`[data-testid="calc-body-part-action-picker-option-${actionValue}"]`).click();
+
+    cy.getByTestId("calc-body-part-details-save-button").click();
+    cy.getByTestId("calc-body-part-details-save-button").should("not.exist");
+  },
+);
 
 /**
  * Vehicle form opens in model-by-default UI; switch to class/body manual mode when needed.
