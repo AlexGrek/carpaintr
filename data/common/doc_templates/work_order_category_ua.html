@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Наряд №{{ data.metadata.order_number }}</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .category-section {
+                page-break-after: always;
+            }
+
+            .category-section:last-child {
+                page-break-after: auto;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.2;
+            margin: 20px;
+            color: black;
+        }
+
+        .invoice-header {
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .company-info h1 {
+            font-size: 16px;
+            margin: 0 0 5px 0;
+            font-weight: bold;
+        }
+
+        .company-info p {
+            margin: 2px 0;
+            font-size: 11px;
+        }
+
+        .order-info {
+            text-align: right;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+        }
+
+        .category-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 4px 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .number-cell {
+            text-align: right;
+        }
+
+        .total-row {
+            font-weight: bold;
+            margin: 8px 0 20px 0;
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            font-size: 11px;
+        }
+
+        .vehicle-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 24px;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+
+        .vehicle-info p {
+            margin: 2px 0;
+        }
+
+        .vehicle-info strong {
+            display: inline-block;
+            min-width: 110px;
+        }
+
+        .order-notes {
+            margin-bottom: 16px;
+            font-size: 11px;
+        }
+
+        .executor-line {
+            margin: 16px 0 0 0;
+            font-size: 11px;
+        }
+
+        .executor-line span {
+            display: inline-block;
+            min-width: 220px;
+            border-bottom: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    {% for category_name, category_data in data.calculation.calc_by_category.items() %}
+    <div class="category-section">
+        <div class="invoice-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="company-info">
+                    <h1>{{ data.company_info.company_name }}</h1>
+                    {% if data.company_info.company_addr %}
+                    <p>{{ data.company_info.company_addr }}</p>
+                    {% endif %}
+                    <p>Email: {{ data.company_info.email }}</p>
+                </div>
+                <div class="order-info">
+                    <p>НАРЯД №{{ data.metadata.order_number }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if loop.first %}
+        {% set car = data.calculation.car %}
+        {% set paint = data.calculation.paint %}
+        {% if car or paint %}
+        <div class="vehicle-info">
+            {% if car.make %}
+            <p><strong>Марка:</strong> {{ car.make }}</p>
+            {% endif %}
+            {% if car.model %}
+            <p><strong>Модель:</strong> {{ car.model }}</p>
+            {% endif %}
+            {% if car.year %}
+            <p><strong>Рік:</strong> {{ car.year }}</p>
+            {% endif %}
+            {% if car.licensePlate %}
+            <p><strong>Держ. номер:</strong> {{ car.licensePlate }}</p>
+            {% endif %}
+            {% if car.VIN or car.vin %}
+            <p><strong>VIN:</strong> {{ car.VIN or car.vin }}</p>
+            {% endif %}
+            {% if paint and paint.color %}
+            <p><strong>Колір:</strong> {{ paint.color }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if data.metadata.order_notes %}
+        <div class="order-notes">
+            <strong>Примітки до замовлення:</strong> {{ data.metadata.order_notes }}
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="category-title">{{ category_name }}</div>
+
+        {% for work_group in category_data %}
+        {% if work_group.result %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Деталь</th>
+                    <th style="width: 38%;">Найменування</th>
+                    <th style="width: 12%;">Оцінка</th>
+                    <th style="width: 12%;">Вартість</th>
+                    <th style="width: 18%;">Сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in work_group.result %}
+                <tr>
+                    <td>{{ item.part }}</td>
+                    <td>{{ item.name }}{% if item.unit %} ({{ item.unit }}){% endif %}</td>
+                    <td class="number-cell">{{ item.estimation }}</td>
+                    <td class="number-cell">{{ item.price }}</td>
+                    <td class="number-cell">{{ item.sum }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-row">
+            Всього по категорії: {{ "%.2f"|format(work_group.total) }} {{ data.company_info.pricing_preferences.preferred_currency }}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <div class="executor-line">
+            Виконавець: <span>&nbsp;</span> &nbsp;&nbsp; Дата виконання: <span>&nbsp;</span>
+        </div>
+
+        <div class="footer">
+            <p>Дата замовлення:
+                {% if data.calculation.order.orderDate %}
+                {{ data.calculation.order.orderDate[:10] }}
+                {% else %}
+                {{ data.calculation.order.orderDate }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+
+</html>

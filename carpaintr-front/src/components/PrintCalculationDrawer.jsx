@@ -24,10 +24,12 @@ import { isArrayLike } from "lodash";
 import { File, FileDown, Braces, Sheet } from "lucide-react";
 import {
   buildTotalTables,
+  buildCategoryTables,
   totalTablesForTemplate,
   sanitizeCalcForTemplate,
 } from "../calc/collapseTables";
 import { downloadCalculationExcel } from "../calc/excelExport";
+import { WORK_CATEGORY_LABELS } from "../calc/workCategories";
 
 registerTranslations("ua", {
   "Show JSON payload": "Показати JSON-дані",
@@ -94,12 +96,27 @@ const PrintDocumentGenerator = React.memo(
       // a null where a real number is required.
       const calcForTemplate = sanitizeCalcForTemplate(rawCalc);
 
+      // Always computed, independent of the collapsed/detailed toggle above,
+      // so a per-category work order template can be selected regardless of
+      // which on-screen view mode produced this print run.
+      const categoryTables = buildCategoryTables(calculationData);
+      const rawCalcByCategory = Object.fromEntries(
+        Object.entries(categoryTables).map(([category, table]) => [
+          str(WORK_CATEGORY_LABELS[category] ?? category),
+          table,
+        ]),
+      );
+      const calcByCategoryForTemplate = sanitizeCalcForTemplate(
+        totalTablesForTemplate(rawCalcByCategory),
+      );
+
       return {
         calculation: {
           car: carData,
           paint: paintData,
           order: orderData,
           calc: calcForTemplate,
+          calc_by_category: calcByCategoryForTemplate,
         },
         metadata: {
           order_number: orderNumber || null,
@@ -119,6 +136,7 @@ const PrintDocumentGenerator = React.memo(
       orderNotes,
       customTemplateContent,
       templateName,
+      str,
     ]);
 
     const handleGeneratePreview = useCallback(async () => {

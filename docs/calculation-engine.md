@@ -64,8 +64,8 @@ Each processor in the bundle is an object with these fields:
 | `requiredTables` | string[] | Table names that must exist in `tableData` for this processor to run |
 | `requiredRepairTypes` | string[] | Repair action strings this processor is valid for (e.g. `["paint", "toning"]`) |
 | `requiredFiles` | string[] | (Currently unused) |
-| `category` | string | Grouping label |
-| `orderingNum` | number | Sort order when multiple processors match |
+| `category` | string | One of the four trade keys in [`WORK_CATEGORIES`](../carpaintr-front/src/calc/workCategories.js): `arm` (арматурні), `body` (рихтувальні), `paint` (малярні), `extra` (додаткові). An unrecognised or missing value (e.g. the legacy `"General"`) is normalized to `uncategorized` and sorts last. Author it through the **Category** picker in [ProcessGenerator.jsx](../carpaintr-front/src/components/editor/ProcessGenerator.jsx) — this field used to be free text, which is why older processors say `"General"`. |
+| `orderingNum` | number | Sort order. Applied once, right after the processors bundle is fetched and verified, in [CarBodyMain.jsx](../carpaintr-front/src/components/calc/CarBodyMain.jsx) (`.sort((a, b) => a.orderingNum - b.orderingNum)`). Every downstream consumer — the evaluation results table, the by-part and by-category grouped views, the print payload, and the Excel export — relies on this order already being applied; none of them re-sort. |
 
 ### The `stuff` Context Object
 
@@ -91,10 +91,12 @@ const stuff = {
 The first argument to `shouldRun`/`run` is a sandbox helper object. Currently it exposes:
 
 ```js
-x.mkRow({ name, evaluate, tooltip })
+x.mkRow({ name, evaluate, tooltip, unit })
 ```
 
 `mkRow` creates a normalised row object. The `evaluate` field is a **string expression** (e.g. `"tableData['Labour']['REPAIR_LIGHT']"`) that will be `eval()`-ed by the engine to produce a numeric estimate.
+
+Set `unit` (e.g. `"л"`, `"мл"`) on rows that represent **materials** rather than labour — a non-empty `unit` is what [`isMaterialRow`](../carpaintr-front/src/calc/collapseTables.js) uses to push the row after all labour rows in both grouped views and the Excel export. Every consumer also receives `category` and `orderingNum`, stamped from the owning processor by `evaluate_processor()` — authors don't set these on individual rows.
 
 ### Example Processor
 
@@ -111,7 +113,7 @@ x.mkRow({ name, evaluate, tooltip })
   },
   requiredTables: ["Labour"],
   requiredRepairTypes: ["toning", "paint_one_side", "paint_two_sides"],
-  category: "General",
+  category: "arm",
   orderingNum: 100,
 }
 ```
@@ -230,6 +232,31 @@ This design prioritizes respecting operator judgement: once a calculation is edi
 
 ---
 
+## Grouping Views
+
+[TableFinalStage.jsx](../carpaintr-front/src/components/calc/TableFinalStage.jsx) offers three ways to view the same `calculations` object, all built by pure functions in [collapseTables.js](../carpaintr-front/src/calc/collapseTables.js):
+
+| Mode | Function | Shape |
+|---|---|---|
+| Detailed | (none — raw `calculations[part]`) | One `EvaluationResultsTable` per processor, per part |
+| Collapsed | `buildTotalTables` → `collapsePartTables` | One merged table per part: every processor's rows flattened, sorted by `orderingNum`, materials (`unit` set) pushed after labour |
+| By category | `buildCategoryTables` | One merged table per work category (`arm`/`body`/`paint`/`extra`/`uncategorized`), rows from every part stamped with `row.part`, sorted by category then `orderingNum`, materials last |
+
+`buildCategoryTables` is also what the Excel export and the per-category work order template consume — it always groups by category regardless of which mode is selected on screen, so exported documents don't depend on the operator's last UI toggle.
+
+## Output: PDF, Per-Category Work Orders, Excel
+
+The print payload built in [PrintCalculationDrawer.jsx](../carpaintr-front/src/components/PrintCalculationDrawer.jsx) sends **both** groupings to the backend on every request:
+
+- `calculation.calc` — by-part (raw or collapsed, depending on the on-screen toggle), consumed by [`calculation_ua.html`](../data/common/doc_templates/calculation_ua.html).
+- `calculation.calc_by_category` — always by-category (via `buildCategoryTables` + `totalTablesForTemplate`, with category keys localized to their display strings), consumed by [`work_order_category_ua.html`](../data/common/doc_templates/work_order_category_ua.html). Each row carries `item.part`, so the template can show which part a line belongs to even though parts are no longer the grouping key. The template inserts a `page-break-after` between categories, so printing it yields one physical sheet per trade — e.g. the painter's sheet contains only `paint`-category rows.
+
+Both templates are discovered automatically by `GET /api/v1/user/list_templates` (it lists every `.html` file in `doc_templates/`, user files shadowing common ones) — adding a new template requires no backend change.
+
+**Excel export** ([excelExport.js](../carpaintr-front/src/calc/excelExport.js), `downloadCalculationExcel`) is built client-side, not on the backend: the Rust backend never computes a calculation, it only proxies whatever JSON blob the browser sends it (see `GeneratePdfRequest` in `output_endpoints.rs`), so there is nothing for a server-side exporter to recompute from. The sheet is flat and by-category (Category | Part | Work / Material | Norm-hours | Unit | Price | Sum), one header row, autofilter, per-category subtotals and a grand total — deliberately no merged cells, since those defeat sorting/pivoting in a real spreadsheet tool.
+
+---
+
 ## Creating Processors — The Processor Generator
 
 Processors are authored via the **Create Processor** page (`/create-proc` → [CreateProcPage.jsx](../carpaintr-front/src/components/pages/CreateProcPage.jsx)), which renders the [ProcessorGenerator](../carpaintr-front/src/components/editor/ProcessGenerator.jsx) component.
@@ -286,7 +313,7 @@ The **Evaluate** field has a `TreePicker` populated from the table headers API. 
     requiredTables: ["T"],
     requiredRepairTypes: ["paint_one_side"],
     requiredFiles: [],
-    category: "General",
+    category: "paint",
     orderingNum: 100
 })
 ```
