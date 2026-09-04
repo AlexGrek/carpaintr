@@ -152,15 +152,19 @@ const RegistrationPage = () => {
             </Button>
           </Form.Group>
         </Form>
-        <div style={{ marginTop: "16pt", textAlign: "center" }}>
+        <div className="auth-footer">
           <Link
             to="/app/login"
-            style={{ marginRight: "20px" }}
+            className="auth-footer-link"
             data-testid="register-login-link"
           >
             Увійти
           </Link>
-          <Link to="/" data-testid="register-home-link">
+          <Link
+            to="/"
+            className="auth-footer-link auth-footer-link--muted"
+            data-testid="register-home-link"
+          >
             ← Назад на головну
           </Link>
         </div>

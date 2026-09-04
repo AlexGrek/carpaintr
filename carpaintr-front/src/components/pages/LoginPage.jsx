@@ -176,15 +176,19 @@ const LoginPage = () => {
           </Form.Group>{" "}
         </Form>
         {/* Footer links */}
-        <div style={{ marginTop: "16pt", textAlign: "center" }}>
+        <div className="auth-footer">
           <Link
             to="/app/register"
-            style={{ marginRight: "20px" }}
+            className="auth-footer-link"
             data-testid="login-register-link"
           >
             Реєстрація
           </Link>
-          <Link to="/" data-testid="login-back-home-link">
+          <Link
+            to="/"
+            className="auth-footer-link auth-footer-link--muted"
+            data-testid="login-back-home-link"
+          >
             ← Назад на головну
           </Link>
         </div>

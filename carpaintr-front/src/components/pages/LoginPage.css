@@ -39,3 +39,35 @@
   display: block;
   height: 100px;
 }
+
+.auth-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 24px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.auth-footer-link {
+  color: var(--rs-primary-500, #e23b1a);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.auth-footer-link:hover {
+  text-decoration: underline;
+}
+
+.auth-footer-link--muted {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.auth-footer-link--muted:hover {
+  color: #374151;
+}
