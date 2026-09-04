@@ -120,12 +120,10 @@ describe("Full path: login → 4-part calculation → PDF via mock", () => {
       "be.visible"
     );
 
-    // Wait for template list to load, then select the first template.
-    // RSuite Checkbox wraps its input in a label; click the label to fire onChange.
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    // Wait for template list to load, then select the first template card.
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     // -- HTML preview (mock returns minimal HTML — just verify 200 and iframe appears) --

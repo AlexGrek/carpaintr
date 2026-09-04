@@ -151,10 +151,9 @@ describe("Table value changes propagate through to calculated results", () => {
 
     cy.getByTestId("calc-final-stage-print-button").click();
     cy.getByTestId("print-calculation-drawer", { timeout: 15000 }).should("be.visible");
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     cy.getByTestId("print-toggle-payload-button").should("be.visible").click();

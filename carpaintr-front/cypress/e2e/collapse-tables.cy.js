@@ -81,10 +81,9 @@ describe("Calc2 final stage: collapse tables", () => {
       "be.visible",
     );
 
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     cy.intercept("POST", "/api/v1/user/generate_html_table", (req) => {
@@ -113,10 +112,9 @@ describe("Calc2 final stage: collapse tables", () => {
       "be.visible",
     );
 
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     cy.intercept("POST", "/api/v1/user/generate_html_table", (req) => {
@@ -145,10 +143,9 @@ describe("Calc2 final stage: collapse tables", () => {
       "be.visible",
     );
 
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     cy.intercept("POST", "/api/v1/user/generate_html_table", (req) => {
@@ -174,10 +171,9 @@ describe("Calc2 final stage: collapse tables", () => {
       "be.visible",
     );
 
-    cy.get('[data-testid^="print-template-checkbox-"]', { timeout: 15000 })
+    cy.get('[data-testid^="print-template-card-"]', { timeout: 15000 })
       .should("have.length.at.least", 1)
       .first()
-      .find("label")
       .click();
 
     cy.getByTestId("print-toggle-payload-button").should("be.visible").click();

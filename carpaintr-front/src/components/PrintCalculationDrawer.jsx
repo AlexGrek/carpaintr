@@ -12,7 +12,6 @@ import {
   useToaster,
   Panel,
   Loader,
-  Checkbox,
 } from "rsuite";
 import { useMediaQuery } from "react-responsive";
 import { useLocale, registerTranslations } from "../localization/LocaleContext";
@@ -21,7 +20,7 @@ import { handleLicenseForbidden } from "../utils/licenseRedirect";
 // Added for Generate Preview button
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
-import { File, FileDown, Braces, Sheet } from "lucide-react";
+import { File, FileDown, Braces, Sheet, Check, FileCode2, FileStack } from "lucide-react";
 import {
   buildTotalTables,
   buildCategoryTables,
@@ -30,6 +29,15 @@ import {
 } from "../calc/collapseTables";
 import { downloadCalculationExcel } from "../calc/excelExport";
 import { WORK_CATEGORY_LABELS } from "../calc/workCategories";
+import "./PrintCalculationDrawer.css";
+
+// Bundled thumbnail previews for the built-in document templates. Templates
+// without an entry here (e.g. future additions, "custom") fall back to a
+// generic icon placeholder in the card instead of a screenshot.
+const DOCUMENT_PREVIEWS = {
+  "calculation_ua.html": "/doc_previews/calculation_ua.png",
+  "work_order_category_ua.html": "/doc_previews/work_order_category_ua.png",
+};
 
 registerTranslations("ua", {
   "Show JSON payload": "Показати JSON-дані",
@@ -406,7 +414,7 @@ const DocumentSelector = ({
   selectedDocuments,
   setSelectedDocuments,
 }) => {
-  const handleCheckboxChange = (value, checked) => {
+  const handleToggle = (value, checked) => {
     if (checked) {
       setSelectedDocuments((prev) => [...prev, value]);
     } else {
@@ -415,33 +423,55 @@ const DocumentSelector = ({
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        alignContent: "center",
-        maxWidth: "300pt",
-        margin: "auto",
-      }}
-    >
-      <h4>Оберіть тип документа</h4>
-      {documents.map((doc) => (
-        <Checkbox
-          key={doc.value}
-          value={doc.value}
-          checked={
+    <div className="doc-selector">
+      <h4 className="doc-selector__title">Оберіть тип документа</h4>
+      <div className="doc-grid">
+        {documents.map((doc) => {
+          const selected =
             isArrayLike(selectedDocuments) &&
-            selectedDocuments.includes(doc.value)
-          }
-          onChange={(value, checked) =>
-            handleCheckboxChange(doc.value, checked)
-          }
-          data-testid={`print-template-checkbox-${doc.value}`}
-        >
-          {doc.label}
-        </Checkbox>
-      ))}
+            selectedDocuments.includes(doc.value);
+          const previewSrc = DOCUMENT_PREVIEWS[doc.value];
+          const isCustom = doc.value === "custom";
+
+          return (
+            <div
+              key={doc.value}
+              role="checkbox"
+              aria-checked={selected}
+              tabIndex={0}
+              className={`doc-card${selected ? " doc-card--selected" : ""}`}
+              onClick={() => handleToggle(doc.value, !selected)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleToggle(doc.value, !selected);
+                }
+              }}
+              data-testid={`print-template-card-${doc.value}`}
+            >
+              <div className="doc-card__thumb">
+                {previewSrc ? (
+                  <img src={previewSrc} alt={doc.label} loading="lazy" />
+                ) : (
+                  <div className="doc-card__placeholder">
+                    {isCustom ? (
+                      <FileCode2 size={36} strokeWidth={1.5} />
+                    ) : (
+                      <FileStack size={36} strokeWidth={1.5} />
+                    )}
+                  </div>
+                )}
+                <div className="doc-card__badge">
+                  <Check size={16} strokeWidth={3} />
+                </div>
+              </div>
+              <div className="doc-card__label">
+                {doc.label.replace(/_/g, " ")}
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <Divider />
     </div>
   );
