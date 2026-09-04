@@ -29,6 +29,7 @@ import {
 } from "../calc/collapseTables";
 import { downloadCalculationExcel } from "../calc/excelExport";
 import { WORK_CATEGORY_LABELS } from "../calc/workCategories";
+import { getTemplateLabel } from "../calc/documentTemplates";
 import "./PrintCalculationDrawer.css";
 
 // Bundled thumbnail previews for the built-in document templates. Templates
@@ -52,6 +53,9 @@ registerTranslations("ua", {
   Unit: "Од.",
   Subtotal: "Разом за категорією",
   "Grand total": "Загалом",
+  "Work order by category": "Наряд за категоріями",
+  "Custom template": "Свій шаблон",
+  "Choose a document type": "Оберіть тип документа",
 });
 
 // Print Document Generator Component
@@ -414,6 +418,7 @@ const DocumentSelector = ({
   selectedDocuments,
   setSelectedDocuments,
 }) => {
+  const { str } = useLocale();
   const handleToggle = (value, checked) => {
     if (checked) {
       setSelectedDocuments((prev) => [...prev, value]);
@@ -424,7 +429,7 @@ const DocumentSelector = ({
 
   return (
     <div className="doc-selector">
-      <h4 className="doc-selector__title">Оберіть тип документа</h4>
+      <h4 className="doc-selector__title">{str("Choose a document type")}</h4>
       <div className="doc-grid">
         {documents.map((doc) => {
           const selected =
@@ -465,9 +470,7 @@ const DocumentSelector = ({
                   <Check size={16} strokeWidth={3} />
                 </div>
               </div>
-              <div className="doc-card__label">
-                {doc.label.replace(/_/g, " ")}
-              </div>
+              <div className="doc-card__label">{doc.label}</div>
             </div>
           );
         })}
@@ -521,14 +524,12 @@ const PrintCalculationDrawer = React.memo(
           }
           const data = await response.json();
           setter([
-            ...data.map((item) => {
-              return {
-                label: str(item.replace(".html", "")),
-                value: item,
-              };
-            }),
+            ...data.map((item) => ({
+              label: getTemplateLabel(item, str),
+              value: item,
+            })),
             {
-              label: "Свій шаблон",
+              label: str("Custom template"),
               value: "custom",
             },
           ]);
