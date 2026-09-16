@@ -116,6 +116,18 @@ pub enum ManageUserRequest {
     ChangePassword { email: String, data: String },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceUserCredential {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct ServiceUsersFile {
+    #[serde(default)]
+    pub service_users: Vec<ServiceUserCredential>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct BulkCreateUserEntry {
     pub email: String,

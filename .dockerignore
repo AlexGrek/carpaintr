@@ -31,6 +31,12 @@ backend-service-rust/.cargo/
 pdf_backend/
 pdf_backend_playwright/
 
+# Autolab CLI: keep pyproject/source, drop local venv/build artifacts
+autolab-cli/.venv/
+autolab-cli/dist/
+autolab-cli/build/
+autolab-cli/*.egg-info/
+
 # Tests and dev tools
 backend-integration-tests/
 load_testing/

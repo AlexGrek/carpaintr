@@ -1,5 +1,5 @@
 use crate::{auth::Auth, cache::license_cache::LicenseCache, db::users::AppDb, utils};
-use std::{path::{PathBuf}, sync::Arc};
+use std::{collections::HashSet, path::{PathBuf}, sync::Arc};
 
 pub struct AppState {
     pub db: AppDb,
@@ -9,5 +9,8 @@ pub struct AppState {
     pub data_dir_path: PathBuf,
     pub jwt_license_secret: String,
     pub pdf_gen_api_url_post: String,
-    pub cache: Arc<utils::DataStorageCache>
+    pub cache: Arc<utils::DataStorageCache>,
+    /// Emails of admin-equivalent, license-exempt service accounts (see
+    /// auth::service_user). Populated once at startup.
+    pub service_users: HashSet<String>,
 }

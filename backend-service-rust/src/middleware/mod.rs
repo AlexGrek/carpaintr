@@ -84,7 +84,9 @@ pub async fn admin_check_middleware(
     req: Request<Body>,                               // Request<Body>
     next: Next,                                       // Next
 ) -> Result<Response, AppError> {
-    if is_admin_async(&user_email, &app_state.admin_file_path).await? {
+    if app_state.service_users.contains(&user_email)
+        || is_admin_async(&user_email, &app_state.admin_file_path).await?
+    {
         Ok(next.run(req).await)
     } else {
         Err(AppError::AdminCheckFailed)
@@ -107,6 +109,9 @@ pub async fn license_expiry_middleware(
     req: Request<Body>, // Request<Body>
     next: Next,         // Next
 ) -> Result<Response, AppError> {
+    if app_state.service_users.contains(&user_email) {
+        return Ok(next.run(req).await);
+    }
     if LICENSE_EXEMPT_PATHS.contains(&req.uri().path()) {
         return Ok(next.run(req).await);
     }

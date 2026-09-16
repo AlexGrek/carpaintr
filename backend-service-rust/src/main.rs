@@ -22,7 +22,7 @@ use crate::{
     utils::DataStorageCache,
 };
 use dotenv::dotenv;
-use std::{env, path::PathBuf, sync::Arc};
+use std::{collections::HashSet, env, path::{Path, PathBuf}, sync::Arc};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 mod api;
@@ -89,6 +89,17 @@ async fn main() -> tokio::io::Result<()> {
         jwt_license_secret.clone(),
     );
 
+    let service_users = auth::service_user::ensure_service_users(&db, &auth, Path::new(&data_dir_path))
+        .await
+        .unwrap_or_else(|e| {
+            log_event(
+                LogLevel::Error,
+                format!("Failed to ensure service user(s): {}", e),
+                None::<String>,
+            );
+            HashSet::new()
+        });
+
     let shared_state = Arc::new(AppState {
         db,
         auth,
@@ -98,6 +109,7 @@ async fn main() -> tokio::io::Result<()> {
         data_dir_path: PathBuf::from(data_dir_path),
         admin_file_path: PathBuf::from(admin_file_path),
         cache: Arc::new(DataStorageCache::new(10, 10, 50)),
+        service_users,
     });
 
     spawn_periodic_cleanup(shared_state.clone());

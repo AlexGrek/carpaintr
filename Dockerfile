@@ -27,6 +27,20 @@ COPY --from=frontend /app/carpaintr-front/dist ./static
 # Build backend in release mode
 RUN touch src/main.rs && cargo build --release
 
+# ---------- Autolab CLI Build Stage ----------
+# Built on the exact same base image as the runtime stage so the PyInstaller
+# onefile binary links against a matching glibc.
+FROM debian:stable-slim AS autolab-cli-builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pip build-essential \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+COPY autolab-cli/ .
+RUN python3 -m venv /opt/autolab-cli-venv \
+    && /opt/autolab-cli-venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /opt/autolab-cli-venv/bin/pip install --no-cache-dir . pyinstaller \
+    && /opt/autolab-cli-venv/bin/pyinstaller --onefile --name autolab run_autolab.py
+
 # ---------- Runtime Stage ----------
 FROM debian:stable-slim
 # Install only necessary runtime dependencies
@@ -35,6 +49,9 @@ WORKDIR /app
 # Copy only the binary and static files
 COPY --from=backend /app/backend-service-rust/target/release/rust-web-service /app/backend
 COPY --from=backend /app/backend-service-rust/static /app/static
+# autolab-cli - precompiled, self-contained (bundles its own Python + deps)
+COPY --from=autolab-cli-builder /build/dist/autolab /usr/local/bin/autolab
+RUN chmod +x /usr/local/bin/autolab
 COPY data/ /var/initialdata
 COPY entrypoint.sh /entrypoint.sh
 
