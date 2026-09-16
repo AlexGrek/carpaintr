@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [Secrets Management](docs/secrets-management.md) - JWT & license secret initialization
 - [API Documentation](docs/api.md) - Full REST API reference (all endpoints, request/response shapes, auth layers)
 - [Known Issues](known-issues.md) - Tracked, reproducible problems not yet fixed. Check before investigating a bug — it may already be documented.
+- [autolab-cli](autolab-cli/README.md) - Admin CLI (users, licenses, debug checks); see also [Autolab CLI](#autolab-cli-autolab-cli) below
 
 ## Build & Development Commands
 
@@ -138,6 +139,35 @@ kubectl get secret autolab-api-secret -n <namespace>
 # View secret keys
 kubectl get secret autolab-api-secret -n <namespace> -o jsonpath='{.data}' | jq 'keys[]'
 ```
+
+## Autolab CLI (`autolab-cli/`)
+
+**Full documentation**: See [autolab-cli/README.md](autolab-cli/README.md)
+
+uv-managed Python (Click) CLI for administering the backend: users, licenses, and a quick debug check. Works from a workstation (any environment) and, with zero setup, from inside the `autolab-api` pod.
+
+### Quick Start
+
+```bash
+cd autolab-cli
+uv sync
+uv run autolab login admin@admin.com            # prompts for password; -p for non-interactive
+uv run autolab get users                        # table by default
+uv run autolab --json get user someone@example.com
+uv run autolab license someone@example.com issue 30 premium
+uv run autolab check someone@example.com        # existence + license status + owned files
+```
+
+### Key Points
+
+- **Auth**: token cached in `~/.autolab-cli.yaml` (override via `AUTOLAB_CLI_CONFIG`). `--base-url`/`--json`/`--table`/`--yaml` are root-command options — they must precede the subcommand, e.g. `autolab --base-url https://... login ...`.
+- **Output**: `--json` / `--table` / `--yaml`; default is table for list results, YAML for single-item results.
+- **In-pod zero-config auth**: the backend provisions an admin-equivalent, license-exempt **service user** (`{random}@user.service`) at startup and persists its credentials to `{DATA_DIR_PATH}/service_users.json` (PVC-backed, survives restarts — see `backend-service-rust/src/auth/service_user.rs`). `autolab-cli` reads that file automatically when there's no stored login, so every command works unattended inside the container:
+  ```bash
+  kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- autolab get users
+  ```
+- **License mutation**: the backend has no in-place update endpoint, so `license extend`/`license upgrade` reissue a replacement license and delete the old file.
+- **Packaging**: built into the `autolab-api` Docker image as a precompiled, self-contained binary (PyInstaller `--onefile`) at `/usr/local/bin/autolab` — bundles its own Python, no system Python needed in the container. Building it requires `python3-dev` (PyInstaller needs the shared `libpython`, which plain `python3`/`python3-venv` don't provide).
 
 ## Integration Testing
 
@@ -326,7 +356,7 @@ Axum-based REST API with Sled embedded database.
 
 **Key directories:**
 - `src/api/v1/` - Route handlers organized by feature (auth, user, admin, editor, calc/, notifications, support)
-- `src/auth/` - JWT creation/validation, admin check, invite codes (`invite.rs`)
+- `src/auth/` - JWT creation/validation, admin check, invite codes (`invite.rs`), service-user provisioning (`service_user.rs`, see [Autolab CLI](#autolab-cli-autolab-cli))
 - `src/middleware/` - jwt_auth, admin_check, license_expiry middlewares
 - `src/db/` - Sled database operations (users, requests, attachments)
 - `src/calc/` - Business logic for car paint calculations
@@ -583,4 +613,4 @@ Key variables: `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PAT
 
 ## Deployment
 
-Multi-stage Docker build: Node builds frontend → Rust compiles backend with static files → Debian slim runtime. Deployed to k3s via Helm chart (`autolab-chart/`).
+Multi-stage Docker build: Node builds frontend → Rust compiles backend with static files → Debian slim runtime. The runtime image also bundles a precompiled `autolab-cli` binary at `/usr/local/bin/autolab` (see [Autolab CLI](#autolab-cli-autolab-cli)). Deployed to k3s via Helm chart (`autolab-chart/`).
