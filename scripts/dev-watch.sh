@@ -5,11 +5,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "$ROOT_DIR"
 
-(cd carpaintr-front && npm run dev) &
+export BACKEND_PORT="${BACKEND_PORT:-8080}"
+export FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+PDFGEN_PORT="${PDFGEN_PORT:-5000}"
+
+(cd carpaintr-front && env FRONTEND_PORT="$FRONTEND_PORT" BACKEND_PORT="$BACKEND_PORT" npm run dev) &
 FE_PID=$!
-(cd backend-service-rust && cargo watch -x run) &
+(cd backend-service-rust && env PORT="$BACKEND_PORT" cargo watch -x run) &
 BE_PID=$!
-python3 "$ROOT_DIR/scripts/mock-pdf-server.py" &
+python3 "$ROOT_DIR/scripts/mock-pdf-server.py" "$PDFGEN_PORT" &
 PDF_PID=$!
 
 cleanup() {
@@ -21,9 +25,9 @@ cleanup() {
     # Belt-and-suspenders: kill anything left on the dev ports
     pkill -f "cargo.watch" 2>/dev/null || true
     pkill -f "mock-pdf-server" 2>/dev/null || true
-    lsof -ti :8080 | xargs kill -9 2>/dev/null || true
-    lsof -ti :5000 | xargs kill -9 2>/dev/null || true
-    lsof -ti :5173 | xargs kill -9 2>/dev/null || true
+    lsof -ti ":${BACKEND_PORT}" | xargs kill -9 2>/dev/null || true
+    lsof -ti ":${PDFGEN_PORT}" | xargs kill -9 2>/dev/null || true
+    lsof -ti ":${FRONTEND_PORT}" | xargs kill -9 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM HUP
 

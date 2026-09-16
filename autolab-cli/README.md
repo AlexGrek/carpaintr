@@ -52,7 +52,8 @@ autolab --json get user admin@admin.com
 
 ```bash
 autolab get users                              # list all registered users
-autolab get user <email>                       # one user + license summary (exists, active_license, ...)
+autolab get user <email>                       # one user + license summary (exists, active_license, last_visit, ...)
+autolab get last_user_req [limit]              # most recently active users, most recent first (limit defaults to 10)
 
 autolab license <email> list                    # that user's licenses, each with active/expired status
 autolab license <email> issue <days> [level]    # issue a new license (level defaults to "Basic")
@@ -63,13 +64,14 @@ autolab license <email> upgrade <license_id> <level> # change level, keep expiry
 
 autolab create user <email> <password>          # register a new account (admin bulk-create endpoint)
 
-autolab check <email>                           # debug: existence + license status + files in owned dir
+autolab check <email>                           # debug: existence + license status + last visit + files in owned dir
 ```
 
 Notes on how these map to the backend:
 
 - The backend has **no in-place license mutation endpoint** — only generate (`/admin/license/generate`), list, get, and delete. So `license extend` and `license upgrade` work by generating a replacement license (with the adjusted expiry or level) and then deleting the old file. `license issue` diffs the file list before/after `generate` to report back the new license's id.
 - `get user` / `check` decode each license JWT's payload locally (base64, **not signature-verified**) purely to compute/display active-vs-expired and expiry — this is safe because it's only reachable through already-authenticated admin API calls, never used for a trust decision.
+- `last_visit` comes from `/admin/last_visit/<email>` and reflects the timestamp of the user's most recent authenticated API request (updated on every such request server-side, not just login); it's `null` if the user has never made one.
 - `check <email>` lists files in the user's owned directory by pulling `/admin/export_user_data/<email>` (a ZIP) and reading its member names in memory — no disk writes.
 - `create user` uses the admin bulk-create endpoint (`/admin/users/bulk`), not the public `/register`, and reports whether the account was actually created or already existed.
 

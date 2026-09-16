@@ -65,6 +65,9 @@ pub async fn jwt_auth_middleware(
 
     match app_state.auth.decode_token(&token) {
         Ok(claims) => {
+            if let Err(e) = crate::db::last_visit::record_visit(&app_state.db.last_visit_tree, &claims.sub) {
+                log::warn!("Failed to record last visit for {}: {}", claims.sub, e);
+            }
             parts.extensions.insert(claims.sub);
             let req = Request::from_parts(parts, body);
             Ok(next.run(req).await)

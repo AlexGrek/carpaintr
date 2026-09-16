@@ -1,7 +1,7 @@
 # API Documentation
 
 **Base URL:** `/api/v1`
-**Backend Port:** `8080`
+**Backend Port:** `8080` (default; override with the `PORT` env var)
 
 All protected endpoints require `Authorization: Bearer <token>` header.
 
@@ -770,6 +770,34 @@ List all archived invitations.
 Export a user's personal directory as a ZIP archive.
 
 **Response:** ZIP binary (`Content-Type: application/zip`, filename: `user_export_<email>.zip`).
+
+---
+
+### `GET /api/v1/admin/last_visit/{user_email}`
+Get the last recorded visit time for a user. Updated on every authenticated request the user makes (see `jwt_auth_middleware`), stored in a dedicated `last_visit` Sled tree keyed by email.
+
+**Response:**
+```json
+{
+  "email": "user@example.com",
+  "last_visit": "2026-09-16T12:34:56.789Z"
+}
+```
+`last_visit` is `null` if the user has never made an authenticated request.
+
+---
+
+### `GET /api/v1/admin/last_visit/recent?limit=10`
+Get the most recently active users, most recent first. `limit` is optional (default `10`).
+
+**Response:**
+```json
+[
+  { "email": "user@example.com", "last_visit": "2026-09-16T12:34:56.789Z" },
+  { "email": "other@example.com", "last_visit": "2026-09-16T11:02:10.123Z" }
+]
+```
+Users who have never made an authenticated request are excluded (they have no entry in the `last_visit` tree).
 
 ---
 

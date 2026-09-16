@@ -8,6 +8,7 @@ const USERS_TREE_NAME: &str = "users";
 const REQUESTS_TREE_NAME: &str = "support_requests";
 const NOTIFICATIONS_TREE_NAME: &str = "notifications";
 const ATTACHMENTS_TREE_NAME: &str = "attachments";
+const LAST_VISIT_TREE_NAME: &str = "last_visit";
 
 #[derive(Clone)]
 pub struct AppDb {
@@ -15,7 +16,8 @@ pub struct AppDb {
     pub users_tree: Tree,
     pub requests_tree: Tree,
     pub notifications_tree: Tree,
-    pub attachments_tree: Tree
+    pub attachments_tree: Tree,
+    pub last_visit_tree: Tree
 }
 
 impl AppDb {
@@ -25,7 +27,8 @@ impl AppDb {
         let requests_tree = db.open_tree(REQUESTS_TREE_NAME)?;
         let notifications_tree = db.open_tree(NOTIFICATIONS_TREE_NAME)?;
         let attachments_tree = db.open_tree(ATTACHMENTS_TREE_NAME)?;
-        Ok(Self { users_tree, requests_tree, notifications_tree, attachments_tree })
+        let last_visit_tree = db.open_tree(LAST_VISIT_TREE_NAME)?;
+        Ok(Self { users_tree, requests_tree, notifications_tree, attachments_tree, last_visit_tree })
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {

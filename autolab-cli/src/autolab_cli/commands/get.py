@@ -38,5 +38,16 @@ def get_user(ctx, email):
                 licenses.append({"id": filename, "status": "unreadable"})
         result["license_count"] = len(licenses)
         result["active_license"] = next((l for l in licenses if l["status"] == "active"), None)
+        result["last_visit"] = client.get(f"/admin/last_visit/{email}").json()["last_visit"]
 
+    emit(ctx, result)
+
+
+@get.command("last_user_req")
+@click.argument("limit", required=False, default=10, type=int)
+@click.pass_context
+def get_last_user_req(ctx, limit):
+    """Show the most recently active users (by last authenticated request)."""
+    client = ctx.obj["client"]
+    result = client.get("/admin/last_visit/recent", params={"limit": limit}).json()
     emit(ctx, result)

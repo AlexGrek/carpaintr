@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start backend (:8080) and frontend (:3000) if not already running. Leaves them up.
+# Start backend and frontend if not already running (ports via BACKEND_PORT/FRONTEND_PORT env vars, default :8080/:3000). Leaves them up.
 # Portable: bash 3.2+ on macOS and Linux. Run via `task ensure-dev` or `bash scripts/ensure-dev-stack.sh`.
 set -euo pipefail
 
@@ -16,7 +16,7 @@ if [ "${1:-}" = "--check" ]; then
     echo "Frontend is NOT running at $FRONTEND_URL"
     exit 1
   }
-  echo "Dev stack is up (backend :8080, frontend $FRONTEND_URL)"
+  echo "Dev stack is up (backend :${BACKEND_PORT}, frontend $FRONTEND_URL)"
   exit 0
 fi
 

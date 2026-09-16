@@ -433,10 +433,13 @@ tasks:
 
   # Integration testing tasks (pytest + uv, see backend-integration-tests/)
   itests:
-    desc: Run integration tests (starts backend if needed, tears down after)
+    desc: Run integration tests (starts backend if needed, tears down after; BACKEND_PORT env var overrides :8080)
     cmd: |
       #!/usr/bin/env bash
       set -e
+
+      BACKEND_PORT="${BACKEND_PORT:-8080}"
+      BACKEND_HEALTH_URL="http://localhost:${BACKEND_PORT}/api/v1/health"
 
       STARTED_BACKEND=0
       STARTED_PDF_MOCK=0
@@ -481,8 +484,8 @@ tasks:
         export PDFGEN_MOCK_URL="${PDF_GEN_URL_POST%/generate}"
       fi
 
-      if curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
-        echo "==> Backend already running on :8080"
+      if curl -sf "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
+        echo "==> Backend already running on :${BACKEND_PORT}"
         BACKEND_ALREADY_UP=1
         export CARPAINTR_ITEST_SKIP_PDF=1
         echo "    PDF output tests will be skipped (restart via task itests for full coverage)"
@@ -491,11 +494,11 @@ tasks:
         (cd {{.BACKEND_DIR}} && cargo build)
 
         for round in $(seq 1 40); do
-          PIDS="$(lsof -ti TCP:8080 -sTCP:LISTEN 2>/dev/null || true)"
+          PIDS="$(lsof -ti TCP:${BACKEND_PORT} -sTCP:LISTEN 2>/dev/null || true)"
           [ -z "$PIDS" ] && break
           REPLACED_EXISTING_BACKEND=1
           if [ "$round" -eq 1 ]; then
-            echo "==> Freeing port 8080 (pid(s): $(echo "$PIDS" | tr '\n' ' ' | sed 's/ $//'))..."
+            echo "==> Freeing port ${BACKEND_PORT} (pid(s): $(echo "$PIDS" | tr '\n' ' ' | sed 's/ $//'))..."
             for pid in $PIDS; do kill "$pid" 2>/dev/null || true; done
           else
             for pid in $PIDS; do kill -9 "$pid" 2>/dev/null || true; done
@@ -503,16 +506,16 @@ tasks:
           sleep 0.2
         done
 
-        echo "==> Starting backend (PDF_GEN_URL_POST=$PDF_GEN_URL_POST)..."
+        echo "==> Starting backend on :${BACKEND_PORT} (PDF_GEN_URL_POST=$PDF_GEN_URL_POST)..."
         pushd {{.BACKEND_DIR}} > /dev/null
-        PDF_GEN_URL_POST="$PDF_GEN_URL_POST" cargo run > /tmp/carpaintr-api.log 2>&1 &
+        PORT="$BACKEND_PORT" PDF_GEN_URL_POST="$PDF_GEN_URL_POST" cargo run > /tmp/carpaintr-api.log 2>&1 &
         echo $! > /tmp/carpaintr-api.pid
         popd > /dev/null
         STARTED_BACKEND=1
 
         echo -n "    Waiting for backend"
         for i in $(seq 1 60); do
-          if curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+          if curl -sf "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
             echo " ready"
             break
           fi
@@ -520,7 +523,7 @@ tasks:
           sleep 1
         done
 
-        if ! curl -sf http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+        if ! curl -sf "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
           echo ""
           echo "ERROR: backend did not start within 60s. Last logs:"
           tail -30 /tmp/carpaintr-api.log
@@ -529,7 +532,7 @@ tasks:
       fi
 
       EXIT_CODE=0
-      (cd {{.ITESTS_DIR}} && uv run pytest) || EXIT_CODE=$?
+      (cd {{.ITESTS_DIR}} && BACKEND_BASE_URL="http://localhost:${BACKEND_PORT}" uv run pytest) || EXIT_CODE=$?
 
       if [ "$STARTED_BACKEND" = "1" ]; then
         echo "==> Stopping backend..."
@@ -537,7 +540,7 @@ tasks:
         rm -f /tmp/carpaintr-api.pid
       fi
       if [ "$REPLACED_EXISTING_BACKEND" = "1" ]; then
-        echo "==> Note: a previously running process on :8080 was replaced for this itest run."
+        echo "==> Note: a previously running process on :${BACKEND_PORT} was replaced for this itest run."
       fi
       if [ "$STARTED_PDF_MOCK" = "1" ]; then
         echo "==> Stopping PDF mock..."

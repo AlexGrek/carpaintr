@@ -609,7 +609,9 @@ Per-user files live under `data/users/{encoded_email}/` (catalog, attachments, s
 
 ## Environment Variables (Backend)
 
-Key variables: `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PATH`, `PDF_GEN_URL_POST`, `ADMIN_FILE_PATH`, `LOG_FILE_PATH`, `LICENSE_CACHE_SIZE` (default `100`), `DEFAULT_CURRENCY` (default `грн`)
+Key variables: `PORT` (default `8080`), `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PATH`, `PDF_GEN_URL_POST`, `ADMIN_FILE_PATH`, `LOG_FILE_PATH`, `LICENSE_CACHE_SIZE` (default `100`), `DEFAULT_CURRENCY` (default `грн`)
+
+Local dev / test scripts (`task dev`, `task itests`, `scripts/*.sh`) additionally honor `BACKEND_PORT` (backend listen port, forwarded to the backend as `PORT`), `FRONTEND_PORT` (Vite dev server port, also used as the Vite `/api` proxy's — and Cypress's — target), and `PDFGEN_PORT` (local mock PDF server). All default to the previous hardcoded values (`8080`/`3000`/`5000`) so existing workflows are unaffected; set them to avoid conflicts with other local services.
 
 ## Deployment
 

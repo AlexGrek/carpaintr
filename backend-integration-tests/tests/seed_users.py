@@ -12,7 +12,9 @@ from typing import Any
 import httpx
 
 SEED_USER_COUNT = 30
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
+BACKEND_BASE_URL = os.getenv(
+    "BACKEND_BASE_URL", f"http://localhost:{os.getenv('BACKEND_PORT', '8080')}"
+)
 API_BASE_PATH = os.getenv("API_BASE_PATH", "/api/v1")
 
 BOOTSTRAP_ADMIN_EMAIL = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "admin@admin.com")

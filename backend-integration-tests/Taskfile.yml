@@ -94,13 +94,14 @@ tasks:
       - uv run python -m tests.populate_licenses
 
   check-backend:
-    desc: "Check if backend is running"
+    desc: "Check if backend is running (BACKEND_PORT env var overrides :8080)"
     cmds:
       - |
-        if curl -sf http://localhost:8080/api/v1/health > /dev/null; then
-          echo "Backend is running at http://localhost:8080"
+        BACKEND_URL="http://localhost:${BACKEND_PORT:-8080}"
+        if curl -sf "$BACKEND_URL/api/v1/health" > /dev/null; then
+          echo "Backend is running at $BACKEND_URL"
         else
-          echo "Backend is NOT running at http://localhost:8080"
+          echo "Backend is NOT running at $BACKEND_URL"
           echo "Run from repo root: task populate  (starts backend automatically)"
           exit 1
         fi

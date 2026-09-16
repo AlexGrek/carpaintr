@@ -8,8 +8,11 @@ CARPAINTR_ROOT="$(cd "${_carpaintr_lib_dir}/../.." && pwd)"
 CARPAINTR_BACKEND_DIR="${CARPAINTR_ROOT}/backend-service-rust"
 CARPAINTR_FRONTEND_DIR="${CARPAINTR_ROOT}/carpaintr-front"
 
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
-BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://localhost:8080/api/v1/health}"
+export BACKEND_PORT="${BACKEND_PORT:-8080}"
+export FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:${FRONTEND_PORT}}"
+BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://localhost:${BACKEND_PORT}/api/v1/health}"
 
 CARPAINTR_API_LOG="${CARPAINTR_API_LOG:-/tmp/carpaintr-api.log}"
 CARPAINTR_FRONTEND_LOG="${CARPAINTR_FRONTEND_LOG:-/tmp/carpaintr-frontend.log}"
@@ -78,10 +81,10 @@ carpaintr_start_backend() {
   echo "==> Building backend..."
   (cd "$CARPAINTR_BACKEND_DIR" && cargo build -q)
 
-  echo "==> Starting backend..."
+  echo "==> Starting backend on :${BACKEND_PORT}..."
   (
     cd "$CARPAINTR_BACKEND_DIR" || exit 1
-    exec cargo run >"$CARPAINTR_API_LOG" 2>&1
+    exec env PORT="$BACKEND_PORT" cargo run >"$CARPAINTR_API_LOG" 2>&1
   ) &
   local pid=$!
   echo "$pid" > "$CARPAINTR_API_PID_FILE"
@@ -89,10 +92,10 @@ carpaintr_start_backend() {
 }
 
 carpaintr_start_frontend() {
-  echo "==> Starting frontend..."
+  echo "==> Starting frontend on :${FRONTEND_PORT}..."
   (
     cd "$CARPAINTR_FRONTEND_DIR" || exit 1
-    exec npm run dev >"$CARPAINTR_FRONTEND_LOG" 2>&1
+    exec env FRONTEND_PORT="$FRONTEND_PORT" BACKEND_PORT="$BACKEND_PORT" npm run dev >"$CARPAINTR_FRONTEND_LOG" 2>&1
   ) &
   local pid=$!
   echo "$pid" > "$CARPAINTR_FRONTEND_PID_FILE"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ensure backend is on :8080, then run seed user populate (task populate logic).
+# Ensure backend is up (BACKEND_PORT env var, default :8080), then run seed user populate (task populate logic).
 # Starts backend only if needed; stops it on exit if this script started it.
 # Portable: bash 3.2+ on macOS and Linux. Run via `task populate`.
 set -euo pipefail
@@ -41,7 +41,7 @@ cleanup() {
 trap cleanup EXIT
 
 if carpaintr_backend_up; then
-  echo "==> Backend already running on :8080"
+  echo "==> Backend already running on :${BACKEND_PORT}"
 else
   carpaintr_start_backend
   STARTED_BACKEND=1

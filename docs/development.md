@@ -582,6 +582,7 @@ Configure via Helm values or Kubernetes secret (see [deployment.md](./deployment
 
 **Backend** (in `backend-service-rust/.env` or shell):
 ```bash
+PORT=8080                    # Listen port (default 8080)
 JWT_SECRET=your-secret-key
 LICENSE_JWT_SECRET=your-license-key
 DATABASE_URL=/path/to/sled_db
@@ -592,17 +593,20 @@ LOG_FILE_PATH=application.log
 RUST_LOG=info                # Options: trace, debug, info, warn, error
 ```
 
-**Frontend proxy** (configured in `vite.config.js`):
+**Frontend dev server + proxy** (configured in `vite.config.js`, reads env vars at startup):
 ```javascript
 server: {
+  port: Number(process.env.FRONTEND_PORT) || 3000,
   proxy: {
     '/api': {
-      target: 'http://localhost:8080',
+      target: `http://localhost:${process.env.BACKEND_PORT || 8080}`,
       changeOrigin: true,
     },
   },
 }
 ```
+
+**Avoiding port conflicts in local dev/testing:** `task dev`, `task itests`, `task cypress`, and the `scripts/*.sh` helpers all honor `BACKEND_PORT` / `FRONTEND_PORT` / `PDFGEN_PORT` env vars (defaulting to the traditional `8080` / `3000` / `5000`), forwarding them to the backend (`PORT`), Vite dev server + proxy, and Cypress `baseUrl` as needed. Set them if another local process is already bound to one of those ports.
 
 ## Code Style & Best Practices
 

@@ -27,7 +27,7 @@ echo "==> Checking frontend dependencies..."
 carpaintr_ensure_frontend_deps
 
 if carpaintr_backend_up; then
-  echo "==> Backend already running on :8080"
+  echo "==> Backend already running on :${BACKEND_PORT}"
 else
   carpaintr_start_backend >/dev/null
   STARTED_BACKEND=1

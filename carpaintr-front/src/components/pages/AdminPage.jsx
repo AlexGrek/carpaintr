@@ -11,6 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { authFetch } from "../../utils/authFetch";
 import AdminTools from "../AdminTools";
+import RecentUsersStats from "../admin/RecentUsersStats";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import Trans from "../../localization/Trans";
 import {
@@ -148,6 +149,8 @@ const AdminPage = () => {
                 </Stack>
               </Stack>
             </Panel>
+
+            <RecentUsersStats />
 
             <Panel
               bordered

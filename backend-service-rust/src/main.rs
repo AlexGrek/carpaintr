@@ -1,6 +1,6 @@
 use api::v1::admin::{
-    delete_user_license_handler, generate_license_handler, get_user_license_handler,
-    list_user_licenses_handler,
+    delete_user_license_handler, generate_license_handler, get_last_visit_handler,
+    get_recent_visits_handler, get_user_license_handler, list_user_licenses_handler,
 };
 use axum::{
     http::StatusCode,
@@ -203,6 +203,8 @@ async fn main() -> tokio::io::Result<()> {
                     "/export_user_data/{user_email}",
                     get(api::v1::admin::export_user_data_handler),
                 )
+                .route("/last_visit/recent", get(get_recent_visits_handler))
+                .route("/last_visit/{user_email}", get(get_last_visit_handler))
                 .route(
                     "/trigger_list_class_body_types_rebuild_global",
                     post(api::v1::admin_editor_endpoints::trigger_list_class_body_types_rebuild_global),
@@ -456,8 +458,13 @@ async fn main() -> tokio::io::Result<()> {
         .with_state(shared_state)
         .layer(TraceLayer::new_for_http());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
-    log::info!("Starting server at http://0.0.0.0:8080");
+    let port: u16 = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse()
+        .expect("PORT must be a valid port number");
+
+    let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await?;
+    log::info!("Starting server at http://0.0.0.0:{}", port);
     log_event(LogLevel::Info, "Application started", None::<&str>);
     axum::serve(listener, app).await?;
 

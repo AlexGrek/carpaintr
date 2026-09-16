@@ -23,7 +23,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::Write;
@@ -193,6 +193,60 @@ pub async fn bulk_create_users(
     }
 
     Ok(Json(BulkCreateUsersResponse { created, skipped }))
+}
+
+#[derive(Debug, Serialize)]
+pub struct LastVisitResponse {
+    pub email: String,
+    pub last_visit: Option<DateTime<Utc>>,
+}
+
+// Returns the last-visit timestamp recorded for a user (admin only)
+pub async fn get_last_visit_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Path(user_email): Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    let last_visit =
+        crate::db::last_visit::get_last_visit(&app_state.db.last_visit_tree, &user_email)?;
+
+    Ok(Json(LastVisitResponse {
+        email: user_email,
+        last_visit,
+    }))
+}
+
+#[derive(Debug, Serialize)]
+pub struct RecentVisitEntry {
+    pub email: String,
+    pub last_visit: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RecentVisitsQuery {
+    #[serde(default = "default_recent_visits_limit")]
+    pub limit: usize,
+}
+
+fn default_recent_visits_limit() -> usize {
+    10
+}
+
+// Returns the most recently active users (admin only)
+pub async fn get_recent_visits_handler(
+    AuthenticatedUser(_admin_email): AuthenticatedUser, // Ensure admin is authenticated
+    State(app_state): State<Arc<AppState>>,
+    Query(query): Query<RecentVisitsQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let visits =
+        crate::db::last_visit::list_recent_visits(&app_state.db.last_visit_tree, query.limit)?;
+
+    let result: Vec<RecentVisitEntry> = visits
+        .into_iter()
+        .map(|(email, last_visit)| RecentVisitEntry { email, last_visit })
+        .collect();
+
+    Ok(Json(result))
 }
 
 // Existing handler to list all users by email (admin only)

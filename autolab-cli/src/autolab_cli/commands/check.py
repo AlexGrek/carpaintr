@@ -11,7 +11,7 @@ from ..output import emit
 @click.argument("email")
 @click.pass_context
 def check(ctx, email):
-    """Quick debug check: existence, license status, owned files."""
+    """Quick debug check: existence, license status, last visit, owned files."""
     client = ctx.obj["client"]
     emails = client.get("/admin/listusers").json()
     result = {"email": email, "exists": email in emails}
@@ -29,6 +29,7 @@ def check(ctx, email):
             licenses.append({"id": filename, "status": "unreadable"})
     result["licenses"] = licenses
     result["has_active_license"] = any(l["status"] == "active" for l in licenses)
+    result["last_visit"] = client.get(f"/admin/last_visit/{email}").json()["last_visit"]
 
     try:
         zip_resp = client.get(f"/admin/export_user_data/{email}")

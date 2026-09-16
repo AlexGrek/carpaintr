@@ -17,7 +17,9 @@ from .seed_users import (
 
 load_dotenv()
 
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
+BACKEND_BASE_URL = os.getenv(
+    "BACKEND_BASE_URL", f"http://localhost:{os.getenv('BACKEND_PORT', '8080')}"
+)
 API_BASE_PATH = os.getenv("API_BASE_PATH", "/api/v1")
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
 PDF_GEN_URL = os.getenv("PDF_GEN_URL", "http://localhost:5000")

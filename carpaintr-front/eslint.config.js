@@ -20,7 +20,7 @@ export default [
     },
   },
   {
-    files: ["vite.config.js"],
+    files: ["vite.config.js", "cypress.config.js"],
     languageOptions: {
       globals: globals.node,
     },
