@@ -32,7 +32,7 @@ RUN touch src/main.rs && cargo build --release
 # onefile binary links against a matching glibc.
 FROM debian:stable-slim AS autolab-cli-builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3 python3-venv python3-pip build-essential \
+        python3 python3-venv python3-pip python3-dev build-essential \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 COPY autolab-cli/ .
