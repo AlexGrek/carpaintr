@@ -14,6 +14,10 @@ import {
   isMaterialRow,
   sortWorkRows,
   buildCategoryTables,
+  calculationsWithDefaultPrices,
+  hasNormPrice,
+  normPriceOf,
+  withDefaultPrices,
 } from "./collapseTables.js";
 import { UNCATEGORIZED } from "./workCategories.js";
 
@@ -114,6 +118,61 @@ describe("toRealNumber", () => {
   it("parses numeric values", () => {
     assert.equal(toRealNumber(3), 3);
     assert.equal(toRealNumber("4.5"), 4.5);
+  });
+});
+
+describe("company norm pricing", () => {
+  it("preserves a configured zero rate instead of replacing it with 1", () => {
+    const company = {
+      pricing_preferences: { norm_price: { amount: "0.00" } },
+    };
+
+    assert.equal(normPriceOf(company), 0);
+    assert.equal(hasNormPrice(company), false);
+  });
+
+  it("parses a configured positive rate", () => {
+    const company = {
+      pricing_preferences: { norm_price: { amount: "850.50" } },
+    };
+
+    assert.equal(normPriceOf(company), 850.5);
+    assert.equal(hasNormPrice(company), true);
+  });
+
+  it("fills only missing prices and refreshes derived sums", () => {
+    const tables = [
+      {
+        name: "work",
+        result: [
+          { name: "labor", estimation: 2, sum: 2 },
+          { name: "material", estimation: 3, price: 4, sum: 12 },
+        ],
+        total: 14,
+      },
+    ];
+
+    const priced = withDefaultPrices(tables, 0);
+
+    assert.equal(priced[0].result[0].price, 0);
+    assert.equal(priced[0].result[0].sum, 0);
+    assert.equal(priced[0].result[1].price, 4);
+    assert.equal(priced[0].result[1].sum, 12);
+    assert.equal(priced[0].total, 12);
+  });
+
+  it("prices every part in a calculation", () => {
+    const calculations = {
+      Hood: [{ name: "a", result: [{ name: "labor", estimation: 2 }] }],
+      Door: [{ name: "b", result: [{ name: "labor", estimation: 3 }] }],
+    };
+
+    const priced = calculationsWithDefaultPrices(calculations, 7);
+
+    assert.equal(priced.Hood[0].result[0].price, 7);
+    assert.equal(priced.Hood[0].total, 14);
+    assert.equal(priced.Door[0].result[0].price, 7);
+    assert.equal(priced.Door[0].total, 21);
   });
 });
 

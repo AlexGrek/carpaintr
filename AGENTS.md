@@ -1,0 +1,618 @@
+# AGENTS.md
+
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+
+## Documentation
+
+**Comprehensive documentation is available in `docs/`:**
+- [Development Guide](docs/development.md) - Setup, testing, code organization
+- [Deployment Guide](docs/deployment.md) - Docker, Kubernetes, Helm, CI/CD
+- [Backup & Restore](docs/backup.md) - Automated backups, restore procedures
+- [Secrets Management](docs/secrets-management.md) - JWT & license secret initialization
+- [API Documentation](docs/api.md) - Full REST API reference (all endpoints, request/response shapes, auth layers)
+- [Known Issues](known-issues.md) - Tracked, reproducible problems not yet fixed. Check before investigating a bug — it may already be documented.
+- [autolab-cli](autolab-cli/README.md) - Admin CLI (users, licenses, debug checks); see also [Autolab CLI](#autolab-cli-autolab-cli) below
+
+## Build & Development Commands
+
+```bash
+# Start full development environment (frontend + backend with hot reload)
+task dev
+
+# Individual services
+task frontend          # Vite dev server (proxies /api to localhost:8080)
+task backend           # cargo watch -x run
+
+# Local data (first run / after data/ updates)
+task dev-data          # rsync data/common → backend-service-rust/data/common
+
+# Reset local dev state (Sled DB + per-user files; keeps/re-syncs common catalog)
+task reset             # Wipe data/sled_db, data/users, data/deleted_users
+task reset POPULATE=1  # Reset + register seed users user1@example.com … user30
+task populate          # Register seed users; starts backend if needed
+task populate:licenses # Force licenses for all 30 seed users (starts backend if needed)
+task kill-dev          # Kill stale :8080 / :5173 / cargo-watch
+
+# Frontend linting
+cd carpaintr-front && npm run lint
+cd carpaintr-front && npm run lint:fix
+
+# Build backend
+cd backend-service-rust && cargo build --release
+
+# Docker
+task docker-build      # Build all images (backend + pdfgen in parallel)
+task docker-push       # Push to localhost:5000 registry
+task redeploy          # Build, push, restart k8s pods
+```
+
+## Backup & Restore
+
+**Full documentation**: See [docs/backup.md](docs/backup.md)
+
+The application includes automated Kubernetes backups (daily by default, keeps last 10 backups).
+
+### Quick Commands
+
+```bash
+# List available backups
+task db-list-backups ENV=dev
+
+# Create manual backup
+task db-backup ENV=dev
+task db-backup-dev         # Shorthand for dev
+
+# Restore from backup (already in cluster)
+task db-restore-dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+task db-restore-staging BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+task db-restore-prod BACKUP_FILE=autolab-backup-20260209_120000.tar.gz CONFIRM_PROD=yes
+
+# Restore from local file (auto-upload + restore, supports .tar.gz/.tgz/.zip)
+task db-restore-from-local-dev LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-dev LOCAL_FILE=./external-backup.zip
+task db-restore-from-local-staging LOCAL_FILE=./my-backup.tar.gz
+task db-restore-from-local-prod LOCAL_FILE=./my-backup.tar.gz CONFIRM_PROD=yes
+
+# Download backup to local machine
+task db-download-backup ENV=dev BACKUP_FILE=autolab-backup-20260209_120000.tar.gz
+
+# Upload local backup to cluster (without restoring)
+task db-upload-backup ENV=dev LOCAL_FILE=./backups/autolab-backup-20260209_120000.tar.gz
+
+# View backup status
+kubectl get cronjob -n autolab-dev
+kubectl get jobs -n autolab-dev | grep backup
+```
+
+### Restore Process
+
+The restore script automatically:
+1. Verifies backup file exists
+2. **Validates backup file structure** - Ensures backup contains expected `sled_db/` directory before proceeding
+3. Scales down application (0 replicas)
+4. Creates safety backup of current data
+5. Clears existing data and restores from backup
+6. Scales up application (1 replica)
+
+**Critical:** The restore process validates backup integrity by checking for the presence of `sled_db/` directory (the database directory). Corrupted or incomplete backups will be rejected before any data is modified, preventing data loss.
+
+**Direct script usage:**
+```bash
+./scripts/restore-from-backup.sh <backup-file> <namespace> <release>
+```
+
+**Supported backup formats:** `.tar.gz`, `.tgz`, `.zip`
+
+## Secrets Management
+
+**Full documentation**: See [docs/secrets-management.md](docs/secrets-management.md)
+
+**CRITICAL**: Kubernetes secrets must be initialized ONCE and never regenerated. If secrets change, JWT tokens become invalid and users can't login.
+
+### Quick Start
+
+```bash
+# Initialize secrets (one-time operation per environment)
+task secret-init-dev
+task secret-init-staging
+task secret-init-prod
+
+# Then deploy normally (Helm will use existing secrets)
+task deploy-dev
+task redeploy-staging
+task redeploy-prod
+```
+
+### Key Points
+
+- **Development**: `secret.create: true` - Auto-generates secrets on first deploy
+- **Staging/Production**: `secret.create: false` - Must pre-create secrets before deployment
+- **Redeploy**: Never touches existing secrets (JWT and licenses remain valid)
+- **Backup/Restore**: Secrets are NOT in backups; they persist separately in Kubernetes
+
+### Verify Secrets
+
+```bash
+# Check if secret exists
+kubectl get secret autolab-api-secret -n <namespace>
+
+# View secret keys
+kubectl get secret autolab-api-secret -n <namespace> -o jsonpath='{.data}' | jq 'keys[]'
+```
+
+## Autolab CLI (`autolab-cli/`)
+
+**Full documentation**: See [autolab-cli/README.md](autolab-cli/README.md)
+
+uv-managed Python (Click) CLI for administering the backend: users, licenses, and a quick debug check. Works from a workstation (any environment) and, with zero setup, from inside the `autolab-api` pod.
+
+### Quick Start
+
+```bash
+cd autolab-cli
+uv sync
+uv run autolab login admin@admin.com            # prompts for password; -p for non-interactive
+uv run autolab get users                        # table by default
+uv run autolab --json get user someone@example.com
+uv run autolab license someone@example.com issue 30 premium
+uv run autolab check someone@example.com        # existence + license status + owned files
+```
+
+### Key Points
+
+- **Auth**: token cached in `~/.autolab-cli.yaml` (override via `AUTOLAB_CLI_CONFIG`). `--base-url`/`--json`/`--table`/`--yaml` are root-command options — they must precede the subcommand, e.g. `autolab --base-url https://... login ...`.
+- **Output**: `--json` / `--table` / `--yaml`; default is table for list results, YAML for single-item results.
+- **In-pod zero-config auth**: the backend provisions an admin-equivalent, license-exempt **service user** (`{random}@user.service`) at startup and persists its credentials to `{DATA_DIR_PATH}/service_users.json` (PVC-backed, survives restarts — see `backend-service-rust/src/auth/service_user.rs`). `autolab-cli` reads that file automatically when there's no stored login, so every command works unattended inside the container:
+  ```bash
+  kubectl exec -n autolab-dev autolab-dev-autolab-api-0 -- autolab get users
+  ```
+- **License mutation**: the backend has no in-place update endpoint, so `license extend`/`license upgrade` reissue a replacement license and delete the old file.
+- **Packaging**: built into the `autolab-api` Docker image as a precompiled, self-contained binary (PyInstaller `--onefile`) at `/usr/local/bin/autolab` — bundles its own Python, no system Python needed in the container. Building it requires `python3-dev` (PyInstaller needs the shared `libpython`, which plain `python3`/`python3-venv` don't provide).
+
+## Integration Testing
+
+pytest + httpx + **uv** suite in `backend-integration-tests/` (layout similar to `consensual_family/itests-py`).
+
+### Quick Start
+
+```bash
+# Recommended: sync deps, start PDF mock + backend if needed, run pytest, teardown
+task itests
+
+# Pytest only (backend must already listen on :8080)
+task test
+task test:auth         # -m auth
+task test:admin        # -m admin
+task test:license      # -m license
+task test:pdf          # PDF/HTML via pdfgen mock (use task itests for full coverage)
+task test:cov          # Coverage (serial)
+task test:check        # curl health endpoint
+```
+
+**Note:** If a backend is already running on `:8080` without `PDF_GEN_URL_POST` pointing at the test mock, `task itests` skips `@pytest.mark.pdf` tests. Stop the backend and run `task itests` for the full suite.
+
+### Test Environment Setup
+
+```bash
+cd backend-integration-tests
+uv sync                # Install deps (commit uv.lock)
+uv run pytest -v       # Manual run
+task populate          # Register seed users (from repo root: task populate)
+```
+
+**Requirements:** Python 3.11+, [uv](https://docs.astral.sh/uv/), backend at `http://localhost:8080` (or use `task itests`).
+
+### PDF Generation Mock
+
+`backend-integration-tests/tests/pdfgen_mock.py` — minimal HTTP server implementing `POST /generate/pdf`, `POST /generate/html`, `GET /health`. `task itests` starts it via `tests/run_pdfgen_mock.py` and sets `PDF_GEN_URL_POST` on the backend process.
+
+Introspection: `GET /_mock/requests`, `POST /_mock/reset`.
+
+### Seed Users
+
+`tests/seed_users.py` — bootstrap admin `admin@admin.com` / `admin123`, then seed users `user{n}@example.com` / `test{n}` (`n` = 1…30) via **`POST /admin/users/bulk`**. **Licenses** are generated for the bootstrap admin on every populate and for seed users **newly created** in that run (existing seed users unchanged).
+
+- **`task populate`** — ensure admin + bulk-create seed users + license bootstrap admin and new seed users (default)
+- **`task populate:licenses`** — issue licenses for bootstrap admin and all 30 seed users (including existing)
+- **Session autouse fixture `seeded_users`** — ensures pool exists before every test run
+- Fixtures: `seed_user`, `seed_user_token`, `seed_authenticated_client`
+
+### Test Structure
+
+```
+backend-integration-tests/
+├── pyproject.toml           # uv + pytest config (package = false)
+├── uv.lock
+├── Taskfile.yml             # sync, test, populate, check-backend
+├── tests/
+│   ├── conftest.py          # Fixtures (auth, seeded_users, pdfgen_mock)
+│   ├── seed_users.py        # Seed pool + ensure_* helpers
+│   ├── populate_users.py    # CLI for task populate
+│   ├── pdfgen_mock.py       # PDF service mock
+│   ├── run_pdfgen_mock.py   # Daemon for task itests
+│   ├── test_auth.py
+│   ├── test_license.py
+│   ├── test_license_protection.py
+│   ├── test_pdf_generation.py
+│   ├── test_seeded_users.py
+│   └── test_health.py
+└── README.md
+```
+
+### Key Fixtures (in `conftest.py`)
+
+- **`http_client`** — Unauthenticated async HTTP client
+- **`authenticated_client`** / **`admin_authenticated_client`** — JWT clients
+- **`seeded_users`** (autouse) — Ensures `user1`…`user30` exist
+- **`seed_user`** / **`seed_authenticated_client`** — First seed user
+- **`test_user_token`** / **`test_admin_token`** — Legacy test accounts (`test_user@example.com`, `test_admin@example.com`)
+- **`generate_license`** — Admin helper to issue licenses
+- **`pdfgen_mock`** — Attach to running PDF mock (or start in-process)
+- **`backend_health_check`** — Exit early if backend is down
+
+### Authentication Flow (Important)
+
+The backend uses a two-step authentication flow:
+
+1. **`POST /api/v1/register`** - Creates user account
+   - Returns: `200` with **empty body** (no token)
+   - Example: `{"email": "user@example.com", "password": "pass123", "company_name": "Company"}`
+
+2. **`POST /api/v1/login`** - Authenticates and gets token
+   - Returns: `200` with JSON `{"token": "jwt_token_here"}`
+   - Example: `{"email": "user@example.com", "password": "pass123"}`
+
+3. **Protected routes** - Use JWT token in `Authorization: Bearer <token>` header
+
+### Admin Users
+
+Admin status is determined by `backend-service-rust/admins.txt`. The test admin email (`test_admin@example.com`) is already configured.
+
+### License Management Testing
+
+The test suite includes comprehensive license management testing capabilities:
+
+**Endpoint:** `POST /api/v1/admin/license/generate` (admin-only)
+
+**Using the `generate_license` fixture:**
+```python
+async def test_with_license(generate_license, test_user_credentials):
+    user_email = test_user_credentials["email"]
+
+    # Generate a 90-day premium license
+    result = await generate_license(user_email, days=90, level="premium")
+    assert result is not None
+```
+
+**Direct API call:**
+```python
+async def test_license_gen(admin_authenticated_client):
+    response = await admin_authenticated_client.post(
+        "/admin/license/generate",
+        json={
+            "email": "user@example.com",
+            "days": 365,
+            "level": "premium"  # optional
+        }
+    )
+    assert response.status_code == 200
+```
+
+*Note: The backend uses an untagged enum, so JSON is sent directly without variant tags.*
+
+**License cache invalidation:** `POST /api/v1/admin/license/invalidate/{email}` (admin-only)
+
+### Writing New Tests
+
+```python
+import pytest
+import httpx
+
+@pytest.mark.integration
+async def test_my_endpoint(authenticated_client):
+    """Test with auto-authenticated user."""
+    response = await authenticated_client.get("/api/v1/user/my_endpoint")
+    assert response.status_code == 200
+    data = response.json()
+    assert "expected_field" in data
+```
+
+### Coverage
+
+```bash
+task test:cov          # Run with coverage report
+# Opens htmlcov/index.html for detailed coverage analysis
+```
+
+For more details, see `backend-integration-tests/README.md` and `backend-integration-tests/tests/README.md`.
+
+## Local Dev Reset
+
+**Script:** `scripts/reset-local-dev.sh` (via `task reset`)
+
+Wipes (paths under `backend-service-rust/`, honouring `config.env`):
+
+- `data/sled_db` — Sled database
+- `data/users/` — per-user catalogs, calculations, attachments
+- `data/deleted_users/` — soft-deleted user trees
+- `data/frontend_failure_reports.log`, `application.log`
+
+Re-syncs **`data/common/`** from repo `data/common/` via `scripts/load-dev-data.sh`. Does **not** remove bundled catalog source in the repo.
+
+`POPULATE=1` runs `task populate` (starts backend if needed) to register seed accounts.
+
+## Architecture Overview
+
+Three-service architecture:
+
+```
+Frontend (React/Vite)  →  Backend API (Axum/Rust)  →  PDF Service (Flask/Python)
+     :3000                     :8080                      :5000
+```
+
+### Backend (`backend-service-rust/`)
+
+Axum-based REST API with Sled embedded database.
+
+**Key directories:**
+- `src/api/v1/` - Route handlers organized by feature (auth, user, admin, editor, calc/, notifications, support)
+- `src/auth/` - JWT creation/validation, admin check, invite codes (`invite.rs`), service-user provisioning (`service_user.rs`, see [Autolab CLI](#autolab-cli-autolab-cli))
+- `src/middleware/` - jwt_auth, admin_check, license_expiry middlewares
+- `src/db/` - Sled database operations (users, requests, attachments)
+- `src/calc/` - Business logic for car paint calculations
+- `src/state.rs` - AppState (shared across handlers via Arc)
+
+**Auth flow:** JWT tokens with bcrypt passwords. Protected routes use `AuthenticatedUser` extractor. Admin routes additionally check against `admins.txt` file.
+
+**Route hierarchy:**
+- Public: `/register`, `/login`
+- User (jwt_auth + license check): `/api/v1/user/*`
+- Admin (jwt_auth + admin check): `/api/v1/admin/*`
+- Editor: `/api/v1/editor/*` (user file management with git-like commits)
+
+**Logging:** Custom logging system via `src/exlogging.rs`. Use `log_event(LogLevel, message, user)` for structured logging. Logs are written to file specified by `LOG_FILE_PATH` env var (default: `application.log`).
+
+**Debug logging in calc modules:**
+- `src/calc/t2.rs` - Comprehensive debug logging for T2 table processing:
+  - Data loading (file paths, row counts, CSV structure)
+  - Filtering operations (match counts, empty results warnings)
+  - Row parsing (field validation, action parsing, success details)
+  - Batch operations (progress tracking, error counts)
+  - Use `LogLevel::Debug` for operational info, `LogLevel::Trace` for detailed row data
+
+### Frontend (`carpaintr-front/`)
+
+React 19 SPA with RSuite UI components and TailwindCSS.
+
+**Key patterns:**
+- `src/utils/authFetch.js` - All API calls go through `authFetchJson()`, `authFetchYaml()`, etc. These add JWT Bearer token automatically.
+- `src/pages/` - Lazy-loaded page components
+- `src/components/calc/` - Multi-step calculation wizard with car diagram
+- `src/localization/LocaleContext.jsx` - i18n support
+
+**State:** JWT token and company info stored in localStorage. No Redux/Zustand.
+
+## UI Libraries & Dependencies
+
+### Core UI Libraries
+- **RSuite** - Primary UI component library (Button, Panel, Message, Loader, etc.)
+  - Import from `"rsuite"`
+  - Provides pre-built form components, navigation, and layout utilities
+- **TailwindCSS** - Utility-first CSS framework for custom styling
+- **lucide-react** - Modern icon library (LogIn, UserPlus, etc.)
+  - Import individual icons: `import { LogIn, UserPlus } from "lucide-react"`
+- **react-responsive** - Media query hook for responsive design
+  - `useMediaQuery({ maxWidth: 767 })` for mobile detection
+
+### Styling Approach
+- Use RSuite components for complex UI elements (forms, buttons, modals)
+- Use TailwindCSS classes for layout and spacing
+- Use inline styles for component-specific styling
+- Custom CSS modules for complex layouts (e.g., `ColorGrid.css`, `BottomStickyLayout.css`)
+
+## Custom Components & Layouts
+
+### Layout Components
+
+#### `StageView` (`src/components/layout/StageView.jsx`)
+Multi-step wizard component with smooth transitions between stages.
+
+**Usage:**
+```javascript
+import StageView from "../layout/StageView";
+
+<StageView
+  stages={[
+    { name: "step1", component: Step1Component },
+    { name: "step2", component: Step2Component }
+  ]}
+  initialState={{}}
+  animationDelay={300}  // Transition duration in ms
+  onSave={(data) => console.log(data)}
+/>
+```
+
+**Features:**
+- Lazy-loaded stage components
+- Fade + slide + scale transitions (300ms with cubic-bezier easing)
+- Navigation via `onMoveForward`, `onMoveBack`, `onMoveTo`
+- Shared `stageData` object passed between stages
+- Each stage receives props: `index`, `enabled`, `fadeOutStarted`, `stageData`, `setStageData`, `onMoveForward`, `onMoveBack`, `onMoveTo`
+
+**Stage Component Structure:**
+```javascript
+const MyStage = ({
+  stageData,
+  setStageData,
+  onMoveForward,
+  onMoveBack,
+  fadeOutStarted
+}) => {
+  return <div>{/* stage content */}</div>;
+};
+```
+
+#### `BottomStickyLayout` (`src/components/layout/BottomStickyLayout.jsx`)
+Responsive layout with sticky bottom panel for navigation buttons.
+
+**Usage:**
+```javascript
+import BottomStickyLayout from "../layout/BottomStickyLayout";
+
+<BottomStickyLayout
+  bottomPanel={
+    <HStack justifyContent="space-between">
+      <Button onClick={onBack}>Back</Button>
+      <Button onClick={onNext}>Next</Button>
+    </HStack>
+  }
+>
+  {/* Main content */}
+</BottomStickyLayout>
+```
+
+**Behavior:**
+- **Mobile (≤767px):** Bottom panel is `position: fixed` at bottom with backdrop blur
+- **Desktop (>767px):** Bottom panel is `position: static` with top margin
+- Automatically adds 100px padding-bottom on mobile to prevent content overlap
+- Z-index: 100 for mobile sticky mode
+
+### Calculation Components
+
+#### `CarBodyMain` (`src/components/calc/CarBodyMain.jsx`)
+Car body diagram selector with interactive SVG visualization.
+
+**Key features:**
+- Fetches car parts from `/api/v1/user/carparts/{class}/{body}`
+- Fetches T2 subcomponents from `/api/v1/user/carparts_t2/{class}/{body}`
+- Debug mode with ⚙️ button to view technical data
+- Centered layout with max-width: 900px
+
+#### `ColorPicker` (`src/components/calc/ColorPicker.jsx`)
+Color selection grid with loading placeholder.
+
+**Key features:**
+- Fetches colors from `/api/v1/user/global/colors.json`
+- Custom skeleton loader (`ColorGridPlaceholder`) - 5×4 grid of semi-transparent tiles
+- No lazy loading (preloaded with stage)
+- Uses `ColorGrid` component for rendering actual colors
+
+#### `ColorGrid` (`src/components/ColorGrid.jsx`)
+Responsive grid layout for displaying color swatches.
+
+**Layout:**
+- 4-column grid (`repeat(4, minmax(24px, 1fr))`)
+- Each color card: 60px preview + label section
+- Hover effects with scale transform
+- Selected state with border and shadow
+
+### Component Patterns
+
+#### Lazy Loading
+Components are preloaded by `StageView` - avoid `React.lazy()` for nested components to prevent loading delays.
+
+#### Media Queries
+```javascript
+import { useMediaQuery } from "react-responsive";
+
+const isMobile = useMediaQuery({ maxWidth: 767 });
+```
+
+#### Auth Fetch Pattern
+All API calls use wrappers from `src/utils/authFetch.js`:
+```javascript
+import { authFetchJson, authFetchYaml } from "../../utils/authFetch";
+
+const data = await authFetchJson("/api/v1/user/endpoint");
+const config = await authFetchYaml("/api/v1/user/config.yaml");
+```
+
+#### Error Handling
+Use RSuite's `Message` and `toaster` for user feedback:
+```javascript
+import { Message, toaster } from "rsuite";
+
+toaster.push(
+  <Message type="error" showIcon closable>Error message</Message>,
+  { placement: 'topCenter', duration: 5000 }
+);
+```
+
+## Frontend Localization (i18n)
+
+Supported languages: `en` (English), `ua` (Ukrainian). English keys are used as-is; Ukrainian has translations.
+
+**Key files:**
+- `src/localization/LocaleContext.jsx` - Core context, `TRANSLATIONS_BASIC`, `registerTranslations()`
+- `src/localization/Trans.jsx` - Translation component
+
+### Adding translations to a component
+
+```javascript
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
+import Trans from "../../localization/Trans";
+
+// Register at module level (outside component)
+registerTranslations("ua", {
+  "My button": "Моя кнопка",
+  "Welcome": "Ласкаво просимо",
+});
+
+const MyComponent = () => {
+  const { str } = useLocale();
+
+  return (
+    <div>
+      <Trans>Welcome</Trans>           {/* Simple strings */}
+      <button>{str("My button")}</button>  {/* Dynamic/conditional */}
+    </div>
+  );
+};
+```
+
+### Translation methods
+
+| Method | Use case |
+|--------|----------|
+| `<Trans>Text</Trans>` | Simple inline strings in JSX |
+| `str("Text")` | Variables, conditionals, data arrays |
+| `registerTranslations("ua", {...})` | Add translations at module load |
+| `addTranslation("ua", {...})` | Runtime/dynamic translations |
+
+### Adding a new language
+
+1. Add language code to `SUPPORTED_LANGUAGES` array in `LocaleContext.jsx`
+2. Add translations to `TRANSLATIONS_BASIC` for core strings
+3. Add `registerTranslations()` calls in components that need the new language
+
+## Frontend Routing Structure
+
+All application routes are under `/app/*`. The root `/` is the marketing landing page.
+
+| Prefix | Purpose |
+|--------|---------|
+| `/` | Marketing landing page (pre-rendered, SEO-optimized) |
+| `/app/*` | Application routes (`/app/login`, `/app/dashboard`, `/app/calc2/*`, `/app/admin/*`, etc.) |
+| `/api/*` | Backend REST API (unchanged) |
+
+When adding navigation links or routes, always use `/app/` prefix for application pages. See `ROUTING-CHANGES.md` for the full route mapping.
+
+### PDF Backend (`pdf_backend_playwright/`)
+
+Flask service using Playwright/Chromium for HTML→PDF conversion (lightweight, multi-arch replacement for the legacy WeasyPrint-based `pdf_backend/`, still built via `task build-pdfgen-legacy`). Receives calculation data from main backend, renders Jinja2 templates, returns PDF bytes. Manages browser lifecycle with an idle-timeout shutdown (`BROWSER_IDLE_TIMEOUT`, default 180s) — see [known-issues.md](known-issues.md) for a related reliability bug on cold browser starts.
+
+## Database
+
+Sled embedded key-value store at `backend-service-rust/data/sled_db` locally (`DATABASE_URL=data/sled_db`). No migrations — schema is implicit in key patterns like `users::{email}`, etc.
+
+Per-user files live under `data/users/{encoded_email}/` (catalog, attachments, saved calculations). **`task reset`** clears DB + user trees for local dev.
+
+## Environment Variables (Backend)
+
+Key variables: `PORT` (default `8080`), `JWT_SECRET`, `LICENSE_JWT_SECRET`, `DATABASE_URL`, `DATA_DIR_PATH`, `PDF_GEN_URL_POST`, `ADMIN_FILE_PATH`, `LOG_FILE_PATH`, `LICENSE_CACHE_SIZE` (default `100`), `DEFAULT_CURRENCY` (default `грн`)
+
+Local dev / test scripts (`task dev`, `task itests`, `scripts/*.sh`) additionally honor `BACKEND_PORT` (backend listen port, forwarded to the backend as `PORT`), `FRONTEND_PORT` (Vite dev server port, also used as the Vite `/api` proxy's — and Cypress's — target), and `PDFGEN_PORT` (local mock PDF server). All default to the previous hardcoded values (`8080`/`3000`/`5000`) so existing workflows are unaffected; set them to avoid conflicts with other local services.
+
+## Deployment
+
+Multi-stage Docker build: Node builds frontend → Rust compiles backend with static files → Debian slim runtime. The runtime image also bundles a precompiled `autolab-cli` binary at `/usr/local/bin/autolab` (see [Autolab CLI](#autolab-cli-autolab-cli)). Deployed to k3s via Helm chart (`autolab-chart/`).

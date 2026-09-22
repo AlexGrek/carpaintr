@@ -29,8 +29,8 @@ registerTranslations("ua", {
   "By category": "За категоріями",
   Order: "Замовлення",
   Color: "Колір",
-  "Norm price is not set, so prices default to 1.":
-    "Ціну нормогодини не задано, тому ціни рахуються як 1.",
+  "Norm price is 0, so labor totals are 0.":
+    "Ціна нормогодини дорівнює 0, тому вартість робіт також дорівнює 0.",
   "Set it in Cabinet": "Задати в кабінеті",
   "Collapsed view is read-only. Switch to Detailed to edit individual table rows.":
     "Згорнутий вигляд лише для перегляду. Перейдіть до «Детально», щоб редагувати рядки.",
@@ -114,7 +114,9 @@ const TableFinalStage = ({
   const [n, setN] = useState(null);
 
   const currency = company?.pricing_preferences?.norm_price?.currency ?? "";
-  const normPrice = normPriceOf(company);
+  // Keep the legacy fallback only if company data could not be loaded. A
+  // successfully loaded company rate of 0 is valid and must remain 0.
+  const normPrice = company ? normPriceOf(company) : 1;
 
   useEffect(() => {
     getOrFetchCompanyInfo()
@@ -126,12 +128,12 @@ const TableFinalStage = ({
   // Rows only carry a price if they were priced on the parts stage; older saved
   // calculations may not be, so price them here before anything sums or prints.
   useEffect(() => {
-    if (!companyLoaded || !stageData.calculations) return;
+    if (!companyLoaded || !company || !stageData.calculations) return;
     setStageData((prev) => {
       const priced = calculationsWithDefaultPrices(prev.calculations, normPrice);
       return priced === prev.calculations ? prev : { ...prev, calculations: priced };
     });
-  }, [companyLoaded, normPrice, stageData.calculations, setStageData]);
+  }, [company, companyLoaded, normPrice, stageData.calculations, setStageData]);
 
   useEffect(() => {
     if (!stageData.calculations) return;
@@ -320,7 +322,7 @@ const TableFinalStage = ({
               >
                 <CircleAlert size={14} className="mt-px shrink-0" />
                 <span>
-                  {str("Norm price is not set, so prices default to 1.")}{" "}
+                  {str("Norm price is 0, so labor totals are 0.")}{" "}
                   <a
                     href="/app/cabinet"
                     target="_blank"

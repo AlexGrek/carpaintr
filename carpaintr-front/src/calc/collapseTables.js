@@ -27,15 +27,14 @@ export function toRealNumber(value) {
 }
 
 /**
- * The company's price per norm-hour. An unset rate (the backend default is 0)
- * falls back to 1 so sums read as norm-hours instead of zeroing out, since
- * zero-sum rows are dropped from the printed document.
+ * The company's price per norm-hour. Preserve an explicit zero: it is the
+ * backend default and must display, save and print consistently as 0 rather
+ * than silently changing to 1 in a downstream view.
  * @param {*} company - company info as returned by getcompanyinfo
  * @returns {number}
  */
 export function normPriceOf(company) {
-  const amount = toRealNumber(company?.pricing_preferences?.norm_price?.amount);
-  return amount > 0 ? amount : 1;
+  return toRealNumber(company?.pricing_preferences?.norm_price?.amount);
 }
 
 /**
@@ -63,9 +62,19 @@ export function withDefaultPrices(tables, price) {
       return table;
     }
     changed = true;
+    const result = table.result.map((row) =>
+      row?.price == null
+        ? {
+            ...row,
+            price,
+            sum: toRealNumber(row?.estimation) * toRealNumber(price),
+          }
+        : row,
+    );
     return {
       ...table,
-      result: table.result.map((row) => (row?.price == null ? { ...row, price } : row)),
+      result,
+      total: result.reduce((total, row) => total + rowSum(row, price), 0),
     };
   });
   return changed ? next : tables;

@@ -357,7 +357,10 @@ export const EvaluationResultsTable = ({
                       <td className="evaluation-table-cell-numeric">
                         <InlineEditWrapper
                           size="sm"
-                          value={price}
+                          // RSuite treats numeric 0 as an empty value and
+                          // renders its "Unfilled" placeholder. A formatted
+                          // string keeps a valid zero price visible/editable.
+                          value={toNumber(price).toFixed(2)}
                           onChange={(value) =>
                             handlePriceChange(entry.name, row.name, value)
                           }
