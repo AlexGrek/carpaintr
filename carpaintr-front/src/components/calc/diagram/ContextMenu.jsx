@@ -93,13 +93,11 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
             return (
               <li
                 key={`ungrouped-${index}`}
-                className="context-menu-item"
+                className={`context-menu-item${isSelected ? " context-menu-item-selected" : ""}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  backgroundColor: isSelected ? "#dcfce7" : "transparent",
-                  borderLeft: isSelected ? "3px solid #16a34a" : "3px solid transparent",
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -157,14 +155,12 @@ const ContextMenu = forwardRef(({ position, items, title, selectedItems = [], on
                     return (
                       <li
                         key={`${groupName}-${index}`}
-                        className="context-menu-item"
+                        className={`context-menu-item${isSelected ? " context-menu-item-selected" : ""}`}
                         style={{
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",
                           paddingLeft: "40px",
-                          backgroundColor: isSelected ? "#dcfce7" : "transparent",
-                          borderLeft: isSelected ? "3px solid #16a34a" : "3px solid transparent",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();

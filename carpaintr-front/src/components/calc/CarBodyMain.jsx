@@ -48,8 +48,6 @@ registerTranslations("en", {
     "Raw Data": "Raw Data",
     "Content for action will appear here": "Content for {action} action will appear here",
     "Damage Level": "Damage Level",
-    "Original Part": "Original Part",
-    "Replace Part": "Replace Part",
     "Save": "Save",
     "toning": "toning",
     "Quick Select": "Quick Select",
@@ -107,8 +105,6 @@ registerTranslations("ua", {
     "Raw Data": "Необроблені дані",
     "Content for action will appear here": "Зміст для дії {action} з'явиться тут",
     "Damage Level": "Рівень пошкодження",
-    "Original Part": "Оригінальна деталь",
-    "Replace Part": "Замінити деталь",
     "Save": "Зберегти",
     "toning": "тонування",
     "Quick Select": "Швидкий вибір",
@@ -1156,42 +1152,6 @@ const CarBodyMain = ({
                                 </Tabs>
                             </div>
                             )}
-
-                            {/* Original Part Checkbox — only visible when Replace Part is checked */}
-                            {editedPart.replace && (
-                            <div style={{ marginTop: '15px', marginBottom: '15px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={editedPart.original}
-                                        onChange={(e) => setEditedPart(prev => ({
-                                            ...prev,
-                                            original: e.target.checked
-                                        }))}
-                                        style={{ marginRight: '8px', width: '16px', height: '16px' }}
-                                        data-testid="calc-body-part-original-checkbox"
-                                    />
-                                    <span>{str("Original Part")}</span>
-                                </label>
-                            </div>
-                            )}
-
-                            {/* Replace Part Checkbox */}
-                            <div style={{ marginTop: '15px', marginBottom: '15px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={editedPart.replace}
-                                        onChange={(e) => setEditedPart(prev => ({
-                                            ...prev,
-                                            replace: e.target.checked
-                                        }))}
-                                        style={{ marginRight: '8px', width: '16px', height: '16px' }}
-                                        data-testid="calc-body-part-replace-checkbox"
-                                    />
-                                    <span>{str("Replace Part")}</span>
-                                </label>
-                            </div>
 
                             <Divider />
 

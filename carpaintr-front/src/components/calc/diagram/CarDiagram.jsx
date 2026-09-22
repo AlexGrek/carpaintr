@@ -99,7 +99,8 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
 
   const menuRef = useRef(null);
 
-  const handlePartClick = (event, title, items) => {
+  // Stable identity so memoized CarPart tiles don't all re-render on every parent update.
+  const handlePartClick = useCallback((event, title, items) => {
     event.stopPropagation();
 
     // Use clientX/clientY for viewport coordinates (menu is portaled to body with position: fixed)
@@ -112,7 +113,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
       items: items,
       title: title,
     });
-  };
+  }, []);
 
   const closeMenu = useCallback(() => {
     setMenuState((prevState) => ({ ...prevState, visible: false }));

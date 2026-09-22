@@ -15,7 +15,7 @@
 .car-container {
   position: relative;
   width: 450px;
-  height: 800px;
+  height: 690px;
   overflow: visible;
   flex-shrink: 0;
   transform: scale(var(--car-scale));
@@ -52,43 +52,79 @@
 /* Base Car Part Styles */
 .car-part {
   position: absolute;
-  background-color: rgba(200, 210, 220, 0.2);
-  border: 2px solid #1a1a1a9f;
-  border-radius: 4px;
+  background-color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
   box-sizing: border-box;
   cursor: pointer;
   transition:
-    background-color 0.2s ease-in-out,
-    color 0.2s ease-in-out;
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: rgba(0, 0, 0, 0.8);
+  color: #334155;
   font-size: var(--car-font-size);
   font-weight: 500;
+  line-height: 1.2;
   text-align: center;
   padding: 2px;
   animation: car-part-reveal-center 350ms ease-out both;
 }
 
 .car-part:hover {
-  background-color: rgba(173, 216, 230, 0.9);
+  background-color: #eff6ff;
+  border-color: #3b82f6;
   z-index: 10;
-  color: black;
+  color: #1d4ed8;
+}
+
+.car-part-selected {
+  background-color: #ecfdf5;
+  border-color: #10b981;
+  color: #065f46;
+  font-weight: 600;
+  z-index: 6;
+}
+
+.car-part-selected:hover {
+  background-color: #d1fae5;
+  border-color: #059669;
+  color: #065f46;
+}
+
+.car-part-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background-color: #10b981;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #ffffff;
+  pointer-events: none;
+  z-index: 12;
 }
 
 .car-part-disabled {
   cursor: not-allowed;
   opacity: 1;
-  color: rgba(55, 65, 81, 0.9);
-  border: 2px dashed rgba(75, 85, 99, 0.7);
+  color: #94a3b8;
+  border: 1.5px dashed #cbd5e1;
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(156, 163, 175, 0.18),
-      rgba(156, 163, 175, 0.18) 8px,
-      rgba(229, 231, 235, 0.24) 8px,
-      rgba(229, 231, 235, 0.24) 16px
+      #f1f5f9,
+      #f1f5f9 6px,
+      #f8fafc 6px,
+      #f8fafc 12px
     );
 }
 
@@ -96,12 +132,13 @@
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(156, 163, 175, 0.18),
-      rgba(156, 163, 175, 0.18) 8px,
-      rgba(229, 231, 235, 0.24) 8px,
-      rgba(229, 231, 235, 0.24) 16px
+      #f1f5f9,
+      #f1f5f9 6px,
+      #f8fafc 6px,
+      #f8fafc 12px
     );
-  color: rgba(55, 65, 81, 0.9);
+  border-color: #cbd5e1;
+  color: #94a3b8;
   z-index: auto;
 }
 
@@ -373,42 +410,52 @@
 /* Context Menu Styles */
 .context-menu {
   position: fixed;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow:
+    0 12px 32px -8px rgba(15, 23, 42, 0.2),
+    0 4px 10px -4px rgba(15, 23, 42, 0.1);
+  padding: 8px;
   z-index: 1000;
-  min-width: 200px;
+  min-width: 220px;
   max-width: 90vw;
 }
 
 .context-menu-header {
-  font-weight: bold;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 8px;
-  font-size: 16px;
-  color: #333;
+  font-weight: 600;
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: #0f172a;
 }
 
 .context-menu-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 12.2em;
+  max-height: 14em;
   overflow-y: auto;
 }
 
 .context-menu-item {
-  padding: 8px 12px;
+  padding: 8px 10px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
+  color: #334155;
+  transition: background-color 0.12s ease;
 }
 
 .context-menu-item:hover {
-  background-color: #f5f5f5;
+  background-color: #f1f5f9;
+}
+
+.context-menu-item-selected,
+.context-menu-item-selected:hover {
+  background-color: #ecfdf5;
+  color: #065f46;
 }
 
 /* Responsive scaling using CSS variables */
@@ -626,38 +673,62 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(15, 23, 42, 0.45);
   z-index: 999;
   animation: fadeInContext 0.2s ease-out;
 }
 
-/* Mobile Modal Centered */
-.context-menu-mobile {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  max-height: 80vh;
-  width: 90vw;
-  max-width: 400px;
+/* Mobile bottom sheet (double class so it beats .fade-in-simple-fast's animation) */
+.context-menu.context-menu-mobile {
+  top: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 75vh;
+  border-radius: 20px 20px 0 0;
+  border-bottom: none;
+  padding: 8px 12px calc(16px + env(safe-area-inset-bottom));
   z-index: 1001;
-  padding: 16px;
   font-size: 16px;
+  animation: sheetUp 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.context-menu-mobile::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 10px;
+  border-radius: 2px;
+  background-color: #cbd5e1;
 }
 
 .context-menu-mobile .context-menu-header {
-  font-size: 18px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
+  font-size: 17px;
+  padding: 0 8px 12px;
+  margin-bottom: 8px;
 }
 
 .context-menu-mobile .context-menu-list {
-  max-height: calc(80vh - 100px);
+  max-height: calc(75vh - 90px);
 }
 
 .context-menu-mobile .context-menu-item {
-  padding: 12px 16px;
+  padding: 12px 14px;
   font-size: 16px;
+}
+
+@keyframes sheetUp {
+  from {
+    opacity: 1;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeInContext {
