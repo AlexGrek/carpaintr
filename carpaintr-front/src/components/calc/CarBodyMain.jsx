@@ -1,9 +1,12 @@
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Divider, Panel, Message, Drawer, Modal, Button, Tabs, Loader } from 'rsuite';
+import { Message, Drawer, Modal, Button, Loader } from 'rsuite';
 import { useMediaQuery } from 'react-responsive';
-import { Check, X, MoreHorizontal, Trash2, Bug, ChevronRight, ChevronDown } from 'lucide-react';
+import {
+    Check, X, Trash2, Bug, ChevronRight, Car, Settings2, SlidersHorizontal, MousePointerClick,
+    Gauge, Wrench, CircleAlert, LoaderCircle, TriangleAlert, Braces,
+} from 'lucide-react';
 import { useLocale, registerTranslations } from '../../localization/LocaleContext';
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import {
@@ -22,6 +25,7 @@ import { EvaluationResultsTable } from './EvaluationResultsTable';
 import { toRealNumber } from '../../calc/collapseTables';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
+import './CarBodyMain.css';
 
 registerTranslations("en", {
     "Selected Parts": "Selected Parts",
@@ -78,6 +82,14 @@ registerTranslations("en", {
     "suv 3 doors": "suv 3 doors",
     "suv 5 doors": "suv 5 doors",
     "Loading car parts...": "Loading car parts...",
+    "Available": "Available",
+    "Selected": "Selected",
+    "Unavailable": "Unavailable",
+    "No action selected": "No action selected",
+    "No parts selected yet": "No parts selected yet",
+    "Tap a body zone on the diagram to add a damaged part": "Tap a body zone on the diagram to add a damaged part",
+    "No calculations yet for this part": "No calculations yet for this part",
+    "Choose action": "Choose action",
 });
 
 registerTranslations("ua", {
@@ -134,7 +146,6 @@ registerTranslations("ua", {
     "hatchback 3 doors": "хетчбек 3 двері",
     "suv 3 doors": "позашляховик 3 двері",
     "suv 5 doors": "позашляховик 5 дверей",
-    "No details, click \"...\" to add details": "Немає даних, натисніть «...» щоб додати деталі",
     "Required table \"%s\" not found. Available: [%s]": "Обов'язкова таблиця \"%s\" не знайдена. Доступні: [%s]",
     "Table \"%s\" loaded but data is null — server returned no rows. Required: [%s]": "Таблиця \"%s\" завантажена, але дані порожні — сервер не повернув рядків. Обов'язкові: [%s]",
     "Loading car parts...": "Завантаження деталей авто...",
