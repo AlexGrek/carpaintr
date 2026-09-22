@@ -19,7 +19,6 @@ import {
     validate_null_tables,
 } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
-import MenuPickerV2 from '../layout/MenuPickerV2';
 import GridDraw from './GridDraw';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
 import { toRealNumber } from '../../calc/collapseTables';
@@ -774,282 +773,403 @@ const CarBodyMain = ({
 
     }, [body, carClass, handleError, fetchData]);
 
+    const partSubComponents = useMemo(
+        () => buildCarSubcomponentsFromT2(availablePartsT2),
+        [availablePartsT2]
+    );
+
+    const basePrice = company?.pricing_preferences?.norm_price?.amount ?? 1;
+    const currency = company?.pricing_preferences?.norm_price?.currency ?? '';
+
+    const partSummaries = useMemo(() => selectedItems.map((item) => {
+        const calcData = calculations?.[item.name];
+        const validTables = Array.isArray(calcData)
+            ? calcData.filter(e => e && typeof e === 'object' && Array.isArray(e.result))
+            : [];
+        const total = validTables.reduce((acc, entry) =>
+            acc + entry.result.reduce((a, row) => a + toRealNumber(row.estimation) * toRealNumber(row.price ?? basePrice), 0), 0);
+        const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
+        const gridMarked = gridFlat.filter(c => c > 0).length;
+        return {
+            item,
+            action: item.selectedAction || item.action,
+            calcData,
+            hasCalcData: Array.isArray(calcData) && calcData.length > 0,
+            validTables,
+            total,
+            dmgLevel: DAMAGE_LEVELS.find(d => d.value === item.damageLevel),
+            gridMarked,
+            gridTotal: gridFlat.length,
+        };
+    }), [selectedItems, calculations, basePrice]);
+
+    const grandTotal = partSummaries.reduce((acc, s) => acc + s.total, 0);
+
+    // Per-part values from repair_types.csv so they match processor requiredRepairTypes
+    // (Ukrainian names). Falls back to T2 action codes, then to the default list.
+    const actionOptions = useMemo(() => {
+        const partTableData = tableDataRepository[drawerPartDetails?.name];
+        const repairTypesEntry = partTableData?.find(t => t.name === 'repair_types');
+        const fromTable = (repairTypesEntry?.data?.['Ремонти'] || '')
+            .split('/')
+            .map(s => s.trim())
+            .filter(Boolean);
+        if (fromTable.length > 0) return fromTable.map(rt => ({ label: rt, value: rt }));
+        const actions = drawerPartDetails?.actions?.length > 0 ? drawerPartDetails.actions : DEFAULT_ACTIONS;
+        return actions.map(a => ({ label: str(a), value: a }));
+    }, [tableDataRepository, drawerPartDetails, str]);
+
+    const togglePart = useCallback((name) => {
+        setCollapsedParts(prev => ({ ...prev, [name]: prev[name] === false }));
+    }, []);
+
+    const handleDamageModeChange = useCallback((mode) => {
+        setEditedPart(prev => {
+            if ((prev.damageLevelMode || 'simple') === mode) return prev;
+            return mode === 'simple'
+                ? { ...prev, damageLevelMode: 'simple', grid: generateInitialGrid(mapVisual(prev.name)) }
+                : { ...prev, damageLevelMode: 'grid', damageLevel: 0 };
+        });
+    }, [generateInitialGrid, mapVisual]);
+
+    const damageMode = editedPart?.damageLevelMode || 'simple';
+    const showDamageSection = editedPart && editedPart.action !== 'replace' && editedPart.action !== 'mount';
+
     return (
-        <Panel
-            header={`${str("Car Body")}: ${str(body) || str('Unknown')} (${str("Class")} ${carClass || 'N/A'})`}
-            className={className}
-            style={{
-                ...style,
-                position: 'relative',
-                maxWidth: '900px',
-                margin: '0 auto',
-                width: '100%'
-            }}
+        <div
+            className={`w-full text-left ${className}`}
+            style={{ ...style, maxWidth: '900px', margin: '0 auto', width: '100%' }}
         >
-            {/* Debug mode toggle button */}
-            <button
-                onClick={() => setShowDebugMode(prev => !prev)}
-                data-testid="calc-body-debug-toggle-button"
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '44px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    opacity: showDebugMode ? 0.9 : 0.2,
-                    transition: 'opacity 0.2s',
-                    padding: '5px',
-                    color: showDebugMode ? '#d97706' : '#666',
-                    display: 'flex',
-                    alignItems: 'center',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = showDebugMode ? '0.9' : '0.2'}
-                title="Toggle evaluator debug mode"
-            >
-                <Bug size={16} />
-            </button>
-
-            {/* Settings cog button */}
-            <button
-                onClick={() => setShowTechData(!showTechData)}
-                data-testid="calc-body-tech-data-toggle-button"
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    opacity: 0.3,
-                    transition: 'opacity 0.2s',
-                    padding: '5px',
-                    fontSize: '18px',
-                    color: '#666'
-                }}
-                onMouseEnter={(e) => e.target.style.opacity = '0.7'}
-                onMouseLeave={(e) => e.target.style.opacity = '0.3'}
-                title="Toggle technical data"
-            >
-                ⚙️
-            </button>
-
-            <div style={{ padding: '4pt', textAlign: 'center', width: '100%' }}>
-                {!showTechData ? (
-                    <>
-                        <div style={{ position: 'relative' }}>
-                            <CarDiagram
-                                selectedItems={selectedItems}
-                                onSelect={handleDiagramSelect}
-                                partSubComponents={buildCarSubcomponentsFromT2(availablePartsT2)}
-                            />
-                            {isDiagramDataLoading && (
-                                <div
-                                    data-testid="calc-car-diagram-loading"
-                                    style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: 'rgba(255, 255, 255, 0.6)',
-                                        zIndex: 20,
-                                    }}
-                                >
-                                    <Loader size="md" content={str("Loading car parts...")} />
-                                </div>
-                            )}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <Car size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1 leading-tight">
+                        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                            {str("Car Body")}
                         </div>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="text-base font-semibold capitalize text-slate-900">
+                                {str(body) || str('Unknown')}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                {str("Class")} {carClass || 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                        <button
+                            type="button"
+                            onClick={() => setShowDebugMode(prev => !prev)}
+                            data-testid="calc-body-debug-toggle-button"
+                            className={`cbm-icon-btn cbm-icon-btn--subtle${showDebugMode ? ' is-active' : ''}`}
+                            aria-pressed={showDebugMode}
+                            title="Toggle evaluator debug mode"
+                        >
+                            <Bug size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowTechData(prev => !prev)}
+                            data-testid="calc-body-tech-data-toggle-button"
+                            className={`cbm-icon-btn cbm-icon-btn--subtle${showTechData ? ' is-active' : ''}`}
+                            aria-pressed={showTechData}
+                            title="Toggle technical data"
+                        >
+                            <Settings2 size={16} />
+                        </button>
+                    </div>
+                </div>
 
-                        {/* Parts with Calculations */}
+                <div className="p-3 sm:p-4">
+                    {showTechData ? (
+                        <TechDataPanel
+                            errors={errors}
+                            setErrors={setErrors}
+                            body={body}
+                            carClass={carClass}
+                            selectedParts={selectedParts}
+                            partsVisual={partsVisual}
+                            company={company}
+                            availableParts={availableParts}
+                            availablePartsT2={availablePartsT2}
+                            processors={processors}
+                            calculations={calculations}
+                            onChange={onChange}
+                            setCalculations={setCalculations}
+                        />
+                    ) : (
+                        <>
+                            <div className="relative rounded-xl bg-slate-50 py-4">
+                                <CarDiagram
+                                    selectedItems={selectedItems}
+                                    onSelect={handleDiagramSelect}
+                                    partSubComponents={partSubComponents}
+                                />
+                                {isDiagramDataLoading && (
+                                    <div
+                                        data-testid="calc-car-diagram-loading"
+                                        className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/70"
+                                    >
+                                        <Loader size="md" content={str("Loading car parts...")} />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                                {DIAGRAM_LEGEND.map(([label, swatch]) => (
+                                    <span key={label} className="inline-flex items-center gap-1.5">
+                                        <span className={`h-3 w-3 rounded-[4px] border-[1.5px] ${swatch}`} />
+                                        {str(label)}
+                                    </span>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {!showTechData && (
+                <div className="mt-6" data-testid="calc-body-selected-parts">
+                    <div className="mb-3 flex items-end justify-between gap-3 px-1">
+                        <div className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                            {str("Selected Parts")}
+                            <span className="rounded-full bg-slate-900 px-2 text-xs font-semibold leading-5 text-white">
+                                {selectedItems.length}
+                            </span>
+                        </div>
                         {selectedItems.length > 0 && (
-                            <div style={{ marginTop: '20px', textAlign: 'left' }}>
-                                <h4 style={{ marginBottom: '8px' }}>{str("Selected Parts")} ({selectedItems.length})</h4>
-                                {selectedItems.map((item) => {
-                                    const action = item.selectedAction || item.action;
-                                    const calcData = calculations?.[item.name];
-                                    const fetchError = fetchErrors[item.name];
-                                    const isItemLoading = fetchingPartsRef.current.has(item.name) && !tableDataRepository[item.name] && !fetchError;
-                                    const hasCalcData = calcData && calcData.length > 0;
-                                    const dmgLevel = DAMAGE_LEVELS.find(d => d.value === item.damageLevel);
-                                    const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
-                                    const gridMarked = gridFlat.filter(c => c > 0).length;
-                                    const gridTotal = gridFlat.length;
-                                    const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
-                                    const isCollapsed = collapsedParts[item.name] !== false;
-                                    const basePrice = company?.pricing_preferences?.norm_price?.amount ?? 1;
-                                    const currency = company?.pricing_preferences?.norm_price?.currency ?? '';
-                                    const validTables = hasCalcData
-                                        ? calcData.filter(e => e && typeof e === 'object' && Array.isArray(e.result))
-                                        : [];
-                                    const calcTotal = validTables.reduce((acc, entry) =>
-                                        acc + entry.result.reduce((a, row) => a + toRealNumber(row.estimation) * toRealNumber(row.price ?? basePrice), 0), 0);
-
-                                    return (
-                                        <div
-                                            key={item.name}
-                                            data-testid={`calc-body-part-item-${toTestIdValue(item.name)}`}
-                                            style={{ marginBottom: '8px', border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}
-                                        >
-                                            {/* Collapsible header */}
-                                            <div
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                                    padding: isMobile ? '8px 10px' : '8px 12px',
-                                                    cursor: 'pointer', backgroundColor: '#fafafa',
-                                                    userSelect: 'none', minWidth: 0,
-                                                }}
-                                                onClick={() => setCollapsedParts(prev => ({ ...prev, [item.name]: !isCollapsed }))}
-                                            >
-                                                <span style={{ color: '#aaa', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                                                    {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                                                </span>
-                                                <span style={{ fontWeight: 600, fontSize: '14px', flexShrink: 0 }}>{item.name}</span>
-                                                {action && (
-                                                    <span style={{ fontSize: '12px', color: '#555', backgroundColor: '#f0f4ff', padding: '1px 8px', borderRadius: '10px', flexShrink: 0 }}>
-                                                        {str(action)}
-                                                    </span>
-                                                )}
-                                                {item.damageLevelMode === 'grid' ? (
-                                                    gridMarked > 0 && (
-                                                        <span style={{ fontSize: '11px', color: '#666', flexShrink: 0 }}>
-                                                            {gridMarked}/{gridTotal} ({gridPct}%)
-                                                        </span>
-                                                    )
-                                                ) : (dmgLevel && dmgLevel.value > 0 ? (
-                                                    <span style={{
-                                                        display: 'inline-block', padding: '1px 8px', borderRadius: '10px',
-                                                        backgroundColor: dmgLevel.color, color: '#fff',
-                                                        fontSize: '11px', fontWeight: 600, flexShrink: 0,
-                                                    }}>
-                                                        {str(dmgLevel.label)}
-                                                    </span>
-                                                ) : null)}
-
-                                                {/* Summary shown only when collapsed */}
-                                                <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    {isCollapsed && (
-                                                        fetchError ? (
-                                                            <span style={{ fontSize: '12px', color: '#ef4444' }}>!</span>
-                                                        ) : isItemLoading ? (
-                                                            <span style={{ fontSize: '12px', color: '#aaa' }}>…</span>
-                                                        ) : validTables.length > 0 ? (
-                                                            <span style={{ fontSize: '12px', color: '#555' }}>
-                                                                {validTables.length} {str("tables")} · {calcTotal.toFixed(2)} {currency}
-                                                            </span>
-                                                        ) : (
-                                                            <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>
-                                                                {str("nothing")}
-                                                            </span>
-                                                        )
-                                                    )}
-                                                    <div
-                                                        style={{ display: 'flex', gap: '6px' }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleShowDetails(item); }}
-                                                            data-testid={`calc-body-part-details-button-${toTestIdValue(item.name)}`}
-                                                            style={{
-                                                                padding: isMobile ? '4px 6px' : '5px 7px',
-                                                                backgroundColor: '#3b82f6', color: 'white',
-                                                                border: 'none', borderRadius: '5px', cursor: 'pointer',
-                                                                display: 'flex', alignItems: 'center',
-                                                            }}
-                                                            title={str("Details")}
-                                                        >
-                                                            <MoreHorizontal size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleRequestDelete(item); }}
-                                                            data-testid={`calc-body-part-remove-button-${toTestIdValue(item.name)}`}
-                                                            style={{
-                                                                padding: isMobile ? '4px 6px' : '5px 7px',
-                                                                backgroundColor: '#ef4444', color: 'white',
-                                                                border: 'none', borderRadius: '5px', cursor: 'pointer',
-                                                                display: 'flex', alignItems: 'center',
-                                                            }}
-                                                            title={str("Remove")}
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </span>
-                                            </div>
-
-                                            {/* Expanded content */}
-                                            {!isCollapsed && (
-                                                <div style={{ padding: '10px 12px' }}>
-                                                    {fetchError ? (
-                                                        <div>
-                                                            <Message type="error" showIcon style={{ marginBottom: '6px' }}>
-                                                                {str("Failed to load table data")} — {fetchError}
-                                                            </Message>
-                                                            <Button size="xs" appearance="ghost" color="blue" onClick={() => fetchTableDataForPart(item.name)}>
-                                                                {str("Retry")}
-                                                            </Button>
-                                                        </div>
-                                                    ) : isItemLoading ? (
-                                                        <div style={{ color: '#999', fontSize: '13px' }}>
-                                                            {str("Loading table data...")}
-                                                        </div>
-                                                    ) : hasCalcData ? (
-                                                        <EvaluationResultsTable
-                                                            data={calcData}
-                                                            setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
-                                                            currency={currency}
-                                                            basePrice={basePrice}
-                                                            skipIncorrect={true}
-                                                            getEditorUrl={getEditorUrl}
-                                                        />
-                                                    ) : (
-                                                        <div style={{ color: '#aaa', fontSize: '13px', fontStyle: 'italic', padding: '4px 0' }}>
-                                                            {str('No details, click "..." to add details')}
-                                                        </div>
-                                                    )}
-                                                    <PartDebugPanel
-                                                        logs={evaluatorLogs[item.name]}
-                                                        open={!!partDebugOpen[item.name]}
-                                                        onToggle={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
-                                                        getEditorUrl={getEditorUrl}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                            <div className="text-right leading-tight">
+                                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                                    {str("Total")}
+                                </div>
+                                <div
+                                    className="text-lg font-semibold tabular-nums text-slate-900"
+                                    data-testid="calc-body-selected-parts-total"
+                                >
+                                    {grandTotal.toFixed(2)}{' '}
+                                    <span className="text-sm font-medium text-slate-500">{currency}</span>
+                                </div>
                             </div>
                         )}
-                    </>
-                ) : (
-                    <TechDataPanel
-                        errors={errors}
-                        setErrors={setErrors}
-                        body={body}
-                        carClass={carClass}
-                        selectedParts={selectedParts}
-                        partsVisual={partsVisual}
-                        company={company}
-                        availableParts={availableParts}
-                        availablePartsT2={availablePartsT2}
-                        processors={processors}
-                        calculations={calculations}
-                        onChange={onChange}
-                        setCalculations={setCalculations}
-                    />
-                )}
-            </div>
+                    </div>
+
+                    {selectedItems.length === 0 ? (
+                        <div
+                            className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center"
+                            data-testid="calc-body-selected-parts-empty"
+                        >
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                <MousePointerClick size={20} />
+                            </div>
+                            <div className="text-sm font-semibold text-slate-700">{str("No parts selected yet")}</div>
+                            <div className="max-w-xs text-xs text-slate-500">
+                                {str("Tap a body zone on the diagram to add a damaged part")}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            {partSummaries.map(({ item, action, calcData, hasCalcData, validTables, total, dmgLevel, gridMarked, gridTotal }) => {
+                                const testId = toTestIdValue(item.name);
+                                const fetchError = fetchErrors[item.name];
+                                const isItemLoading = fetchingPartsRef.current.has(item.name) && !tableDataRepository[item.name] && !fetchError;
+                                const isCollapsed = collapsedParts[item.name] !== false;
+                                const isGridMode = item.damageLevelMode === 'grid';
+                                const gridPct = gridTotal > 0 ? Math.round((gridMarked / gridTotal) * 100) : 0;
+                                const accent = isGridMode
+                                    ? (gridMarked > 0 ? GRID_ACCENT : NEUTRAL_ACCENT)
+                                    : (dmgLevel?.value > 0 ? dmgLevel.color : NEUTRAL_ACCENT);
+
+                                return (
+                                    <div
+                                        key={item.name}
+                                        data-testid={`calc-body-part-item-${testId}`}
+                                        className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                                    >
+                                        <span
+                                            aria-hidden
+                                            className="absolute inset-y-0 left-0 w-1"
+                                            style={{ backgroundColor: accent }}
+                                        />
+                                        <div className="flex items-center gap-1 pr-2">
+                                            <div
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-expanded={!isCollapsed}
+                                                data-testid={`calc-body-part-toggle-${testId}`}
+                                                className="flex min-w-0 flex-1 cursor-pointer select-none items-center gap-2 py-2.5 pl-3 sm:gap-3 sm:pl-4"
+                                                onClick={() => togglePart(item.name)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        togglePart(item.name);
+                                                    }
+                                                }}
+                                            >
+                                                <ChevronRight
+                                                    size={16}
+                                                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="break-words text-sm font-semibold leading-snug text-slate-900">
+                                                        {item.name}
+                                                    </div>
+                                                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                                                        {action ? (
+                                                            <span className="text-slate-500">{str(action)}</span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+                                                                <CircleAlert size={12} />
+                                                                {str("No action selected")}
+                                                            </span>
+                                                        )}
+                                                        {isGridMode ? (
+                                                            gridMarked > 0 && (
+                                                                <span className="rounded-full bg-orange-100 px-2 py-0.5 font-medium tabular-nums text-orange-800">
+                                                                    {gridMarked}/{gridTotal} ({gridPct}%)
+                                                                </span>
+                                                            )
+                                                        ) : (
+                                                            dmgLevel?.value > 0 && (
+                                                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${dmgLevel.pill}`}>
+                                                                    <span
+                                                                        className="h-1.5 w-1.5 rounded-full"
+                                                                        style={{ backgroundColor: dmgLevel.color }}
+                                                                    />
+                                                                    {str(dmgLevel.label)}
+                                                                </span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0 text-right leading-tight">
+                                                    {fetchError ? (
+                                                        <TriangleAlert size={16} className="text-red-500" />
+                                                    ) : isItemLoading ? (
+                                                        <LoaderCircle size={16} className="animate-spin text-slate-400" />
+                                                    ) : validTables.length > 0 ? (
+                                                        <>
+                                                            <div className="text-sm font-semibold tabular-nums text-slate-900">
+                                                                {total.toFixed(2)}{' '}
+                                                                <span className="text-xs font-medium text-slate-400">{currency}</span>
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-400">
+                                                                {validTables.length} {str("tables")}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs italic text-slate-300">{str("nothing")}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex shrink-0 items-center">
+                                                <button
+                                                    type="button"
+                                                    className="cbm-icon-btn"
+                                                    onClick={() => handleShowDetails(item)}
+                                                    data-testid={`calc-body-part-details-button-${testId}`}
+                                                    title={str("Details")}
+                                                    aria-label={str("Details")}
+                                                >
+                                                    <SlidersHorizontal size={16} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="cbm-icon-btn cbm-icon-btn--danger"
+                                                    onClick={() => handleRequestDelete(item)}
+                                                    data-testid={`calc-body-part-remove-button-${testId}`}
+                                                    title={str("Remove")}
+                                                    aria-label={str("Remove")}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {!isCollapsed && (
+                                            <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
+                                                {fetchError ? (
+                                                    <div>
+                                                        <Message type="error" showIcon style={{ marginBottom: '6px' }}>
+                                                            {str("Failed to load table data")} — {fetchError}
+                                                        </Message>
+                                                        <Button
+                                                            size="xs"
+                                                            appearance="ghost"
+                                                            color="blue"
+                                                            onClick={() => fetchTableDataForPart(item.name)}
+                                                            data-testid={`calc-body-part-retry-button-${testId}`}
+                                                        >
+                                                            {str("Retry")}
+                                                        </Button>
+                                                    </div>
+                                                ) : isItemLoading ? (
+                                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                        <LoaderCircle size={14} className="animate-spin" />
+                                                        {str("Loading table data...")}
+                                                    </div>
+                                                ) : hasCalcData ? (
+                                                    <EvaluationResultsTable
+                                                        data={calcData}
+                                                        setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
+                                                        currency={currency}
+                                                        basePrice={basePrice}
+                                                        skipIncorrect={true}
+                                                        getEditorUrl={getEditorUrl}
+                                                    />
+                                                ) : (
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <span className="text-sm text-slate-500">
+                                                            {str("No calculations yet for this part")}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            className="cbm-soft-btn"
+                                                            onClick={() => handleShowDetails(item)}
+                                                            data-testid={`calc-body-part-choose-action-button-${testId}`}
+                                                        >
+                                                            <SlidersHorizontal size={14} />
+                                                            {str("Choose action")}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <PartDebugPanel
+                                                    logs={evaluatorLogs[item.name]}
+                                                    open={!!partDebugOpen[item.name]}
+                                                    onToggle={() => setPartDebugOpen(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                                                    getEditorUrl={getEditorUrl}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Part Details Drawer */}
             <Drawer
                 open={drawerOpen}
                 onClose={handleDrawerSave}
-                size={isMobile ? 'full' : 'lg'}
+                size={isMobile ? 'full' : 'sm'}
+                className="cbm-drawer"
                 data-testid="calc-body-part-details-drawer"
             >
                 <Drawer.Header>
-                    <Drawer.Title>{drawerPartDetails?.name || str("Part Details")}</Drawer.Title>
+                    <Drawer.Title>
+                        <div className="min-w-0 leading-tight">
+                            <div className="truncate text-base font-semibold text-slate-900">
+                                {drawerPartDetails?.name || str("Part Details")}
+                            </div>
+                            {(drawerPartDetails?.zone || drawerPartDetails?.group) && (
+                                <div className="mt-0.5 truncate text-xs font-normal text-slate-500">
+                                    {[drawerPartDetails.zone, drawerPartDetails.group].filter(Boolean).join(' · ')}
+                                </div>
+                            )}
+                        </div>
+                    </Drawer.Title>
                     <Drawer.Actions>
                         <Button
                             onClick={handleDrawerCancel}
@@ -1072,111 +1192,79 @@ const CarBodyMain = ({
                 </Drawer.Header>
                 <Drawer.Body>
                     {editedPart ? (
-                        <div style={{ padding: '10px' }}>
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>{str("Name")}:</strong> {editedPart.name}
-                            </div>
-
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>{str("Zone")}:</strong> {drawerPartDetails?.zone || '-'}
-                            </div>
-
-                            <div style={{ marginBottom: '15px' }}>
-                                <strong>{str("Group")}:</strong> {drawerPartDetails?.group || '-'}
-                            </div>
-
-                            <Divider />
-
-                            {/* Action Selection — uses repair_types.csv per-part values so they
-                                match processor requiredRepairTypes (Ukrainian names). Falls back
-                                to T2 action codes, then to the full 6-action default list. */}
-                            {(() => {
-                                const partTableData = tableDataRepository[drawerPartDetails?.name];
-                                const repairTypesEntry = partTableData?.find(t => t.name === 'repair_types');
-                                const repairTypesStr = repairTypesEntry?.data?.['Ремонти'] || '';
-                                const fromTable = repairTypesStr
-                                    .split('/')
-                                    .map(s => s.trim())
-                                    .filter(Boolean);
-
-                                const items = fromTable.length > 0
-                                    ? fromTable.map(rt => ({ label: rt, value: rt }))
-                                    : (drawerPartDetails?.actions?.length > 0
-                                        ? drawerPartDetails.actions.map(a => ({ label: str(a), value: a }))
-                                        : ['assemble', 'twist', 'replace', 'mount', 'repair', 'paint'].map(a => ({ label: str(a), value: a })));
-
-                                return (
-                                    <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-                                        <MenuPickerV2
-                                            label={str("Action")}
-                                            items={items}
-                                            value={editedPart.action}
-                                            onSelect={(value) => setEditedPart(prev => ({ ...prev, action: value }))}
-                                            style={{ maxWidth: '100%' }}
-                                            testId="calc-body-part-action-picker"
-                                        />
-                                    </div>
-                                );
-                            })()}
-
-                            {/* Damage Level - hidden for replace/mount actions */}
-                            {editedPart.action !== 'replace' && editedPart.action !== 'mount' && (
-                            <div style={{ marginTop: '20px', marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                                    {str("Damage Level")}
-                                </label>
-                                <Tabs
-                                    activeKey={editedPart.damageLevelMode || 'simple'}
-                                    onSelect={(key) => {
-                                        if (key === 'simple') {
-                                            setEditedPart(prev => ({
-                                                ...prev,
-                                                damageLevelMode: 'simple',
-                                                grid: generateInitialGrid(mapVisual(prev.name)),
-                                            }));
-                                        } else {
-                                            setEditedPart(prev => ({
-                                                ...prev,
-                                                damageLevelMode: 'grid',
-                                                damageLevel: 0,
-                                            }));
-                                        }
-                                    }}
-                                    appearance="subtle"
+                        <div className="flex flex-col gap-7 text-left">
+                            <section>
+                                <SectionLabel icon={Wrench}>{str("Action")}</SectionLabel>
+                                <div
+                                    role="radiogroup"
+                                    aria-label={str("Action")}
+                                    data-testid="calc-body-part-action-picker"
+                                    className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2"
                                 >
-                                    <Tabs.Tab eventKey="simple" title={str("Quick Select")}>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 0' }}>
+                                    {actionOptions.map((opt) => {
+                                        const isSelected = editedPart.action === opt.value;
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={isSelected}
+                                                className={`cbm-option${isSelected ? ' is-selected' : ''}`}
+                                                onClick={() => setEditedPart(prev => ({ ...prev, action: opt.value }))}
+                                                data-testid={`calc-body-part-action-picker-option-${opt.value}`}
+                                            >
+                                                <span className="cbm-option-radio" aria-hidden />
+                                                <span>{opt.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+
+                            {showDamageSection && (
+                                <section>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <SectionLabel icon={Gauge}>{str("Damage Level")}</SectionLabel>
+                                        <div className="cbm-segmented" role="tablist">
+                                            {[['simple', "Quick Select"], ['grid', "Damage Map"]].map(([mode, label]) => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-selected={damageMode === mode}
+                                                    className={`cbm-segment${damageMode === mode ? ' is-active' : ''}`}
+                                                    onClick={() => handleDamageModeChange(mode)}
+                                                    data-testid={`calc-body-part-damage-mode-${mode}`}
+                                                >
+                                                    {str(label)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {damageMode === 'simple' ? (
+                                        <div className="mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
                                             {DAMAGE_LEVELS.map(({ value, label, color }) => {
                                                 const isActive = editedPart.damageLevel === value;
                                                 return (
                                                     <button
                                                         key={value}
+                                                        type="button"
+                                                        aria-pressed={isActive}
+                                                        className={`cbm-level${isActive ? ' is-active' : ''}`}
+                                                        style={{ '--level-color': color }}
                                                         onClick={() => setEditedPart(prev => ({ ...prev, damageLevel: value }))}
                                                         data-testid={`calc-body-part-damage-level-${value}`}
-                                                        style={{
-                                                            flex: '1 1 auto',
-                                                            minWidth: '60px',
-                                                            padding: '10px 12px',
-                                                            borderRadius: '6px',
-                                                            border: isActive ? `2px solid ${color}` : '2px solid #ddd',
-                                                            backgroundColor: isActive ? color : '#fafafa',
-                                                            color: isActive ? '#fff' : '#333',
-                                                            fontWeight: isActive ? 'bold' : 'normal',
-                                                            cursor: 'pointer',
-                                                            textAlign: 'center',
-                                                            fontSize: '13px',
-                                                            transition: 'all 0.15s ease',
-                                                        }}
                                                     >
-                                                        <div>{str(label)}</div>
-                                                        <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>{value}</div>
+                                                        <span className="cbm-level-dot" aria-hidden />
+                                                        <span className="cbm-level-label">{str(label)}</span>
+                                                        <span className="cbm-level-value">{value}</span>
                                                     </button>
                                                 );
                                             })}
                                         </div>
-                                    </Tabs.Tab>
-                                    <Tabs.Tab eventKey="grid" title={str("Damage Map")}>
-                                        <div style={{ padding: '12px 0' }}>
+                                    ) : (
+                                        <div className="mt-3">
                                             {editedPart.grid && editedPart.grid.length > 0 ? (
                                                 <GridDraw
                                                     gridData={editedPart.grid}
@@ -1189,34 +1277,20 @@ const CarBodyMain = ({
                                                 </Message>
                                             )}
                                         </div>
-                                    </Tabs.Tab>
-                                </Tabs>
-                            </div>
+                                    )}
+                                </section>
                             )}
 
-                            <Divider />
-
-                            {/* Show all available properties */}
-                            {drawerPartDetails && Object.keys(drawerPartDetails).length > 0 && (
-                                <div style={{ marginTop: '20px' }}>
-                                    <Divider />
-                                    <details>
-                                        <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
-                                            {str("Raw Data")}
-                                        </summary>
-                                        <pre style={{
-                                            background: '#f5f5f5',
-                                            padding: '10px',
-                                            borderRadius: '4px',
-                                            fontSize: '11px',
-                                            fontFamily: 'monospace',
-                                            overflow: 'auto',
-                                            maxHeight: '400px'
-                                        }}>
-                                            {JSON.stringify({ original: drawerPartDetails, edited: editedPart }, null, 2)}
-                                        </pre>
-                                    </details>
-                                </div>
+                            {showDebugMode && drawerPartDetails && (
+                                <details className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                                    <summary className="cursor-pointer text-sm font-semibold text-slate-600">
+                                        <Braces size={14} className="mr-1.5 inline-block align-[-2px]" />
+                                        {str("Raw Data")}
+                                    </summary>
+                                    <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-white p-3 font-mono text-[11px]">
+                                        {JSON.stringify({ original: drawerPartDetails, edited: editedPart }, null, 2)}
+                                    </pre>
+                                </details>
                             )}
                         </div>
                     ) : (
@@ -1261,7 +1335,7 @@ const CarBodyMain = ({
                     </Button>
                 </Modal.Footer>
             </Modal>
-        </Panel>
+        </div>
     );
 };
 

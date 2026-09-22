@@ -3,18 +3,19 @@ import {
   HStack,
   IconButton,
   Message,
+  SelectPicker,
   toaster,
   VStack,
   Loader,
 } from "rsuite";
+import { Sparkles } from "lucide-react";
 import { styles } from "../layout/StageView";
 import Trans from "../../localization/Trans";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { authFetchYaml } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
-import MenuPickerV2 from "../layout/MenuPickerV2";
 import CarBodyMain from "./CarBodyMain";
 
 registerTranslations("en", {
@@ -65,6 +66,16 @@ const BodyPartsStage = ({
     [],
   );
   const { str } = useLocale();
+
+  const qualityPickerData = useMemo(
+    () =>
+      repairQualityOptions.map((option) =>
+        typeof option === "string"
+          ? { label: option, value: option }
+          : { label: option.label ?? option.value, value: option.value },
+      ),
+    [repairQualityOptions],
+  );
 
   // Unified error handler
   const handleError = useCallback((error, context) => {
@@ -210,14 +221,24 @@ const BodyPartsStage = ({
           }
         >
           <VStack spacing={3} style={{ minWidth: "12em" }}>
-            <MenuPickerV2
-              items={repairQualityOptions}
-              onSelect={setRepairQuality}
-              value={repairQuality}
-              label={str("Repair quality")}
-              style={{ width: "100%" }}
-              testId="calc-repair-quality-picker"
-            />
+            <div
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm"
+              data-testid="calc-repair-quality-picker"
+            >
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <Sparkles size={14} />
+                {str("Repair quality")}
+              </div>
+              <SelectPicker
+                data={qualityPickerData}
+                value={repairQuality || null}
+                onChange={(value) => setRepairQuality(value ?? "")}
+                cleanable={false}
+                searchable={false}
+                block
+                data-testid="calc-repair-quality-select"
+              />
+            </div>
             <CarBodyMain
               partsVisual={partsVisual}
               selectedParts={selectedParts}
