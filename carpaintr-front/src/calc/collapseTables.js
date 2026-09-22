@@ -27,6 +27,70 @@ export function toRealNumber(value) {
 }
 
 /**
+ * The company's price per norm-hour. An unset rate (the backend default is 0)
+ * falls back to 1 so sums read as norm-hours instead of zeroing out, since
+ * zero-sum rows are dropped from the printed document.
+ * @param {*} company - company info as returned by getcompanyinfo
+ * @returns {number}
+ */
+export function normPriceOf(company) {
+  const amount = toRealNumber(company?.pricing_preferences?.norm_price?.amount);
+  return amount > 0 ? amount : 1;
+}
+
+/**
+ * Whether the company has configured a norm-hour price at all.
+ * @param {*} company
+ * @returns {boolean}
+ */
+export function hasNormPrice(company) {
+  return toRealNumber(company?.pricing_preferences?.norm_price?.amount) > 0;
+}
+
+/**
+ * Stamp `price` onto every row that has none, so totals, the saved calculation
+ * and the print payload all use the same price instead of each consumer
+ * applying its own fallback. Returns the input unchanged if nothing needed it.
+ * @param {Array} tables - per-processor entries for one part
+ * @param {number} price
+ * @returns {Array}
+ */
+export function withDefaultPrices(tables, price) {
+  if (!Array.isArray(tables)) return tables;
+  let changed = false;
+  const next = tables.map((table) => {
+    if (!isValidTableEntry(table) || table.result.every((row) => row?.price != null)) {
+      return table;
+    }
+    changed = true;
+    return {
+      ...table,
+      result: table.result.map((row) => (row?.price == null ? { ...row, price } : row)),
+    };
+  });
+  return changed ? next : tables;
+}
+
+/**
+ * `withDefaultPrices` applied to every part of a calculation.
+ * @param {Record<string, Array>} calculations
+ * @param {number} price
+ * @returns {Record<string, Array>}
+ */
+export function calculationsWithDefaultPrices(calculations, price) {
+  if (!calculations || typeof calculations !== "object") return calculations;
+  let changed = false;
+  const next = Object.fromEntries(
+    Object.entries(calculations).map(([part, tables]) => {
+      const stamped = withDefaultPrices(tables, price);
+      if (stamped !== tables) changed = true;
+      return [part, stamped];
+    }),
+  );
+  return changed ? next : calculations;
+}
+
+/**
  * A row is "unfilled" when its estimation is not a real number (e.g. the
  * literal "Unfilled" placeholder, null, undefined or ""). Unfilled rows show a
  * "-" in the estimation cell that the user can click to fill in.

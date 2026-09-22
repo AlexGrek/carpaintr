@@ -20,8 +20,9 @@ import {
 } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import GridDraw from './GridDraw';
+import SegmentedControl from '../layout/SegmentedControl';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
-import { toRealNumber } from '../../calc/collapseTables';
+import { normPriceOf, toRealNumber, withDefaultPrices } from '../../calc/collapseTables';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
 import './CarBodyMain.css';
@@ -684,7 +685,7 @@ const CarBodyMain = ({
             });
 
             lastEvaluatedRef.current[item.name] = action;
-            updates[item.name] = results;
+            updates[item.name] = withDefaultPrices(results, normPriceOf(company));
             logUpdates[item.name] = debugLogs;
         });
 
@@ -778,7 +779,7 @@ const CarBodyMain = ({
         [availablePartsT2]
     );
 
-    const basePrice = company?.pricing_preferences?.norm_price?.amount ?? 1;
+    const basePrice = normPriceOf(company);
     const currency = company?.pricing_preferences?.norm_price?.currency ?? '';
 
     const partSummaries = useMemo(() => selectedItems.map((item) => {
@@ -1087,7 +1088,7 @@ const CarBodyMain = ({
                                         </div>
 
                                         {!isCollapsed && (
-                                            <div className="cbm-part-body border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
+                                            <div className="overflow-x-auto border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
                                                 {fetchError ? (
                                                     <div>
                                                         <Message type="error" showIcon style={{ marginBottom: '6px' }}>
@@ -1225,21 +1226,15 @@ const CarBodyMain = ({
                                 <section>
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <SectionLabel icon={Gauge}>{str("Damage Level")}</SectionLabel>
-                                        <div className="cbm-segmented" role="tablist">
-                                            {[['simple', "Quick Select"], ['grid', "Damage Map"]].map(([mode, label]) => (
-                                                <button
-                                                    key={mode}
-                                                    type="button"
-                                                    role="tab"
-                                                    aria-selected={damageMode === mode}
-                                                    className={`cbm-segment${damageMode === mode ? ' is-active' : ''}`}
-                                                    onClick={() => handleDamageModeChange(mode)}
-                                                    data-testid={`calc-body-part-damage-mode-${mode}`}
-                                                >
-                                                    {str(label)}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        <SegmentedControl
+                                            ariaLabel={str("Damage Level")}
+                                            value={damageMode}
+                                            onChange={handleDamageModeChange}
+                                            options={[
+                                                { value: 'simple', label: str("Quick Select"), testId: 'calc-body-part-damage-mode-simple' },
+                                                { value: 'grid', label: str("Damage Map"), testId: 'calc-body-part-damage-mode-grid' },
+                                            ]}
+                                        />
                                     </div>
 
                                     {damageMode === 'simple' ? (

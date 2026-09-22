@@ -144,7 +144,7 @@ export const EvaluationResultsTable = ({
                 if (item.sum == undefined) {
                   // console.log("-------------------------", item.name)
                   // console.log(item)
-                  item.price = getPrice(item.name);
+                  item.price = item.price ?? getPrice(item.name);
                   // console.log(item.price)
                   const sum = toNumber(item.estimation) * toNumber(item.price);
                   acc += sum;
@@ -297,7 +297,9 @@ export const EvaluationResultsTable = ({
 
         return (
           <div key={index} style={{ width: "100%", marginBottom: "10px" }}>
-            {!hideTableHeaders && entry.name && <h4>{entry.name}</h4>}
+            {!hideTableHeaders && entry.name && (
+              <h4 className="evaluation-table-title">{entry.name}</h4>
+            )}
             <table className="evaluation-table modern">
               <thead>
                 <tr>
@@ -310,13 +312,13 @@ export const EvaluationResultsTable = ({
                       <Trans>Part</Trans>
                     </th>
                   )}
-                  <th>
+                  <th className="evaluation-table-cell-numeric">
                     <Trans>Estimation</Trans>
                   </th>
-                  <th>
+                  <th className="evaluation-table-cell-numeric">
                     <Trans>Price</Trans> {currency && `(${currency})`}
                   </th>
-                  <th>
+                  <th className="evaluation-table-cell-numeric">
                     <Trans>Sum</Trans> {currency && `(${currency})`}
                   </th>
                 </tr>
@@ -348,11 +350,13 @@ export const EvaluationResultsTable = ({
                           onChange={(value) =>
                             handleEstimationChange(entry.name, row.name, value)
                           }
+                          size="sm"
                           style={{ minWidth: 60 }}
                         />
                       </td>
                       <td className="evaluation-table-cell-numeric">
                         <InlineEditWrapper
+                          size="sm"
                           value={price}
                           onChange={(value) =>
                             handlePriceChange(entry.name, row.name, value)
@@ -367,24 +371,19 @@ export const EvaluationResultsTable = ({
                   );
                 })}
                 <tr className="total-row">
-                  <td
-                    colSpan={showPartColumn ? 5 : 4}
-                    style={{ textAlign: "right", fontWeight: "bold" }}
-                  >
+                  <td colSpan={showPartColumn ? 5 : 4} style={{ textAlign: "right" }}>
                     <Trans>Total</Trans>:
                   </td>
-                  <td>
-                    <pre>
-                      <b>
-                        {entry.result
-                          .reduce((acc, row) => {
-                            const price = row.price ?? basePrice;
-                            return acc + toNumber(row.estimation) * toNumber(price);
-                          }, 0)
-                          .toFixed(2)}
-                      </b>{" "}
-                      {currency}
-                    </pre>
+                  <td className="evaluation-table-cell-numeric">
+                    <span className="evaluation-table-total">
+                      {entry.result
+                        .reduce((acc, row) => {
+                          const price = row.price ?? basePrice;
+                          return acc + toNumber(row.estimation) * toNumber(price);
+                        }, 0)
+                        .toFixed(2)}
+                    </span>
+                    {currency && ` ${currency}`}
                   </td>
                 </tr>
               </tbody>

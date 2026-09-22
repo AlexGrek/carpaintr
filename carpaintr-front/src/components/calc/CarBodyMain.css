@@ -33,14 +33,6 @@
   }
 }
 
-.cbm-part-body h4 {
-  margin: 4px 0 8px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: #334155;
-}
-
 /* Icon buttons */
 .cbm-icon-btn {
   display: inline-flex;
@@ -61,7 +53,6 @@
 
 .cbm-icon-btn:focus-visible,
 .cbm-option:focus-visible,
-.cbm-segment:focus-visible,
 .cbm-level:focus-visible,
 .cbm-soft-btn:focus-visible {
   outline: 2px solid #3b82f6;
@@ -147,35 +138,6 @@
   border-color: #3b82f6;
   background: #3b82f6;
   box-shadow: inset 0 0 0 3px #fff;
-}
-
-/* Segmented control */
-.cbm-segmented {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 10px;
-  background: #f1f5f9;
-}
-
-.cbm-segment {
-  padding: 5px 12px;
-  border-radius: 8px;
-  background: transparent;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.cbm-segment:hover {
-  color: #0f172a;
-}
-
-.cbm-segment.is-active {
-  background: #fff;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
 }
 
 /* Damage level tiles */

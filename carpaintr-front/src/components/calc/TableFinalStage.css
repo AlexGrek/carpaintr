@@ -1,0 +1,9 @@
+/* Plain CSS: rsuite's unlayered `h4` rule overrides Tailwind utilities. */
+.cfs-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}

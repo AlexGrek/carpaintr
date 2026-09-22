@@ -111,8 +111,6 @@ registerTranslations("ua", {
   "Order number": "Номер замовлення",
   Tables: "Таблиці",
   "Collapse tables": "Згорнути таблиці",
-  "Collapsed view is read-only. Uncheck to edit individual table rows.":
-    "Згорнутий вигляд лише для перегляду. Зніміть позначку, щоб редагувати окремі рядки таблиці.",
 
   "Repair quality": "Очікувана якість ремонту",
   "Part material": "Матеріал запчастини",

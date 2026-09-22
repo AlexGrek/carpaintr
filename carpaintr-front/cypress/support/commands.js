@@ -293,10 +293,9 @@ Cypress.Commands.add("setCollapseTables", (checked) => {
   cy.getByTestId("calc-final-collapse-readonly-note").should(
     checked ? "be.visible" : "not.exist",
   );
-  // The active mode is highlighted via the primary appearance.
   cy.getByTestId(`calc-final-mode-${mode}`).should(
     "have.attr",
-    "data-appearance",
-    "primary",
+    "aria-pressed",
+    "true",
   );
 });
