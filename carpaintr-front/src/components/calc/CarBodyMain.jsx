@@ -149,15 +149,45 @@ registerTranslations("ua", {
     "Required table \"%s\" not found. Available: [%s]": "Обов'язкова таблиця \"%s\" не знайдена. Доступні: [%s]",
     "Table \"%s\" loaded but data is null — server returned no rows. Required: [%s]": "Таблиця \"%s\" завантажена, але дані порожні — сервер не повернув рядків. Обов'язкові: [%s]",
     "Loading car parts...": "Завантаження деталей авто...",
+    "Available": "Доступно",
+    "Selected": "Обрано",
+    "Unavailable": "Недоступно",
+    "No action selected": "Дію не обрано",
+    "No parts selected yet": "Деталі ще не обрано",
+    "Tap a body zone on the diagram to add a damaged part": "Натисніть на зону кузова на схемі, щоб додати пошкоджену деталь",
+    "No calculations yet for this part": "Для цієї деталі ще немає розрахунків",
+    "Choose action": "Обрати дію",
 });
 
 const DAMAGE_LEVELS = [
-    { value: 0, label: "None", color: "#e0e0e0" },
-    { value: 2, label: "Light", color: "#fadb14" },
-    { value: 5, label: "Medium", color: "#fa8c16" },
-    { value: 7, label: "Severe", color: "#f5222d" },
-    { value: 10, label: "Critical", color: "#722ed1" },
+    { value: 0, label: "None", color: "#94a3b8", pill: "bg-slate-100 text-slate-600" },
+    { value: 2, label: "Light", color: "#eab308", pill: "bg-yellow-100 text-yellow-800" },
+    { value: 5, label: "Medium", color: "#f97316", pill: "bg-orange-100 text-orange-800" },
+    { value: 7, label: "Severe", color: "#ef4444", pill: "bg-red-100 text-red-700" },
+    { value: 10, label: "Critical", color: "#a855f7", pill: "bg-purple-100 text-purple-700" },
 ];
+
+const NEUTRAL_ACCENT = "#cbd5e1";
+const GRID_ACCENT = "#f97316";
+const DEFAULT_ACTIONS = ['assemble', 'twist', 'replace', 'mount', 'repair', 'paint'];
+
+const DIAGRAM_LEGEND = [
+    ["Available", "border-slate-300 bg-white"],
+    ["Selected", "border-emerald-500 bg-emerald-50"],
+    ["Unavailable", "border-dashed border-slate-300 bg-slate-100"],
+];
+
+const SectionLabel = ({ icon: Icon, children }) => (
+    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <Icon size={14} className="text-slate-400" />
+        {children}
+    </div>
+);
+
+SectionLabel.propTypes = {
+    icon: PropTypes.elementType.isRequired,
+    children: PropTypes.node,
+};
 
 function flattenFileTree(node, prefix = '') {
     const result = new Set();
