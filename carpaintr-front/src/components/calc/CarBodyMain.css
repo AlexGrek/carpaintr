@@ -1,14 +1,44 @@
 /* Button styles live here rather than in Tailwind utilities: rsuite's unlayered
-   `button` reset (radius, border, color, font) wins over layered utilities. */
+   `button` reset (radius, border, color, font) wins over layered utilities.
+   Grid layouts avoid Tailwind's `grid` class: GridDraw.css defines a global
+   `.grid` with a full-size ::before overlay that swallows clicks. */
 
-.cbm-drawer {
-  --rs-drawer-body-padding: 24px 28px;
+@media (min-width: 768px) {
+  .cbm-drawer .rs-drawer-body {
+    padding: 20px 24px;
+  }
 }
 
-@media (max-width: 767px) {
-  .cbm-drawer {
-    --rs-drawer-body-padding: 16px;
+.cbm-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .cbm-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.cbm-levels {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  .cbm-levels {
+    gap: 8px;
+  }
+}
+
+.cbm-part-body h4 {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #334155;
 }
 
 /* Icon buttons */
@@ -208,5 +238,19 @@
 @media (max-width: 480px) {
   .cbm-level-label {
     font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .cbm-levels {
+    gap: 4px;
+  }
+
+  .cbm-level {
+    padding: 8px 1px;
+  }
+
+  .cbm-level-label {
+    font-size: 10px;
   }
 }

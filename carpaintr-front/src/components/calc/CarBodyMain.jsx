@@ -850,7 +850,7 @@ const CarBodyMain = ({
                             {str("Car Body")}
                         </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className="text-base font-semibold capitalize text-slate-900">
+                            <span className="inline-block text-base font-semibold text-slate-900 first-letter:uppercase">
                                 {str(body) || str('Unknown')}
                             </span>
                             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
@@ -1087,7 +1087,7 @@ const CarBodyMain = ({
                                         </div>
 
                                         {!isCollapsed && (
-                                            <div className="border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
+                                            <div className="cbm-part-body border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
                                                 {fetchError ? (
                                                     <div>
                                                         <Message type="error" showIcon style={{ marginBottom: '6px' }}>
@@ -1199,7 +1199,7 @@ const CarBodyMain = ({
                                     role="radiogroup"
                                     aria-label={str("Action")}
                                     data-testid="calc-body-part-action-picker"
-                                    className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2"
+                                    className="cbm-options mt-3"
                                 >
                                     {actionOptions.map((opt) => {
                                         const isSelected = editedPart.action === opt.value;
@@ -1243,7 +1243,7 @@ const CarBodyMain = ({
                                     </div>
 
                                     {damageMode === 'simple' ? (
-                                        <div className="mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
+                                        <div className="cbm-levels mt-3">
                                             {DAMAGE_LEVELS.map(({ value, label, color }) => {
                                                 const isActive = editedPart.damageLevel === value;
                                                 return (

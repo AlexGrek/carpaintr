@@ -13,9 +13,12 @@
 }
 
 .car-container {
+  --car-height: 690px;
   position: relative;
   width: 450px;
-  height: 690px;
+  height: var(--car-height);
+  /* transform doesn't shrink the layout box; reclaim the space the scale-down frees */
+  margin-bottom: calc(var(--car-height) * (var(--car-scale) - 1));
   overflow: visible;
   flex-shrink: 0;
   transform: scale(var(--car-scale));
