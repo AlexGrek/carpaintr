@@ -85,11 +85,17 @@ describe("Excel-like CSV table editor", () => {
     cy.getByTestId("sheet-cell-1-0").should("contain.text", "Cherry");
 
     // --- Column AutoFilter: isolate "Cherry" then clear it again -----------
+    // RSuite's <Checkbox> root element is wider than its actual clickable
+    // label, so click the native input directly (force: true — it's the
+    // custom-styled, visually-hidden control underneath).
+    const clickCheckbox = (testId) =>
+      cy.getByTestId(testId).find("input[type=checkbox]").click({ force: true });
+
     cy.getByTestId("sheet-col-menu-0").click();
     cy.getByTestId("colmenu-select-all-0")
       .find("input[type=checkbox]")
       .should("be.checked");
-    cy.getByTestId("colmenu-select-all-0").click(); // uncheck everything
+    clickCheckbox("colmenu-select-all-0"); // uncheck everything
     cy.getByTestId("colmenu-select-all-0")
       .find("input[type=checkbox]")
       .should("not.be.checked");
@@ -97,7 +103,7 @@ describe("Excel-like CSV table editor", () => {
     cy.getByTestId("colmenu-value-0")
       .find("input[type=checkbox]")
       .should("not.be.checked");
-    cy.getByTestId("colmenu-value-0").click(); // check just "Cherry"
+    clickCheckbox("colmenu-value-0"); // check just "Cherry"
     cy.getByTestId("colmenu-value-0")
       .find("input[type=checkbox]")
       .should("be.checked");
