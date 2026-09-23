@@ -103,7 +103,6 @@ export default function DirectoryViewTable({
       hover
       onRowClick={(rowData) => {
         if (rowData.isFile) {
-          console.log(rowData);
           onFileClick?.(rowData.value);
         } else {
           onDirectoryClick?.(rowData);
@@ -119,6 +118,7 @@ export default function DirectoryViewTable({
             <div
               style={{ display: "flex", alignItems: "center", gap: 8 }}
               key={rowData.label}
+              data-testid={`file-entry-${rowData.label}`}
             >
               {getIcon(rowData)}
               {renderNameWithExtension(rowData.label)}

@@ -940,6 +940,7 @@ const FileEditor = ({
                     appearance="subtle"
                     onClick={handleOpenTableEditor}
                     disabled={isEditing}
+                    data-testid="file-editor-open-table"
                   >
                     <ScrollText style={{ marginRight: 5 }} />{" "}
                     <Trans>Open table editor</Trans>
