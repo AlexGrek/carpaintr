@@ -179,10 +179,18 @@ describe("Calc2 final stage: collapse tables", () => {
     cy.getByTestId("print-toggle-payload-button").should("be.visible").click();
     cy.getByTestId("print-payload-panel").scrollIntoView().should("exist");
 
+    // Storage filenames such as "calculation_ua.html" must never be visible
+    // anywhere in the drawer: not in the card labels, the section heading,
+    // or the payload panel.
+    cy.getByTestId("print-calculation-drawer")
+      .invoke("text")
+      .should("not.match", /\.html|_ua/);
+
     cy.getByTestId("print-payload-json")
       .invoke("text")
       .then((text) => {
         const payload = JSON.parse(text);
+        expect(payload).to.not.have.property("template_name");
         const calc = payload?.calculation?.calc;
         expect(calc).to.be.an("object");
         Object.values(calc).forEach((sections) => {

@@ -62,6 +62,7 @@ registerTranslations("ua", {
 const PrintDocumentGenerator = React.memo(
   ({
     name,
+    title,
     calculationData,
     collapseTables = false,
     totalTables = {},
@@ -150,6 +151,15 @@ const PrintDocumentGenerator = React.memo(
       templateName,
       str,
     ]);
+
+    // What the payload panel shows: the request body minus `template_name`,
+    // which is a storage filename (e.g. "calculation_ua.html") and must not
+    // surface in the UI. It is still sent to the backend unchanged.
+    const buildDisplayedPayload = useCallback(() => {
+      const { template_name: _templateName, ...displayed } =
+        buildRequestPayload();
+      return displayed;
+    }, [buildRequestPayload]);
 
     const handleGeneratePreview = useCallback(async () => {
       setLoadingPreview(true);
@@ -265,7 +275,7 @@ const PrintDocumentGenerator = React.memo(
         style={{ margin: "auto", maxWidth: "560px", paddingTop: "5pt" }}
         className="fade-in-simple"
       >
-        <h4>{name}</h4>
+        <h4>{title}</h4>
         <Form fluid className="w-full">
           <Form.Group>
             <Form.ControlLabel>
@@ -377,7 +387,7 @@ const PrintDocumentGenerator = React.memo(
                 margin: 0,
               }}
             >
-              {JSON.stringify(buildRequestPayload(), null, 2)}
+              {JSON.stringify(buildDisplayedPayload(), null, 2)}
             </pre>
           </Panel>
         )}
@@ -571,6 +581,11 @@ const PrintCalculationDrawer = React.memo(
                 <PrintDocumentGenerator
                   key={doc}
                   name={doc}
+                  title={
+                    doc === "custom"
+                      ? str("Custom template")
+                      : getTemplateLabel(doc, str)
+                  }
                   paintData={paintData}
                   calculationData={calculationData}
                   collapseTables={collapseTables}
