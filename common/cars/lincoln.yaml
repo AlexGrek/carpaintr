@@ -1,0 +1,45 @@
+# Lincoln Car Catalog
+"mkz":
+  body: ["sedan"]
+  class: "mid-size premium"
+  gen: ["2007-2012", "2013-2020"]
+  is_suv: false
+  estimated_price: 36000
+  euro_class: "E"
+  euro_body_types: ["sedan"]
+
+"corsair":
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2020-"]
+  is_suv: true
+  estimated_price: 39000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"nautilus":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2019-2023", "2024-"]
+  is_suv: true
+  estimated_price: 50000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"aviator":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2020-"]
+  is_suv: true
+  estimated_price: 55000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]
+
+"navigator":
+  body: ["suv"]
+  class: "full-size suv"
+  gen: ["2007-2017", "2018-2024", "2025-"]
+  is_suv: true
+  estimated_price: 85000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]

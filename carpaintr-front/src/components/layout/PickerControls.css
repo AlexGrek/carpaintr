@@ -1,0 +1,52 @@
+/*
+ * Button boxes for ImagePickerGrid / ChipPicker / SelectedValueRow.
+ * Plain (unlayered) CSS on purpose: rsuite's reset `button { border-width: 0 }`
+ * is unlayered too and would beat Tailwind's layered border/rounded utilities.
+ * Colors mirror .cbm-option in calc/CarBodyMain.css.
+ */
+.pc-tile,
+.pc-chip,
+.pc-row {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.pc-tile:hover,
+.pc-chip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.pc-tile.is-selected,
+.pc-chip.is-selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1e3a8a;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.pc-row {
+  background: #f8fafc;
+}
+
+.pc-row:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.pc-tile:focus-visible,
+.pc-chip:focus-visible,
+.pc-row:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.pc-tile:focus:not(:focus-visible),
+.pc-chip:focus:not(:focus-visible),
+.pc-row:focus:not(:focus-visible) {
+  outline: none;
+}

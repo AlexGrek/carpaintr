@@ -3,10 +3,10 @@ import { Button, Drawer } from "rsuite";
 import { styles } from "../layout/StageView";
 import LoadCalculationMenu from "./LoadCalculationMenu";
 import Trans from "../../localization/Trans";
-import { registerTranslations } from "../../localization/LocaleContext";
+import { registerTranslations, useLocale } from "../../localization/LocaleContext";
 import { CarCard } from "../utility/CarCard";
 import CreateCard from "../utility/CreateCard";
-import { FolderOpen, RotateCcw } from "lucide-react";
+import { FolderOpen, RotateCcw, Car, Tag, SearchCode } from "lucide-react";
 
 registerTranslations("ua", {
   "Open project": "Відкрити проєкт",
@@ -15,6 +15,10 @@ registerTranslations("ua", {
   "Continue": "Продовжити",
   "Previous calculation": "Попередній розрахунок",
   "or": "або",
+  "By car type": "За типом кузова",
+  "By car brand": "За маркою авто",
+  "By VIN decoder": "Через VIN декодер",
+  "Create new": "Створити новий",
 });
 
 const cardContainerStyle = {
@@ -89,6 +93,7 @@ const RenderUnsaved = ({ dataString, onLoadData }) => {
 const CalcMainMenuStage = ({ onNext, onLoad }) => {
   const unsaved = localStorage.getItem("unsaved_calculation");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { str } = useLocale();
 
   const handleLoaded = (data) => {
     setDrawerOpen(false);
@@ -99,10 +104,36 @@ const CalcMainMenuStage = ({ onNext, onLoad }) => {
     <div style={styles.sampleStage}>
       <div className="fade-in-simple">
         <div style={cardContainerStyle}>
-          <CreateCard
-            onClick={() => onNext()}
-            dataTestId="calc-main-create-new-button"
-          />
+          <div style={{ width: "100%", textAlign: "center", marginBottom: "-8px" }}>
+            <h3 style={{ fontSize: "20px", fontWeight: "600", color: "#333" }}>
+              <Trans>Create new</Trans>
+            </h3>
+          </div>
+          
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", justifyContent: "center" }}>
+            <CreateCard
+              text={str("By car type")}
+              icon={<Car size={32} color="orangered" strokeWidth={2.5} />}
+              onClick={() => onNext("type")}
+              dataTestId="calc-main-create-by-type-button"
+              style={{ width: "240px", minHeight: "160px" }}
+            />
+            <CreateCard
+              text={str("By car brand")}
+              icon={<Tag size={32} color="orangered" strokeWidth={2.5} />}
+              onClick={() => onNext("brand")}
+              dataTestId="calc-main-create-by-brand-button"
+              style={{ width: "240px", minHeight: "160px" }}
+            />
+            <CreateCard
+              text={str("By VIN decoder")}
+              icon={<SearchCode size={32} color="orangered" strokeWidth={2.5} />}
+              beta={true}
+              onClick={() => onNext("vin")}
+              dataTestId="calc-main-create-by-vin-button"
+              style={{ width: "240px", minHeight: "160px" }}
+            />
+          </div>
 
           {unsaved && <RenderUnsaved dataString={unsaved} onLoadData={onLoad} />}
 

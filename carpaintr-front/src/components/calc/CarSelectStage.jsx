@@ -1,4 +1,5 @@
-import { Button, Divider, Input } from "rsuite";
+import { Button, Input } from "rsuite";
+import { ClipboardList } from "lucide-react";
 import { styles } from "../layout/StageView";
 import VehicleSelect from "./VehicleSelect";
 import Trans from "../../localization/Trans";
@@ -6,6 +7,14 @@ import { useLocale } from "../../localization/LocaleContext";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
+import StageSection from "../layout/StageSection";
+
+const Field = ({ label, className = "", children }) => (
+  <label className={`flex min-w-0 flex-col gap-1.5 ${className}`}>
+    <span className="text-xs font-medium text-slate-600">{label}</span>
+    {children}
+  </label>
+);
 
 const CarSelectStage = ({
   title: _title,
@@ -33,6 +42,14 @@ const CarSelectStage = ({
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const mode = stageData["carSelectionMode"];
+    if (mode === "brand") {
+      setSelectModelMode(true);
+    } else if (mode === "type") {
+      setSelectModelMode(false);
+    }
+    // "vin" mode doesn't strictly need a switch here, but we can pass a prop to VehicleSelect to open the modal
+
     const car = stageData["car"];
     if (car) {
       setMake(car.make ?? null);
@@ -112,6 +129,7 @@ const CarSelectStage = ({
           }
         >
           <VehicleSelect
+            autoOpenVin={stageData["carSelectionMode"] === "vin"}
             selectedBodyType={bodyType}
             carclass={carClass}
             setCarClass={setCarClass}
@@ -129,45 +147,51 @@ const CarSelectStage = ({
             isFromLoading={isFromLoading}
           />
           {year != null && (
-            <div className="pop-in-simple">
-              <Divider>
-                <Trans>Additional info</Trans>
-              </Divider>
-              <Input
-                value={make}
-                onChange={setMake}
-                placeholder={str("Car brand")}
-                data-testid="calc-car-make-input"
-              ></Input>
-              <Input
-                value={model}
-                onChange={setModel}
-                placeholder={str("Car model")}
-                data-testid="calc-car-model-input"
-              ></Input>
-              <br />
-              <Input
-                value={licensePlate}
-                onChange={setLicensePlate}
-                placeholder={str("License plate (optional)")}
-                data-testid="calc-car-license-plate-input"
-              ></Input>
-              <Input
-                value={VIN}
-                onChange={setVIN}
-                placeholder={str("VIN (optional)")}
-                data-testid="calc-car-vin-input"
-              ></Input>
-              <br />
-              <Input
-                as="textarea"
-                rows={3}
-                value={notes}
-                onChange={setNotes}
-                placeholder={str("Notes")}
-                data-testid="calc-car-notes-input"
-              ></Input>
-            </div>
+            <StageSection
+              icon={ClipboardList}
+              title={str("Additional info")}
+              className="pop-in-simple mt-3"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={str("Car brand")}>
+                  <Input
+                    value={make ?? ""}
+                    onChange={setMake}
+                    data-testid="calc-car-make-input"
+                  />
+                </Field>
+                <Field label={str("Car model")}>
+                  <Input
+                    value={model ?? ""}
+                    onChange={setModel}
+                    data-testid="calc-car-model-input"
+                  />
+                </Field>
+                <Field label={str("License plate (optional)")}>
+                  <Input
+                    value={licensePlate}
+                    onChange={setLicensePlate}
+                    data-testid="calc-car-license-plate-input"
+                  />
+                </Field>
+                <Field label={str("VIN (optional)")}>
+                  <Input
+                    value={VIN}
+                    onChange={setVIN}
+                    data-testid="calc-car-vin-input"
+                  />
+                </Field>
+                <Field label={str("Notes")} className="sm:col-span-2">
+                  <Input
+                    as="textarea"
+                    rows={3}
+                    value={notes}
+                    onChange={setNotes}
+                    data-testid="calc-car-notes-input"
+                  />
+                </Field>
+              </div>
+            </StageSection>
           )}
         </BottomStickyLayout>
       </div>

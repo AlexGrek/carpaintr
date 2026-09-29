@@ -1,0 +1,63 @@
+# Fiat Car Catalog
+"500":
+  body: ["hatchback"]
+  class: "subcompact"
+  gen: ["2007-"]
+  is_suv: false
+  estimated_price: 15000
+  euro_class: "A"
+  euro_body_types: ["hatchback 3 doors"]
+
+"500x":
+  body: ["suv"]
+  class: "subcompact suv"
+  gen: ["2014-"]
+  is_suv: true
+  estimated_price: 22000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"500l":
+  body: ["minivan"]
+  class: "compact mpv"
+  gen: ["2012-"]
+  is_suv: false
+  estimated_price: 20000
+  euro_class: "F"
+  euro_body_types: ["wagon"]
+
+"panda":
+  body: ["hatchback"]
+  class: "subcompact"
+  gen: ["2011-"]
+  is_suv: false
+  estimated_price: 14000
+  euro_class: "A"
+  euro_body_types: ["hatchback 5 doors"]
+
+"tipo":
+  body: ["sedan", "hatchback", "wagon"]
+  class: "compact"
+  gen: ["2015-"]
+  is_suv: false
+  estimated_price: 18000
+  euro_class: "C"
+  euro_body_types: ["sedan", "hatchback 5 doors", "wagon"]
+
+"doblo":
+  body: ["minivan", "van"]
+  class: "compact van"
+  gen: ["2010-2022", "2022-"]
+  is_suv: false
+  estimated_price: 22000
+  euro_class: "F"
+  euro_body_types: ["wagon"]
+
+"ducato":
+  body: ["van"]
+  class: "commercial van"
+  gen: ["2006-"]
+  is_suv: false
+  estimated_price: 35000
+  euro_class: "F"
+  euro_body_types: ["wagon"]

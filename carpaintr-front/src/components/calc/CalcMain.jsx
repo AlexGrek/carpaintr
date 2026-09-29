@@ -49,9 +49,14 @@ const CalcMain = () => {
     setIsMainMenuStage(false);
   }, []);
 
+  const handleNext = useCallback((mode) => {
+    setInitialState({ carSelectionMode: mode });
+    setIsMainMenuStage(false);
+  }, []);
+
   return isMainMenuStage ? (
     <CalcMainMenuStage
-      onNext={() => setIsMainMenuStage(false)}
+      onNext={handleNext}
       onLoad={handleLoadData}
     />
   ) : (

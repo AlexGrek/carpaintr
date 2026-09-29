@@ -421,6 +421,15 @@ GET /api/v1/user/lookup_all_tables?car_class=A&car_type=sedan&part=Капот
 ```
 Returns table data including a `repair_types` entry with the specific part's repair types.
 
+### Important: Local Data Sync (`common/` vs `data/common/`)
+
+The repository contains two related directories for global data files:
+1. `common/`: The source-of-truth directory tracked by Git, containing YAMLs, CSVs, and processors. **This is where you should make edits.**
+2. `data/common/`: The local working directory that the backend actually reads from at runtime.
+
+**Whenever you make changes to files in `common/`, you MUST run `task dev-data`.** 
+This task uses `rsync` to automatically sync your changes into `data/common/` and the backend's directory (`backend-service-rust/data/common/`). If you forget this step, the app will not see your new YAMLs, CSV updates, or processor changes!
+
 ---
 
 ## Data Flow Architecture

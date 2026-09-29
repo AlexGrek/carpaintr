@@ -1,0 +1,36 @@
+# Chrysler Car Catalog
+"200":
+  body: ["sedan"]
+  class: "mid-size"
+  gen: ["2011-2014", "2015-2017"]
+  is_suv: false
+  estimated_price: 22000
+  euro_class: "D"
+  euro_body_types: ["sedan"]
+
+"300":
+  body: ["sedan"]
+  class: "full-size"
+  gen: ["2005-2010", "2011-2023"]
+  is_suv: false
+  estimated_price: 33000
+  euro_class: "E"
+  euro_body_types: ["sedan"]
+
+"pacifica":
+  body: ["minivan"]
+  class: "minivan"
+  gen: ["2017-"]
+  is_suv: false
+  estimated_price: 38000
+  euro_class: "F"
+  euro_body_types: ["wagon"]
+
+"voyager":
+  body: ["minivan"]
+  class: "minivan"
+  gen: ["2020-"]
+  is_suv: false
+  estimated_price: 28000
+  euro_class: "F"
+  euro_body_types: ["wagon"]

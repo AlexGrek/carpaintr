@@ -66,7 +66,7 @@
   is_suv: false
   estimated_price: 40000
   euro_class: "D"
-  euro_body_types: ["hatchback 5 doors", "suv 5 doors"]
+  euro_body_types: ["hatchback 5 doors"]
 
 # Electric and Hybrid Models
 "born":
@@ -106,7 +106,7 @@
   is_suv: false
   estimated_price: 22000
   euro_class: "C"
-  euro_body_types: ["wagon", "suv 5 doors"]
+  euro_body_types: ["wagon"]
 
 # Historical Models
 "cordoba":
@@ -116,7 +116,7 @@
   is_suv: false
   estimated_price: 15000
   euro_class: "B"
-  euro_body_types: ["sedan", "coupe"]
+  euro_body_types: ["sedan"]
 
 "exeo":
   body: ["sedan", "st"]

@@ -62,7 +62,7 @@
   powertrain: "electric"
   estimated_price: 45000
   euro_class: "SUV 2"
-  euro_body_types: ["suv 5 doors", "coupe"]
+  euro_body_types: ["suv 5 doors"]
 
 # Small Cars
 "citigo":
@@ -88,13 +88,13 @@
 
 # Historical Models
 "felicia":
-  body: ["hatchback", "combi", "pickup"]
+  body: ["hatchback", "combi", "suv 5 doors"]
   class: "compact"
   gen: ["1994-2001"]
   is_suv: false
   estimated_price: 10000
   euro_class: "B"
-  euro_body_types: ["hatchback 5 doors", "wagon", "pickup"]
+  euro_body_types: ["hatchback 5 doors", "wagon"]
 
 "superb":
   body: ["liftback", "combi"]

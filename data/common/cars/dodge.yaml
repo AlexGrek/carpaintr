@@ -1,0 +1,54 @@
+# Dodge Car Catalog
+"charger":
+  body: ["sedan"]
+  class: "full-size"
+  gen: ["2006-2010", "2011-2023", "2024-"]
+  is_suv: false
+  estimated_price: 35000
+  euro_class: "E"
+  euro_body_types: ["sedan"]
+
+"challenger":
+  body: ["coupe"]
+  class: "sports"
+  gen: ["2008-2023"]
+  is_suv: false
+  estimated_price: 33000
+  euro_class: "D"
+  euro_body_types: ["coupe"]
+
+"journey":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2009-2020"]
+  is_suv: true
+  estimated_price: 24000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"durango":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2011-"]
+  is_suv: true
+  estimated_price: 40000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]
+
+"dart":
+  body: ["sedan"]
+  class: "compact"
+  gen: ["2013-2016"]
+  is_suv: false
+  estimated_price: 18000
+  euro_class: "C"
+  euro_body_types: ["sedan"]
+
+"ram":
+  body: ["suv 5 doors"]
+  class: "pickup truck"
+  gen: ["2009-2018", "2019-"]
+  is_suv: true
+  estimated_price: 45000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]

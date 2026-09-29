@@ -16,7 +16,7 @@
   margin: auto;
 }
 
-.grid {
+.grid-draw {
   display: grid;
   cursor: pointer;
   margin: auto;
@@ -26,7 +26,7 @@
 }
 
 /* Pseudo-element for the background image */
-.grid::before {
+.grid-draw::before {
   content: "";
   position: absolute;
   top: 0;
@@ -41,7 +41,7 @@
 }
 
 /* Rule for mirroring the background */
-.grid.mirrored::before {
+.grid-draw.mirrored::before {
   transform: scaleX(-1); /* Mirror horizontally */
 }
 

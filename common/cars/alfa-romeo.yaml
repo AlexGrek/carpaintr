@@ -1,0 +1,36 @@
+# Alfa Romeo Car Catalog
+"giulia":
+  body: ["sedan"]
+  class: "mid-size premium"
+  gen: ["2015-"]
+  is_suv: false
+  estimated_price: 45000
+  euro_class: "D"
+  euro_body_types: ["sedan"]
+
+"stelvio":
+  body: ["suv"]
+  class: "compact premium suv"
+  gen: ["2016-"]
+  is_suv: true
+  estimated_price: 50000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"tonale":
+  body: ["suv"]
+  class: "subcompact premium suv"
+  gen: ["2022-"]
+  is_suv: true
+  estimated_price: 40000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"giulietta":
+  body: ["hatchback"]
+  class: "compact premium"
+  gen: ["2010-2020"]
+  is_suv: false
+  estimated_price: 20000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]

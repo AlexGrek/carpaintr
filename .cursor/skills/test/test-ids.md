@@ -68,21 +68,29 @@ Route → testid mapping: `cypress/support/app-routes.js`.
 |--------|---------|
 | `calc-car-select-stage` | Stage root |
 | `calc-car-stage-accept-button` | Accept (needs class + body + year) |
-| `calc-vehicle-class-picker` | Class `MenuPickerV2` |
+| `calc-vehicle-class-picker` | Class `ChipPicker` (chips) |
 | `calc-vehicle-class-picker-option-{class}` | e.g. `option-A` |
 | `calc-vehicle-body-type-picker` | Body type picker |
 | `calc-vehicle-body-type-picker-option-{value}` | Body option |
 | `calc-vehicle-year-select` | Year `SelectPicker` |
 | `calc-vehicle-switch-to-class-mode-link` | Manual class mode |
 | `calc-vehicle-switch-to-model-mode-link` | Model mode |
-| `calc-vehicle-make-select` | Make (model mode) |
-| `calc-vehicle-model-select` | Model |
+| `calc-vehicle-make-select` | Make (model mode); collapses to selected brand card once chosen |
+| `calc-vehicle-make-select-change` | "Change" pill on collapsed brand card (click card to reopen grid) |
+| `calc-vehicle-model-select` | Model search list (`SearchSelectInput`) |
+| `calc-vehicle-model-select-input` | Model search field (Enter picks exact/highlighted match) |
+| `calc-vehicle-model-select-option-{model}` | Catalog model option |
+| `calc-vehicle-model-select-custom` | "Use typed text" option for models not in catalog |
+| `calc-vehicle-model-select-selected` | Selected model card (click to clear) |
+| `calc-vehicle-custom-class-picker` | Class `ChipPicker` shown for custom model after body type |
 | `calc-vehicle-body-type-select` | Body (model mode) |
-| `calc-vehicle-open-vin-decoder-link` | VIN decoder |
-| `calc-vehicle-vin-decoder-modal` | VIN modal |
-| `calc-vehicle-vin-input` | VIN field |
-| `calc-vehicle-vin-decode-button` | Decode |
-| `calc-vehicle-vin-close-button` | Close modal |
+| `calc-vehicle-open-vin-decoder-link` | Open VIN decoder panel (class & model mode hints) |
+| `calc-vehicle-vin-decoder` | Inline VIN decoder panel (`VinDecoderPanel`) |
+| `calc-vehicle-vin-input` | VIN field (auto-uppercased, max 17) |
+| `calc-vehicle-vin-{make,model,year}` | Live result rows; `…-value` holds the decoded value |
+| `calc-vehicle-vin-online-status` | NHTSA lookup status (after 17 chars) |
+| `calc-vehicle-vin-apply-button` | Use decoded car (needs brand in catalog) |
+| `calc-vehicle-vin-manual-button` / `calc-vehicle-vin-close-button` | Close panel, pick manually |
 | `calc-car-make-input` | Extra make (after year set) |
 | `calc-car-model-input` | Extra model |
 | `calc-car-license-plate-input` | Plate |

@@ -414,8 +414,9 @@ tasks:
       - cargo watch -x run
 
   dev-data:
-    desc: Sync repo data/common into backend-service-rust/data for local dev
+    desc: Sync repo common/ to data/common and into backend-service-rust/data for local dev
     cmds:
+      - rsync -avu common/ data/common/
       - ./scripts/load-dev-data.sh
 
   kill-dev:

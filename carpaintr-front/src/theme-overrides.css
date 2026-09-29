@@ -12,9 +12,12 @@
   --rs-radius-3xl: 2.25rem;
   --rs-radius-4xl: 2.75rem;
 
+  /* Text inputs / pickers: less rounded than buttons (matches Tailwind rounded-xl) */
+  --app-input-radius: 0.75rem;
+
   /* Component-specific radius (inherit from scale above) */
-  --rs-input-border-radius: var(--rs-radius-lg);
-  --rs-input-group-border-radius: var(--rs-radius-lg);
+  --rs-input-border-radius: var(--app-input-radius);
+  --rs-input-group-border-radius: var(--app-input-radius);
   --rs-panel-border-radius: var(--rs-radius-xl);
   --rs-message-border-radius: var(--rs-radius-lg);
   --rs-notify-border-radius: var(--rs-radius-lg);
@@ -84,14 +87,20 @@
   padding-left: 40pt;
 }
 
-/* Buttons, inputs, pickers — ensure base controls use the larger scale */
+/* Buttons and toggles — ensure base controls use the larger scale */
 .rs-btn,
-.rs-input,
-.rs-picker-toggle,
 .rs-dropdown-toggle,
 .rs-checkbox-checker label,
 .rs-radio-checker label {
   border-radius: var(--rs-radius-lg);
+}
+
+/* Text inputs and picker toggles — flatter than buttons */
+.rs-input,
+.rs-input-group,
+.rs-picker-toggle,
+.rs-picker-toggle.rs-btn {
+  border-radius: var(--app-input-radius);
 }
 
 .rs-modal-content,

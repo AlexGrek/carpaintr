@@ -1,0 +1,83 @@
+# Chevrolet Car Catalog
+"malibu":
+  body: ["sedan"]
+  class: "mid-size"
+  gen: ["2012-2015", "2016-2022", "2023-"]
+  is_suv: false
+  estimated_price: 25000
+  euro_class: "D"
+  euro_body_types: ["sedan"]
+
+"cruze":
+  body: ["sedan", "hatchback"]
+  class: "compact"
+  gen: ["2008-2016", "2016-2019"]
+  is_suv: false
+  estimated_price: 18000
+  euro_class: "C"
+  euro_body_types: ["sedan", "hatchback 5 doors"]
+
+"equinox":
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2010-2017", "2018-2024", "2024-"]
+  is_suv: true
+  estimated_price: 28000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"trax":
+  body: ["suv"]
+  class: "subcompact suv"
+  gen: ["2013-2022", "2023-"]
+  is_suv: true
+  estimated_price: 22000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"traverse":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2009-2017", "2018-2023", "2024-"]
+  is_suv: true
+  estimated_price: 36000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"tahoe":
+  body: ["suv"]
+  class: "full-size suv"
+  gen: ["2007-2014", "2015-2020", "2021-"]
+  is_suv: true
+  estimated_price: 55000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]
+
+"camaro":
+  body: ["coupe", "convertible"]
+  class: "sports"
+  gen: ["2010-2015", "2016-2024"]
+  is_suv: false
+  estimated_price: 35000
+  euro_class: "D"
+  euro_body_types: ["coupe"]
+
+"volt":
+  body: ["hatchback"]
+  class: "compact"
+  powertrain: "plug-in hybrid"
+  gen: ["2011-2015", "2016-2019"]
+  is_suv: false
+  estimated_price: 30000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
+
+"bolt":
+  body: ["hatchback", "suv"]
+  class: "subcompact"
+  powertrain: "electric"
+  gen: ["2017-"]
+  is_suv: false
+  estimated_price: 32000
+  euro_class: "B"
+  euro_body_types: ["hatchback 5 doors"]

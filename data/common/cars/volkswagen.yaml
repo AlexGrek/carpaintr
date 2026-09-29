@@ -3,7 +3,7 @@
 
 # Compact Cars
 "golf":
-  body: ["hatchback", "variant", "cabriolet"]
+  body: ["hatchback", "variant", "coupe"]
   class: "compact"
   gen: ["1991-1997", "1997-2003", "2003-2008", "2008-2012", "2012-2019", "2019-"]
   is_suv: false
@@ -16,7 +16,7 @@
     mk8: 35000
   estimated_price: 30000
   euro_class: "C"
-  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "wagon", "cabriolet"]
+  euro_body_types: ["hatchback 3 doors", "hatchback 5 doors", "wagon", "coupe"]
 
 "polo":
   body: ["hatchback", "sedan"]
@@ -69,11 +69,11 @@
     second_gen: 55000
     third_gen: 65000
   estimated_price: 55000
-  euro_class: "SUV MAX"
+  euro_class: "SUV 3"
   euro_body_types: ["suv 5 doors"]
 
 "t-roc":
-  body: ["suv", "cabriolet"]
+  body: ["suv", "coupe"]
   class: "compact suv"
   gen: ["2017-"]
   is_suv: true
@@ -81,7 +81,7 @@
     base_model: 28000
   estimated_price: 30000
   euro_class: "SUV 1"
-  euro_body_types: ["suv 5 doors", "cabriolet"]
+  euro_body_types: ["suv 5 doors"]
 
 "id.4":
   body: ["suv"]
@@ -186,12 +186,12 @@
 
 # Commercial/Utility Vehicles
 "transporter":
-  body: ["van", "kombi", "camper"]
+  body: ["van", "wagon", "wagon"]
   class: "commercial van"
   gen: ["1990-2003", "2003-2015", "2015-"]
   is_suv: false
   price:
     base_model: 30000
   estimated_price: 35000
-  euro_class: "F" # Commercial vans are usually larger, falling into F or special categories
-  euro_body_types: ["wagon"] # Interpreting "van", "kombi", "camper" as variations of wagon for Euro body types.
+  euro_class: "F"
+  euro_body_types: ["wagon"] # Interpreting "van", "wagon", "wagon" as variations of wagon for Euro body types.

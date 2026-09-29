@@ -1,0 +1,45 @@
+# Cupra Car Catalog
+"formentor":
+  body: ["suv"]
+  class: "compact crossover"
+  gen: ["2020-"]
+  is_suv: true
+  estimated_price: 35000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"leon":
+  body: ["hatchback", "wagon"]
+  class: "compact"
+  gen: ["2020-"]
+  is_suv: false
+  estimated_price: 35000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors", "wagon"]
+
+"ateca":
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2018-"]
+  is_suv: true
+  estimated_price: 40000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"born":
+  body: ["hatchback"]
+  class: "compact ev"
+  gen: ["2021-"]
+  is_suv: false
+  estimated_price: 40000
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors"]
+
+"tavascan":
+  body: ["suv"]
+  class: "mid-size crossover ev"
+  gen: ["2024-"]
+  is_suv: true
+  estimated_price: 50000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]

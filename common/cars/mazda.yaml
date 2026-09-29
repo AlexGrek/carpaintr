@@ -1,0 +1,87 @@
+# Mazda Car Catalog
+# Includes models, generations, and key characteristics
+# Note: estimated_price (MSRP) is only an estimate and may vary by market, trim, and dealer.
+
+# Sedans and Hatchbacks
+"mazda3":
+  body: ["sedan", "hatchback"]
+  class: "compact"
+  gen: ["2004-2009", "2010-2013", "2014-2018", "2019-"]
+  is_suv: false
+  estimated_price: 24550
+  euro_class: "C"
+  euro_body_types: ["hatchback 5 doors", "sedan"]
+
+"mazda6":
+  body: ["sedan", "wagon"]
+  class: "mid-size"
+  gen: ["2002-2007", "2007-2012", "2012-"]
+  is_suv: false
+  estimated_price: 30000
+  euro_class: "D"
+  euro_body_types: ["sedan", "wagon"]
+
+# SUVs and Crossovers
+"cx-3":
+  body: ["suv"]
+  class: "subcompact suv"
+  gen: ["2015-"]
+  is_suv: true
+  estimated_price: 22000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"cx-30":
+  body: ["suv"]
+  class: "subcompact suv"
+  gen: ["2019-"]
+  is_suv: true
+  estimated_price: 26000
+  euro_class: "SUV 1"
+  euro_body_types: ["suv 5 doors"]
+
+"cx-5":
+  body: ["suv"]
+  class: "compact suv"
+  gen: ["2012-2017", "2017-"]
+  is_suv: true
+  estimated_price: 30000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"cx-9":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2006-2016", "2016-2023"]
+  is_suv: true
+  estimated_price: 42000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"cx-60":
+  body: ["suv"]
+  class: "mid-size suv"
+  gen: ["2022-"]
+  is_suv: true
+  estimated_price: 48000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"cx-90":
+  body: ["suv"]
+  class: "full-size suv"
+  gen: ["2023-"]
+  is_suv: true
+  estimated_price: 55000
+  euro_class: "SUV 3"
+  euro_body_types: ["suv 5 doors"]
+
+# Sports Cars
+"mx-5":
+  body: ["roadster", "coupe"]
+  class: "sports"
+  gen: ["1989-1997", "1998-2005", "2005-2015", "2015-"]
+  is_suv: false
+  estimated_price: 32000
+  euro_class: "D"
+  euro_body_types: ["coupe", "coupe"]

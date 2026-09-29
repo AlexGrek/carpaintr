@@ -1,0 +1,40 @@
+# Tesla Car Catalog
+"model-s":
+  body: ["sedan", "liftback"]
+  class: "full-size luxury"
+  powertrain: "electric"
+  gen: ["2012-"]
+  is_suv: false
+  estimated_price: 80000
+  euro_class: "F"
+  euro_body_types: ["sedan"]
+
+"model-3":
+  body: ["sedan"]
+  class: "compact premium"
+  powertrain: "electric"
+  gen: ["2017-2023", "2024-"]
+  is_suv: false
+  estimated_price: 40000
+  euro_class: "D"
+  euro_body_types: ["sedan"]
+
+"model-x":
+  body: ["suv"]
+  class: "mid-size suv"
+  powertrain: "electric"
+  gen: ["2015-"]
+  is_suv: true
+  estimated_price: 90000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]
+
+"model-y":
+  body: ["suv"]
+  class: "compact suv"
+  powertrain: "electric"
+  gen: ["2020-"]
+  is_suv: true
+  estimated_price: 45000
+  euro_class: "SUV 2"
+  euro_body_types: ["suv 5 doors"]

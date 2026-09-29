@@ -64,6 +64,8 @@ export function CreateCard({
   style,
   text = "Створити новий",
   dataTestId,
+  icon,
+  beta = false,
 }) {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -93,9 +95,16 @@ export function CreateCard({
       data-testid={dataTestId}
     >
       <div style={iconStyle}>
-        <Plus size={32} color="orangered" strokeWidth={2.5} />
+        {icon || <Plus size={32} color="orangered" strokeWidth={2.5} />}
       </div>
-      <p style={textStyle}>{text}</p>
+      <p style={textStyle}>
+        {text}
+        {beta && (
+          <sup style={{ color: "red", fontSize: "0.6em", marginLeft: "4px" }}>
+            beta
+          </sup>
+        )}
+      </p>
     </div>
   );
 }

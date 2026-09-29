@@ -130,7 +130,7 @@ const GridDraw = ({
   }, [debouncedOnGridChange]);
 
   // Determine the class for mirroring the background
-  const gridClasses = `grid ${visual.mirrored ? "mirrored" : ""}`;
+  const gridClasses = `grid-draw ${visual.mirrored ? "mirrored" : ""}`;
 
   // Set CSS variables for background image and grid dimensions
   const gridStyle = {
