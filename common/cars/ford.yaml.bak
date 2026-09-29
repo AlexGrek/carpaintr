@@ -101,7 +101,7 @@
   is_suv: true
   estimated_price: 50000
   euro_class: "SUV 3"
-  euro_body_types: ["pickup"]
+  euro_body_types: [\"pickup\"]
 
 "transit":
   body: ["van"]
@@ -164,7 +164,7 @@
   is_suv: true
   estimated_price: 35000
   euro_class: "SUV 2"
-  euro_body_types: ["pickup"]
+  euro_body_types: [\"pickup\"]
 
 "bronco":
   body: ["suv"]

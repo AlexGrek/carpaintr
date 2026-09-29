@@ -103,7 +103,7 @@
   is_suv: true
   estimated_price: 48000
   euro_class: "SUV 2"
-  euro_body_types: ["pickup"]
+  euro_body_types: [\"pickup\"]
 
 "aygo":
   body: ["hatchback"]
@@ -193,7 +193,7 @@
   is_suv: true
   estimated_price: 45000
   euro_class: "SUV 2"
-  euro_body_types: ["pickup"]
+  euro_body_types: [\"pickup\"]
 
 "tundra":
   body: ["pickup"]
@@ -202,7 +202,7 @@
   is_suv: true
   estimated_price: 65000
   euro_class: "SUV 3"
-  euro_body_types: ["pickup"]
+  euro_body_types: [\"pickup\"]
 
 "sienna":
   body: ["minivan"]

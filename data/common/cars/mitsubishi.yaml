@@ -6,7 +6,7 @@
   is_suv: true
   estimated_price: 35000
   euro_class: "SUV 2"
-  euro_body_types: ["suv 5 doors"]
+  euro_body_types: ["pickup"]
 
 "asx":
   body: ["suv"]
@@ -15,7 +15,7 @@
   is_suv: true
   estimated_price: 25000
   euro_class: "SUV 1"
-  euro_body_types: ["suv 5 doors"]
+  euro_body_types: ["pickup"]
 
 "eclipse-cross":
   body: ["suv"]
@@ -24,7 +24,7 @@
   is_suv: true
   estimated_price: 30000
   euro_class: "SUV 2"
-  euro_body_types: ["suv 5 doors"]
+  euro_body_types: ["pickup"]
 
 "l200":
   body: ["pickup"]
@@ -33,7 +33,7 @@
   is_suv: true
   estimated_price: 35000
   euro_class: "SUV 2"
-  euro_body_types: ["suv 5 doors"]
+  euro_body_types: ["pickup"]
 
 "pajero":
   body: ["suv"]
@@ -51,7 +51,7 @@
   is_suv: true
   estimated_price: 45000
   euro_class: "SUV 3"
-  euro_body_types: ["suv 5 doors"]
+  euro_body_types: ["pickup"]
 
 "lancer":
   body: ["sedan", "hatchback"]

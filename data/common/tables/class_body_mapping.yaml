@@ -1,25 +1,4 @@
-SUV 1:
-- suv 3 doors
-- suv 5 doors
-C:
-- coupe
-- hatchback 3 doors
-- hatchback 5 doors
-- liftback
-- sedan
-- wagon
-E:
-- liftback
-- sedan
-- wagon
-SUV 2:
-- suv 3 doors
-- suv 5 doors
-D:
-- coupe
-- hatchback 3 doors
-- hatchback 5 doors
-- liftback
+F:
 - sedan
 - wagon
 B:
@@ -27,11 +6,34 @@ B:
 - hatchback 5 doors
 - sedan
 - wagon
+C:
+- coupe
+- hatchback 3 doors
+- hatchback 5 doors
+- liftback
+- sedan
+- wagon
 A:
 - hatchback 3 doors
 - hatchback 5 doors
-F:
-- sedan
-- wagon
 SUV 3:
 - suv 5 doors
+- pickup
+SUV 1:
+- suv 3 doors
+- suv 5 doors
+E:
+- liftback
+- sedan
+- wagon
+SUV 2:
+- suv 3 doors
+- suv 5 doors
+- pickup
+D:
+- coupe
+- hatchback 3 doors
+- hatchback 5 doors
+- liftback
+- sedan
+- wagon
