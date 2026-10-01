@@ -142,7 +142,7 @@ Cypress.Commands.add("visitAppRoute", (path, pageTestId) => {
 
 /** Open calc wizard from main menu and wait for car-select stage. */
 Cypress.Commands.add("openNewCalculation", () => {
-  cy.getByTestId("calc-main-create-new-button", { timeout: 20000 })
+  cy.getByTestId("calc-main-create-by-type-button", { timeout: 20000 })
     .should("be.visible")
     .click();
   cy.getByTestId("calc-car-select-stage", { timeout: 20000 }).should("be.visible");

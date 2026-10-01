@@ -3,7 +3,8 @@ import { useLocale, registerTranslations } from "../localization/LocaleContext";
 import { fetchCompanyInfo, authFetch } from "../utils/authFetch";
 import { Button, Divider, Input, Text, Message } from "rsuite";
 import Trans from "../localization/Trans";
-import MoneyEditor from "./MoneyEditor";
+import NormRatesEditor from "./calc/NormRatesEditor";
+import { companyNormRates } from "../calc/normRates";
 
 registerTranslations("ua", {
   "Company name": "Назва компанії",
@@ -11,6 +12,7 @@ registerTranslations("ua", {
   "Save changes": "Зберегти зміни",
   "Norm price": "Ціна нормогодини",
   "Preferred currency": "Валюта",
+  "Company changes saved": "Зміни компанії збережено",
 });
 
 const OrganisationMenu = () => {
@@ -29,10 +31,14 @@ const OrganisationMenu = () => {
           },
         });
 
+        if (!data.ok) {
+          const error = await data.json();
+          throw new Error(error.message || data.statusText);
+        }
         const newData = await fetchCompanyInfo();
         setCompany(newData);
-        if (data.lang_ui) {
-          setLang(data.lang_ui);
+        if (newData.lang_ui) {
+          setLang(newData.lang_ui);
         }
       };
 
@@ -42,8 +48,15 @@ const OrganisationMenu = () => {
   );
 
   const handleSave = useCallback(
-    async () => await save(company),
-    [company, save],
+    async () => {
+      try {
+        await save(company);
+        setMessage({ type: "success", title: str("Save changes"), message: str("Company changes saved") });
+      } catch (error) {
+        setMessage({ type: "error", title: str("Save changes"), message: error.message });
+      }
+    },
+    [company, save, str],
   );
 
   useEffect(() => {
@@ -82,6 +95,7 @@ const OrganisationMenu = () => {
       </Text>
       {company && (
         <Input
+          data-testid="company-name-input"
           value={company.company_name}
           onChange={(value) => setCompany({ ...company, company_name: value })}
         ></Input>
@@ -91,6 +105,7 @@ const OrganisationMenu = () => {
       </Text>
       {company && (
         <Input
+          data-testid="company-address-input"
           value={company.company_addr}
           onChange={(value) => setCompany({ ...company, company_addr: value })}
         ></Input>
@@ -101,6 +116,7 @@ const OrganisationMenu = () => {
       </Text>
       {company && (
         <Input
+          data-testid="company-preferred-currency-input"
           value={company.pricing_preferences.preferred_currency}
           onChange={(value) =>
             setCompany({
@@ -113,27 +129,25 @@ const OrganisationMenu = () => {
           }
         ></Input>
       )}
-      <Text>
-        <Trans>Norm price</Trans>
-      </Text>
       {company && (
-        <MoneyEditor
-          preferredCurrency={company.pricing_preferences.preferred_currency}
-          value={company.pricing_preferences.norm_price}
-          onChange={(value) =>
-            setCompany({
-              ...company,
-              pricing_preferences: {
-                ...company.pricing_preferences,
-                norm_price: value,
-              },
-            })
-          }
+        <NormRatesEditor
+          currencyEditable
+          testId="company-norm-rates"
+          value={companyNormRates(company)}
+          onChange={(rates) => setCompany({
+            ...company,
+            pricing_preferences: {
+              ...company.pricing_preferences,
+              norm_price: { ...company.pricing_preferences.norm_price, amount: rates.base, currency: rates.currency },
+              norm_rates: rates.additional,
+            },
+          })}
         />
       )}
       <Divider></Divider>
       <Button
         appearance="primary"
+        data-testid="company-save-button"
         onClick={handleSave}
         disabled={company == null}
       >

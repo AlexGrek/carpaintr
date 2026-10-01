@@ -5,6 +5,7 @@ import Trans from "../../localization/Trans";
 import { registerTranslations } from "../../localization/LocaleContext";
 import { cloneDeep, isArray, isArrayLike, isString } from "lodash";
 import InlineEditWrapper from "../layout/InlineEditWrapper";
+import NormRatePicker from "./NormRatePicker";
 import { isUnfilledRow, isZeroSumRow } from "../../calc/collapseTables";
 
 registerTranslations("ua", {
@@ -90,6 +91,9 @@ const TraceModal = ({ trace, onClose, getEditorUrl }) => {
 export const EvaluationResultsTable = ({
   data,
   setData = null,
+  normRates,
+  tableRateOverrides,
+  onTableRateChange,
   currency = "",
   basePrice = 1,
   skipIncorrect = false,
@@ -147,10 +151,10 @@ export const EvaluationResultsTable = ({
                   item.price = item.price ?? getPrice(item.name);
                   // console.log(item.price)
                   const sum = toNumber(item.estimation) * toNumber(item.price);
-                  acc += sum;
                   item.sum = sum.toFixed(2);
                   // console.log(item.sum)
                 }
+                acc += toNumber(item.estimation) * toNumber(item.price ?? basePrice);
                 return item;
               });
               return { ...table, result: updated_result, total: acc };
@@ -167,7 +171,7 @@ export const EvaluationResultsTable = ({
         );
       }
     },
-    [data, getPrice, setData, toaster],
+    [data, basePrice, getPrice, setData, toaster],
   );
 
   useEffect(() => {
@@ -185,6 +189,8 @@ export const EvaluationResultsTable = ({
           let item = table.result.find((obj) => obj.name === name);
           if (item) {
             item.price = parseFloat(value);
+            item.priceSource = "manual";
+            delete item.normRateId;
             delete item.sum;
             setData(copy);
           } else {
@@ -300,6 +306,13 @@ export const EvaluationResultsTable = ({
             {!hideTableHeaders && entry.name && (
               <h4 className="evaluation-table-title">{entry.name}</h4>
             )}
+            {setData && onTableRateChange && <NormRatePicker
+              rates={normRates}
+              value={tableRateOverrides?.[entry.name]}
+              onChange={(id) => onTableRateChange(entry.name, id)}
+              label="Table labor rate"
+              testId={`calc-table-rate-${entry.name}`}
+            />}
             <table className="evaluation-table modern">
               <thead>
                 <tr>
@@ -351,6 +364,7 @@ export const EvaluationResultsTable = ({
                             handleEstimationChange(entry.name, row.name, value)
                           }
                           size="sm"
+                          disabled={!setData}
                           style={{ minWidth: 60 }}
                         />
                       </td>
@@ -364,6 +378,7 @@ export const EvaluationResultsTable = ({
                           onChange={(value) =>
                             handlePriceChange(entry.name, row.name, value)
                           }
+                          disabled={!setData}
                           style={{ minWidth: 60 }}
                         />
                       </td>

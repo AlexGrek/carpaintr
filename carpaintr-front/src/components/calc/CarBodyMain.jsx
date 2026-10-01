@@ -23,6 +23,8 @@ import GridDraw from './GridDraw';
 import SegmentedControl from '../layout/SegmentedControl';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
 import { normPriceOf, toRealNumber, withDefaultPrices } from '../../calc/collapseTables';
+import NormRatePicker from './NormRatePicker';
+import { setRateOverride } from '../../calc/normRates';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
 import './CarBodyMain.css';
@@ -212,6 +214,9 @@ const CarBodyMain = ({
     body,
     calculations,
     setCalculations,
+    normRates,
+    normRateOverrides,
+    setNormRateOverrides,
     className,
     style
 }) => {
@@ -779,8 +784,8 @@ const CarBodyMain = ({
         [availablePartsT2]
     );
 
-    const basePrice = normPriceOf(company);
-    const currency = company?.pricing_preferences?.norm_price?.currency ?? '';
+    const basePrice = normRates?.base ?? normPriceOf(company);
+    const currency = normRates?.currency ?? company?.pricing_preferences?.norm_price?.currency ?? '';
 
     const partSummaries = useMemo(() => selectedItems.map((item) => {
         const calcData = calculations?.[item.name];
@@ -1044,7 +1049,14 @@ const CarBodyMain = ({
                                                     </div>
                                                 </div>
                                                 <div className="shrink-0 text-right leading-tight">
-                                                    {fetchError ? (
+                                                    {setNormRateOverrides && <NormRatePicker
+                                                    rates={normRates}
+                                                    value={normRateOverrides?.[item.name]?.rateId}
+                                                    onChange={(id) => setNormRateOverrides(prev => setRateOverride(prev, item.name, null, id))}
+                                                    label="Part labor rate"
+                                                    testId={`calc-part-rate-${item.name}`}
+                                                />}
+                                                {fetchError ? (
                                                         <TriangleAlert size={16} className="text-red-500" />
                                                     ) : isItemLoading ? (
                                                         <LoaderCircle size={16} className="animate-spin text-slate-400" />
@@ -1089,6 +1101,13 @@ const CarBodyMain = ({
 
                                         {!isCollapsed && (
                                             <div className="overflow-x-auto border-t border-slate-100 bg-slate-50/70 px-3 py-3 sm:px-4">
+                                                {setNormRateOverrides && <NormRatePicker
+                                                    rates={normRates}
+                                                    value={normRateOverrides?.[item.name]?.rateId}
+                                                    onChange={(id) => setNormRateOverrides(prev => setRateOverride(prev, item.name, null, id))}
+                                                    label="Part labor rate"
+                                                    testId={`calc-part-rate-${item.name}`}
+                                                />}
                                                 {fetchError ? (
                                                     <div>
                                                         <Message type="error" showIcon style={{ marginBottom: '6px' }}>
@@ -1111,6 +1130,9 @@ const CarBodyMain = ({
                                                     </div>
                                                 ) : hasCalcData ? (
                                                     <EvaluationResultsTable
+                                                        normRates={normRates}
+                                                        tableRateOverrides={normRateOverrides?.[item.name]?.tables}
+                                                        onTableRateChange={setNormRateOverrides ? (table, id) => setNormRateOverrides(prev => setRateOverride(prev, item.name, table, id)) : null}
                                                         data={calcData}
                                                         setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
                                                         currency={currency}

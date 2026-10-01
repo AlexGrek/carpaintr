@@ -162,6 +162,20 @@ pub async fn update_company_info(
     State(app_state): State<Arc<AppState>>,
     Json(mut company_info_input): Json<CompanyInfo>,
 ) -> Result<impl IntoResponse, AppError> {
+    let mut rate_ids = std::collections::HashSet::new();
+    for rate in &company_info_input.pricing_preferences.norm_rates {
+        if rate.id.trim().is_empty()
+            || rate.id == "base"
+            || !rate_ids.insert(&rate.id)
+            || rate.name.trim().is_empty()
+            || !rate.amount.is_finite()
+            || rate.amount < 0.0
+        {
+            return Err(AppError::InvalidData(
+                "Labor rates require unique IDs, names and non-negative amounts".to_string(),
+            ));
+        }
+    }
     // Get the user's data directory path
     let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)
         .map_err(|e| {

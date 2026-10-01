@@ -16,10 +16,11 @@ import NotifyMessage from "../layout/NotifyMessage";
 import {
   buildTotalTables,
   buildCategoryTables,
-  calculationsWithDefaultPrices,
-  hasNormPrice,
   normPriceOf,
 } from "../../calc/collapseTables";
+import NormRatesEditor from "./NormRatesEditor";
+import NormRatePicker from "./NormRatePicker";
+import { applyNormRates, companyNormRates, setRateOverride } from "../../calc/normRates";
 import { WORK_CATEGORY_LABELS } from "../../calc/workCategories";
 import "./TableFinalStage.css";
 
@@ -29,8 +30,6 @@ registerTranslations("ua", {
   "By category": "За категоріями",
   Order: "Замовлення",
   Color: "Колір",
-  "Norm price is 0, so labor totals are 0.":
-    "Ціна нормогодини дорівнює 0, тому вартість робіт також дорівнює 0.",
   "Set it in Cabinet": "Задати в кабінеті",
   "Collapsed view is read-only. Switch to Detailed to edit individual table rows.":
     "Згорнутий вигляд лише для перегляду. Перейдіть до «Детально», щоб редагувати рядки.",
@@ -113,10 +112,10 @@ const TableFinalStage = ({
 
   const [n, setN] = useState(null);
 
-  const currency = company?.pricing_preferences?.norm_price?.currency ?? "";
+  const currency = stageData.normRates?.currency ?? company?.pricing_preferences?.norm_price?.currency ?? "";
   // Keep the legacy fallback only if company data could not be loaded. A
   // successfully loaded company rate of 0 is valid and must remain 0.
-  const normPrice = company ? normPriceOf(company) : 1;
+  const normPrice = stageData.normRates?.base ?? (company ? normPriceOf(company) : 1);
 
   useEffect(() => {
     getOrFetchCompanyInfo()
@@ -125,15 +124,14 @@ const TableFinalStage = ({
       .finally(() => setCompanyLoaded(true));
   }, []);
 
-  // Rows only carry a price if they were priced on the parts stage; older saved
-  // calculations may not be, so price them here before anything sums or prints.
   useEffect(() => {
-    if (!companyLoaded || !company || !stageData.calculations) return;
+    if (!companyLoaded || !company) return;
     setStageData((prev) => {
-      const priced = calculationsWithDefaultPrices(prev.calculations, normPrice);
-      return priced === prev.calculations ? prev : { ...prev, calculations: priced };
+      const rates = prev.normRates ?? companyNormRates(company);
+      const priced = applyNormRates(prev.calculations, rates, prev.normRateOverrides);
+      return priced === prev.calculations && prev.normRates ? prev : { ...prev, normRates: rates, calculations: priced };
     });
-  }, [company, companyLoaded, normPrice, stageData.calculations, setStageData]);
+  }, [company, companyLoaded, stageData.calculations, stageData.normRates, stageData.normRateOverrides, setStageData]);
 
   useEffect(() => {
     if (!stageData.calculations) return;
@@ -315,14 +313,14 @@ const TableFinalStage = ({
               </div>
             </div>
 
-            {companyLoaded && company && !hasNormPrice(company) && (
+            {companyLoaded && company && normPrice === 0 && (
               <div
                 className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
                 data-testid="calc-final-norm-price-warning"
               >
                 <CircleAlert size={14} className="mt-px shrink-0" />
                 <span>
-                  {str("Norm price is 0, so labor totals are 0.")}{" "}
+                  {str("Base rate is 0. Select or configure a labor rate to price work.")}{" "}
                   <a
                     href="/app/cabinet"
                     target="_blank"
@@ -368,6 +366,11 @@ const TableFinalStage = ({
               </div>
             </div>
 
+            <NormRatesEditor value={stageData.normRates} testId="calc-norm-rates"
+              onChange={(normRates) => setStageData((prev) => ({
+                ...prev, normRates,
+                calculations: applyNormRates(prev.calculations, normRates, prev.normRateOverrides),
+              }))} />
             <div data-testid="calc-final-tables-panel">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
                 <div className="text-lg font-semibold text-slate-900">{str("Tables")}</div>
@@ -435,19 +438,32 @@ const TableFinalStage = ({
                           total={collapsedTable?.total}
                           currency={currency}
                         >
+                          <NormRatePicker rates={stageData.normRates}
+                            value={stageData.normRateOverrides?.[key]?.rateId}
+                            label="Part labor rate" testId={`calc-part-rate-${key}`}
+                            onChange={(id) => setStageData((prev) => {
+                              const normRateOverrides = setRateOverride(prev.normRateOverrides, key, null, id);
+                              return { ...prev, normRateOverrides, calculations: applyNormRates(prev.calculations, prev.normRates, normRateOverrides) };
+                            })} />
                           <EvaluationResultsTable
+                            normRates={stageData.normRates}
+                            tableRateOverrides={stageData.normRateOverrides?.[key]?.tables}
+                            onTableRateChange={(table, id) => setStageData((prev) => {
+                              const normRateOverrides = setRateOverride(prev.normRateOverrides, key, table, id);
+                              return { ...prev, normRateOverrides, calculations: applyNormRates(prev.calculations, prev.normRates, normRateOverrides) };
+                            })}
                             data={tableData}
                             setData={
                               collapseTables
                                 ? null
                                 : (value) => {
-                                    setStageData({
-                                      ...stageData,
+                                    setStageData((prev) => ({
+                                      ...prev,
                                       calculations: {
-                                        ...stageData.calculations,
+                                        ...prev.calculations,
                                         [key]: value,
                                       },
-                                    });
+                                    }));
                                   }
                             }
                             currency={currency}

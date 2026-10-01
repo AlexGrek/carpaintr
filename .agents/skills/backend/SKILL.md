@@ -45,6 +45,14 @@ src/
 
 ---
 
+## Company pricing
+
+Company pricing (`src/models/mod.rs`) keeps the base rate in `norm_price` and
+additional named rates in `norm_rates` (`id`, `name`, numeric `amount`, sharing
+the base currency). The list defaults to empty for legacy profiles. Company
+updates reject reserved/duplicate/empty IDs, empty names and negative amounts
+using `AppError::InvalidData` (HTTP 400).
+
 ## AppState
 
 ```rust

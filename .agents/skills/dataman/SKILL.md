@@ -213,6 +213,15 @@ requiredRepairTypes: ["Ремонт без фарбування", "Ремонт 
 
 ### Row Output Structure
 
+Calc2 hourly pricing is resolved by `src/calc/normRates.js`: table override →
+part override → base. Calculation JSON snapshots `normRates` and
+`normRateOverrides` separately from company defaults. `priceSource: "norm"`
+rows follow rate changes; `"manual"` and `"processor"` prices and material rows
+are preserved. New processor rows with explicit `price` are stamped
+`priceSource: "processor"` by the evaluator. Resolved numeric row prices are
+shared by totals, saved JSON, PDF/HTML and Excel. Legacy explicit row prices
+remain unchanged until a part/table override is selected.
+
 Each processor returns array of rows:
 ```javascript
 x.mkRow({

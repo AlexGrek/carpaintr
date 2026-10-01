@@ -67,6 +67,7 @@ export function withDefaultPrices(tables, price) {
         ? {
             ...row,
             price,
+            priceSource: row?.unit ? "processor" : "norm",
             sum: toRealNumber(row?.estimation) * toRealNumber(price),
           }
         : row,

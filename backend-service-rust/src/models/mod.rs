@@ -64,11 +64,22 @@ fn default_empty_string() -> String {
 
 // Struct to represent the company information stored in company.json
 #[derive(Debug, Serialize, Deserialize)]
+pub struct NormRate {
+    pub id: String,
+    pub name: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PricingPreferences {
     #[serde(default = "default_currency")]
     pub preferred_currency: String,
     #[serde(default)]
     pub norm_price: MoneyWithCurrency,
+    // Additional hourly rates share the base rate's currency. Old company
+    // files deserialize with an empty list.
+    #[serde(default)]
+    pub norm_rates: Vec<NormRate>,
 }
 
 impl Default for PricingPreferences {
@@ -76,7 +87,38 @@ impl Default for PricingPreferences {
         Self {
             preferred_currency: default_currency(),
             norm_price: MoneyWithCurrency::default(),
+            norm_rates: Vec::new(),
         }
+    }
+}
+
+#[cfg(test)]
+mod pricing_tests {
+    use super::PricingPreferences;
+
+    #[test]
+    fn legacy_pricing_has_no_additional_rates() {
+        let pricing: PricingPreferences = serde_json::from_value(serde_json::json!({
+            "norm_price": { "amount": "850.50", "currency": "UAH" }
+        }))
+        .unwrap();
+        assert!(pricing.norm_rates.is_empty());
+        assert_eq!(pricing.norm_price.amount.to_string(), "850.50");
+    }
+
+    #[test]
+    fn named_rates_survive_company_serialization() {
+        let input = serde_json::json!({
+            "preferred_currency": "UAH",
+            "norm_price": { "amount": "100.00", "currency": "UAH" },
+            "norm_rates": [
+                { "id": "paint", "name": "Фарбування", "amount": 900.5 },
+                { "id": "arm", "name": "Арматурні роботи", "amount": 0.0 }
+            ]
+        });
+        let pricing: PricingPreferences = serde_json::from_value(input.clone()).unwrap();
+        let stored = serde_json::to_value(pricing).unwrap();
+        assert_eq!(stored["norm_rates"], input["norm_rates"]);
     }
 }
 

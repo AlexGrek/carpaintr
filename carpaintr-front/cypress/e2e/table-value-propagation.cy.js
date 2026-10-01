@@ -73,11 +73,32 @@ const closeTo = (a, b) => Math.abs(a - b) < 1e-9;
 
 describe("Table value changes propagate through to calculated results", () => {
   let token;
+  let originalCompany;
 
   before(() => {
     cy.ensureSeedUserLicensed(TEST_USER_INDEX);
     cy.getAuthToken(TEST_USER_INDEX).then((t) => {
       token = t;
+      cy.request({
+        url: "/api/v1/getcompanyinfo",
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(({ body }) => {
+        originalCompany = body;
+        // Printed output excludes zero-cost rows. Configure a positive rate
+        // so this table-value test works on a fresh seed profile (base = 0).
+        cy.request({
+          method: "POST",
+          url: "/api/v1/updatecompanyinfo",
+          headers: { Authorization: `Bearer ${token}` },
+          body: {
+            ...body,
+            pricing_preferences: {
+              ...body.pricing_preferences,
+              norm_price: { ...body.pricing_preferences.norm_price, amount: 100 },
+            },
+          },
+        });
+      });
     });
   });
 
@@ -85,6 +106,12 @@ describe("Table value changes propagate through to calculated results", () => {
     // Leave the seed user's catalog as it started so repeated runs (and any
     // other spec that might one day use this user index) see common data.
     cy.deleteUserFile({ token, path: TABLE_PATH });
+    if (originalCompany) cy.request({
+      method: "POST",
+      url: "/api/v1/updatecompanyinfo",
+      headers: { Authorization: `Bearer ${token}` },
+      body: originalCompany,
+    });
   });
 
   const uploadValueSet = (values) =>
@@ -156,7 +183,7 @@ describe("Table value changes propagate through to calculated results", () => {
       .first()
       .click();
 
-    cy.getByTestId("print-toggle-payload-button").should("be.visible").click();
+    cy.getByTestId("print-toggle-payload-button").scrollIntoView().should("be.visible").click();
     cy.getByTestId("print-payload-panel").scrollIntoView().should("exist");
 
     return cy
@@ -177,13 +204,15 @@ describe("Table value changes propagate through to calculated results", () => {
     // manual testing) that also apply to this part/action. Those are
     // irrelevant here — what matters is that exactly these known rows are
     // present with the values implied by the currently-uploaded table.
-    const findByEstimation = (num) => rows.find((r) => closeTo(r.estimation, num));
+    const findByEstimation = (num, category = "arm") => rows.find((r) =>
+      r.category === category && closeTo(r.estimation, num),
+    );
 
     const removeRow = findByEstimation(values.remove.num);
     const installRow = findByEstimation(values.install.num);
     const disassembleRow = findByEstimation(values.disassemble.num);
     const reassembleRow = findByEstimation(values.reassemble.num);
-    const constantRow = findByEstimation(CONSTANT_ESTIMATION);
+    const constantRow = findByEstimation(CONSTANT_ESTIMATION, "extra");
 
     [removeRow, installRow, disassembleRow, reassembleRow].forEach((row, i) => {
       expect(row, `table-driven row #${i} present with expected value`).to.exist;
@@ -208,7 +237,7 @@ describe("Table value changes propagate through to calculated results", () => {
     const categoryTables = payload.calculation.calc_by_category;
     const armKey = Object.keys(categoryTables).find((key) =>
       (categoryTables[key]?.[0]?.result || []).some((r) =>
-        closeTo(r.estimation, values.remove.num),
+        r.category === "arm" && closeTo(r.estimation, values.remove.num),
       ),
     );
     expect(armKey, "an 'arm' category bucket exists").to.exist;
@@ -223,7 +252,7 @@ describe("Table value changes propagate through to calculated results", () => {
 
     const extraKey = Object.keys(categoryTables).find((key) =>
       (categoryTables[key]?.[0]?.result || []).some((r) =>
-        closeTo(r.estimation, CONSTANT_ESTIMATION),
+        r.category === "extra" && closeTo(r.estimation, CONSTANT_ESTIMATION),
       ),
     );
     expect(extraKey, "an 'extra' category bucket exists").to.exist;

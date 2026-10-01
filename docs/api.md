@@ -142,7 +142,8 @@ Get company profile. Creates default if none exists.
   "lang_output": "ua",
   "pricing_preferences": {
     "preferred_currency": "UAH",
-    "norm_price": { "amount": 0, "currency": "UAH" }
+    "norm_price": { "amount": 0, "currency": "UAH" },
+    "norm_rates": [{ "id": "paint", "name": "Painting", "amount": 900 }]
   }
 }
 ```
@@ -153,6 +154,14 @@ Get company profile. Creates default if none exists.
 Update company profile.
 
 **Request:** Same structure as `GET /getcompanyinfo` response.
+
+`norm_price` is the base hourly rate. `norm_rates` is an optional, unbounded list
+of additional named rates (unique stable `id`, `name`, non-negative numeric
+`amount`), all in the base rate's currency. Existing profiles default to `[]`.
+Calc2 copies these rates into `normRates` in the saved calculation and stores
+part/table selections in `normRateOverrides`. Pricing inherits table → part →
+base; material, processor-specific and manually edited row prices are preserved.
+Calculation rate edits do not change the company defaults.
 
 **Response:** Updated `CompanyInfo` object.
 

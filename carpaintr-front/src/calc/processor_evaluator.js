@@ -156,6 +156,7 @@ export function evaluate_processor(processor, stuff) {
       // Substitute placeholders like «деталь»/«Деталь» with the actual part
       // name for every row, whether or not it has an evaluate expression.
       const name = process_name_string(item.name, stuff);
+      const priceSource = item.price != null ? { priceSource: "processor" } : {};
       if (!isEmptyOrWhitespace(item.evaluate)) {
         // evaluate!
         console.log("evaluating", item.evaluate.replace(",", "."));
@@ -166,12 +167,13 @@ export function evaluate_processor(processor, stuff) {
         }
         return {
           ...item,
+          ...priceSource,
           ...provenance,
           estimation: estimation,
           name,
         };
       }
-      return { ...item, ...provenance, name };
+      return { ...item, ...priceSource, ...provenance, name };
     });
     return {
       name: processor.name,

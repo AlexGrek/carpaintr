@@ -14,9 +14,11 @@ import Trans from "../../localization/Trans";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
-import { authFetchYaml } from "../../utils/authFetch";
+import { authFetchYaml, getOrFetchCompanyInfo } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import CarBodyMain from "./CarBodyMain";
+import NormRatesEditor from "./NormRatesEditor";
+import { applyNormRates, companyNormRates } from "../../calc/normRates";
 
 registerTranslations("en", {
   "Data loaded successfully": "Data loaded successfully",
@@ -58,6 +60,14 @@ const BodyPartsStage = ({
   const [repairQuality, setRepairQuality] = useState("");
   const [repairQualityOptions, setRepairQualityOptions] = useState([]);
   const [calculations, setCalculations] = useState({});
+  const [normRates, setNormRates] = useState(stageData.normRates ?? null);
+  const [normRateOverrides, setNormRateOverrides] = useState(stageData.normRateOverrides ?? {});
+  useEffect(() => {
+    getOrFetchCompanyInfo().then((company) => setNormRates((prev) => prev ?? companyNormRates(company))).catch(() => {});
+  }, []);
+  useEffect(() => {
+    setCalculations((prev) => applyNormRates(prev, normRates, normRateOverrides));
+  }, [calculations, normRates, normRateOverrides]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -125,7 +135,7 @@ const BodyPartsStage = ({
       if (parts) {
         console.log("Loading stage data:", parts);
         setSelectedParts(parts.selectedParts || []);
-        setCalculations(parts.calculations || {});
+        setCalculations(stageData.calculations ?? parts.calculations ?? {});
         setRepairQuality(parts.repairQuality || "");
       }
     } catch (error) {
@@ -143,7 +153,7 @@ const BodyPartsStage = ({
       };
       
       console.log("Saving stage data:", data);
-      setStageData({ parts: data, calculations });
+      setStageData({ parts: data, calculations, normRates, normRateOverrides });
       
       if (onMoveForward) {
         onMoveForward();
@@ -151,7 +161,7 @@ const BodyPartsStage = ({
     } catch (error) {
       handleError(error, "Failed to save data");
     }
-  }, [onMoveForward, partsVisual, selectedParts, calculations, repairQuality, setStageData, handleError]);
+  }, [onMoveForward, partsVisual, selectedParts, calculations, repairQuality, normRates, normRateOverrides, setStageData, handleError]);
 
   // Show loading state
   if (isLoading) {
@@ -239,7 +249,11 @@ const BodyPartsStage = ({
                 data-testid="calc-repair-quality-select"
               />
             </div>
+            <NormRatesEditor value={normRates} onChange={setNormRates} testId="calc-norm-rates" />
             <CarBodyMain
+              normRates={normRates}
+              normRateOverrides={normRateOverrides}
+              setNormRateOverrides={setNormRateOverrides}
               partsVisual={partsVisual}
               selectedParts={selectedParts}
               onChange={handleSetSelectedParts}
