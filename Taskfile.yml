@@ -509,7 +509,8 @@ tasks:
 
         echo "==> Starting backend on :${BACKEND_PORT} (PDF_GEN_URL_POST=$PDF_GEN_URL_POST)..."
         pushd {{.BACKEND_DIR}} > /dev/null
-        PORT="$BACKEND_PORT" PDF_GEN_URL_POST="$PDF_GEN_URL_POST" cargo run > /tmp/carpaintr-api.log 2>&1 &
+        # Run the built binary directly (not `cargo run`) so $! is the server PID and the kill below stops it.
+        PORT="$BACKEND_PORT" PDF_GEN_URL_POST="$PDF_GEN_URL_POST" ./target/debug/rust-web-service > /tmp/carpaintr-api.log 2>&1 &
         echo $! > /tmp/carpaintr-api.pid
         popd > /dev/null
         STARTED_BACKEND=1
