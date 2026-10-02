@@ -43,3 +43,8 @@ describe('stable document output identities', () => {
   const output = buildCalculationOutput({ calculations: {}, categoryTables: Object.fromEntries(['constructor', '__proto__', 'toString'].map(name => [name, {result: [], total: 0}])) });
   for (const name of ['constructor', '__proto__', 'toString']) assert.equal(output.category_labels[name], name);
  });
+
+ it('does not translate an authored category that coincides with an application label', () => {
+  const output = buildCalculationOutput({ calculations: {}, categoryTables: {Price: {result: [], total: 0}}, str: text => `translated:${text}` });
+  assert.equal(output.category_labels.Price, 'Price');
+ });

@@ -16,7 +16,7 @@ describe('Editable calculation document', () => {
       cy.getByTestId('calc-grand-total-input').clear().type('23').blur();
       cy.getByTestId('calc-final-mode-collapsed').scrollIntoView().click(); cell(rowId, 'name').should('have.value', 'Custom paint'); cell(rowId, 'sum').should('have.value', '17');
       cy.getByTestId('calc-final-mode-by-category').scrollIntoView().click(); cell(rowId, 'price').should('have.value', '12,25'); cy.getByTestId('calc-final-category-Custom finishing').should('exist');
-      cy.getByTestId(`calc-row-options-${rowId}`).find('summary').click(); write(rowId, 'category', 'constructor'); cy.getByTestId('calc-final-category-constructor').should('exist');
+      cy.getByTestId(`calc-row-options-${rowId}`).find('summary').click(); write(rowId, 'category', 'constructor'); cy.getByTestId('calc-final-category-constructor').find('h4').should('have.text', 'constructor');
       write(rowId, 'price', '-'); cy.getByTestId('calc-final-stage-print-button').should('be.disabled'); cy.getByTestId(`calc-reset-${rowId}-price`).click(); cell(rowId, 'price').should('have.value', '100'); write(rowId, 'price', '12,25');
       cy.getByTestId('calc-final-stage-back-button').click(); cy.getByTestId('calc-body-parts-stage-accept-button').click(); cell(rowId, 'sum').should('have.value', '17'); cy.getByTestId('calc-grand-total-input').should('have.value', '23');
       cy.intercept('POST', '**/calculationstore').as('saveDocument'); cy.getByTestId('calc-final-stage-save-button').click();
@@ -61,7 +61,9 @@ describe('Editable calculation document', () => {
     cy.getByTestId('calc-final-stage-save-button').click(); cy.getByTestId('calc-stage-tab-carSelectStage').click();
     cy.wait('@vehicleSave').then(({request, response}) => {
       expect(request.body.car.vin).to.eq('WVWZZZ1JZXW000001'); expect(request.body.car).not.to.have.property('VIN');
-      current().then(doc => { expect(doc.car.storeFileName).to.eq(response.body.saved_file_path); });
+      cy.window().should(win => { const doc = JSON.parse(win.localStorage.getItem('unsaved_calculation')); expect(doc.car.storeFileName).to.eq(response.body.saved_file_path); });
+      cy.getByTestId('calc-car-notes-input').clear().type('After save');
+      cy.window().should(win => expect(JSON.parse(win.localStorage.getItem('unsaved_calculation')).car.storeFileName).to.eq(response.body.saved_file_path));
       cy.getAuthToken(27).then(token => cy.request({ url: `/api/v1/user/calculationstore?filename=${encodeURIComponent(response.body.saved_file_path)}`, headers: {Authorization: `Bearer ${token}`} }).its('body.car.vin').should('eq', 'WVWZZZ1JZXW000001'));
     });
   });

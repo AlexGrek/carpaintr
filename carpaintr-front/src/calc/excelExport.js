@@ -19,7 +19,7 @@ import {
   sanitizeTableEntry,
   toRealNumber,
 } from "./collapseTables.js";
-import { workCategoryLabel } from "./workCategories.js";
+import { localizedCategoryLabel } from "./workCategories.js";
 
 const HEADER_FILL = "FF1F3864";
 const SUBTOTAL_FILL = "FFDCE6F1";
@@ -132,14 +132,12 @@ export async function buildCalculationWorkbook({
   styleHeaderRow(headerRow);
 
   for (const group of groups) {
-    const categoryLabel = str(
-      workCategoryLabel(group.category),
-    );
+    const categoryLabel = localizedCategoryLabel(group.category, str);
 
     for (const row of group.rows) {
       const dataRow = sheet.addRow([
         row.category === "" ? "" :
-          str(workCategoryLabel(row.category) ?? categoryLabel),
+          localizedCategoryLabel(row.category, str) ?? categoryLabel,
         row.part ?? "",
         row.name ?? "",
         row.estimation == null || row.estimation === "" ? "" : toRealNumber(row.estimation),

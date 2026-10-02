@@ -150,15 +150,15 @@ export const LocaleProvider = ({ children }) => {
 
   const str = (s) => {
     if (
-      currentLang in TRANSLATIONS_BASIC &&
-      s in TRANSLATIONS_BASIC[currentLang]
+      Object.hasOwn(TRANSLATIONS_BASIC, currentLang) &&
+      Object.hasOwn(TRANSLATIONS_BASIC[currentLang], s)
     ) {
       return TRANSLATIONS_BASIC[currentLang][s];
     }
 
     if (
-      currentLang in additionalTranslations &&
-      s in additionalTranslations[currentLang]
+      Object.hasOwn(additionalTranslations, currentLang) &&
+      Object.hasOwn(additionalTranslations[currentLang], s)
     ) {
       return additionalTranslations[currentLang][s];
     }

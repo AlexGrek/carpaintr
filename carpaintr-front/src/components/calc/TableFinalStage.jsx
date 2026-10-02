@@ -21,7 +21,7 @@ import CalculationCell from "./CalculationCell";
 import NormRatesEditor from "./NormRatesEditor";
 import NormRatePicker from "./NormRatePicker";
 import { companyNormRates, setRateOverride } from "../../calc/normRates";
-import { workCategoryLabel } from "../../calc/workCategories";
+import { localizedCategoryLabel } from "../../calc/workCategories";
 import "./TableFinalStage.css";
 
 registerTranslations("ua", {
@@ -349,7 +349,7 @@ const TableFinalStage = ({
                       <TableCard
                         key={category}
                         testId={`calc-final-category-${category}`}
-                        title={str(workCategoryLabel(category))}
+                        title={localizedCategoryLabel(category, str)}
                         icon={<Shapes size={16} className="shrink-0 text-slate-400" />}
                         total={categoryTables[category]?.total}
                         currency={currency}

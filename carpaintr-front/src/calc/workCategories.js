@@ -67,6 +67,6 @@ export function categoryRank(category) {
 }
 
 /** Authored category names may coincide with Object prototype properties. */
-export function workCategoryLabel(category) {
-  return Object.hasOwn(WORK_CATEGORY_LABELS, category) ? WORK_CATEGORY_LABELS[category] : category;
+export function localizedCategoryLabel(category, str = text => text) {
+  return Object.hasOwn(WORK_CATEGORY_LABELS, category) ? str(WORK_CATEGORY_LABELS[category]) : category;
 }
