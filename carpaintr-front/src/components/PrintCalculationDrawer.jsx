@@ -15,20 +15,14 @@ import {
 } from "rsuite";
 import { useMediaQuery } from "react-responsive";
 import { useLocale, registerTranslations } from "../localization/LocaleContext";
-import { authFetch } from "../utils/authFetch";
+import { authFetch, getCompanyInfo } from "../utils/authFetch";
 import { handleLicenseForbidden } from "../utils/licenseRedirect";
 // Added for Generate Preview button
 import Trans from "../localization/Trans";
 import { isArrayLike } from "lodash";
 import { File, FileDown, Braces, Sheet, Check, FileCode2, FileStack } from "lucide-react";
-import {
-  buildTotalTables,
-  buildCategoryTables,
-  totalTablesForTemplate,
-  sanitizeCalcForTemplate,
-} from "../calc/collapseTables";
+import { buildCalculationOutput } from "../calc/calculationOutputs";
 import { downloadCalculationExcel } from "../calc/excelExport";
-import { WORK_CATEGORY_LABELS } from "../calc/workCategories";
 import { getTemplateLabel } from "../calc/documentTemplates";
 import "./PrintCalculationDrawer.css";
 
@@ -52,6 +46,9 @@ registerTranslations("ua", {
   "Norm-hours": "Нормо-години",
   Unit: "Од.",
   Subtotal: "Разом за категорією",
+  "Computed subtotal": "Розрахована сума",
+  "Difference": "Різниця",
+  "Part totals": "Суми за деталями",
   "Grand total": "Загалом",
   "Work order by category": "Наряд за категоріями",
   "Custom template": "Свій шаблон",
@@ -66,6 +63,10 @@ const PrintDocumentGenerator = React.memo(
     calculationData,
     collapseTables = false,
     totalTables = {},
+    categoryTables: resolvedCategoryTables,
+    grandTotal,
+    currency = "",
+    onOrderChange,
     partsData: _partsData,
     carData,
     orderData,
@@ -75,8 +76,14 @@ const PrintDocumentGenerator = React.memo(
     const { str } = useLocale();
     const toaster = useToaster();
     const [customTemplateContent, setCustomTemplateContent] = useState("");
-    const [orderNumber, setOrderNumber] = useState(orderData.orderNumber);
-    const [orderNotes, setOrderNotes] = useState("");
+    const [localOrderNumber, setLocalOrderNumber] = useState(orderData?.orderNumber ?? "");
+    const [localOrderNotes, setLocalOrderNotes] = useState(orderData?.orderNotes ?? "");
+    const orderNumber = onOrderChange ? orderData?.orderNumber ?? "" : localOrderNumber;
+    const orderNotes = onOrderChange ? orderData?.orderNotes ?? "" : localOrderNotes;
+    const setOrderNumber = (value) => onOrderChange
+      ? onOrderChange({ ...orderData, orderNumber: value }) : setLocalOrderNumber(value);
+    const setOrderNotes = (value) => onOrderChange
+      ? onOrderChange({ ...orderData, orderNotes: value }) : setLocalOrderNotes(value);
     const [htmlPreview, setHtmlPreview] = useState("");
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [clickedPreview, setClickedPreview] = useState(false);
@@ -97,39 +104,15 @@ const PrintDocumentGenerator = React.memo(
     );
 
     const buildRequestPayload = useCallback(() => {
-      const rawCalc = collapseTables
-        ? totalTablesForTemplate(
-            Object.keys(totalTables || {}).length > 0
-              ? totalTables
-              : buildTotalTables(calculationData),
-          )
-        : calculationData;
-
-      // Treat unfilled cells as zeroes so the template engine never receives
-      // a null where a real number is required.
-      const calcForTemplate = sanitizeCalcForTemplate(rawCalc);
-
-      // Always computed, independent of the collapsed/detailed toggle above,
-      // so a per-category work order template can be selected regardless of
-      // which on-screen view mode produced this print run.
-      const categoryTables = buildCategoryTables(calculationData);
-      const rawCalcByCategory = Object.fromEntries(
-        Object.entries(categoryTables).map(([category, table]) => [
-          str(WORK_CATEGORY_LABELS[category] ?? category),
-          table,
-        ]),
-      );
-      const calcByCategoryForTemplate = sanitizeCalcForTemplate(
-        totalTablesForTemplate(rawCalcByCategory),
-      );
+      const output = buildCalculationOutput({ calculations: calculationData, collapseTables,
+        totalTables, categoryTables: resolvedCategoryTables, grandTotal, currency, str });
 
       return {
         calculation: {
           car: carData,
           paint: paintData,
           order: orderData,
-          calc: calcForTemplate,
-          calc_by_category: calcByCategoryForTemplate,
+          ...output,
         },
         metadata: {
           order_number: orderNumber || null,
@@ -145,6 +128,9 @@ const PrintDocumentGenerator = React.memo(
       calculationData,
       collapseTables,
       totalTables,
+      resolvedCategoryTables,
+      grandTotal,
+      currency,
       orderNumber,
       orderNotes,
       customTemplateContent,
@@ -255,6 +241,10 @@ const PrintDocumentGenerator = React.memo(
         // grouped by category, not by the on-screen collapsed/detailed choice.
         await downloadCalculationExcel({
           calculations: calculationData,
+          categoryTables: resolvedCategoryTables,
+          totalTables,
+          grandTotal,
+          currency,
           str,
           fileName: `calculation_${orderNumber || Date.now()}.xlsx`,
         });
@@ -268,7 +258,7 @@ const PrintDocumentGenerator = React.memo(
       } finally {
         setLoadingExcel(false);
       }
-    }, [calculationData, orderNumber, showMessage, str]);
+    }, [calculationData, resolvedCategoryTables, totalTables, grandTotal, currency, orderNumber, showMessage, str]);
 
     return (
       <div
@@ -282,6 +272,7 @@ const PrintDocumentGenerator = React.memo(
               <Trans>Order Number</Trans>
             </Form.ControlLabel>
             <Input
+              data-testid="print-order-number-input"
               value={orderNumber}
               onChange={setOrderNumber}
               placeholder={str("Enter order number")}
@@ -294,6 +285,7 @@ const PrintDocumentGenerator = React.memo(
             <Input
               as="textarea"
               rows={3}
+              data-testid="print-order-notes-input"
               value={orderNotes}
               onChange={setOrderNotes}
               placeholder={str("Enter order notes")}
@@ -309,6 +301,7 @@ const PrintDocumentGenerator = React.memo(
                 <Input
                   as="textarea"
                   rows={8}
+                  data-testid="print-custom-template-input"
                   value={customTemplateContent}
                   onChange={setCustomTemplateContent}
                   placeholder={str(
@@ -498,11 +491,16 @@ const PrintCalculationDrawer = React.memo(
     calculationData,
     collapseTables = false,
     totalTables = {},
+    categoryTables: resolvedCategoryTables,
+    grandTotal,
+    currency: savedCurrency,
+    onOrderChange,
     partsData,
     carData,
     orderData,
     paintData,
   }) => {
+    const currency = savedCurrency ?? getCompanyInfo()?.pricing_preferences?.norm_price?.currency ?? "";
     const toaster = useToaster();
     const { str } = useLocale();
     const navigate = useNavigate();
@@ -590,6 +588,10 @@ const PrintCalculationDrawer = React.memo(
                   calculationData={calculationData}
                   collapseTables={collapseTables}
                   totalTables={totalTables}
+                  categoryTables={resolvedCategoryTables}
+                  grandTotal={grandTotal}
+                  currency={currency}
+                  onOrderChange={onOrderChange}
                   carData={carData}
                   partsData={partsData}
                   orderData={orderData}

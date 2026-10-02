@@ -30,6 +30,7 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 - **[Backup & Restore](docs/backup.md)** - Automated backups, restore procedures, disaster recovery
 - **[Secrets Management](docs/secrets-management.md)** - JWT & license secret initialization
 - **[API Documentation](docs/api.md)** - Full REST API reference
+- **[Calc2 Refactoring Plan](docs/calc2-refactoring-plan.md)** - Preserve all cell edits through stages, save/load, and document generation
 - **[Known Issues](known-issues.md)** - Tracked, reproducible problems not yet fixed
 
 ## Project Structure

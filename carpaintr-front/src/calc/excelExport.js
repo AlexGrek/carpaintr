@@ -4,7 +4,7 @@
  * Built client-side on purpose: the fully computed, sanitized payload only
  * exists in the browser (the Rust backend receives an opaque JSON blob it
  * cannot recompute — all norm-hours come from the JS processors). Rounding and
- * zero-row filtering are shared with the PDF path through
+ * explicit row inclusion are shared with the PDF path through
  * `sanitizeCalcForTemplate`, so the spreadsheet and the printed document always
  * agree.
  *
@@ -19,7 +19,7 @@ import {
   sanitizeTableEntry,
   toRealNumber,
 } from "./collapseTables.js";
-import { WORK_CATEGORY_LABELS } from "./workCategories.js";
+import { workCategoryLabel } from "./workCategories.js";
 
 const HEADER_FILL = "FF1F3864";
 const SUBTOTAL_FILL = "FFDCE6F1";
@@ -33,18 +33,20 @@ const COLUMNS = [
   { key: "unit", header: "Unit", width: 8 },
   { key: "price", header: "Price", width: 12, numeric: true },
   { key: "sum", header: "Sum", width: 14, numeric: true },
+  { key: "tooltip", header: "Tooltip", width: 40 },
+  { key: "orderingNum", header: "Ordering", width: 12, numeric: true },
 ];
 
 /**
  * Flatten the by-category grouping into spreadsheet rows, applying the same
- * sanitization (real numbers, zero-sum rows dropped) as the document payload.
+ * sanitization (resolved sums, totals, and explicit row inclusion) as the document payload.
  *
  * @param {Record<string, Array>} calculations - stageData.calculations
  * @param {number} [basePrice=1]
  * @returns {{ groups: Array<{category: string, rows: Array, total: number}>, grandTotal: number }}
  */
-export function buildExcelRows(calculations, basePrice = 1) {
-  const byCategory = buildCategoryTables(calculations, basePrice);
+export function buildExcelRows(calculations, basePrice = 1, resolved = {}) {
+  const byCategory = resolved.categoryTables ?? buildCategoryTables(calculations, basePrice);
 
   const groups = Object.entries(byCategory)
     .map(([category, table]) => {
@@ -53,12 +55,15 @@ export function buildExcelRows(calculations, basePrice = 1) {
         category,
         rows: sanitized.result,
         total: sanitized.total,
+        computedTotal: table.computedTotal,
       };
     })
-    // A category whose every row was filtered out as zero-sum adds nothing.
-    .filter((group) => group.rows.length > 0);
+    // Empty categories without an authored subtotal need no sheet rows.
+    .filter((group) => group.rows.length > 0 || group.total !== 0);
 
-  const grandTotal = groups.reduce((acc, group) => acc + group.total, 0);
+  const grandTotal = resolved.grandTotal !== undefined
+    ? resolved.grandTotal
+    : groups.reduce((acc, group) => acc + toRealNumber(group.total), 0);
 
   return { groups, grandTotal };
 }
@@ -97,9 +102,14 @@ export async function buildCalculationWorkbook({
   calculations,
   basePrice = 1,
   currency = "",
+  categoryTables,
+  totalTables,
+  grandTotal: resolvedGrandTotal,
   str = (s) => s,
 }) {
-  const { groups, grandTotal } = buildExcelRows(calculations, basePrice);
+  const { groups, grandTotal } = buildExcelRows(calculations, basePrice, {
+    categoryTables, grandTotal: resolvedGrandTotal,
+  });
 
   const workbook = new ExcelJS.Workbook();
   workbook.created = new Date();
@@ -114,7 +124,7 @@ export async function buildCalculationWorkbook({
 
   const headerRow = sheet.addRow(
     COLUMNS.map((col) =>
-      col.numeric && col.key !== "estimation" && currency
+      ["price", "sum"].includes(col.key) && currency
         ? `${str(col.header)} (${currency})`
         : str(col.header),
     ),
@@ -123,18 +133,21 @@ export async function buildCalculationWorkbook({
 
   for (const group of groups) {
     const categoryLabel = str(
-      WORK_CATEGORY_LABELS[group.category] ?? group.category,
+      workCategoryLabel(group.category),
     );
 
     for (const row of group.rows) {
       const dataRow = sheet.addRow([
-        categoryLabel,
+        row.category === "" ? "" :
+          str(workCategoryLabel(row.category) ?? categoryLabel),
         row.part ?? "",
         row.name ?? "",
-        toRealNumber(row.estimation),
+        row.estimation == null || row.estimation === "" ? "" : toRealNumber(row.estimation),
         row.unit ?? "",
-        toRealNumber(row.price),
-        toRealNumber(row.sum),
+        row.price == null || row.price === "" ? "" : toRealNumber(row.price),
+        row.sum == null || row.sum === "" ? "" : toRealNumber(row.sum),
+        row.tooltip ?? "",
+        row.orderingNum ?? "",
       ]);
       dataRow.getCell(4).numFmt = "0.00";
       dataRow.getCell(6).numFmt = "0.00";
@@ -152,6 +165,9 @@ export async function buildCalculationWorkbook({
     ]);
     subtotalRow.getCell(7).numFmt = "0.00";
     styleTotalRow(subtotalRow, SUBTOTAL_FILL);
+    if (group.computedTotal != null && group.computedTotal !== group.total) {
+      subtotalRow.getCell(7).note = `${str("Computed subtotal")}: ${group.computedTotal}; ${str("Difference")}: ${toRealNumber(group.total) - group.computedTotal}`;
+    }
   }
 
   const grandTotalRow = sheet.addRow([
@@ -165,6 +181,18 @@ export async function buildCalculationWorkbook({
   ]);
   grandTotalRow.getCell(7).numFmt = "0.00";
   styleTotalRow(grandTotalRow, GRAND_TOTAL_FILL);
+  if (totalTables) {
+    const partSheet = workbook.addWorksheet(str("Part totals"));
+    partSheet.columns = [{ key: "part", width: 35 }, { key: "total", width: 20 }, { key: "computed", width: 20 }, { key: "difference", width: 20 }];
+    styleHeaderRow(partSheet.addRow([str("Part"), `${str("Sum")}${currency ? ` (${currency})` : ""}`, str("Computed subtotal"), str("Difference")]));
+    for (const [part, table] of Object.entries(totalTables)) {
+      const computed = table.computedTotal ?? table.total;
+      const row = partSheet.addRow([table.name ?? part, table.total ?? "", computed ?? "", toRealNumber(table.total) - toRealNumber(computed)]);
+      for (const column of [2, 3, 4]) row.getCell(column).numFmt = "0.00";
+    }
+    const computedGrand = Object.values(totalTables).reduce((sum, table) => sum + toRealNumber(table.total), 0);
+    if (computedGrand !== grandTotal) grandTotalRow.getCell(7).note = `${str("Computed subtotal")}: ${computedGrand}; ${str("Difference")}: ${toRealNumber(grandTotal) - computedGrand}`;
+  }
 
   // Autofilter over the header plus every data row (the grand total is left
   // out so it does not get swept up by a filter).

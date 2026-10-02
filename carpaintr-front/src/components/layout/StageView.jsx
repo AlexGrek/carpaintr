@@ -120,9 +120,15 @@ function StageView({
   initialState = {},
   animationDelay: _animationDelay = 300,
   onSave = null,
+  value,
+  onChange,
+  onUndo,
+  saveDocument,
+  savePending = false,
 }) {
   const [isFadingOut] = useState(false);
-  const [stageData, setStageDataState] = useState(initialState);
+  const [localData, setStageDataState] = useState(initialState);
+  const stageData = value ?? localData;
   const { str } = useLocale();
 
   // Get initial stage from URL or default to 0
@@ -194,18 +200,11 @@ function StageView({
    * Updates the shared state. Merges new data with existing data.
    * @param {object} newData - The new data to merge into the state.
    */
-  const handleSetStageData = (newData) => {
-    setStageDataState((prevData) => {
-      const updated =
-        typeof newData === "function"
-          ? newData(prevData)
-          : { ...prevData, ...newData };
-      if (onSave != null) {
-        onSave(updated);
-      }
-      return updated;
-    });
-  };
+  const handleSetStageData = useCallback((newData) => {
+    if (onChange) { onChange(newData); return; }
+    setStageDataState(prev => typeof newData === "function" ? newData(prev) : { ...prev, ...newData });
+  }, [onChange]);
+  useEffect(() => { if (onSave) onSave(stageData); }, [onSave, stageData]);
 
   const handleMoveToInternal = useCallback(
     (targetIndex, { skipUrlUpdate = false, isMovingForward = false } = {}) => {
@@ -325,6 +324,7 @@ function StageView({
           return (
             <Button
               key={stage.name}
+              data-testid={`calc-stage-tab-${stage.name}`}
               onClick={() => handleMoveTo(index)}
               disabled={!stage.enabled || isFadingOut}
               appearance={isActive ? "primary" : "subtle"}
@@ -369,6 +369,9 @@ function StageView({
               onMoveTo={handleMoveToByNameOrIndex}
               stageData={stageData}
               setStageData={handleSetStageData}
+              onUndo={onUndo}
+              saveDocument={saveDocument}
+              savePending={savePending}
             />
           </Suspense>
         </div>

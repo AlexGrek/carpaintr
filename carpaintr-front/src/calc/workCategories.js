@@ -63,5 +63,10 @@ export function normalizeCategory(category) {
  * @returns {number}
  */
 export function categoryRank(category) {
-  return WORK_CATEGORY_ORDER[category] ?? Number.MAX_SAFE_INTEGER;
+  return Object.hasOwn(WORK_CATEGORY_ORDER, category) ? WORK_CATEGORY_ORDER[category] : Number.MAX_SAFE_INTEGER;
+}
+
+/** Authored category names may coincide with Object prototype properties. */
+export function workCategoryLabel(category) {
+  return Object.hasOwn(WORK_CATEGORY_LABELS, category) ? WORK_CATEGORY_LABELS[category] : category;
 }

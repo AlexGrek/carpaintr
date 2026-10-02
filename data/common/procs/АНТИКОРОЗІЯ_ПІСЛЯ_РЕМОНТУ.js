@@ -12,7 +12,7 @@
         const { mkRow, traceRowToTable } = x;
 
         // константа: н.г. Розрив антикор = 0.3
-        output.push(mkRow({name: "Антикорозійна обробка зварювання «деталь»", evaluate: "0.3", tooltip: "Константа: 0.3 н.г."}));
+        output.push(mkRow({key: "clause-5309c4a0be666aed", name: "Антикорозійна обробка зварювання «деталь»", evaluate: "0.3", tooltip: "Константа: 0.3 н.г."}));
 
         // - final section -
         return output;

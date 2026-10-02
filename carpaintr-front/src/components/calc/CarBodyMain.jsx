@@ -11,18 +11,18 @@ import { useLocale, registerTranslations } from '../../localization/LocaleContex
 import { authFetch, getOrFetchCompanyInfo } from '../../utils/authFetch';
 import {
     make_sandbox_extensions,
-    make_sandbox,
     verify_processor,
-    evaluate_processor,
-    is_supported_repair_type,
-    validate_requirements,
-    validate_null_tables,
 } from '../../calc/processor_evaluator';
 import CarDiagram, { buildCarSubcomponentsFromT2 } from './diagram/CarDiagram';
 import GridDraw from './GridDraw';
 import SegmentedControl from '../layout/SegmentedControl';
 import { EvaluationResultsTable } from './EvaluationResultsTable';
-import { normPriceOf, toRealNumber, withDefaultPrices } from '../../calc/collapseTables';
+import { normPriceOf, toRealNumber } from '../../calc/collapseTables';
+import { processPart } from '../../calc/processingPipeline';
+import { buildProcessorContext } from '../../calc/processorContext';
+import { processingFingerprint, restoreInactiveRow, partScopeId } from '../../calc/calculationDocument';
+import CalculationCell from './CalculationCell';
+import LookupTableEditor from './LookupTableEditor';
 import NormRatePicker from './NormRatePicker';
 import { setRateOverride } from '../../calc/normRates';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
@@ -208,21 +208,27 @@ function flattenFileTree(node, prefix = '') {
 
 const CarBodyMain = ({
     partsVisual,
+    stageData,
+    setStageData,
+    onGenerated,
+    onCellEdit,
+    onCellReset,
     selectedParts,
     onChange,
     carClass,
     body,
     calculations,
-    setCalculations,
     normRates,
     normRateOverrides,
     setNormRateOverrides,
     className,
-    style
+    style,
+    onUndo
 }) => {
     const isMobile = useMediaQuery({ maxWidth: 767 });
     const { str } = useLocale();
     const [company, setCompany] = useState(null);
+    const [refreshToken, setRefreshToken] = useState(0);
     const [showTechData, setShowTechData] = useState(false);
     const toTestIdValue = useCallback(
         (value) =>
@@ -265,21 +271,23 @@ const CarBodyMain = ({
     // indistinguishable from a real empty result) - this flag lets the UI tell them apart.
     const [isDiagramDataLoading, setIsDiagramDataLoading] = useState(true);
     const [processors, setProcessors] = useState([]);
-    const [selectedItems, setSelectedItems] = useState([]);
+    const selectedItems = selectedParts;
+    const setSelectedItems = useCallback(update => onChange(typeof update === "function" ? update(selectedParts) : update), [onChange, selectedParts]);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerPartDetails, setDrawerPartDetails] = useState(null);
     const [editedPart, setEditedPart] = useState(null); // Local state for drawer edits
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
-    const [tableDataRepository, setTableDataRepository] = useState({});
+    const [tableDataRepository, setTableDataRepository] = useState(() => Object.fromEntries(Object.entries(stageData.sourceSnapshot ?? {}).filter(([, snapshot]) => snapshot.context === `${carClass}/${body}`).map(([name, snapshot]) => [name, snapshot.tables])));
+    const [processorFiles, setProcessorFiles] = useState(stageData.processorFiles ?? {});
+    const requestEpoch = useRef(0);
     const [fetchErrors, setFetchErrors] = useState({}); // { partName: errorMessage }
     const [showDebugMode, setShowDebugMode] = useState(false);
     const [evaluatorLogs, setEvaluatorLogs] = useState({}); // { partName: LogEntry[] }
     const [partDebugOpen, setPartDebugOpen] = useState({}); // { partName: bool }
     const [userFiles, setUserFiles] = useState(new Set());
     const [collapsedParts, setCollapsedParts] = useState({});
-    const lastEvaluatedRef = useRef({}); // { partName: action } - track what's been evaluated
     const fetchingPartsRef = useRef(new Set()); // prevent duplicate fetches
 
     // Fetch user file list once to determine User vs Common links in debug UI
@@ -295,27 +303,6 @@ const CarBodyMain = ({
         return `/app/fileeditor?fs=${fs}&path=${encodeURIComponent(filePath)}`;
     }, [userFiles]);
 
-    // Ref to prevent infinite loop when syncing state
-    const isInternalUpdate = useRef(false);
-
-    // Ref to track current selectedItems for comparison
-    const selectedItemsRef = useRef(selectedItems);
-
-    // Update ref when selectedItems changes
-    useEffect(() => {
-        selectedItemsRef.current = selectedItems;
-    }, [selectedItems]);
-
-    // Helper to deep compare arrays of objects
-    const arraysEqual = useCallback((a, b) => {
-        if (a === b) return true;
-        if (!a || !b) return false;
-        if (a.length !== b.length) return false;
-
-        // Quick check: compare stringified versions
-        return JSON.stringify(a) === JSON.stringify(b);
-    }, []);
-
     const handleDiagramSelect = useCallback((item) => {
         // Toggle item in selectedItems array
         setSelectedItems(prev => {
@@ -328,7 +315,7 @@ const CarBodyMain = ({
                 return [...prev, { ...item, selectedAction: null }];
             }
         });
-    }, []);
+    }, [setSelectedItems]);
 
     const handleShowDetails = useCallback((item) => {
         // Find the item in selectedItems to get the current data
@@ -373,7 +360,7 @@ const CarBodyMain = ({
         }
         setDrawerOpen(false);
         setEditedPart(null);
-    }, [editedPart]);
+    }, [editedPart, setSelectedItems]);
 
     const handleDrawerCancel = useCallback(() => {
         setDrawerOpen(false);
@@ -392,66 +379,6 @@ const CarBodyMain = ({
         setDeleteConfirmOpen(false);
         setItemToDelete(null);
     }, [itemToDelete, handleDiagramSelect]);
-
-    // Seed lastEvaluatedRef from existing calculations prop on mount,
-    // so returning to this stage doesn't overwrite manual overrides.
-    useEffect(() => {
-        if (!calculations || Object.keys(calculations).length === 0) return;
-        if (!selectedParts || !Array.isArray(selectedParts)) return;
-        selectedParts.forEach(part => {
-            const action = part.action || part.selectedAction || null;
-            if (action && calculations[part.name]?.length > 0) {
-                lastEvaluatedRef.current[part.name] = action;
-            }
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run once on mount only
-
-    // Sync selectedParts prop → selectedItems state (parent controls initial state)
-    useEffect(() => {
-        if (selectedParts && Array.isArray(selectedParts)) {
-            // Convert selectedParts format to selectedItems format
-            const converted = selectedParts.map(part => ({
-                name: part.name,
-                zone: part.zone || null,
-                group: part.group || null,
-                actions: part.actions || [],
-                selectedAction: part.action || null,
-                // Preserve any additional fields from parent
-                ...part
-            }));
-
-            // Only update if actually different (prevents infinite loops)
-            // Use ref to get current value without adding to dependencies
-            if (!arraysEqual(converted, selectedItemsRef.current)) {
-                // Mark as external update to prevent calling onChange
-                isInternalUpdate.current = true;
-                setSelectedItems(converted);
-
-                // Reset flag after state update completes
-                setTimeout(() => {
-                    isInternalUpdate.current = false;
-                }, 0);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedParts]); // Only run when parent's selectedParts changes, not when internal selectedItems changes
-
-    // Sync selectedItems state → onChange callback (notify parent of changes)
-    // Store previous value to detect actual changes
-    const prevSelectedItemsRef = useRef();
-    useEffect(() => {
-        // Only call onChange if this is a user-initiated change (not from prop sync)
-        // AND the value has actually changed
-        const isUserChange = !isInternalUpdate.current;
-        const hasChanged = !arraysEqual(selectedItems, prevSelectedItemsRef.current);
-
-        if (isUserChange && onChange && hasChanged) {
-            prevSelectedItemsRef.current = selectedItems;
-            onChange(selectedItems);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedItems]); // onChange is stable (memoized in parent), don't need it in deps
 
     // Unified error handler
     const handleError = useCallback((context, error) => {
@@ -498,11 +425,13 @@ const CarBodyMain = ({
         fetchingPartsRef.current.add(partName);
         setFetchErrors(prev => { const next = { ...prev }; delete next[partName]; return next; });
 
+        const epoch = requestEpoch.current;
         const params = new URLSearchParams({ car_class: carClass, car_type: body, part: partName });
         try {
             const response = await authFetch(`/api/v1/user/lookup_all_tables?${params}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             const data = await response.json();
+            if (epoch !== requestEpoch.current) return;
             if (Array.isArray(data)) {
                 const preprocessed = data.map(table => ({
                     name: stripExt(table[0]),
@@ -510,13 +439,15 @@ const CarBodyMain = ({
                     file: table[0],
                 }));
                 setTableDataRepository(prev => ({ ...prev, [partName]: preprocessed }));
+                setStageData(prev => ({ ...prev, sourceSnapshot: { ...prev.sourceSnapshot, [partName]: { context: `${carClass}/${body}`, tables: preprocessed } } }));
             }
         } catch (error) {
+            if (epoch !== requestEpoch.current) return;
             handleError(`Table Data: ${partName}`, error);
             setFetchErrors(prev => ({ ...prev, [partName]: error.message || 'Unknown error' }));
             fetchingPartsRef.current.delete(partName); // allow retry
         }
-    }, [carClass, body, handleError]);
+    }, [carClass, body, handleError, setStageData]);
 
     // Fetch table data whenever a new part appears that we don't have data for yet
     useEffect(() => {
@@ -528,188 +459,46 @@ const CarBodyMain = ({
         });
     }, [selectedItems, tableDataRepository, carClass, body, fetchTableDataForPart]);
 
-    // Evaluate processors for each selected part whenever inputs change.
-    // Uses lastEvaluatedRef to skip re-evaluation when (part, action) hasn't changed,
-    // so manual overrides in EvaluationResultsTable are preserved across unrelated updates.
+    // Generated defaults may change independently of the user's per-cell edits.
     useEffect(() => {
-        if (!processors.length || !company) return;
-
-        // Clean up tracking for removed parts
-        const currentNames = new Set(selectedItems.map(i => i.name));
-        Object.keys(lastEvaluatedRef.current).forEach(name => {
-            if (!currentNames.has(name)) delete lastEvaluatedRef.current[name];
-        });
-
-        const updates = {};
+        if (!processors.length || !company || !stageData.pricingSnapshot) return;
         const logUpdates = {};
         selectedItems.forEach(item => {
             const action = item.selectedAction || item.action || null;
             const tableData = tableDataRepository[item.name];
             if (!action || !tableData) return;
 
-            // Skip if this exact (part, action) was already evaluated
-            if (lastEvaluatedRef.current[item.name] === action) return;
-
-            const tdata = tableData.reduce((acc, t) => { acc[t.name] = t.data; return acc; }, {});
-            const stuff = {
-                repairAction: action,
-                files: [],
-                carClass,
-                carBodyType: body,
-                carYear: 1999,
-                carModel: {},
-                tableData: tdata,
-                paint: {},
-                pricing: company.pricing_preferences,
-                carPart: item,
-            };
-
-            const results = [];
-            const debugLogs = [];
-
-            processors.forEach(proc => {
-                // Check 1: required tables present?
-                const missingTable = validate_requirements(proc, tdata);
-                if (missingTable !== null) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'skipped',
-                        reason: 'missing_table',
-                        detail: str('Required table "%s" not found. Available: [%s]')
-                                .replace('%s', missingTable)
-                                .replace('%s', Object.keys(tdata).join(', ')),
-                    });
-                    return;
-                }
-
-                // Check 1b: required tables loaded but null (fetch returned no data)?
-                const nullTable = validate_null_tables(proc, tdata);
-                if (nullTable !== null) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'error',
-                        reason: 'null_table',
-                        detail: str('Table "%s" loaded but data is null — server returned no rows. Required: [%s]')
-                                .replace('%s', nullTable)
-                                .replace('%s', proc.requiredTables.join(', ')),
-                    });
-                    return;
-                }
-
-                // Check 2: action is supported?
-                if (!is_supported_repair_type(proc, action)) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'skipped',
-                        reason: 'unsupported_action',
-                        detail: `Action "${action}" not in requiredRepairTypes: [${proc.requiredRepairTypes.join(', ')}]`,
-                    });
-                    return;
-                }
-
-                // Check 3: shouldRun() condition
-                let shouldRunResult = false;
-                let shouldRunError = null;
-                try {
-                    shouldRunResult = proc.shouldRun(
-                        make_sandbox(),
-                        stuff.carPart,
-                        stuff.tableData,
-                        stuff.repairAction,
-                        stuff.files,
-                        stuff.carClass,
-                        stuff.carBodyType,
-                        stuff.carYear,
-                        stuff.carModel,
-                        stuff.paint,
-                        stuff.pricing,
-                    );
-                } catch (e) {
-                    shouldRunError = e?.message || String(e);
-                }
-
-                if (shouldRunError) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'error',
-                        reason: 'shouldRun_threw',
-                        detail: `shouldRun() threw: ${shouldRunError}`,
-                    });
-                    return;
-                }
-
-                if (!shouldRunResult) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'skipped',
-                        reason: 'shouldRun_false',
-                        detail: 'shouldRun() returned false',
-                    });
-                    return;
-                }
-
-                // Step 4: run the processor
-                const result = evaluate_processor(proc, stuff);
-                if (result.error) {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'error',
-                        reason: 'run_threw',
-                        detail: result.text,
-                    });
-                } else {
-                    debugLogs.push({
-                        processorName: proc.name,
-                        category: proc.category,
-                        orderingNum: proc.orderingNum,
-                        tables: proc.requiredTables,
-                        status: 'applied',
-                        detail: `${result.result?.length ?? 0} row(s)`,
-                        rows: result.result?.map(r => ({ name: r.name, estimation: r.estimation, tooltip: r.tooltip })),
-                    });
-                    results.push(result);
-                }
-            });
-
-            lastEvaluatedRef.current[item.name] = action;
-            updates[item.name] = withDefaultPrices(results, normPriceOf(company));
+            const stuff = buildProcessorContext(stageData, item, tableData, processorFiles, stageData.pricingSnapshot);
+            const fingerprint = processingFingerprint({ context: stuff, processors: processors.map(p => [p.processorId, p.version]) });
+            if (stageData.processing?.[item.name]?.fingerprint === fingerprint) return;
+            // A loaded snapshot is authoritative; establish its input revision without replacing it.
+            if (!stageData.processing?.[item.name] && stageData.generatedCalculations?.[item.name]?.length) {
+                setStageData(prev => ({ ...prev, processing: { ...prev.processing, [item.name]: { fingerprint, status: 'ready' } } }));
+                return;
+            }
+            const { tables, logs, errors } = processPart(processors, stuff, { str });
+            const failed = new Set(errors.map(error => error.processorId));
+            const previous = stageData.generatedCalculations?.[item.name] ?? [];
+            const preserved = previous.filter(table => failed.has(table.processorId ?? table.name));
+            onGenerated(item.name, [...tables, ...preserved], fingerprint, errors);
+            const debugLogs = logs;
             logUpdates[item.name] = debugLogs;
         });
 
-        if (Object.keys(updates).length > 0) {
-            setCalculations(prev => ({ ...prev, ...updates }));
-        }
         if (Object.keys(logUpdates).length > 0) {
             setEvaluatorLogs(prev => ({ ...prev, ...logUpdates }));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedItems, processors, company, tableDataRepository, carClass, body]);
+    }, [selectedItems, processors, company, tableDataRepository, carClass, body, stageData, normRates, processorFiles, onGenerated, setStageData, str]);
 
     // Effect to fetch company info and car parts
     useEffect(() => {
+        const epoch = ++requestEpoch.current;
         const updateCompanyInfo = async () => {
             try {
                 const info = await getOrFetchCompanyInfo();
-                if (info != null) {
+                if (info != null && epoch === requestEpoch.current) {
                     setCompany(info);
+                    setStageData(prev => prev.pricingSnapshot ? prev : { ...prev, pricingSnapshot: info.pricing_preferences ?? {} });
                 }
             } catch (error) {
                 handleError('Company Info', error);
@@ -722,23 +511,20 @@ const CarBodyMain = ({
             return;
         }
 
-        // Reset state
+        // Reset fetch presentation only; the saved document and its edits stay intact.
         setAvailableParts([]);
         setAvailablePartsT2([]);
         setProcessors([]);
         setErrors([]);
-        setTableDataRepository({});
+        setTableDataRepository(Object.fromEntries(Object.entries(stageData.sourceSnapshot ?? {}).filter(([, snapshot]) => snapshot.context === `${carClass}/${body}`).map(([name, snapshot]) => [name, snapshot.tables])));
         setFetchErrors({});
         setEvaluatorLogs({});
-        lastEvaluatedRef.current = {};
         fetchingPartsRef.current = new Set();
         setIsDiagramDataLoading(true);
 
         // Fetch processors bundle
-        const processorsPromise = fetchData(
-            '/api/v1/user/processors_bundle',
-            'Processors Bundle',
-            (code) => {
+        const loadProcessors = code => {
+                if (epoch !== requestEpoch.current) return;
                 try {
                     const sandbox = { exports: {}, ...make_sandbox_extensions() };
                     new Function("exports", code)(sandbox.exports);
@@ -751,33 +537,52 @@ const CarBodyMain = ({
                         .map((p) => verify_processor(p))
                         .sort((a, b) => (a.orderingNum ?? 0) - (b.orderingNum ?? 0));
                     setProcessors(plugins);
+                    if (!stageData.processorSnapshot) setStageData(prev => ({ ...prev, processorSnapshot: code }));
+                    const files = [...new Set(plugins.flatMap(p => p.requiredFiles ?? []))];
+                    Promise.all(files.map(async file => {
+                        if (Object.hasOwn(stageData.processorFiles ?? {}, file)) return [file, stageData.processorFiles[file]];
+                        const response = await authFetch(`/api/v1/user/global/${encodeURIComponent(file)}`);
+                        if (!response.ok) throw new Error(`Required file ${file}: ${response.status}`);
+                        const text = await response.text();
+                        const { default: YAML } = await import('yaml');
+                        return [file, YAML.parse(text)];
+                    })).then(entries => {
+                        if (epoch !== requestEpoch.current) return;
+                        const files = Object.fromEntries(entries);
+                        setProcessorFiles(files);
+                        setStageData(prev => ({ ...prev, processorFiles: files }));
+                    }).catch(error => handleError('Required files', error));
                 } catch (error) {
                     handleError('Processors Bundle Processing', error);
                 }
-            }
-        );
+        };
+        const processorsPromise = stageData.processorSnapshot ? Promise.resolve(loadProcessors(stageData.processorSnapshot)) : fetchData('/api/v1/user/processors_bundle', 'Processors Bundle', loadProcessors);
+
 
         // Fetch car parts (T1)
         const t1Promise = fetchData(
             `/api/v1/user/carparts/${carClass}/${body}`,
             'Car Parts T1',
-            (data) => setAvailableParts(data)
+            (data) => { if (epoch === requestEpoch.current) setAvailableParts(data); }
         );
 
         // Fetch car parts (T2)
         const t2Promise = fetchData(
             `/api/v1/user/carparts_t2/${carClass}/${body}`,
             'Car Parts T2',
-            (data) => setAvailablePartsT2(data)
+            (data) => { if (epoch === requestEpoch.current) setAvailablePartsT2(data); }
         );
 
         // fetchData swallows its own errors (routed to handleError), so this always
         // resolves - the diagram becomes interactive whether the fetches succeeded or not.
         Promise.all([processorsPromise, t1Promise, t2Promise]).then(() => {
-            setIsDiagramDataLoading(false);
+            if (epoch === requestEpoch.current) setIsDiagramDataLoading(false);
         });
 
-    }, [body, carClass, handleError, fetchData]);
+        return () => { if (requestEpoch.current === epoch) requestEpoch.current += 1; };
+    // Document snapshots initialize this cache; input edits never refetch/reset it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [body, carClass, handleError, fetchData, refreshToken]);
 
     const partSubComponents = useMemo(
         () => buildCarSubcomponentsFromT2(availablePartsT2),
@@ -792,8 +597,7 @@ const CarBodyMain = ({
         const validTables = Array.isArray(calcData)
             ? calcData.filter(e => e && typeof e === 'object' && Array.isArray(e.result))
             : [];
-        const total = validTables.reduce((acc, entry) =>
-            acc + entry.result.reduce((a, row) => a + toRealNumber(row.estimation) * toRealNumber(row.price ?? basePrice), 0), 0);
+        const total = toRealNumber(stageData.totalTables?.[item.name]?.total);
         const gridFlat = item.grid ? item.grid.flat().filter(c => c !== -1) : [];
         const gridMarked = gridFlat.filter(c => c > 0).length;
         return {
@@ -807,9 +611,9 @@ const CarBodyMain = ({
             gridMarked,
             gridTotal: gridFlat.length,
         };
-    }), [selectedItems, calculations, basePrice]);
+    }), [stageData.totalTables, selectedItems, calculations]);
 
-    const grandTotal = partSummaries.reduce((acc, s) => acc + s.total, 0);
+    const grandTotal = toRealNumber(stageData.grandTotal);
 
     // Per-part values from repair_types.csv so they match processor requiredRepairTypes
     // (Ukrainian names). Falls back to T2 action codes, then to the default list.
@@ -846,6 +650,15 @@ const CarBodyMain = ({
             className={`w-full text-left ${className}`}
             style={{ ...style, maxWidth: '900px', margin: '0 auto', width: '100%' }}
         >
+            <Button data-testid="calc-refresh-defaults" onClick={() => {
+              setStageData(prev => ({ ...prev, processorSnapshot: null, processorFiles: {}, sourceSnapshot: {}, pricingSnapshot: null, processing: Object.fromEntries(selectedItems.map(item => [item.name, { status: 'refreshing' }])) }));
+              setProcessorFiles({}); setRefreshToken(token => token + 1);
+            }}>{str('Refresh calculation defaults')}</Button>
+            {errors.map((error, index) => <Message type="warning" key={index}>{error.context}: {error.message}</Message>)}
+            {Object.entries(stageData.inactiveParts ?? {}).filter(([name]) => !selectedItems.some(item => item.name === name)).map(([name, part]) =>
+              <Button key={name} size="xs" data-testid={`calc-restore-part-${name}`} onClick={() => onChange([...selectedItems, part])}>{str('Restore row')}: {name}</Button>)}
+            {onUndo && <Button onClick={onUndo} data-testid="calc-undo">{str('Undo last change')}</Button>}
+            {Object.entries(stageData.processing ?? {}).filter(([, state]) => state.status === 'error').map(([name, state]) => <Message key={name} type="warning" data-testid={`calc-processing-error-${name}`}>{name}: {state.errors?.map(error => error.detail).join('; ')}</Message>)}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
@@ -903,7 +716,6 @@ const CarBodyMain = ({
                             processors={processors}
                             calculations={calculations}
                             onChange={onChange}
-                            setCalculations={setCalculations}
                         />
                     ) : (
                         <>
@@ -1018,7 +830,9 @@ const CarBodyMain = ({
                                                 />
                                                 <div className="min-w-0 flex-1">
                                                     <div className="break-words text-sm font-semibold leading-snug text-slate-900">
-                                                        {item.name}
+                                                        <div onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+                                                          <CalculationCell entity={{ id: partScopeId(item.name), _overrides: stageData.totalTables?.[item.name]?._overrides }} field="name" value={stageData.totalTables?.[item.name]?.name ?? item.name} drafts={stageData.cellDrafts} onEdit={onCellEdit} onReset={onCellReset} label="Part" />
+                                                        </div>
                                                     </div>
                                                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                                                         {action ? (
@@ -1049,14 +863,7 @@ const CarBodyMain = ({
                                                     </div>
                                                 </div>
                                                 <div className="shrink-0 text-right leading-tight">
-                                                    {setNormRateOverrides && <NormRatePicker
-                                                    rates={normRates}
-                                                    value={normRateOverrides?.[item.name]?.rateId}
-                                                    onChange={(id) => setNormRateOverrides(prev => setRateOverride(prev, item.name, null, id))}
-                                                    label="Part labor rate"
-                                                    testId={`calc-part-rate-${item.name}`}
-                                                />}
-                                                {fetchError ? (
+                                                    {fetchError ? (
                                                         <TriangleAlert size={16} className="text-red-500" />
                                                     ) : isItemLoading ? (
                                                         <LoaderCircle size={16} className="animate-spin text-slate-400" />
@@ -1133,8 +940,10 @@ const CarBodyMain = ({
                                                         normRates={normRates}
                                                         tableRateOverrides={normRateOverrides?.[item.name]?.tables}
                                                         onTableRateChange={setNormRateOverrides ? (table, id) => setNormRateOverrides(prev => setRateOverride(prev, item.name, table, id)) : null}
+                                                        onCellEdit={onCellEdit}
+                                                        onCellReset={onCellReset}
+                                                        cellDrafts={stageData.cellDrafts}
                                                         data={calcData}
-                                                        setData={(newData) => setCalculations(prev => ({ ...prev, [item.name]: newData }))}
                                                         currency={currency}
                                                         basePrice={basePrice}
                                                         skipIncorrect={true}
@@ -1172,6 +981,11 @@ const CarBodyMain = ({
                 </div>
             )}
 
+            {Object.entries(stageData.inactiveRows ?? {}).some(([, rows]) => rows.length) && <details className="my-3 rounded-xl border p-3" data-testid="calc-inactive-rows"><summary>{str('Saved edits for inactive rows')}</summary>
+              {Object.entries(stageData.inactiveRows ?? {}).flatMap(([name, rows]) => rows.map(row => <div key={row.id} className="flex items-center gap-2">{name}: {row.name}
+                <Button size="xs" data-testid={`calc-restore-row-${row.id}`} onClick={() => setStageData(prev => restoreInactiveRow(prev, name, row.id))}>{str('Restore row')}</Button>
+              </div>))}
+            </details>}
             {/* Part Details Drawer */}
             <Drawer
                 open={drawerOpen}
@@ -1298,6 +1112,10 @@ const CarBodyMain = ({
                                 </section>
                             )}
 
+                            {drawerPartDetails && <LookupTableEditor tables={tableDataRepository[drawerPartDetails.name] ?? []}
+                                overrides={stageData.inputOverrides?.[drawerPartDetails.name] ?? {}}
+                                onReset={(table, field) => setStageData(prev => { const fields = { ...prev.inputOverrides?.[drawerPartDetails.name]?.[table] }; delete fields[field]; return { ...prev, inputOverrides: { ...prev.inputOverrides, [drawerPartDetails.name]: { ...prev.inputOverrides?.[drawerPartDetails.name], [table]: fields } } }; })}
+                                onChange={(table, field, value) => setStageData(prev => ({ ...prev, inputOverrides: { ...prev.inputOverrides, [drawerPartDetails.name]: { ...prev.inputOverrides?.[drawerPartDetails.name], [table]: { ...prev.inputOverrides?.[drawerPartDetails.name]?.[table], [field]: value } } } }))} />}
                             {showDebugMode && drawerPartDetails && (
                                 <details className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                                     <summary className="cursor-pointer text-sm font-semibold text-slate-600">
@@ -1371,7 +1189,6 @@ CarBodyMain.propTypes = {
     carClass: PropTypes.string.isRequired,
     body: PropTypes.string.isRequired,
     calculations: PropTypes.object,
-    setCalculations: PropTypes.func,
     className: PropTypes.string,
     style: PropTypes.object
 };
@@ -1381,7 +1198,6 @@ CarBodyMain.defaultProps = {
     carClass: '',
     body: '',
     calculations: {},
-    setCalculations: () => { },
     className: '',
     style: {}
 };

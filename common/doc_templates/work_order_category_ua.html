@@ -194,7 +194,7 @@
         {% endif %}
         {% endif %}
 
-        <div class="category-title">{{ category_name }}</div>
+        <div class="category-title">{{ data.calculation.category_labels[category_name] if data.calculation.category_labels is defined and category_name in data.calculation.category_labels else category_name }}</div>
 
         {% for work_group in category_data %}
         {% if work_group.result %}
@@ -212,7 +212,10 @@
                 {% for item in work_group.result %}
                 <tr>
                     <td>{{ item.part }}</td>
-                    <td>{{ item.name }}{% if item.unit %} ({{ item.unit }}){% endif %}</td>
+                    <td>{{ item.name }}{% if item.unit %} ({{ item.unit }}){% endif %}
+                        {% if item.tooltip %}<div style="font-size: 10px; font-weight: normal;">{{ item.tooltip }}</div>{% endif %}
+                        {% if item.category and item._overrides is defined and 'category' in item._overrides %}<div style="font-size: 10px; font-weight: normal;">Категорія: {{ item.category }}</div>{% endif %}
+                    </td>
                     <td class="number-cell">{{ item.estimation }}</td>
                     <td class="number-cell">{{ item.price }}</td>
                     <td class="number-cell">{{ item.sum }}</td>
@@ -222,7 +225,10 @@
         </table>
 
         <div class="total-row">
-            Всього по категорії: {{ "%.2f"|format(work_group.total) }} {{ data.company_info.pricing_preferences.preferred_currency }}
+            Всього по категорії: {{ "%.2f"|format(work_group.total) if work_group.total is number else work_group.total }} {{ data.calculation.currency if data.calculation.currency is defined else data.company_info.pricing_preferences.preferred_currency }}
+            {% if work_group.computedTotal is defined and work_group.computedTotal is number and work_group.total != work_group.computedTotal %}
+            <span style="font-weight: normal;">(Розраховано: {{ "%.2f"|format(work_group.computedTotal) }})</span>
+            {% endif %}
         </div>
         {% endif %}
         {% endfor %}

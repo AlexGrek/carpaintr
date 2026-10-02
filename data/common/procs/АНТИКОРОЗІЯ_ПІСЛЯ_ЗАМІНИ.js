@@ -12,7 +12,7 @@
         const { mkRow, traceRowToTable } = x;
 
         // н.г. from Таблица 1, column "н.ч. антикор"
-        output.push(mkRow({name: "Антикорозійна обробка «деталь»", evaluate: tableData["Таблица 1"]["н.ч. антикор"], trace: traceRowToTable("Таблица 1", "н.ч. антикор"), tooltip: ""}));
+        output.push(mkRow({key: "clause-7ce6a7ff15a37e0b", name: "Антикорозійна обробка «деталь»", evaluate: tableData["Таблица 1"]["н.ч. антикор"], trace: traceRowToTable("Таблица 1", "н.ч. антикор"), tooltip: ""}));
 
         // - final section -
         return output;

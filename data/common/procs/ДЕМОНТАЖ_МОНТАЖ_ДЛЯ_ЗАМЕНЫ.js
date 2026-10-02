@@ -10,8 +10,8 @@
 
         // TODO: branch by material type (метал / алюміній) once material param is available in processor API.
         // Currently outputs both rows; one will be removed once material selection is wired.
-        output.push(mkRow({name: "Демонтаж/Монтаж, Зварювання «деталь» (метал)", evaluate: tableData["Работы рихтовочніе демонтаж монтаж"]["МЕТАЛЛ"], trace: traceRowToTable("Работы рихтовочніе демонтаж монтаж", "МЕТАЛЛ"), tooltip: ""}));
-        output.push(mkRow({name: "Демонтаж/Монтаж, Зварювання алюмінію «деталь»", evaluate: tableData["Работы рихтовочніе демонтаж монтаж"]["АЛЮМИНИЙ"], trace: traceRowToTable("Работы рихтовочніе демонтаж монтаж", "АЛЮМИНИЙ"), tooltip: ""}));
+        output.push(mkRow({key: "clause-b0ce335a8275f6ce", name: "Демонтаж/Монтаж, Зварювання «деталь» (метал)", evaluate: tableData["Работы рихтовочніе демонтаж монтаж"]["МЕТАЛЛ"], trace: traceRowToTable("Работы рихтовочніе демонтаж монтаж", "МЕТАЛЛ"), tooltip: ""}));
+        output.push(mkRow({key: "clause-ca162960172170dc", name: "Демонтаж/Монтаж, Зварювання алюмінію «деталь»", evaluate: tableData["Работы рихтовочніе демонтаж монтаж"]["АЛЮМИНИЙ"], trace: traceRowToTable("Работы рихтовочніе демонтаж монтаж", "АЛЮМИНИЙ"), tooltip: ""}));
 
         // - final section -
         return output;

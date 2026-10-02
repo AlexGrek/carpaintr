@@ -1,4 +1,4 @@
-import { isNumber } from "lodash";
+import { parseCell } from "./calculationDocument.js";
 
 export const defaultProcessor = {
   name: "",
@@ -79,8 +79,18 @@ export function make_sandbox_extensions() {
   };
 }
 
-export function isEmptyOrWhitespace(str) {
-  return !str || str.trim().length === 0;
+export function isEmptyOrWhitespace(value) {
+  return value == null || typeof value === 'string' && value.trim().length === 0;
+}
+export function evaluateExpression(value) {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('Expression must return a finite number');
+    return value;
+  }
+  const literal = parseCell(value, true);
+  const result = literal.error ? eval(value) : literal.value;
+  if (!Number.isFinite(result)) throw new Error('Expression must return a finite number');
+  return result;
 }
 
 export function should_evaluate_processor(processor, stuff) {
@@ -156,27 +166,24 @@ export function evaluate_processor(processor, stuff) {
       // Substitute placeholders like «деталь»/«Деталь» with the actual part
       // name for every row, whether or not it has an evaluate expression.
       const name = process_name_string(item.name, stuff);
+      const originKey = item.key ?? (item.trace ? `${item.trace.table}/${item.trace.field}` : item.name);
       const priceSource = item.price != null ? { priceSource: "processor" } : {};
       if (!isEmptyOrWhitespace(item.evaluate)) {
-        // evaluate!
-        console.log("evaluating", item.evaluate.replace(",", "."));
-        let estimation = eval(item.evaluate.replace(",", "."));
-        console.log("result =", estimation);
-        if (!isNumber(estimation)) {
-          estimation = "[error]";
-        }
+        const estimation = evaluateExpression(item.evaluate);
         return {
           ...item,
+          originKey,
           ...priceSource,
           ...provenance,
           estimation: estimation,
           name,
         };
       }
-      return { ...item, ...priceSource, ...provenance, name };
+      return { ...item, originKey, ...priceSource, ...provenance, name };
     });
     return {
       name: processor.name,
+      processorId: processor.processorId ?? processor.name,
       result: processedRows,
       text: resultRows.map(JSON.stringify).join(";"),
       error: null,
@@ -197,6 +204,7 @@ export function evaluate_processor(processor, stuff) {
     ].filter(Boolean);
     return {
       name: processor.name,
+      processorId: processor.processorId ?? processor.name,
       result: null,
       text: contextLines.join("\n"),
       error: e,

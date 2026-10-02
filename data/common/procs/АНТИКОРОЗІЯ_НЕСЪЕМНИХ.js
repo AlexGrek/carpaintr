@@ -13,7 +13,7 @@
         const { mkRow, traceRowToTable } = x;
 
         // константа: н.г. змена несъемних антикор = 0.4
-        output.push(mkRow({name: "Антикорозійна обробка зварювання «деталь» (заміна несъемна)", evaluate: "0.4", tooltip: "Константа: 0.4 н.г."}));
+        output.push(mkRow({key: "clause-c1f51bb6fae41575", name: "Антикорозійна обробка зварювання «деталь» (заміна несъемна)", evaluate: "0.4", tooltip: "Константа: 0.4 н.г."}));
 
         // - final section -
         return output;

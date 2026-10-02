@@ -19,8 +19,8 @@ const ColorSelectStage = ({
   stageData,
   setStageData,
 }) => {
-  const [color, setColor] = useState(null);
-  const [paintType, setPaintType] = useState(null);
+  const [color, setColor] = useState(stageData.paint?.color ?? null);
+  const [paintType, setPaintType] = useState(stageData.paint?.paintType ?? null);
   const { str } = useLocale();
 
   useEffect(() => {
@@ -32,6 +32,9 @@ const ColorSelectStage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    setStageData(prev => prev.paint?.color === color && prev.paint?.paintType === paintType ? prev : { ...prev, paint: { color, paintType } });
+  }, [color, paintType, setStageData]);
   const handleClose = useCallback(() => {
     const data = {
       color,

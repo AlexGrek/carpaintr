@@ -182,3 +182,18 @@ log_event(LogLevel::Error, format!("Failed: {e}"), None::<&str>);
 5. Log with `log_event`
 6. Update `docs/api.md` with the new endpoint
 7. Update this skill file if a new module or pattern was introduced
+
+## Calc2 editable document (V2)
+
+Calc2 now owns one versioned document in `CalcMain` above stages. See
+`docs/calculation-engine.md` for the implemented contract; older synchronization
+and `lastEvaluatedRef` descriptions below/in prior context are superseded.
+`generatedCalculations` stores defaults, `cellOverrides`/`cellDrafts` store
+addressed user values, and `resolveDocument()` supplies all views/outputs.
+Snapshots include sources, processor code/files, pricing and saved currency.
+Processor reruns reconcile IDs and preserve edits; removals archive inactive
+rows. SaveCoordinator serializes saves and applies metadata acknowledgments
+only. Rust serde flattening preserves V2 fields, and `car.year` stays a string.
+Tests: calculationDocument/Persistence/processingPipeline/output Node suites,
+API `test_calculation_document.py`, actual Jinja rendering, and Cypress
+`calculation-document.cy.js` plus table-value-propagation/norm-rates.

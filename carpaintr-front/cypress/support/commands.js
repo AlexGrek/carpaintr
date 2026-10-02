@@ -288,11 +288,6 @@ Cypress.Commands.add("reachCalcFinalStage", () => {
 Cypress.Commands.add("setCollapseTables", (checked) => {
   const mode = checked ? "collapsed" : "detailed";
   cy.getByTestId(`calc-final-mode-${mode}`).scrollIntoView().click();
-  // Wait for the actual mode change to take effect: the read-only note is
-  // shown only in collapsed mode.
-  cy.getByTestId("calc-final-collapse-readonly-note").should(
-    checked ? "be.visible" : "not.exist",
-  );
   cy.getByTestId(`calc-final-mode-${mode}`).should(
     "have.attr",
     "aria-pressed",

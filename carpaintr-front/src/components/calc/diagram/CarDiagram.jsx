@@ -132,6 +132,10 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
         closeMenu();
       }
     };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeMenu();
+    };
+    document.addEventListener("keydown", handleKeyDown);
 
     // Delay to avoid immediate close from the same click that opened menu
     const timeoutId = setTimeout(() => {
@@ -141,6 +145,7 @@ const CarDiagram = ({ selectedItems = [], partSubComponents = {}, onSelect = () 
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [menuState.visible, closeMenu]);
 

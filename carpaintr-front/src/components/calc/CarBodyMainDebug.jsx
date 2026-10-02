@@ -140,7 +140,6 @@ export const TechDataPanel = ({
     body, carClass, selectedParts, partsVisual,
     company, availableParts, availablePartsT2,
     processors, calculations,
-    onChange, setCalculations,
 }) => (
     <div style={{ textAlign: 'left' }}>
         {errors.length > 0 && (
@@ -194,12 +193,6 @@ export const TechDataPanel = ({
         <pre style={PRE_STYLE}>{JSON.stringify(calculations, null, 2)}</pre>
 
         <div style={{ marginTop: '20px' }}>
-            <button onClick={() => onChange && onChange(['test_part'])} style={{ marginRight: '10px' }}>
-                Test onChange
-            </button>
-            <button onClick={() => setCalculations && setCalculations({ test: 'value' })}>
-                Test setCalculations
-            </button>
             <button onClick={() => setErrors([])} style={{ marginLeft: '10px' }} disabled={errors.length === 0}>
                 Clear Errors ({errors.length})
             </button>

@@ -1,415 +1,60 @@
-import { useCallback, useEffect, useState } from "react";
-import { Button, Message, Modal, Panel, Stack, useToaster } from "rsuite";
-import "./EvaluationResultsTable.css";
-import Trans from "../../localization/Trans";
-import { registerTranslations } from "../../localization/LocaleContext";
-import { cloneDeep, isArray, isArrayLike, isString } from "lodash";
-import InlineEditWrapper from "../layout/InlineEditWrapper";
-import NormRatePicker from "./NormRatePicker";
-import { isUnfilledRow, isZeroSumRow } from "../../calc/collapseTables";
-
-registerTranslations("ua", {
-  Name: "Найменування",
-  Part: "Деталь",
-  Estimation: "Оцінка",
-  Price: "Ціна",
-  Sum: "Сума",
-  Total: "Всього",
-  Source: "Джерело",
-  "Data source": "Джерело даних",
-  Table: "Таблиця",
-  Field: "Поле",
-  Close: "Закрити",
+import { useState } from 'react';
+import { Message, Modal } from 'rsuite';
+import { useLocale, registerTranslations } from '../../localization/LocaleContext';
+import Trans from '../../localization/Trans';
+import CalculationCell from './CalculationCell';
+import NormRatePicker from './NormRatePicker';
+import { isValidTableEntry, rowSum, toRealNumber } from '../../calc/collapseTables';
+import { partScopeId } from '../../calc/calculationDocument';
+import './EvaluationResultsTable.css';
+registerTranslations('ua', {
+  Name: 'Найменування', Part: 'Деталь', Estimation: 'Оцінка', Price: 'Ціна', Sum: 'Сума', Total: 'Всього',
+  'Data source': 'Джерело даних', Table: 'Таблиця', Field: 'Поле', 'Ordering': 'Порядок', Tooltip: 'Підказка',
 });
-
-const TABLE_CHIP_STYLE = {
-  fontSize: "12px",
-  backgroundColor: "#e0e7ff",
-  color: "#3730a3",
-  borderRadius: "3px",
-  padding: "2px 6px",
-  textDecoration: "none",
-  fontFamily: "monospace",
-};
-
-const toNumber = (value) => {
-  const n = parseFloat(value);
-  return Number.isFinite(n) ? n : 0;
-};
-
-const defaultGetEditorUrl = (filePath) =>
-  `/app/fileeditor?fs=Common&path=${encodeURIComponent(filePath)}`;
-
-const TraceButton = ({ trace, onOpen }) => (
-  <span
-    onClick={(e) => { e.stopPropagation(); onOpen(trace); }}
-    style={{
-      cursor: "pointer",
-      color: "#aaa",
-      fontSize: "12px",
-      userSelect: "none",
-      marginLeft: "6px",
-    }}
-    title="Show source"
-  >
-    ⓘ
-  </span>
-);
-
-const TraceModal = ({ trace, onClose, getEditorUrl }) => {
-  if (!trace) return null;
-  const tablePath = `tables/${trace.table}.csv`;
-  const editorUrl = getEditorUrl(tablePath);
-  return (
-    <Modal open onClose={onClose} size="xs">
-      <Modal.Header>
-        <Modal.Title><Trans>Data source</Trans></Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div style={{ fontSize: "14px", lineHeight: "2" }}>
-          <div>
-            <strong><Trans>Table</Trans>:</strong>{" "}
-            <a href={editorUrl} target="_blank" rel="noopener noreferrer" style={TABLE_CHIP_STYLE}>
-              {trace.table}
-            </a>
-          </div>
-          <div>
-            <strong><Trans>Field</Trans>:</strong>{" "}
-            <code style={{ fontSize: "12px", backgroundColor: "#f5f5f5", padding: "1px 5px", borderRadius: "3px" }}>
-              {trace.field}
-            </code>
-          </div>
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={onClose} appearance="subtle"><Trans>Close</Trans></Button>
-      </Modal.Footer>
+const defaultGetEditorUrl = file => `/app/fileeditor?fs=Common&path=${encodeURIComponent(file)}`;
+export const EvaluationResultsTable = ({ data, normRates, tableRateOverrides, onTableRateChange, currency = '', basePrice = 1,
+  hideTableHeaders = false, showPartColumn = false, getEditorUrl = defaultGetEditorUrl, onCellEdit, onCellReset, onCellFocus, onCellBlur, cellDrafts, setData }) => {
+  const { str } = useLocale();
+  const [trace, setTrace] = useState(null);
+  // The old calc1 renderer remains compatible. Calc2 always dispatches addressed cell edits.
+  const legacyEdit = setData ? (id, field, value) => setData(data.map((table, ti) => ({ ...table, ...(id === `legacy-table-${ti}` ? { [field]: value } : {}), result: table.result.map((row, ri) => (row.id ?? `legacy-row-${ti}-${ri}`) === id ? { ...row, [field]: value, sum: field === 'sum' ? value : undefined } : row) }))) : null;
+  const edit = onCellEdit ?? legacyEdit;
+  const cell = (entity, field, label = field) => <CalculationCell entity={entity} field={field} value={entity[field]}
+    onFocus={onCellFocus} onBlur={onCellBlur} drafts={cellDrafts} onEdit={edit} onReset={onCellReset} label={label} />;
+  if (!Array.isArray(data)) return <Message type="error">Invalid calculation tables</Message>;
+  return <div className="flex flex-col gap-4">
+    <Modal open={!!trace} onClose={() => setTrace(null)} size="xs" data-testid="calc-source-modal">
+      <Modal.Header><Modal.Title><Trans>Data source</Trans></Modal.Title></Modal.Header>
+      <Modal.Body>{trace && <><a href={getEditorUrl(`tables/${trace.table}.csv`)} target="_blank" rel="noopener noreferrer">{trace.table}</a><p>{trace.field}</p></>}</Modal.Body>
     </Modal>
-  );
-};
-
-export const EvaluationResultsTable = ({
-  data,
-  setData = null,
-  normRates,
-  tableRateOverrides,
-  onTableRateChange,
-  currency = "",
-  basePrice = 1,
-  skipIncorrect = false,
-  hideTableHeaders = false,
-  // In the by-category view the part is no longer the enclosing heading, so it
-  // has to become a cell. Off by default, leaving the by-part views unchanged.
-  showPartColumn = false,
-  getEditorUrl = defaultGetEditorUrl,
-}) => {
-  const toaster = useToaster();
-  const [activeTrace, setActiveTrace] = useState(null);
-
-  const getPrice = useCallback(
-    (_name) => {
-      return basePrice;
-    },
-    [basePrice],
-  );
-
-  const skipIncorrectData = (entry) => {
-    if (skipIncorrect) {
-      return typeof entry === "object";
-    } else {
-      return true;
-    }
-  };
-
-  const updateSums = useCallback(
-    (isForced = false) => {
-      try {
-        if (setData && isArray(data)) {
-          if (
-            isForced ||
-            !data
-              .map((table) => {
-                if (!isString(table.result)) return table.result;
-                return [];
-              })
-              .every(
-                (result) =>
-                  result != undefined &&
-                  result.every((r) => r.sum != undefined),
-              )
-          ) {
-            // need to pre-calculate everything
-            // console.log("result: ", data.map(x => x.result))
-
-            let copy = cloneDeep(data);
-            let upd = copy.map((table) => {
-              let acc = 0;
-              let updated_result = table.result.map((item) => {
-                if (item.sum == undefined) {
-                  // console.log("-------------------------", item.name)
-                  // console.log(item)
-                  item.price = item.price ?? getPrice(item.name);
-                  // console.log(item.price)
-                  const sum = toNumber(item.estimation) * toNumber(item.price);
-                  item.sum = sum.toFixed(2);
-                  // console.log(item.sum)
-                }
-                acc += toNumber(item.estimation) * toNumber(item.price ?? basePrice);
-                return item;
-              });
-              return { ...table, result: updated_result, total: acc };
-            });
-            setData(upd);
-          }
-        }
-      } catch (e) {
-        toaster.push(
-          <Message
-            type="error"
-            closable
-          >{`Error ${e} in data: ${JSON.stringify(data)}`}</Message>,
-        );
-      }
-    },
-    [data, basePrice, getPrice, setData, toaster],
-  );
-
-  useEffect(() => {
-    updateSums();
-  }, [data, getPrice, setData, updateSums]);
-
-  const handlePriceChange = (tname, name, value) => {
-    try {
-      console.log("Setting new proce value");
-      if (setData) {
-        let copy = cloneDeep(data);
-        console.log("Searching for name", name);
-        let table = copy.find((obj) => obj.name === tname);
-        if (table) {
-          let item = table.result.find((obj) => obj.name === name);
-          if (item) {
-            item.price = parseFloat(value);
-            item.priceSource = "manual";
-            delete item.normRateId;
-            delete item.sum;
-            setData(copy);
-          } else {
-            toaster.push(
-              <Message
-                type="error"
-                closable
-              >{`Name '${tname}'::'${name}' not found in: ${JSON.stringify(table)}`}</Message>,
-            );
-          }
-        } else {
-          toaster.push(
-            <Message
-              type="error"
-              closable
-            >{`Name '${tname}' not found in: ${JSON.stringify(copy)}`}</Message>,
-          );
-        }
-      }
-    } catch (e) {
-      toaster.push(
-        <Message
-          type="error"
-          closable
-        >{`Error ${e} in handlePriceChange: ${JSON.stringify(data)}`}</Message>,
-      );
-    }
-  };
-
-  const handleEstimationChange = (tname, name, value) => {
-    try {
-      console.log("Setting new est value");
-      if (setData) {
-        let copy = cloneDeep(data);
-        console.log("Searching for name", name);
-        let table = copy.find((obj) => obj.name === tname);
-        if (table) {
-          let item = table.result.find((obj) => obj.name === name);
-          if (item) {
-            item.estimation = parseFloat(value);
-            delete item.sum;
-            setData(copy);
-          } else {
-            toaster.push(
-              <Message
-                type="error"
-                closable
-              >{`Name '${tname}'::'${name}' not found in: ${JSON.stringify(copy)}`}</Message>,
-            );
-          }
-        } else {
-          toaster.push(
-            <Message
-              type="error"
-              closable
-            >{`Name '${tname}' not found in: ${JSON.stringify(copy)}`}</Message>,
-          );
-        }
-      }
-    } catch (e) {
-      toaster.push(
-        <Message
-          type="error"
-          closable
-        >{`Error ${e} in handlePriceChange: ${JSON.stringify(data)}`}</Message>,
-      );
-    }
-  };
-
-  if (!isArrayLike(data)) {
-    return (
-      <Message type="error" showIcon>
-        Invalid data: expected an array.
-      </Message>
-    );
-  }
-
-  return (
-    <>
-    <TraceModal trace={activeTrace} onClose={() => setActiveTrace(null)} getEditorUrl={getEditorUrl} />
-    <Stack direction="column" spacing={20} alignItems="stretch">
-      {data.filter(skipIncorrectData).map((entry, index) => {
-        if (!entry || typeof entry !== "object") {
-          return (
-            <Panel key={index} header={entry.name} style={{ width: "100%" }}>
-              <Message type="error" showIcon>
-                Invalid entry at index {index}
-                <pre>{JSON.stringify(entry)}</pre>
-              </Message>
-            </Panel>
-          );
-        }
-
-        if (!entry.result || !isArrayLike(entry.result)) {
-          return (
-            <Panel
-              key={index}
-              header={entry.name}
-              style={{ width: "100%", padding: "0" }}
-            >
-              <Message key={index} type="error" showIcon>
-                {entry.text || "Unknown error"}
-              </Message>
-              <Message key={index} type="error" showIcon>
-                {JSON.stringify(entry, null, 2)}
-              </Message>
-            </Panel>
-          );
-        }
-
-        return (
-          <div key={index} style={{ width: "100%", marginBottom: "10px" }}>
-            {!hideTableHeaders && entry.name && (
-              <h4 className="evaluation-table-title">{entry.name}</h4>
-            )}
-            {setData && onTableRateChange && <NormRatePicker
-              rates={normRates}
-              value={tableRateOverrides?.[entry.name]}
-              onChange={(id) => onTableRateChange(entry.name, id)}
-              label="Table labor rate"
-              testId={`calc-table-rate-${entry.name}`}
-            />}
-            <table className="evaluation-table modern">
-              <thead>
-                <tr>
-                  <th style={{ width: "25px" }}>#</th>
-                  <th style={{ width: showPartColumn ? "68%" : "88%" }}>
-                    <Trans>Name</Trans>
-                  </th>
-                  {showPartColumn && (
-                    <th style={{ width: "20%" }}>
-                      <Trans>Part</Trans>
-                    </th>
-                  )}
-                  <th className="evaluation-table-cell-numeric">
-                    <Trans>Estimation</Trans>
-                  </th>
-                  <th className="evaluation-table-cell-numeric">
-                    <Trans>Price</Trans> {currency && `(${currency})`}
-                  </th>
-                  <th className="evaluation-table-cell-numeric">
-                    <Trans>Sum</Trans> {currency && `(${currency})`}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {entry.result.map((row, i) => {
-                  const price = row.price ?? basePrice;
-                  const unfilled = isUnfilledRow(row);
-                  const excluded = isZeroSumRow(row, basePrice);
-                  const sum = (toNumber(row.estimation) * toNumber(price)).toFixed(2);
-                  return (
-                    <tr
-                      key={i}
-                      style={excluded ? { color: "#aaa" } : undefined}
-                      data-excluded={excluded ? "true" : undefined}
-                    >
-                      <td className="evaluation-table-cell-numeric">{i + 1}</td>
-                      <td title={row.tooltip || ""}>
-                        {row.name}
-                        {row.trace && row.trace.type === "table" && (
-                          <TraceButton trace={row.trace} onOpen={setActiveTrace} />
-                        )}
-                      </td>
-                      {showPartColumn && <td>{row.part || ""}</td>}
-                      <td className="evaluation-table-cell-numeric">
-                        <InlineEditWrapper
-                          value={unfilled ? "" : row.estimation}
-                          placeholder="-"
-                          onChange={(value) =>
-                            handleEstimationChange(entry.name, row.name, value)
-                          }
-                          size="sm"
-                          disabled={!setData}
-                          style={{ minWidth: 60 }}
-                        />
-                      </td>
-                      <td className="evaluation-table-cell-numeric">
-                        <InlineEditWrapper
-                          size="sm"
-                          // RSuite treats numeric 0 as an empty value and
-                          // renders its "Unfilled" placeholder. A formatted
-                          // string keeps a valid zero price visible/editable.
-                          value={toNumber(price).toFixed(2)}
-                          onChange={(value) =>
-                            handlePriceChange(entry.name, row.name, value)
-                          }
-                          disabled={!setData}
-                          style={{ minWidth: 60 }}
-                        />
-                      </td>
-                      <td className="evaluation-table-cell-numeric">
-                        {unfilled ? "-" : sum}
-                      </td>
-                    </tr>
-                  );
-                })}
-                <tr className="total-row">
-                  <td colSpan={showPartColumn ? 5 : 4} style={{ textAlign: "right" }}>
-                    <Trans>Total</Trans>:
-                  </td>
-                  <td className="evaluation-table-cell-numeric">
-                    <span className="evaluation-table-total">
-                      {entry.result
-                        .reduce((acc, row) => {
-                          const price = row.price ?? basePrice;
-                          return acc + toNumber(row.estimation) * toNumber(price);
-                        }, 0)
-                        .toFixed(2)}
-                    </span>
-                    {currency && ` ${currency}`}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        );
-      })}
-    </Stack>
-    </>
-  );
+    {data.map((rawEntry, index) => { const entry = onCellEdit ? rawEntry : { ...rawEntry, id: rawEntry.id ?? `legacy-table-${index}`, result: rawEntry.result?.map((row, ri) => ({ ...row, id: row.id ?? `legacy-row-${index}-${ri}` })) }; return !isValidTableEntry(entry) ? <Message type="error" key={index}>{entry?.text ?? 'Invalid table'}</Message> :
+      <section key={entry.id ?? index} className="w-full" data-testid={`calc-evaluation-${entry.id ?? index}`}>
+        {!hideTableHeaders && <div className="mb-2 font-semibold">{cell(entry, 'name', 'Name')}</div>}
+        {edit && onTableRateChange && <NormRatePicker rates={normRates} value={tableRateOverrides?.[entry.id] ?? (data.filter(table => table.name === entry.name).length === 1 ? tableRateOverrides?.[entry.name] : undefined)}
+          onChange={id => onTableRateChange(entry.id ?? entry.name, id)} label="Table labor rate" testId={`calc-table-rate-${entry.name}`} />}
+        <table className="evaluation-table modern"><thead><tr>
+          <th>#</th><th>{str('Name')}</th>{showPartColumn && <th>{str('Part')}</th>}
+          <th>{str('Estimation')}</th><th>{str('Unit')}</th><th>{str('Price')} {currency}</th><th>{str('Sum')} {currency}</th>
+        </tr></thead><tbody>
+          {entry.result.map((row, i) => <tr key={row.id ?? i} data-testid={`calc-row-${row.id}`} data-excluded={row.excluded ? 'true' : undefined}>
+            <td>{i + 1}</td><td>
+              {cell(row, 'name', 'Name')}
+              {row.trace && <button type="button" onClick={() => setTrace(row.trace)} data-testid={`calc-trace-${row.id}`} aria-label={str('Data source')}>ⓘ</button>}
+              {edit && <details className="text-xs mt-1" data-testid={`calc-row-options-${row.id}`}><summary>{str('More row fields')}</summary>
+                {['category', 'orderingNum', 'tooltip'].map(field => <label key={field} className="block mt-1">{str(field === 'orderingNum' ? 'Ordering' : field === 'tooltip' ? 'Tooltip' : 'Category')}{cell(row, field)}</label>)}
+                <label><input type="checkbox" checked={!row.excluded} onChange={event => edit(row.id, 'excluded', !event.target.checked)} data-testid={`calc-include-${row.id}`} />{str('Include in document')}</label>
+              </details>}
+            </td>{showPartColumn && <td>{cell({ id: partScopeId(row._partKey ?? row.part), name: row.part, _overrides: row._partOverrides }, 'name', 'Part')}</td>}
+            <td className="evaluation-table-cell-numeric">{cell(row, 'estimation', 'Estimation')}</td>
+            <td>{cell(row, 'unit', 'Unit')}</td>
+            <td className="evaluation-table-cell-numeric">{cell(row, 'price', 'Price')}</td>
+            <td className="evaluation-table-cell-numeric">{edit ? cell(row, 'sum', 'Sum') : rowSum(row, basePrice).toFixed(2)}</td>
+          </tr>)}
+          <tr className="total-row"><td colSpan={showPartColumn ? 6 : 5}>{str('Total')}</td><td>
+            {edit ? cell(entry, 'total', 'Total') : toRealNumber(entry.total ?? entry.result.reduce((sum,row) => sum + rowSum(row,basePrice),0)).toFixed(2)} {currency}
+            {entry._overrides?.includes('total') && <div className="text-xs font-normal">{str('Calculated total')}: {toRealNumber(entry.computedTotal).toFixed(2)}</div>}
+          </td></tr>
+        </tbody></table>
+      </section>; })}
+  </div>;
 };

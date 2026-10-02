@@ -45,7 +45,7 @@ export function applyNormRates(calculations, rates, overrides = {}) {
       const result = table.result.map((row) => {
         if (!row || isMaterialRow(row) || row.priceSource === "manual" || row.priceSource === "processor") return row;
         if (row.price != null && row.priceSource !== "norm" && !selected) return row;
-        const sum = rowSum({ ...row, price });
+        const sum = toRealNumber(row.estimation) * toRealNumber(price);
         if (row.price === price && row.priceSource === "norm" && row.normRateId === id && row.sum === sum) return row;
         tableChanged = true;
         return { ...row, price, priceSource: "norm", normRateId: id, sum };

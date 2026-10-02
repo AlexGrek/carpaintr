@@ -16,9 +16,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ArrowBackIcon from "@rsuite/icons/ArrowBack";
 import { authFetchYaml, getOrFetchCompanyInfo } from "../../utils/authFetch";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
+import { selectParts, applyGenerated, editCell, resetCell } from "../../calc/calculationDocument";
 import CarBodyMain from "./CarBodyMain";
 import NormRatesEditor from "./NormRatesEditor";
-import { applyNormRates, companyNormRates } from "../../calc/normRates";
+import { companyNormRates } from "../../calc/normRates";
 
 registerTranslations("en", {
   "Data loaded successfully": "Data loaded successfully",
@@ -54,26 +55,27 @@ const BodyPartsStage = ({
   onMoveTo: _onMoveTo,
   stageData,
   setStageData,
+  onUndo,
 }) => {
   const [partsVisual, setPartsVisual] = useState({});
-  const [selectedParts, setSelectedParts] = useState([]);
-  const [repairQuality, setRepairQuality] = useState("");
+  const selectedParts = stageData.parts?.selectedParts ?? [];
+  const repairQuality = stageData.parts?.repairQuality ?? "";
   const [repairQualityOptions, setRepairQualityOptions] = useState([]);
-  const [calculations, setCalculations] = useState({});
-  const [normRates, setNormRates] = useState(stageData.normRates ?? null);
-  const [normRateOverrides, setNormRateOverrides] = useState(stageData.normRateOverrides ?? {});
+  const calculations = stageData.calculations;
+  const normRates = stageData.normRates;
+  const normRateOverrides = stageData.normRateOverrides ?? {};
+  const setNormRates = useCallback(value => setStageData(prev => ({ ...prev, normRates: value })), [setStageData]);
+  const setNormRateOverrides = useCallback(update => setStageData(prev => ({ ...prev, normRateOverrides: typeof update === "function" ? update(prev.normRateOverrides ?? {}) : update })), [setStageData]);
+  const setRepairQuality = useCallback(value => setStageData(prev => ({ ...prev, parts: { ...prev.parts, repairQuality: value } })), [setStageData]);
   useEffect(() => {
-    getOrFetchCompanyInfo().then((company) => setNormRates((prev) => prev ?? companyNormRates(company))).catch(() => {});
-  }, []);
-  useEffect(() => {
-    setCalculations((prev) => applyNormRates(prev, normRates, normRateOverrides));
-  }, [calculations, normRates, normRateOverrides]);
+    getOrFetchCompanyInfo().then(company => { if (company) setStageData(prev => prev.normRates ? prev : { ...prev, normRates: companyNormRates(company) }); });
+  }, [setStageData]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const handleSetSelectedParts = useCallback(
-    (val) => setSelectedParts(val),
-    [],
+    (val) => setStageData(prev => selectParts(prev, val)),
+    [setStageData],
   );
   const { str } = useLocale();
 
@@ -116,7 +118,7 @@ const BodyPartsStage = ({
         const qualityData = await authFetchYaml("/api/v1/user/global/quality.yaml");
         console.log("Quality options fetched:", qualityData);
         setRepairQualityOptions(qualityData.options || []);
-        setRepairQuality(qualityData.default || "");
+        setStageData(prev => prev.parts?.repairQuality != null ? prev : { ...prev, parts: { ...prev.parts, repairQuality: qualityData.default || "" } });
 
 
       } catch (error) {
@@ -127,41 +129,12 @@ const BodyPartsStage = ({
     };
     
     fetchData();
-  }, [handleError]);
+  }, [handleError, setStageData]);
 
-  useEffect(() => {
-    try {
-      const parts = stageData["parts"];
-      if (parts) {
-        console.log("Loading stage data:", parts);
-        setSelectedParts(parts.selectedParts || []);
-        setCalculations(stageData.calculations ?? parts.calculations ?? {});
-        setRepairQuality(parts.repairQuality || "");
-      }
-    } catch (error) {
-      handleError(error, "Failed to load stage data");
-    }
-  }, [stageData, handleError]);
-
-  const handleClose = useCallback(() => {
-    try {
-      const data = {
-        partsVisual,
-        selectedParts,
-        calculations,
-        repairQuality,
-      };
-      
-      console.log("Saving stage data:", data);
-      setStageData({ parts: data, calculations, normRates, normRateOverrides });
-      
-      if (onMoveForward) {
-        onMoveForward();
-      }
-    } catch (error) {
-      handleError(error, "Failed to save data");
-    }
-  }, [onMoveForward, partsVisual, selectedParts, calculations, repairQuality, normRates, normRateOverrides, setStageData, handleError]);
+  const handleClose = onMoveForward;
+  const onCellEdit = useCallback((id, field, value) => setStageData(prev => editCell(prev, id, field, value)), [setStageData]);
+  const onCellReset = useCallback((id, field) => setStageData(prev => resetCell(prev, id, field)), [setStageData]);
+  const onGenerated = useCallback((name, tables, fingerprint, errors) => setStageData(prev => applyGenerated(prev, name, tables, fingerprint, errors)), [setStageData]);
 
   // Show loading state
   if (isLoading) {
@@ -186,11 +159,11 @@ const BodyPartsStage = ({
               {error}
             </Message>
             <HStack spacing={2}>
-              <Button onClick={() => window.location.reload()} appearance="primary">
+              <Button data-testid="calc-config-retry" onClick={() => window.location.reload()} appearance="primary">
                 <Trans>Retry</Trans>
               </Button>
               {onMoveBack && (
-                <Button onClick={onMoveBack} appearance="ghost">
+                <Button data-testid="calc-config-back" onClick={onMoveBack} appearance="ghost">
                   <Trans>Back</Trans>
                 </Button>
               )}
@@ -249,7 +222,7 @@ const BodyPartsStage = ({
                 data-testid="calc-repair-quality-select"
               />
             </div>
-            <NormRatesEditor value={normRates} onChange={setNormRates} testId="calc-norm-rates" />
+            <NormRatesEditor currencyEditable value={normRates} onChange={setNormRates} testId="calc-norm-rates" />
             <CarBodyMain
               normRates={normRates}
               normRateOverrides={normRateOverrides}
@@ -260,7 +233,12 @@ const BodyPartsStage = ({
               carClass={stageData["car"]?.carClass ?? ''}
               body={stageData["car"]?.bodyType ?? ''}
               calculations={calculations}
-              setCalculations={setCalculations}
+              onUndo={onUndo}
+              stageData={stageData}
+              setStageData={setStageData}
+              onGenerated={onGenerated}
+              onCellEdit={onCellEdit}
+              onCellReset={onCellReset}
             />
           </VStack>
         </BottomStickyLayout>

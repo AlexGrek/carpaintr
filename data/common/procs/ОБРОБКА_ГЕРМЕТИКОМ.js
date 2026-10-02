@@ -9,7 +9,7 @@
         const { mkRow, traceRowToTable } = x;
 
         // - row clause section -
-        output.push(mkRow({name: "Обробка герметиком «деталь»", evaluate: tableData["Обробка герметиком"]["н.г. обробка герметиком"], trace: traceRowToTable("Обробка герметиком", "н.г. обробка герметиком"), tooltip: ""}));
+        output.push(mkRow({key: "clause-98ae9a763c0f56cb", name: "Обробка герметиком «деталь»", evaluate: tableData["Обробка герметиком"]["н.г. обробка герметиком"], trace: traceRowToTable("Обробка герметиком", "н.г. обробка герметиком"), tooltip: ""}));
 
         // - final section -
         return output;

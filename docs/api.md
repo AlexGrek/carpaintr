@@ -428,6 +428,15 @@ Save a calculation.
 
 ---
 
+Calc2 additionally saves an additive `schemaVersion: 2` document. Storage
+preserves `generatedCalculations`, addressed `cellOverrides`/`cellDrafts`,
+`inputOverrides`, processor/lookup/file/pricing snapshots, active/inactive rows,
+processing diagnostics, `calculationId`, `revision`, and `lastSavedRevision`.
+`calculations`, `totalTables`, `categoryTables`, `grandTotal` and
+`computedGrandTotal` contain the resolved snapshot. `car.year` remains a string.
+The client serializes saves and applies response metadata without replacing
+newer edits. See [calculation document contract](calculation-engine.md).
+
 ### `GET /api/v1/user/calculationstore?filename=<filename>`
 Load a saved calculation by filename.
 

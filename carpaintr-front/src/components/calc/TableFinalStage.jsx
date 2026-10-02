@@ -7,21 +7,21 @@ import BottomStickyLayout from "../layout/BottomStickyLayout";
 import SegmentedControl from "../layout/SegmentedControl";
 import { EvaluationResultsTable } from "./EvaluationResultsTable";
 import PrintCalculationDrawer from "../PrintCalculationDrawer";
-import { Car, CircleAlert, Lock, Printer, Save, Shapes } from "lucide-react";
-import { cloneDeep, isEqual } from "lodash";
-import { authFetch, getOrFetchCompanyInfo } from "../../utils/authFetch";
+import { Car, CircleAlert, Printer, Save, Shapes } from "lucide-react";
+
+import { getOrFetchCompanyInfo } from "../../utils/authFetch";
 import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { capitalizeFirstLetter } from "../../utils/utils";
 import NotifyMessage from "../layout/NotifyMessage";
 import {
-  buildTotalTables,
-  buildCategoryTables,
   normPriceOf,
 } from "../../calc/collapseTables";
+import { editCell, resetCell, hasInvalidDrafts, GRAND_TOTAL_ID, partScopeId } from "../../calc/calculationDocument";
+import CalculationCell from "./CalculationCell";
 import NormRatesEditor from "./NormRatesEditor";
 import NormRatePicker from "./NormRatePicker";
-import { applyNormRates, companyNormRates, setRateOverride } from "../../calc/normRates";
-import { WORK_CATEGORY_LABELS } from "../../calc/workCategories";
+import { companyNormRates, setRateOverride } from "../../calc/normRates";
+import { workCategoryLabel } from "../../calc/workCategories";
 import "./TableFinalStage.css";
 
 registerTranslations("ua", {
@@ -31,10 +31,7 @@ registerTranslations("ua", {
   Order: "Замовлення",
   Color: "Колір",
   "Set it in Cabinet": "Задати в кабінеті",
-  "Collapsed view is read-only. Switch to Detailed to edit individual table rows.":
-    "Згорнутий вигляд лише для перегляду. Перейдіть до «Детально», щоб редагувати рядки.",
-  "Category view is read-only. Switch to Detailed to edit individual table rows.":
-    "Перегляд за категоріями доступний лише для читання. Перейдіть до «Детально», щоб редагувати рядки.",
+
 });
 
 const MODE_COLLAPSED = "collapsed";
@@ -44,17 +41,7 @@ const MODE_BY_CATEGORY = "byCategory";
 const toTestIdSlug = (value) =>
   value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
-const formatMoney = (value) => (Number.isFinite(value) ? value : 0).toFixed(2);
-
-const ReadOnlyNote = ({ testId, children }) => (
-  <div
-    className="mb-3 flex items-start gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-600"
-    data-testid={testId}
-  >
-    <Lock size={14} className="mt-px shrink-0 text-slate-400" />
-    <span>{children}</span>
-  </div>
-);
+const formatMoney = value => value == null || value === '' ? '' : Number(String(value).replace(',', '.')).toFixed(2);
 
 const TableCard = ({ testId, title, icon, total, currency, children }) => (
   <section
@@ -83,11 +70,18 @@ const TableFinalStage = ({
   onMoveTo: _onMoveTo,
   stageData,
   setStageData,
+  onUndo,
+  saveDocument,
+  savePending = false,
 }) => {
   const [printDrawerOpen, setPrintDrawerOpen] = useState(false);
+  const [categoryLayout, setCategoryLayout] = useState(null);
   const { str } = useLocale();
-  const [orderNumber, setOrderNumber] = useState("0");
-  const [orderDate, setOrderDate] = useState(new Date());
+  const orderNumber = stageData.order?.orderNumber ?? "0";
+  const orderDate = stageData.order?.orderDate ? new Date(stageData.order.orderDate) : new Date();
+  const setOrderNumber = value => setStageData(prev => ({ ...prev, order: { ...prev.order, orderNumber: value } }));
+  const setOrderDate = value => setStageData(prev => ({ ...prev, order: { ...prev.order, orderDate: value?.toISOString() ?? null } }));
+  const saving = savePending;
   const [company, setCompany] = useState(null);
   const [companyLoaded, setCompanyLoaded] = useState(false);
   // `tableMode` supersedes the older `collapseTables` boolean, which is still
@@ -100,6 +94,12 @@ const TableFinalStage = ({
   const byCategory = tableMode === MODE_BY_CATEGORY;
   const totalTables = stageData.totalTables ?? {};
   const categoryTables = stageData.categoryTables ?? {};
+  // Hold group membership while a category input has focus so moving its row
+  // cannot unmount the editor midway through typing. Values still commit immediately.
+  const currentRows = new Map(Object.values(categoryTables).flatMap(table => table.result.map(row => [row.id, row])));
+  const visibleCategoryTables = categoryLayout ? Object.fromEntries(Object.entries(categoryLayout).map(([key, table]) => [key, { ...table, result: table.result.map(row => currentRows.get(row.id) ?? row) }])) : categoryTables;
+  const onCellFocus = (_id, field) => { if (field === 'category' && byCategory) setCategoryLayout(categoryTables); };
+  const onCellBlur = (_id, field) => { if (field === 'category') setCategoryLayout(null); };
   const car = stageData.car ?? {};
   const paint = stageData.paint ?? {};
 
@@ -125,38 +125,12 @@ const TableFinalStage = ({
   }, []);
 
   useEffect(() => {
-    if (!companyLoaded || !company) return;
-    setStageData((prev) => {
-      const rates = prev.normRates ?? companyNormRates(company);
-      const priced = applyNormRates(prev.calculations, rates, prev.normRateOverrides);
-      return priced === prev.calculations && prev.normRates ? prev : { ...prev, normRates: rates, calculations: priced };
-    });
-  }, [company, companyLoaded, stageData.calculations, stageData.normRates, stageData.normRateOverrides, setStageData]);
-
-  useEffect(() => {
-    if (!stageData.calculations) return;
-    const nextTotals = buildTotalTables(stageData.calculations, normPrice);
-    const nextCategories = buildCategoryTables(stageData.calculations, normPrice);
-    setStageData((prev) => {
-      if (
-        isEqual(prev.totalTables, nextTotals) &&
-        isEqual(prev.categoryTables, nextCategories)
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
-        totalTables: nextTotals,
-        categoryTables: nextCategories,
-      };
-    });
-  }, [stageData.calculations, normPrice, setStageData]);
-
-  const grandTotal = Object.values(totalTables).reduce(
-    (acc, table) => acc + (Number.isFinite(table?.total) ? table.total : 0),
-    0,
-  );
-
+    if (company) setStageData(prev => prev.normRates ? prev : { ...prev, normRates: companyNormRates(company) });
+  }, [company, setStageData]);
+  const grandTotal = stageData.grandTotal;
+  const invalid = hasInvalidDrafts(stageData);
+  const onCellEdit = useCallback((id, field, value) => setStageData(prev => editCell(prev, id, field, value)), [setStageData]);
+  const onCellReset = useCallback((id, field) => setStageData(prev => resetCell(prev, id, field)), [setStageData]);
   const partCount = Object.keys(stageData.calculations ?? {}).length;
   const carTitle =
     [car.make, car.model].filter((v) => typeof v === "string" && v).join(" ") ||
@@ -176,47 +150,20 @@ const TableFinalStage = ({
         tableMode: value,
         // Kept in sync for the print drawer and previously saved calculations.
         collapseTables: value === MODE_COLLAPSED,
-        totalTables: buildTotalTables(prev.calculations || {}, normPrice),
-        categoryTables: buildCategoryTables(prev.calculations || {}, normPrice),
       }));
     },
-    [setStageData, normPrice],
+    [setStageData],
   );
 
   const handleSave = useCallback(async () => {
-    const dataToSave = cloneDeep(stageData);
-
+    if (saving) return;
     try {
-      const response = await authFetch("/api/v1/user/calculationstore", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataToSave),
-      });
-      if (response.ok) {
-        showMessage("success", str("Calculation saved successfully!"));
-        const data = await response.json();
-        console.log("Got data: " + JSON.stringify(data));
-        setStageData({
-          ...dataToSave,
-          car: { ...dataToSave.car, storeFileName: data.saved_file_path },
-        });
-      } else {
-        const errorData = await response.json();
-        showMessage(
-          "error",
-          `${str("Failed to save calculation:")} ${errorData.message || response.statusText}`,
-        );
-      }
+      const result = await saveDocument(stageData);
+      if (result.acknowledged) showMessage("success", str("Calculation saved successfully!"));
     } catch (error) {
-      console.error("Error saving calculation:", error);
-      showMessage(
-        "error",
-        `${str("Error saving calculation:")} ${error.message}`,
-      );
+      showMessage("error", `${str("Error saving calculation:")} ${error.message}`);
     }
-  }, [setStageData, showMessage, stageData, str]);
+  }, [saveDocument, showMessage, stageData, str, saving]);
 
   const modeOptions = [
     { value: MODE_COLLAPSED, label: str("Collapsed"), testId: "calc-final-mode-collapsed" },
@@ -244,6 +191,8 @@ const TableFinalStage = ({
               <HStack spacing={8}>
                 <Button
                   onClick={() => handleSave()}
+                  loading={saving}
+                  disabled={saving}
                   color="blue"
                   appearance="ghost"
                   startIcon={<Save size={16} />}
@@ -253,6 +202,7 @@ const TableFinalStage = ({
                 </Button>
                 <Button
                   onClick={() => setPrintDrawerOpen(true)}
+                  disabled={invalid}
                   color="green"
                   appearance="primary"
                   startIcon={<Printer size={16} />}
@@ -266,6 +216,9 @@ const TableFinalStage = ({
         >
           <div className="flex w-full flex-col gap-4 text-left">
             <NotifyMessage text={n} />
+            {invalid && <NotifyMessage text={str('Fix invalid cells before generating a document')} />}
+            <div className="flex gap-2 flex-wrap">{onUndo && <Button onClick={onUndo} data-testid="calc-undo">{str('Undo last change')}</Button>}
+            <Button data-testid="calc-reset-all-cells" onClick={() => setStageData(prev => ({ ...prev, cellOverrides: {}, cellDrafts: {} }))}>{str('Reset all edited cells')}</Button></div>
 
             <div
               className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
@@ -304,11 +257,14 @@ const TableFinalStage = ({
                   className="text-2xl font-bold tabular-nums text-slate-900"
                   data-testid="calc-final-grand-total"
                 >
-                  {formatMoney(grandTotal)}{" "}
+                  <CalculationCell entity={{ id: GRAND_TOTAL_ID, _overrides: Object.keys(stageData.cellOverrides?.[GRAND_TOTAL_ID] ?? {}) }} field="total" value={grandTotal}
+                    drafts={stageData.cellDrafts} onEdit={onCellEdit} onReset={onCellReset} testId="calc-grand-total-input" label="Total" />
+                  <span>{formatMoney(grandTotal)}</span>{" "}
                   <span className="text-sm font-medium text-slate-500">{currency}</span>
                 </div>
                 <div className="text-xs text-slate-400">
                   {str("Selected Parts")}: {partCount}
+                  {stageData.cellOverrides?.[GRAND_TOTAL_ID]?.total && <div>{str('Calculated total')}: {formatMoney(stageData.computedGrandTotal)} {currency}</div>}
                 </div>
               </div>
             </div>
@@ -366,10 +322,9 @@ const TableFinalStage = ({
               </div>
             </div>
 
-            <NormRatesEditor value={stageData.normRates} testId="calc-norm-rates"
+            <NormRatesEditor currencyEditable value={stageData.normRates} testId="calc-norm-rates"
               onChange={(normRates) => setStageData((prev) => ({
                 ...prev, normRates,
-                calculations: applyNormRates(prev.calculations, normRates, prev.normRateOverrides),
               }))} />
             <div data-testid="calc-final-tables-panel">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
@@ -383,17 +338,6 @@ const TableFinalStage = ({
                 />
               </div>
 
-              {collapseTables && (
-                <ReadOnlyNote testId="calc-final-collapse-readonly-note">
-                  {str("Collapsed view is read-only. Switch to Detailed to edit individual table rows.")}
-                </ReadOnlyNote>
-              )}
-              {byCategory && (
-                <ReadOnlyNote testId="calc-final-category-readonly-note">
-                  {str("Category view is read-only. Switch to Detailed to edit individual table rows.")}
-                </ReadOnlyNote>
-              )}
-
               {!companyLoaded ? (
                 <div className="flex justify-center py-8">
                   <Loader size="md" />
@@ -401,18 +345,19 @@ const TableFinalStage = ({
               ) : (
                 <div className="flex flex-col gap-3">
                   {byCategory &&
-                    Object.keys(categoryTables).map((category) => (
+                    Object.keys(visibleCategoryTables).map((category) => (
                       <TableCard
                         key={category}
                         testId={`calc-final-category-${category}`}
-                        title={str(WORK_CATEGORY_LABELS[category] ?? category)}
+                        title={str(workCategoryLabel(category))}
                         icon={<Shapes size={16} className="shrink-0 text-slate-400" />}
                         total={categoryTables[category]?.total}
                         currency={currency}
                       >
                         <EvaluationResultsTable
-                          data={[categoryTables[category]]}
-                          setData={null}
+                          data={[visibleCategoryTables[category]]}
+                          onCellFocus={onCellFocus} onCellBlur={onCellBlur}
+                          onCellEdit={onCellEdit} onCellReset={onCellReset} cellDrafts={stageData.cellDrafts}
                           currency={currency}
                           basePrice={normPrice}
                           skipIncorrect={true}
@@ -434,38 +379,31 @@ const TableFinalStage = ({
                         <TableCard
                           key={key}
                           testId={`calc-final-table-${toTestIdSlug(key)}`}
-                          title={key}
+                          title={<CalculationCell entity={collapsedTable ?? { id: partScopeId(key) }} field="name" value={collapsedTable?.name ?? key}
+                            drafts={stageData.cellDrafts} onEdit={onCellEdit} onReset={onCellReset} label="Part" />}
                           total={collapsedTable?.total}
                           currency={currency}
                         >
+                          {!collapseTables && <div className="mb-3 flex items-center gap-2 text-sm">{str('Total')}
+                            <CalculationCell entity={collapsedTable} field="total" value={collapsedTable?.total} drafts={stageData.cellDrafts} onEdit={onCellEdit} onReset={onCellReset} label="Total" />
+                            {collapsedTable?._overrides?.includes('total') && <span>{str('Calculated total')}: {formatMoney(collapsedTable.computedTotal)} {currency}</span>}
+                          </div>}
                           <NormRatePicker rates={stageData.normRates}
                             value={stageData.normRateOverrides?.[key]?.rateId}
                             label="Part labor rate" testId={`calc-part-rate-${key}`}
                             onChange={(id) => setStageData((prev) => {
                               const normRateOverrides = setRateOverride(prev.normRateOverrides, key, null, id);
-                              return { ...prev, normRateOverrides, calculations: applyNormRates(prev.calculations, prev.normRates, normRateOverrides) };
+                              return { ...prev, normRateOverrides };
                             })} />
                           <EvaluationResultsTable
                             normRates={stageData.normRates}
                             tableRateOverrides={stageData.normRateOverrides?.[key]?.tables}
-                            onTableRateChange={(table, id) => setStageData((prev) => {
+                            onTableRateChange={collapseTables ? null : (table, id) => setStageData((prev) => {
                               const normRateOverrides = setRateOverride(prev.normRateOverrides, key, table, id);
-                              return { ...prev, normRateOverrides, calculations: applyNormRates(prev.calculations, prev.normRates, normRateOverrides) };
+                              return { ...prev, normRateOverrides };
                             })}
                             data={tableData}
-                            setData={
-                              collapseTables
-                                ? null
-                                : (value) => {
-                                    setStageData((prev) => ({
-                                      ...prev,
-                                      calculations: {
-                                        ...prev.calculations,
-                                        [key]: value,
-                                      },
-                                    }));
-                                  }
-                            }
+                            onCellEdit={onCellEdit} onCellReset={onCellReset} cellDrafts={stageData.cellDrafts}
                             currency={currency}
                             basePrice={normPrice}
                             skipIncorrect={true}
@@ -486,7 +424,11 @@ const TableFinalStage = ({
           calculationData={stageData.calculations || {}}
           collapseTables={collapseTables}
           totalTables={totalTables}
-          orderData={{ orderNumber, orderDate }}
+          currency={currency}
+          categoryTables={categoryTables}
+          grandTotal={grandTotal}
+          orderData={{ ...stageData.order, orderNumber, orderDate }}
+          onOrderChange={order => setStageData(prev => ({ ...prev, order: { ...prev.order, ...order } }))}
           carData={stageData["car"]}
           paintData={stageData["paint"]}
         />

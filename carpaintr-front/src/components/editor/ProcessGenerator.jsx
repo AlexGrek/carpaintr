@@ -496,7 +496,7 @@ const ProcessorGenerator = () => {
             clause.traceTable && clause.traceField
               ? `, trace: traceRowToTable("${clause.traceTable}", "${clause.traceField}")`
               : "";
-          const rowObject = `{name: "${clause.name}", evaluate: ${clause.evaluate || "null"}, tooltip: "${clause.tooltip}"${traceStr}}`;
+          const rowObject = `{key: ${JSON.stringify(clause.id)}, name: "${clause.name}", evaluate: ${clause.evaluate || "null"}, tooltip: "${clause.tooltip}"${traceStr}}`;
           const pushStatement = `output.push(mkRow(${rowObject}));`;
 
           if (clause.condition && clause.condition.trim() !== "") {

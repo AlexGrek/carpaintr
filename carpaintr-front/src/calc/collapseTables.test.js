@@ -118,6 +118,12 @@ describe("toRealNumber", () => {
   it("parses numeric values", () => {
     assert.equal(toRealNumber(3), 3);
     assert.equal(toRealNumber("4.5"), 4.5);
+    assert.equal(toRealNumber(" 0,3 "), 0.3);
+    assert.equal(toRealNumber("-1,25"), -1.25);
+    assert.equal(toRealNumber("1e2"), 100);
+    assert.equal(toRealNumber("2 hours"), 0);
+    assert.equal(toRealNumber("1,5 + 2,5"), 0);
+    assert.equal(toRealNumber("1e999"), 0);
   });
 });
 
@@ -196,6 +202,8 @@ describe("rowSum / isZeroSumRow", () => {
   it("computes estimation × price with basePrice fallback", () => {
     assert.equal(rowSum({ estimation: 2, price: 5 }), 10);
     assert.equal(rowSum({ estimation: 3 }, 4), 12);
+    assert.equal(rowSum({ estimation: "0,3", price: "100,5" }), 30.15);
+    assert.equal(rowSum({ estimation: 1, price: 100, sum: "17,5" }), 17.5);
     assert.equal(rowSum({ estimation: "Unfilled", price: 100 }), 0);
   });
 
@@ -208,7 +216,7 @@ describe("rowSum / isZeroSumRow", () => {
 });
 
 describe("sanitizeTableEntry", () => {
-  it("drops zero-sum rows and recomputes sum/total from the rest", () => {
+  it("retains zero and unfilled rows and derives missing legacy sums", () => {
     const table = {
       name: "p1",
       result: [
@@ -221,11 +229,10 @@ describe("sanitizeTableEntry", () => {
     };
 
     const sanitized = sanitizeTableEntry(table);
-    // Only the non-zero-sum row "b" survives.
-    assert.equal(sanitized.result.length, 1);
-    assert.equal(sanitized.result[0].name, "b");
-    assert.equal(sanitized.result[0].price, 1);
-    assert.equal(sanitized.result[0].sum, 3);
+    assert.equal(sanitized.result.length, 4);
+    assert.equal(sanitized.result[1].name, "b");
+    assert.equal(sanitized.result[1].price, 1);
+    assert.equal(sanitized.result[1].sum, 3);
     assert.equal(sanitized.total, 3);
   });
 
@@ -235,7 +242,7 @@ describe("sanitizeTableEntry", () => {
 });
 
 describe("sanitizeCalcForTemplate", () => {
-  it("removes unfilled rows and never produces null numeric fields", () => {
+  it("keeps unfilled rows without dropping the rest of the document", () => {
     const calc = {
       Hood: [
         {
@@ -249,9 +256,10 @@ describe("sanitizeCalcForTemplate", () => {
     };
 
     const sanitized = sanitizeCalcForTemplate(calc);
-    assert.equal(sanitized.Hood[0].result.length, 1);
-    assert.equal(sanitized.Hood[0].result[0].name, "b");
-    assert.equal(sanitized.Hood[0].result[0].sum, 10);
+    assert.equal(sanitized.Hood[0].result.length, 2);
+    assert.equal(sanitized.Hood[0].result[0].estimation, "");
+    assert.equal(sanitized.Hood[0].result[1].name, "b");
+    assert.equal(sanitized.Hood[0].result[1].sum, 10);
     assert.equal(sanitized.Hood[0].total, 10);
   });
 
@@ -271,6 +279,8 @@ describe("isMaterialRow", () => {
     assert.equal(isMaterialRow({ name: "Зняти", unit: "" }), false);
     assert.equal(isMaterialRow({ name: "Зняти", unit: "   " }), false);
     assert.equal(isMaterialRow(null), false);
+    assert.equal(isMaterialRow({ kind: "material", unit: "" }), true);
+    assert.equal(isMaterialRow({ kind: "labor", unit: "л" }), false);
   });
 });
 
@@ -449,5 +459,65 @@ describe("buildCategoryTables", () => {
     assert.deepEqual(Object.keys(byCategory), ["arm"]);
     assert.equal(byCategory.arm.total, 4);
     assert.deepEqual(buildCategoryTables(null), {});
+  });
+});
+
+
+describe("authored output values", () => {
+  it("preserves a manual row sum and subtotal even when arithmetic disagrees", () => {
+    const table = {
+      name: "Renamed work", total: 42,
+      result: [{ name: "Custom", estimation: 2, price: 100, sum: 17, unit: "л" }],
+    };
+    assert.equal(rowSum(table.result[0]), 17);
+    assert.deepEqual(sanitizeTableEntry(table), table);
+    assert.equal(collapsePartTables([table]).total, 42);
+    assert.equal(buildCategoryTables({ Hood: [table] }).uncategorized.total, 17);
+  });
+
+  it("preserves explicit zero, blank and row-part labels; only exclusion removes rows", () => {
+    const table = {
+      result: [
+        { name: "free", estimation: 2, price: 100, sum: 0, part: "Edited hood" },
+        { name: "blank", estimation: "", price: "", sum: "" },
+        { name: "excluded", estimation: 2, price: 100, sum: 200, excluded: true },
+      ], total: 0,
+    };
+    const output = sanitizeTableEntry(table);
+    assert.deepEqual(output.result.map((r) => r.name), ["free", "blank"]);
+    assert.equal(output.result[1].sum, "");
+    assert.equal(output.total, 0);
+    const grouped = buildCategoryTables({ Hood: [table] });
+    assert.equal(grouped.uncategorized.result[0].part, "Edited hood");
+    assert.equal(grouped.uncategorized.result.length, 2);
+    assert.equal(grouped.uncategorized.total, 0);
+  });
+});
+
+describe('authored category and row order output', () => {
+  it('preserves custom and blank category groups without changing legacy normalization', () => {
+    const tables = buildCategoryTables({ Hood: [{ result: [
+      { name: 'Custom row', category: 'Custom finishing', sum: 17, _overrides: ['category'] },
+      { name: 'Blank category', category: '', sum: 0, _overrides: ['category'] },
+      { name: 'Legacy category', category: 'General', sum: 3 },
+      { name: 'Paint row', category: 'paint', sum: 5 },
+    ] }] });
+    assert.deepEqual(Object.keys(tables), ['paint', 'Custom finishing', '', 'uncategorized']);
+    assert.equal(tables['Custom finishing'].result[0].category, 'Custom finishing');
+    assert.equal(tables['Custom finishing'].total, 17);
+    assert.equal(tables[''].result[0].category, '');
+    assert.equal(tables[''].total, 0);
+  });
+
+  it('honors edited ordering and tooltip when adapting detailed tables for documents', () => {
+    const table = { total: 19, result: [
+      { name: 'Later row', estimation: 1, price: 100, sum: 17, orderingNum: 20 },
+      { name: 'Earlier row', estimation: 1, price: 100, sum: 2, orderingNum: -1, tooltip: 'Authored instruction', _overrides: ['orderingNum', 'tooltip'] },
+    ] };
+    const output = sanitizeTableEntry(table);
+    assert.deepEqual(output.result.map(row => row.name), ['Earlier row', 'Later row']);
+    assert.equal(output.result[0].tooltip, 'Authored instruction');
+    assert.equal(output.result[0].sum, 2);
+    assert.deepEqual(table.result.map(row => row.name), ['Later row', 'Earlier row']);
   });
 });

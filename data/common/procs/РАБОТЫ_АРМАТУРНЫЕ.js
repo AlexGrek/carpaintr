@@ -9,8 +9,8 @@
         const { mkRow, traceRowToTable } = x;
 
         // - row clause section -
-        output.push(mkRow({name: "Зняти «деталь»  для  заміни", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ ЗАМЕНЫ"], trace: traceRowToTable("Арматурные работы", "СНЯТИЕ ДЛЯ ЗАМЕНЫ"), tooltip: ""}));
-        output.push(mkRow({name: "Встановити «деталь»  після  заміни", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ ЗАМЕНЫ"], trace: traceRowToTable("Арматурные работы", "УСТАНОВКА ДЛЯ ЗАМЕНЫ"), tooltip: ""}));
+        output.push(mkRow({key: "clause-0b304762fedf095e", name: "Зняти «деталь»  для  заміни", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ ЗАМЕНЫ"], trace: traceRowToTable("Арматурные работы", "СНЯТИЕ ДЛЯ ЗАМЕНЫ"), tooltip: ""}));
+        output.push(mkRow({key: "clause-e0272e03325d8009", name: "Встановити «деталь»  після  заміни", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ ЗАМЕНЫ"], trace: traceRowToTable("Арматурные работы", "УСТАНОВКА ДЛЯ ЗАМЕНЫ"), tooltip: ""}));
 
         // - final section -
         return output;

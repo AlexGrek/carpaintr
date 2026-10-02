@@ -28,23 +28,23 @@
         // Condition 1: replacement — add primary priming and primer in color
         // TODO: restrict to "знімна деталь" once removability is available in processor API
         if (isReplacement) {
-            output.push(mkRow({name: "Грунтування первинне «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. грунтование первичное"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. грунтование первичное"), tooltip: ""}));
+            output.push(mkRow({key: "clause-906d336fe21ccb66", name: "Грунтування первинне «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. грунтование первичное"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. грунтование первичное"), tooltip: ""}));
         }
 
         // Condition 2: bright color / 3-layer / high quality — add primer in color tone
         if (needsPrimer) {
-            output.push(mkRow({name: "Грунтування в тон фарби «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. грунтование в цвет"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. грунтование в цвет"), tooltip: ""}));
+            output.push(mkRow({key: "clause-370893e148024574", name: "Грунтування в тон фарби «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. грунтование в цвет"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. грунтование в цвет"), tooltip: ""}));
         }
 
         // Painting (all conditions)
-        output.push(mkRow({name: "Фарбування «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. покраска"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. покраска"), tooltip: ""}));
-        output.push(mkRow({name: "Фарба 1 шар «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расход л. краски1"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расход л. краски1"), tooltip: "л", unit: "л"}));
-        output.push(mkRow({name: "Фарба 2 шар «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расход л. краски2"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расход л. краски2"), tooltip: "л", unit: "л"}));
-        output.push(mkRow({name: "Лак «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расхода л. Лак"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расхода л. Лак"), tooltip: "л", unit: "л"}));
+        output.push(mkRow({key: "clause-f40bfd043d5070f8", name: "Фарбування «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["н.ч. покраска"], trace: traceRowToTable("Нормы материалов и работ для покраски", "н.ч. покраска"), tooltip: ""}));
+        output.push(mkRow({key: "clause-ba956ae155647a8b", name: "Фарба 1 шар «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расход л. краски1"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расход л. краски1"), tooltip: "л", unit: "л"}));
+        output.push(mkRow({key: "clause-7888800ab501167e", name: "Фарба 2 шар «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расход л. краски2"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расход л. краски2"), tooltip: "л", unit: "л"}));
+        output.push(mkRow({key: "clause-cea30c52791673ae", name: "Лак «деталь»", evaluate: tableData["Нормы материалов и работ для покраски"]["расхода л. Лак"], trace: traceRowToTable("Нормы материалов и работ для покраски", "расхода л. Лак"), tooltip: "л", unit: "л"}));
 
         // Condition 3 (standard quality, non-bright): add aerosol primer
         if (!needsPrimer && !isReplacement) {
-            output.push(mkRow({name: "Грунт аерозольний", evaluate: tableData["Нормы материалов и работ для покраски"]["грунт аерозольний"], trace: traceRowToTable("Нормы материалов и работ для покраски", "грунт аерозольний"), tooltip: "30мл", unit: "мл"}));
+            output.push(mkRow({key: "clause-0f3b6db8fefe25bd", name: "Грунт аерозольний", evaluate: tableData["Нормы материалов и работ для покраски"]["грунт аерозольний"], trace: traceRowToTable("Нормы материалов и работ для покраски", "грунт аерозольний"), tooltip: "30мл", unit: "мл"}));
         }
 
         // - final section -

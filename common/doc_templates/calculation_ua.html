@@ -192,7 +192,7 @@
 
     <div class="calc-section">
         {% for section_name, section_data in data.calculation.calc.items() %}
-        <div class="calc-title">{{ section_name }}</div>
+        <div class="calc-title">{{ data.calculation.part_labels[section_name] if data.calculation.part_labels is defined and section_name in data.calculation.part_labels else data.calculation.part_totals[section_name].name if data.calculation.part_totals is defined and section_name in data.calculation.part_totals else section_name }}</div>
 
         {% for work_group in section_data %}
         {% if work_group.name %}
@@ -212,7 +212,10 @@
             <tbody>
                 {% for item in work_group.result %}
                 <tr>
-                    <td>{{ item.name }}</td>
+                    <td>{{ item.name }}{% if item.unit %} ({{ item.unit }}){% endif %}
+                        {% if item.tooltip %}<div style="font-size: 10px; font-weight: normal;">{{ item.tooltip }}</div>{% endif %}
+                        {% if item.category and item._overrides is defined and 'category' in item._overrides %}<div style="font-size: 10px; font-weight: normal;">Категорія: {{ item.category }}</div>{% endif %}
+                    </td>
                     <td class="number-cell">{{ item.estimation }}</td>
                     <td class="number-cell">{{ item.price }}</td>
                     <td class="number-cell">{{ item.sum }}</td>
@@ -222,11 +225,28 @@
         </table>
 
         <div class="total-row">
-            Всього: {{ "%.2f"|format(work_group.total) }} {{ data.company_info.pricing_preferences.preferred_currency }}
+            Всього: {{ "%.2f"|format(work_group.total) if work_group.total is number else work_group.total }} {{ data.calculation.currency if data.calculation.currency is defined else data.company_info.pricing_preferences.preferred_currency }}
+            {% if work_group.computedTotal is defined and work_group.computedTotal is number and work_group.total != work_group.computedTotal %}
+            <span style="font-weight: normal;">(Розраховано: {{ "%.2f"|format(work_group.computedTotal) }})</span>
+            {% endif %}
         </div>
         {% endif %}
         {% endfor %}
+        {% if data.calculation.part_totals is defined and section_name in data.calculation.part_totals %}
+        {% set part_total = data.calculation.part_totals[section_name] %}
+        <div class="total-row">
+            Разом за деталлю: {{ "%.2f"|format(part_total.total) if part_total.total is number else part_total.total }} {{ data.calculation.currency if data.calculation.currency is defined else data.company_info.pricing_preferences.preferred_currency }}
+            {% if part_total.computedTotal is defined and part_total.computedTotal is number and part_total.total != part_total.computedTotal %}
+            <span style="font-weight: normal;">(Розраховано: {{ "%.2f"|format(part_total.computedTotal) }})</span>
+            {% endif %}
+        </div>
+        {% endif %}
         {% endfor %}
+        {% if data.calculation.grand_total is defined %}
+        <div class="total-row">
+            Загалом: {{ "%.2f"|format(data.calculation.grand_total) if data.calculation.grand_total is number else data.calculation.grand_total }} {{ data.calculation.currency if data.calculation.currency is defined else data.company_info.pricing_preferences.preferred_currency }}
+        </div>
+        {% endif %}
     </div>
 
     <div class="footer">

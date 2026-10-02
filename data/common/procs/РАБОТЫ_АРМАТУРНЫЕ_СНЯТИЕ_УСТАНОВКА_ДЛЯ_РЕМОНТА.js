@@ -12,8 +12,8 @@
         // leave blank now, there are no data validation stages yet
 
         // - row clause section -
-        output.push(mkRow({name: "Зняти «Деталь» для ремонту", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ РЕМОНТА"], tooltip: "Арматурные работы снять", trace: traceRowToTable("Арматурные работы", "СНЯТИЕ ДЛЯ РЕМОНТА")}));
-        output.push(mkRow({name: "Встановити «Деталь» після ремонту", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ РЕМОНТА"], tooltip: "Just paint part", trace: traceRowToTable("Арматурные работы", "УСТАНОВКА ДЛЯ РЕМОНТА")}));
+        output.push(mkRow({key: "clause-262e901a55b4fc30", name: "Зняти «Деталь» для ремонту", evaluate: tableData["Арматурные работы"]["СНЯТИЕ ДЛЯ РЕМОНТА"], tooltip: "Арматурные работы снять", trace: traceRowToTable("Арматурные работы", "СНЯТИЕ ДЛЯ РЕМОНТА")}));
+        output.push(mkRow({key: "clause-c926dade7b666880", name: "Встановити «Деталь» після ремонту", evaluate: tableData["Арматурные работы"]["УСТАНОВКА ДЛЯ РЕМОНТА"], tooltip: "Just paint part", trace: traceRowToTable("Арматурные работы", "УСТАНОВКА ДЛЯ РЕМОНТА")}));
 
         // - final section -
         return output;

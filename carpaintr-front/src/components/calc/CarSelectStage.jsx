@@ -27,16 +27,16 @@ const CarSelectStage = ({
   stageData,
   setStageData,
 }) => {
-  const [make, setMake] = useState(null);
-  const [model, setModel] = useState(null);
-  const [year, setYear] = useState(null);
-  const [carClass, setCarClass] = useState(null);
-  const [bodyType, setBodyType] = useState(null);
-  const [licensePlate, setLicensePlate] = useState("");
-  const [VIN, setVIN] = useState("");
-  const [notes, setNotes] = useState("");
+  const [make, setMake] = useState(stageData.car?.make ?? null);
+  const [model, setModel] = useState(stageData.car?.model ?? null);
+  const [year, setYear] = useState(stageData.car?.year ?? null);
+  const [carClass, setCarClass] = useState(stageData.car?.carClass ?? null);
+  const [bodyType, setBodyType] = useState(stageData.car?.bodyType ?? null);
+  const [licensePlate, setLicensePlate] = useState(stageData.car?.licensePlate ?? "");
+  const [VIN, setVIN] = useState(stageData.car?.VIN ?? stageData.car?.vin ?? "");
+  const [notes, setNotes] = useState(stageData.car?.notes ?? "");
   const [isFromLoading, setIsFromLoading] = useState(false);
-  const [storeFileName, setStoreFileName] = useState(null);
+  const storeFileName = stageData.car?.storeFileName ?? null;
   const [selectModelMode, setSelectModelMode] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -58,9 +58,8 @@ const CarSelectStage = ({
       setCarClass(car.carClass ?? null);
       setBodyType(car.bodyType ?? null);
       setLicensePlate(car.licensePlate ?? "");
-      setVIN(car.VIN ?? "");
+      setVIN(car.VIN ?? car.vin ?? "");
       setNotes(car.notes ?? "");
-      setStoreFileName(car.storeFileName ?? null);
       setIsFromLoading(true);
       if (car.make) {
         setSelectModelMode(true);
@@ -71,15 +70,20 @@ const CarSelectStage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const car = { ...stageData.car, make, model, year: String(year ?? ''), carClass, bodyType, licensePlate, vin: VIN, notes, storeFileName };
+    setStageData(prev => JSON.stringify(prev.car) === JSON.stringify(car) ? prev : { ...prev, car });
+  }, [make, model, year, carClass, bodyType, licensePlate, VIN, notes, storeFileName, setStageData, stageData.car]);
   const handleClose = useCallback(() => {
     const data = {
+      ...stageData.car,
       make,
       model,
-      year,
+      year: String(year ?? ""),
       carClass,
       bodyType,
       licensePlate,
-      VIN,
+      vin: VIN,
       notes,
       storeFileName,
     };
@@ -98,6 +102,7 @@ const CarSelectStage = ({
     onMoveForward,
     setStageData,
     storeFileName,
+    stageData.car,
     year,
   ]);
 

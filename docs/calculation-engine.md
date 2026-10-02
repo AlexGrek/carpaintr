@@ -120,146 +120,106 @@ Set `unit` (e.g. `"л"`, `"мл"`) on rows that represent **materials** rather t
 
 ---
 
-## Evaluation Pipeline
+## Editable calculation document (Calc2)
 
-Implemented in [processor_evaluator.js](../carpaintr-front/src/calc/processor_evaluator.js) and called from [CarBodyMain.jsx](../carpaintr-front/src/components/calc/CarBodyMain.jsx).
+`CalcMain` owns a version-2 document and bounded undo history above all wizard
+stages. Components dispatch functional patches; table rendering has no state
+writes. Every cell editor commits valid input immediately and stores incomplete
+numeric text in `cellDrafts`. Stage tabs, Back/Accept and browser history therefore
+use the same cells. Invalid active drafts block document generation; saving still
+preserves drafts for recovery.
 
-```
-For each selected part:
-  │
-  ├─ [tableDataRepository] loaded? ──No──▶ fetch from API, wait for next render cycle
-  │
-  ├─ action selected? ──No──▶ show "Select an action to calculate" hint
-  │
-  └─ For each processor:
-       │
-       ├─ validate_requirements(proc, tdata)  ── missing table? ──▶ skip
-       │
-       ├─ is_supported_repair_type(proc, action) ──▶ skip if action not in proc.requiredRepairTypes
-       │
-       ├─ should_evaluate_processor(proc, stuff) ──▶ calls proc.shouldRun(); skip if false
-       │
-       └─ evaluate_processor(proc, stuff)
-            │
-            ├─ calls proc.run() → array of { name, evaluate, tooltip }
-            │
-            ├─ for each row where evaluate is non-empty:
-            │     estimation = eval(evaluate.replace(",", "."))
-            │
-            └─ returns { name, result: [{name, estimation, tooltip, …}], error }
-```
+The authoritative data consists of inputs, `generatedCalculations` (processor
+defaults), `cellOverrides[entityId][field] = {kind: "literal", value}`, lookup
+`inputOverrides`, saved rates/currency and source snapshots. `resolveDocument()`
+produces `calculations`, `totalTables`, `categoryTables`, `grandTotal` and
+`computedGrandTotal`. These resolved values supply screen views and outputs.
 
-### `eval()` and Why It Is Intentional
+### Processing and identities
 
-The `evaluate` field in each row is a JavaScript expression string authored by the admin in the processor script. It is evaluated with `eval()` so processors can express arbitrary formulae referencing the lookup table values:
+`processorContext.js` passes the actual year/model, paint, paint type, quality,
+damage, saved pricing defaults, lookup values and required files. `processPart()`
+isolates each processor's context, validates requirements and collects tables,
+logs and errors. Numeric expressions accept complete decimal-comma literals;
+other JavaScript expressions run unchanged. Nonfinite results are rejected.
 
-```js
-eval(item.evaluate.replace(",", "."))
-```
+The input fingerprint includes all context values and processor versions. A
+saved snapshot displays immediately; reopening does not replace it with current
+catalog values. The parts stage saves processor code, required files, lookup
+values and pricing preferences. Explicit **Refresh calculation defaults** adopts
+current source defaults and reconciles entities. Failed processors retain their
+last successful tables; errors remain visible. Request epochs reject older
+vehicle/refresh responses.
 
-The comma→period replacement handles European decimal notation in source data.
+The backend assigns processor identity from its catalog filename and a separate
+content hash version. Generator row clauses and all bundled processors emit persistent `key` fields.
+Legacy rows use source trace or original description keys. Table/row IDs are
+persisted and never follow edited labels or ordering. Unique matches recover
+previous IDs; ambiguous duplicate matches retain edited rows in an inactive
+archive for explicit restoration instead of transferring their edits.
 
----
+Removing a part archives its generated rows and input settings, excluding them
+from active totals and outputs. Reselecting/restoring the same catalog part
+restores its edits. Parts are unique by catalog name in the current selector;
+multiple independent instances of the same catalog part are not exposed.
 
-## Re-evaluation Logic
+### Editing, pricing and totals
 
-Re-evaluation is guarded by `lastEvaluatedRef` — a ref tracking `{ partName → lastAction }`:
+Detailed, collapsed and category views address the same row IDs. Name,
+estimation, unit, price, sum, category, ordering, tooltip and inclusion are
+editable. Part labels, table names, table/part/category totals and grand total
+have separate addressed overrides. Calculation-specific lookup edits run before
+processors and never change shared CSV files.
 
-- **Trigger:** `selectedItems`, `processors`, `company`, or `tableDataRepository` changes.
-- **Guard:** if `lastEvaluatedRef.current[partName] === currentAction`, skip — prevents overwriting manual overrides when an unrelated state change fires the effect.
-- **Reset:** when the action changes (e.g. user switches from `paint` to `repair` in the drawer), the stored action differs from the new one, so the part is re-evaluated fresh.
-- **Car change:** when `carClass` or `body` changes, `lastEvaluatedRef`, `tableDataRepository`, and `fetchingPartsRef` are all cleared so everything re-fetches from scratch.
+A literal price wins over processor defaults and labor rates. Otherwise explicit
+processor prices remain, labor uses table → part → base rate, and materials
+remain unpriced unless a material price exists. Editing a displayed unit does
+not change the row's original material/labor classification. Numeric zero and
+blank (`null`) are explicit edits; **Reset to default** removes the override.
+**Reset all edited cells** removes output-cell edits and drafts; lookup edits
+and rates have their own controls. Undo includes user edits and removals while
+excluding processing/cache/view/save metadata changes.
 
----
+Without a sum override, decimal coefficient arithmetic multiplies quantity and
+price and rounds to two currency places, half away from zero. Totals add the
+same effective amounts. A manual sum remains literal. Table totals feed part
+totals; part totals feed the grand total. Category totals independently group
+row amounts. Manual aggregates can disagree; computed values remain available
+and built-in exports show differences without inventing balancing rows.
 
-## Result Format
+### Save/load and outputs
 
-`evaluate_processor` returns:
+Local recovery and server loading use the same idempotent migration. Ambiguous
+legacy fields and unknown sums/totals are preserved as literals; known managed
+norm prices keep rate linkage. Opening a file never writes it to the server.
 
-```js
-{
-  name: "Processor display name",   // shown as table section header
-  result: [
-    {
-      name: "Work item name",        // substituted via applyRedefinitions (e.g. «Деталь» → actual part name)
-      estimation: 1.5,               // eval() result — labour hours or coefficient
-      tooltip: "source field name",  // shown on hover
-      price: undefined,              // filled by EvaluationResultsTable.updateSums()
-      sum: undefined,                // filled by EvaluationResultsTable.updateSums()
-    },
-    …
-  ],
-  text: "…",    // raw serialised form, used for error display
-  error: null,
-}
-```
+A single save coordinator above stages serializes saves. Acknowledgments patch
+only the filename and saved revision; edits made while saving remain current.
+An owner epoch rejects acknowledgments after another calculation is loaded.
+The Rust storage endpoint preserves additive V2 fields through serde flattening.
 
-The `calculations` object shape in the parent state:
+Print payloads include `calculation.calc`, `calc_by_category`, stable category
+keys with `category_labels`, `part_totals`, `part_labels`, `grand_total` and the
+saved `currency`. Rows preserve IDs, descriptions, categories, units, literal
+prices/sums, ordering and notes. Explicit exclusion removes a row; zero/blank
+values do not remove it. Built-in templates use saved currency with a legacy
+company fallback. Custom templates can read these additive fields.
 
-```js
-{
-  "Hood": [ processorResult1, processorResult2, … ],
-  "Front Bumper": [ … ],
-}
-```
+Excel uses the same resolved snapshot, with category subtotals and grand total,
+plus a part-total sheet. Its columns are Category, Part, Work/Material,
+Norm-hours, Unit, Price, Sum, Tooltip and Ordering. Order number/date and document
+notes belong to the saved calculation.
 
----
-
-## Manual Overrides (EvaluationResultsTable)
-
-[EvaluationResultsTable.jsx](../carpaintr-front/src/components/calc/EvaluationResultsTable.jsx) renders each processor result as an interactive table. Every cell in the `Estimation` and `Price` columns is wrapped in `InlineEditWrapper` — the operator can click any cell and type a new value.
-
-- Changing `estimation` → `sum` updates in real time.
-- Changing `price` → `sum` updates in real time.
-- `Total` row shows the sum across all rows for that processor.
-- `setData` propagates changes upward via `setCalculations(prev => ({ ...prev, [partName]: newData }))`.
-
-### Override Persistence
-
-**Overrides survive across:**
-- Unrelated state changes (scrolling, adding other parts, diagram interactions)
-- Stage navigation (returning to the Body Parts stage preserves edits)
-- Component remounts
-
-**Mechanism:** The `lastEvaluatedRef` tracks `{ partName → action }` pairs. Re-evaluation only fires when the `(part, action)` pair changes. Additionally, when `CarBodyMain` mounts with pre-existing `calculations` in props, it seeds `lastEvaluatedRef` to mark those parts as already-evaluated, preventing re-evaluation and preserving operator overrides across stage transitions.
-
-**Overrides are cleared when:**
-- The repair action for a part changes in the part drawer (user saves → re-evaluation from scratch)
-- Car class or body type changes (entire component resets)
-- User explicitly navigates backward to an earlier stage and then forward again (fresh calculation)
-
-This design prioritizes respecting operator judgement: once a calculation is edited, it stays edited unless the part's action explicitly changes or the car selection changes.
-
----
-
-## Grouping Views
-
-[TableFinalStage.jsx](../carpaintr-front/src/components/calc/TableFinalStage.jsx) offers three ways to view the same `calculations` object, all built by pure functions in [collapseTables.js](../carpaintr-front/src/calc/collapseTables.js):
-
-| Mode | Function | Shape |
-|---|---|---|
-| Detailed | (none — raw `calculations[part]`) | One `EvaluationResultsTable` per processor, per part |
-| Collapsed | `buildTotalTables` → `collapsePartTables` | One merged table per part: every processor's rows flattened, sorted by `orderingNum`, materials (`unit` set) pushed after labour |
-| By category | `buildCategoryTables` | One merged table per work category (`arm`/`body`/`paint`/`extra`/`uncategorized`), rows from every part stamped with `row.part`, sorted by category then `orderingNum`, materials last |
-
-`buildCategoryTables` is also what the Excel export and the per-category work order template consume — it always groups by category regardless of which mode is selected on screen, so exported documents don't depend on the operator's last UI toggle.
-
-## Output: PDF, Per-Category Work Orders, Excel
-
-The print payload built in [PrintCalculationDrawer.jsx](../carpaintr-front/src/components/PrintCalculationDrawer.jsx) sends **both** groupings to the backend on every request:
-
-- `calculation.calc` — by-part (raw or collapsed, depending on the on-screen toggle), consumed by [`calculation_ua.html`](../data/common/doc_templates/calculation_ua.html).
-- `calculation.calc_by_category` — always by-category (via `buildCategoryTables` + `totalTablesForTemplate`, with category keys localized to their display strings), consumed by [`work_order_category_ua.html`](../data/common/doc_templates/work_order_category_ua.html). Each row carries `item.part`, so the template can show which part a line belongs to even though parts are no longer the grouping key. The template inserts a `page-break-after` between categories, so printing it yields one physical sheet per trade — e.g. the painter's sheet contains only `paint`-category rows.
-
-Both templates are discovered automatically by `GET /api/v1/user/list_templates` (it lists every `.html` file in `doc_templates/`, user files shadowing common ones) — adding a new template requires no backend change.
-
-**Excel export** ([excelExport.js](../carpaintr-front/src/calc/excelExport.js), `downloadCalculationExcel`) is built client-side, not on the backend: the Rust backend never computes a calculation, it only proxies whatever JSON blob the browser sends it (see `GeneratePdfRequest` in `output_endpoints.rs`), so there is nothing for a server-side exporter to recompute from. The sheet is flat and by-category (Category | Part | Work / Material | Norm-hours | Unit | Price | Sum), one header row, autofilter, per-category subtotals and a grand total — deliberately no merged cells, since those defeat sorting/pivoting in a real spreadsheet tool.
+Regression coverage lives in `calculationDocument.test.js`,
+`calculationPersistence.test.js`, `processingPipeline.test.js`, output/workbook
+tests, `test_calculation_document.py`, actual Jinja rendering tests and
+`calculation-document.cy.js` (desktop/mobile + delayed save).
 
 ---
 
 ## Creating Processors — The Processor Generator
 
-Processors are authored via the **Create Processor** page (`/create-proc` → [CreateProcPage.jsx](../carpaintr-front/src/components/pages/CreateProcPage.jsx)), which renders the [ProcessorGenerator](../carpaintr-front/src/components/editor/ProcessGenerator.jsx) component.
+Processors are authored via the **Create Processor** page (`/app/create-proc` → [CreateProcPage.jsx](../carpaintr-front/src/components/pages/CreateProcPage.jsx)), which renders the [ProcessorGenerator](../carpaintr-front/src/components/editor/ProcessGenerator.jsx) component.
 
 This is the primary tool for admins and editors to add new calculation rules without touching raw JavaScript files.
 
@@ -278,7 +238,7 @@ Stage 1: Form  →  "Generate Code"  →  Stage 2: Code Review  →  "Upload to 
 | Ordering Number | `orderingNum` | Controls sort order when multiple processors match |
 | Required Repair Types | `requiredRepairTypes` | Tag picker populated from `/api/v1/user/list_all_repair_types` |
 | Required Tables | `requiredTables` | Autocompleted from `/api/v1/editor/all_tables_headers` |
-| Required Files | `requiredFiles` | (Currently unused) |
+| Required Files | `requiredFiles` | Loaded and snapshotted before processing |
 | Condition | `shouldRun` body | Optional JS block; defaults to `return true;` |
 | Row Clause Section | `run` body rows | One editor panel per output row (see below) |
 
@@ -304,9 +264,9 @@ The **Evaluate** field has a `TreePicker` populated from the table headers API. 
     run: (x, carPart, tableData, repairAction, files, carClass, carBodyType, carYear, carModel, paint, pricing) => {
         var output = [];
         const { mkRow } = x;
-        output.push(mkRow({name: "…", evaluate: tableData["T"]["field"], tooltip: "…"}));
+        output.push(mkRow({key: "stable-clause-key", name: "…", evaluate: tableData["T"]["field"], tooltip: "…"}));
         if (repairAction == "paint_one_side") {
-            output.push(mkRow({name: "…", evaluate: tableData["T"]["field2"], tooltip: "…"}));
+            output.push(mkRow({key: "stable-clause-key", name: "…", evaluate: tableData["T"]["field2"], tooltip: "…"}));
         }
         return output;
     },
@@ -336,26 +296,14 @@ The **Catalog** button (magnifier icon) opens a `PartsCatalog` component alongsi
 
 ## Data Flow Summary
 
+```text
+CalcMain document/reducer
+  → saved inputs + source snapshots + lookup overrides
+  → processorContext → processPart → stable entity reconciliation
+  → resolveDocument (cell overrides, rate precedence, decimal amounts, totals)
+  → detailed / collapsed / category views
+  → local draft + API save snapshot + HTML/PDF payload + Excel
 ```
-BodyPartsStage
-  │  props: carClass, body, calculations, setCalculations
-  │
-  └─ CarBodyMain
-       │
-       ├─ fetches: processors_bundle, carparts, carparts_t2
-       ├─ fetches: lookup_all_tables (per part, on demand)
-       │
-       ├─ on (selectedItems | processors | company | tableDataRepository) change:
-       │     → evaluate processors → setCalculations(prev => { ...prev, [part]: results })
-       │
-       └─ renders:
-            ├─ CarDiagram  (select/deselect parts)
-            ├─ Selected Parts table  (click row → open drawer)
-            ├─ Part Details Drawer  (set action, damage level, replace flag)
-            └─ Calculations section
-                 └─ per-part EvaluationResultsTable  (editable by operator)
 
-BodyPartsStage.handleClose()
-  └─ setStageData({ parts: { selectedParts, calculations, … } })
-       └─ TableFinalStage renders EvaluationResultsTable for all parts (final review + print)
-```
+See [the refactoring plan](calc2-refactoring-plan.md) for the edit contract and
+acceptance scenarios.

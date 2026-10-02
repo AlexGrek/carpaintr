@@ -9,8 +9,8 @@
         const { mkRow, traceRowToTable } = x;
 
         // - row clause section -
-        output.push(mkRow({name: "Обробка оловом зварювальних швів «деталь»", evaluate: tableData["Обробка зварювальних швів"]["н.г. обробка оловом"], trace: traceRowToTable("Обробка зварювальних швів", "н.г. обробка оловом"), tooltip: ""}));
-        output.push(mkRow({name: "Обробка епоксидною шпаклівкою зварювальних швів «деталь»", evaluate: tableData["Обробка зварювальних швів"]["н.г. обробка епоксидною шпаклівкою"], trace: traceRowToTable("Обробка зварювальних швів", "н.г. обробка епоксидною шпаклівкою"), tooltip: ""}));
+        output.push(mkRow({key: "clause-5ffc7ab8051c28d1", name: "Обробка оловом зварювальних швів «деталь»", evaluate: tableData["Обробка зварювальних швів"]["н.г. обробка оловом"], trace: traceRowToTable("Обробка зварювальних швів", "н.г. обробка оловом"), tooltip: ""}));
+        output.push(mkRow({key: "clause-6073f421dadefb27", name: "Обробка епоксидною шпаклівкою зварювальних швів «деталь»", evaluate: tableData["Обробка зварювальних швів"]["н.г. обробка епоксидною шпаклівкою"], trace: traceRowToTable("Обробка зварювальних швів", "н.г. обробка епоксидною шпаклівкою"), tooltip: ""}));
 
         // - final section -
         return output;

@@ -19,7 +19,7 @@
             col = "Зазори ремонт";
         }
 
-        output.push(mkRow({name: "Регулювання зазорів «деталь»", evaluate: tableData["Работы регулировка зазоров"][col], trace: traceRowToTable("Работы регулировка зазоров", col), tooltip: ""}));
+        output.push(mkRow({key: "clause-1c457a5b853ea0ad", name: "Регулювання зазорів «деталь»", evaluate: tableData["Работы регулировка зазоров"][col], trace: traceRowToTable("Работы регулировка зазоров", col), tooltip: ""}));
 
         // - final section -
         return output;

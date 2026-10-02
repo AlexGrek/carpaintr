@@ -1,5 +1,8 @@
 use std::{
-    ffi::OsStr, io, path::{Path, PathBuf}, sync::{Arc, LazyLock}
+    ffi::OsStr,
+    io,
+    path::{Path, PathBuf},
+    sync::{Arc, LazyLock},
 };
 
 use axum::{
@@ -47,7 +50,16 @@ where
             .and_then(|name| name.to_str())
             .unwrap_or("unknown.js");
 
-        bundled.push_str(&format!("  // {}\n  ({content}),\n", filename));
+        let identity = serde_json::to_string(filename)?;
+        // Content version is separate from the stable source filename identity.
+        let digest = content.bytes().fold(0xcbf29ce484222325u64, |hash, byte| {
+            (hash ^ u64::from(byte)).wrapping_mul(0x100000001b3)
+        });
+        let version = serde_json::to_string(&format!("{:016x}", digest))?;
+        bundled.push_str(&format!(
+            "  // {}\n  Object.assign(({}), {{processorId: {}, version: {}}}),\n",
+            filename, content, identity, version
+        ));
     }
 
     bundled.push_str("];\n");
@@ -59,7 +71,8 @@ async fn bundle_plugins_for_user(
     data_dir: &PathBuf,
     _cache: &DataStorageCache, // TODO: use cache
 ) -> Result<String, AppError> {
-    let all_js_files = utils::all_files_with_extension(data_dir, user_email, PROCS, &JS_EXT).await?;
+    let all_js_files =
+        utils::all_files_with_extension(data_dir, user_email, PROCS, &JS_EXT).await?;
     bundle_plugins_as_array(all_js_files).await
 }
 

@@ -50,7 +50,8 @@ describe("Calc2 named labor rates", () => {
       // Persist the exact calculation JSON through the save API.
       cy.intercept("POST", "/api/v1/user/calculationstore", (request) => {
         expect(request.body.normRates.additional[0].amount).to.eq(300);
-        expect(request.body.normRateOverrides.Hood.tables.Assembly).to.eq("arm");
+        const assemblyId = request.body.calculations.Hood.find(table => table.name === "Assembly").id;
+        expect(request.body.normRateOverrides.Hood.tables[assemblyId]).to.eq("arm");
         expect(request.body.calculations.Hood[0].result[0].price).to.eq(300);
         request.reply({ saved_file_path: "rate-test.json" });
       }).as("saveRates");

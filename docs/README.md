@@ -6,6 +6,8 @@ Welcome to the Carpaintr (Autolab) documentation. This directory contains compre
 
 ### Core Guides
 
+- **[Calc2 Refactoring Plan](calc2-refactoring-plan.md)** - Persistent cell edits, processor reconciliation, stage state, save/load, and document output
+
 - **[Development Guide](development.md)** 🔧
   - Local development setup
   - Project structure and code organization

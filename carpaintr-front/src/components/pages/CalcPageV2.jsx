@@ -35,7 +35,7 @@ const CalcPage = () => {
         const shouldLeave = confirmNavigation();
         if (!shouldLeave) {
           // Push the current state back to prevent navigation
-          window.history.pushState(null, "", location.pathname);
+          window.history.pushState(null, "", location.pathname + location.search);
         }
       }
     };
@@ -45,13 +45,15 @@ const CalcPage = () => {
     window.addEventListener("popstate", handlePopState);
 
     // Push initial state to handle back button
-    window.history.pushState(null, "", location.pathname);
+    window.history.pushState(null, "", location.pathname + location.search);
 
     // Cleanup
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("popstate", handlePopState);
     };
+  // Preserve the current stage query; this listener follows page navigation only.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasChanges, confirmNavigation, location.pathname]);
 
   // Custom navigation function that can be passed to child components

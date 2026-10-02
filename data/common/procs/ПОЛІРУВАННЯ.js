@@ -8,7 +8,7 @@
         var output = [];
         const { mkRow, traceRowToTable } = x;
 
-        output.push(mkRow({name: "Полірування «деталь»", evaluate: tableData["Таблица 1"]["н.ч. полировка"], trace: traceRowToTable("Таблица 1", "н.ч. полировка"), tooltip: ""}));
+        output.push(mkRow({key: "clause-2ae00c495a1463a8", name: "Полірування «деталь»", evaluate: tableData["Таблица 1"]["н.ч. полировка"], trace: traceRowToTable("Таблица 1", "н.ч. полировка"), tooltip: ""}));
 
         // - final section -
         return output;

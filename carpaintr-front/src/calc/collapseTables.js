@@ -22,8 +22,12 @@ export function isValidTableEntry(entry) {
  * @returns {number}
  */
 export function toRealNumber(value) {
-  const n = parseFloat(value);
-  return Number.isFinite(n) ? n : 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const literal = value.trim().replace(",", ".");
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(literal)) return 0;
+  const number = Number(literal);
+  return Number.isFinite(number) ? number : 0;
 }
 
 /**
@@ -112,22 +116,22 @@ export function isUnfilledRow(row) {
 }
 
 /**
- * Compute a row's sum (estimation × price, with `basePrice` as the price
- * fallback). Unfilled/empty numeric fields count as zero.
+ * Read a resolved row amount. An explicit sum, including zero or blank, wins.
+ * Only legacy rows without a sum use estimation × price.
  * @param {*} row
  * @param {number} [basePrice=1]
  * @returns {number}
  */
 export function rowSum(row, basePrice = 1) {
+  if (row?.excluded === true) return 0;
+  if (row && Object.hasOwn(row, "sum")) return toRealNumber(row.sum);
   const price = row?.price == null ? basePrice : row.price;
   return toRealNumber(row?.estimation) * toRealNumber(price);
 }
 
 /**
- * A row is excluded (greyed out, dropped from totals and from the generated
- * document) when its sum is zero — whether because it is unfilled or because
- * its estimation/price evaluate to zero. Filling a value so the sum is no
- * longer zero re-activates the row.
+ * Whether a row amount is zero. This is a display hint only; inclusion in
+ * totals and generated documents is controlled by the explicit excluded flag.
  * @param {*} row
  * @param {number} [basePrice=1]
  * @returns {boolean}
@@ -147,6 +151,7 @@ function rowTotal(row, basePrice = 1) {
  * @returns {boolean}
  */
 export function isMaterialRow(row) {
+  if (row?.kind != null) return row.kind === "material";
   return typeof row?.unit === "string" && row.unit.trim() !== "";
 }
 
@@ -179,10 +184,12 @@ export function collapsePartTables(tables, basePrice = 1) {
   }
 
   const result = sortWorkRows(
-    tables.filter(isValidTableEntry).flatMap((entry) => entry.result),
+    tables.filter(isValidTableEntry).flatMap((entry) => entry.result.filter((row) => row?.excluded !== true)),
   );
 
-  const total = result.reduce((acc, row) => acc + rowTotal(row, basePrice), 0);
+  const total = tables.filter(isValidTableEntry).reduce((acc, table) =>
+    acc + (table.total != null || table._explicitTotal ? toRealNumber(table.total) :
+      table.result.reduce((sum, row) => sum + rowTotal(row, basePrice), 0)), 0);
 
   return { result, total };
 }
@@ -210,9 +217,11 @@ export function buildCategoryTables(calculations, basePrice = 1) {
     if (!Array.isArray(tables)) continue;
     for (const entry of tables.filter(isValidTableEntry)) {
       for (const row of entry.result) {
-        const category = normalizeCategory(row?.category);
+        if (row?.excluded === true) continue;
+        const category = row?._overrides?.includes("category")
+          ? String(row.category ?? "") : normalizeCategory(row?.category);
         if (!grouped.has(category)) grouped.set(category, []);
-        grouped.get(category).push({ ...row, part: partName });
+        grouped.get(category).push({ ...row, part: row.part ?? partName });
       }
     }
   }
@@ -269,8 +278,8 @@ export function totalTablesForTemplate(totalTables) {
 
 /**
  * Normalize a single table entry so every numeric field is a real number:
- * each row's `estimation`/`price`/`sum` and the table `total`. Unfilled cells
- * (null/undefined/empty) become zeroes. Non-table entries (e.g. error strings)
+ * each row's `estimation`/`price`/`sum` and the table `total`. Explicit blanks
+ * and zeroes remain present; missing legacy amounts get a fallback. Non-table entries (e.g. error strings)
  * are returned unchanged.
  * @param {*} table
  * @param {number} [basePrice=1]
@@ -281,19 +290,24 @@ export function sanitizeTableEntry(table, basePrice = 1) {
     return table;
   }
 
-  let total = 0;
-  const result = table.result
+  // Preserve authored blanks and zero amounts. Exclusion is an explicit choice,
+  // never inferred from a price, estimate, or amount.
+  const result = sortWorkRows(table.result)
+    .filter((row) => row?.excluded !== true)
     .map((row) => {
-      const estimation = toRealNumber(row.estimation);
-      const price = row.price == null ? basePrice : toRealNumber(row.price);
-      const sum = estimation * price;
+      const estimation = row.estimation == null || row.estimation === ""
+        ? row.estimation ?? "" : toRealNumber(row.estimation);
+      const price = row.price == null
+        ? row._explicitSum || row._overrides?.includes("price") ? "" : basePrice
+        : row.price === "" ? "" : toRealNumber(row.price);
+      const sum = Object.hasOwn(row, "sum")
+        ? row.sum == null || row.sum === "" ? "" : toRealNumber(row.sum)
+        : rowSum(row, basePrice);
       return { ...row, estimation, price, sum };
-    })
-    // Zero-sum rows (unfilled or evaluating to zero) are not rendered in the
-    // generated document.
-    .filter((row) => row.sum !== 0);
-
-  total = result.reduce((acc, row) => acc + row.sum, 0);
+    });
+  const total = table.total != null || table._explicitTotal
+    ? table.total == null || table.total === "" ? "" : toRealNumber(table.total)
+    : result.reduce((acc, row) => acc + rowSum(row, basePrice), 0);
 
   return { ...table, result, total };
 }

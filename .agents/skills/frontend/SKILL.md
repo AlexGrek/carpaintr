@@ -568,3 +568,18 @@ This skill engages whenever you're:
 **Last Updated:** 2026-03-25
 **Scope:** Autolab Frontend (carpaintr-front)
 **Expertise Level:** Senior Frontend Engineer
+
+## Calc2 editable document (V2)
+
+Calc2 now owns one versioned document in `CalcMain` above stages. See
+`docs/calculation-engine.md` for the implemented contract; older synchronization
+and `lastEvaluatedRef` descriptions below/in prior context are superseded.
+`generatedCalculations` stores defaults, `cellOverrides`/`cellDrafts` store
+addressed user values, and `resolveDocument()` supplies all views/outputs.
+Snapshots include sources, processor code/files, pricing and saved currency.
+Processor reruns reconcile IDs and preserve edits; removals archive inactive
+rows. SaveCoordinator serializes saves and applies metadata acknowledgments
+only. Rust serde flattening preserves V2 fields, and `car.year` stays a string.
+Tests: calculationDocument/Persistence/processingPipeline/output Node suites,
+API `test_calculation_document.py`, actual Jinja rendering, and Cypress
+`calculation-document.cy.js` plus table-value-propagation/norm-rates.
