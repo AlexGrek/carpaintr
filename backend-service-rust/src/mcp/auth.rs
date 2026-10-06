@@ -111,6 +111,39 @@ fn valid_redirect(value: &str) -> bool {
         })
         .unwrap_or(false)
 }
+fn loopback_redirect_without_port(value: &str) -> Option<String> {
+    if !valid_redirect(value) {
+        return None;
+    }
+    let url = url::Url::parse(value).ok()?;
+    let host = url.host_str()?;
+    if url.scheme() != "http" || !matches!(host, "localhost" | "127.0.0.1" | "[::1]") {
+        return None;
+    }
+    // Preserve the original host, path and query spelling. RFC 8252 permits
+    // only the port to differ, not URL normalization or callback host aliases.
+    let remainder = value.strip_prefix("http://")?;
+    let authority_end = remainder.find(['/', '?', '#']).unwrap_or(remainder.len());
+    let authority = &remainder[..authority_end];
+    if authority != host && !authority.strip_prefix(host)?.starts_with(':') {
+        return None;
+    }
+    Some(format!("http://{host}{}", &remainder[authority_end..]))
+}
+fn redirect_matches(registered: &str, requested: &str) -> bool {
+    if registered == requested {
+        return true;
+    }
+    // Native apps obtain an available loopback port when starting OAuth.
+    // Keep the exact requested URI on the code for token-exchange validation.
+    match (
+        loopback_redirect_without_port(registered),
+        loopback_redirect_without_port(requested),
+    ) {
+        (Some(registered), Some(requested)) => registered == requested,
+        _ => false,
+    }
+}
 fn safe_public_ip(ip: std::net::IpAddr) -> bool {
     match ip {
         std::net::IpAddr::V4(v) => {
@@ -393,7 +426,10 @@ pub async fn authorize(
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
         || query.resource != state.mcp.resource()
-        || !client.redirect_uris.contains(&query.redirect_uri)
+        || !client
+            .redirect_uris
+            .iter()
+            .any(|registered| redirect_matches(registered, &query.redirect_uri))
     {
         return Err(bad("Invalid authorization request"));
     }
@@ -811,4 +847,156 @@ pub async fn revoke_connection(
     connection.revoked = true;
     put(&state, &format!("connection:{id}"), &connection)?;
     Ok(Json(json!({"revoked":true})))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn native_loopback_callbacks_allow_ephemeral_ports() {
+        for host in ["127.0.0.1", "localhost", "[::1]"] {
+            let registered = format!("http://{host}/callback");
+            for port in [1, 59868, 65535] {
+                assert!(redirect_matches(
+                    &registered,
+                    &format!("http://{host}:{port}/callback")
+                ));
+            }
+            assert!(redirect_matches(
+                &format!("http://{host}:19000/callback?client=desktop"),
+                &format!("http://{host}:59868/callback?client=desktop")
+            ));
+        }
+    }
+
+    #[test]
+    fn port_exception_keeps_other_callback_components_exact() {
+        let registered = "http://127.0.0.1/callback?client=desktop";
+        for requested in [
+            "http://localhost:59868/callback?client=desktop",
+            "http://[::1]:59868/callback?client=desktop",
+            "http://127.0.0.2:59868/callback?client=desktop",
+            "http://127.0.0.1.evil.example:59868/callback?client=desktop",
+            "http://127.0.0.1:59868/other?client=desktop",
+            "http://127.0.0.1:59868/x/../callback?client=desktop",
+            "http://127.0.0.1:59868/%63allback?client=desktop",
+            "http://127.0.0.1:59868/callback/?client=desktop",
+            "http://127.0.0.1:59868/callback?client=other",
+            "http://127.0.0.1:59868/callback?client=desktop#fragment",
+            "http://user@127.0.0.1:59868/callback?client=desktop",
+            "https://127.0.0.1:59868/callback?client=desktop",
+        ] {
+            assert!(!redirect_matches(registered, requested), "{requested}");
+        }
+        for registered in [
+            "https://client.example/callback",
+            "https://127.0.0.1/callback",
+        ] {
+            assert!(redirect_matches(registered, registered));
+            let mut requested = url::Url::parse(registered).unwrap();
+            requested.set_port(Some(59868)).unwrap();
+            assert!(!redirect_matches(registered, requested.as_str()));
+        }
+    }
+
+    #[tokio::test]
+    async fn metadata_client_loopback_oauth_preserves_callback_and_pkce_binding() {
+        let (_dir, state) = super::super::test_state();
+        let client_id = "https://chatgpt.com/oauth/codex/client.json";
+        let client = parse_client(
+            json!({"client_name":"Codex","redirect_uris":["http://127.0.0.1/callback","http://localhost/callback"],"token_endpoint_auth_method":"none"}),
+            client_id.into(),
+            None,
+        )
+        .unwrap();
+        // Cache the published metadata shape so the test needs no external DNS.
+        put(&state, &format!("client:{client_id}"), &client).unwrap();
+        let verifier = "x".repeat(64);
+        let redirect_uri = "http://127.0.0.1:59868/callback";
+        let authorization = authorize(
+            State(state.clone()),
+            axum::extract::Query(Authorization {
+                client_id: client_id.into(),
+                redirect_uri: redirect_uri.into(),
+                response_type: "code".into(),
+                code_challenge: digest(verifier.as_bytes()),
+                code_challenge_method: "S256".into(),
+                state: Some("desktop-state".into()),
+                scope: Some("company:read".into()),
+                resource: state.mcp.resource(),
+            }),
+        )
+        .await
+        .unwrap()
+        .into_response();
+        assert_eq!(authorization.status(), StatusCode::SEE_OTHER);
+        let location =
+            url::Url::parse(authorization.headers()[header::LOCATION].to_str().unwrap()).unwrap();
+        assert_eq!(location.path(), "/app/mcp/authorize");
+        let pending_id = location
+            .query_pairs()
+            .find(|(key, _)| key == "request")
+            .unwrap()
+            .1
+            .into_owned();
+        let Json(consented) = consent(
+            AuthenticatedUser("mcp-test@example.com".into()),
+            State(state.clone()),
+            Json(json!({"request":pending_id,"decision":"approve"})),
+        )
+        .await
+        .unwrap();
+        let callback = url::Url::parse(consented["redirect"].as_str().unwrap()).unwrap();
+        assert_eq!(callback.port(), Some(59868));
+        assert_eq!(callback.path(), "/callback");
+        assert!(callback
+            .query_pairs()
+            .any(|(key, value)| key == "state" && value == "desktop-state"));
+        let code = callback
+            .query_pairs()
+            .find(|(key, _)| key == "code")
+            .unwrap()
+            .1
+            .into_owned();
+        let request = |redirect: &str, verifier: &str| TokenRequest {
+            grant_type: "authorization_code".into(),
+            code: Some(code.clone()),
+            code_verifier: Some(verifier.into()),
+            redirect_uri: Some(redirect.into()),
+            resource: Some(state.mcp.resource()),
+            refresh_token: None,
+            client_id: Some(client_id.into()),
+            client_secret: None,
+        };
+        assert!(token_inner(
+            &state,
+            axum::http::HeaderMap::new(),
+            request("http://127.0.0.1:59869/callback", &verifier)
+        )
+        .await
+        .is_err());
+        assert!(token_inner(
+            &state,
+            axum::http::HeaderMap::new(),
+            request(redirect_uri, &"y".repeat(64))
+        )
+        .await
+        .is_err());
+        let tokens = token_inner(
+            &state,
+            axum::http::HeaderMap::new(),
+            request(redirect_uri, &verifier),
+        )
+        .await
+        .unwrap();
+        assert!(tokens["access_token"].is_string());
+        assert!(token_inner(
+            &state,
+            axum::http::HeaderMap::new(),
+            request(redirect_uri, &verifier)
+        )
+        .await
+        .is_err());
+    }
 }

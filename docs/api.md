@@ -985,7 +985,10 @@ Public OAuth endpoints: discovery at `/.well-known/oauth-protected-resource/mcp`
 and `/.well-known/oauth-authorization-server`; JSON dynamic registration at
 `POST /oauth/register` (201); redirecting `GET /oauth/authorize`; form-encoded
 `POST /oauth/token` and `POST /oauth/revoke`. PKCE S256 and the configured `/mcp`
-resource indicator are required.
+resource indicator are required. Registered HTTP loopback callbacks may select
+an ephemeral port (RFC 8252); host, path and query must still match. HTTPS
+callbacks match exactly. Token exchange requires the exact callback URI used
+in the authorization request, including its selected port.
 
 | Environment variable | Default | Purpose |
 |---|---|---|

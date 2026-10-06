@@ -130,8 +130,12 @@ only as SHA-256 hashes, bound to the account's UUID and MCP resource URL.
 `client_secret_basic`. HTTPS client metadata document URLs support public clients
 (`token_endpoint_auth_method: "none"`); fetching rejects private network
 addresses, pins validated DNS results, and disables redirects. Callback URLs must
-match registration exactly, use HTTPS (HTTP is allowed on loopback), and have no
-fragment or embedded credentials. Connections and keys are separately revocable.
+match registration exactly, except HTTP loopback callbacks may use a different
+port as required by RFC 8252 for native clients (including ChatGPT/Codex).
+Callback host, path and query still match exactly; HTTPS callbacks require an
+exact match including the port. The code and token exchange remain bound to the
+exact callback selected during authorization. Callbacks have no fragment or
+embedded credentials. Connections and keys are separately revocable.
 
 | Scope | Tools |
 |---|---|
