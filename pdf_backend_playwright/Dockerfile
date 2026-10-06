@@ -61,10 +61,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 EXPOSE 5000
 
-# Use gunicorn with threading (Playwright browser is shared via BrowserManager)
+# A single request thread owns the synchronous Playwright browser. Multiple
+# workers duplicate Chromium and multiple threads violate Playwright affinity.
+# Scale with pod replicas when more rendering concurrency is needed.
 CMD ["gunicorn", \
-    "--workers", "2", \
-    "--threads", "4", \
+    "--workers", "1", \
+    "--threads", "1", \
     "--worker-class", "gthread", \
     "--bind", "0.0.0.0:5000", \
     "--timeout", "120", \

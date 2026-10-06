@@ -23,6 +23,11 @@ The service includes an intelligent `BrowserManager` that:
 
 This design saves memory when the service is idle while maintaining fast response times during active use.
 
+The container runs one Gunicorn worker with one request thread so the shared
+synchronous Playwright browser stays on its owning thread and Chromium is not
+duplicated within a pod. Increase pod replicas for parallel rendering. Dev
+allows 512Mi memory and 500m CPU for Chromium startup headroom.
+
 ### Configuration
 
 Environment variables:

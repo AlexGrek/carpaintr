@@ -6,7 +6,7 @@ Tracked, reproducible problems that are understood but not yet fixed. Each entry
 
 ## 2026-08-07 — `autolab-pdfgen` (Playwright) can hang for minutes and crash its worker
 
-**Status:** Open, not yet fixed. Real generation works most of the time; this is an intermittent reliability bug, not a total outage.
+**Status:** Partially mitigated on 2026-10-06. Live MCP testing reproduced a stalled second Chromium launch at the dev container's 256Mi memory ceiling after the first PDF succeeded. The PDF container now uses one Gunicorn worker with one request thread (one Chromium instance, consistent Playwright thread ownership); dev limits are 500m CPU / 512Mi memory. The remaining idle lifecycle/cold-start investigation below is still open.
 
 **Where:** `pdf_backend_playwright/` (deployed as the `autolab-pdfgen` pod, e.g. `autolab-dev` namespace). Backend endpoints affected: `POST /api/v1/user/generate_html_table` and `POST /api/v1/user/generate_pdf_table` on `backend-service-rust`, which proxy to `pdf_backend_playwright`'s `/generate/html` and `/generate/pdf`.
 
