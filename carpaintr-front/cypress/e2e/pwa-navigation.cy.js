@@ -9,6 +9,13 @@ const visitControlledApp = () => {
 };
 
 describe('Production PWA navigation boundaries', () => {
+  before(function () {
+    // Ordinary Vite dev runs have no production worker. Keep this regression
+    // in the full suite, but exercise it only when a built worker is served.
+    cy.request({ url: '/sw.js', failOnStatusCode: false }).then(response => {
+      if (!response.headers['content-type']?.includes('javascript')) this.skip();
+    });
+  });
   it('lets OAuth redirect to the consent screen while the service worker controls the page', () => {
     cy.intercept('GET', '/oauth/authorize*', { statusCode: 303, headers: { location: '/app/mcp/authorize?request=pwa-test' } }).as('authorize');
     cy.intercept('POST', '/api/v1/mcp/authorize', {

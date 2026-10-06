@@ -68,3 +68,9 @@ The production browser regression in
 navigation, server handling of MCP/API/discovery/public PDF routes, and continued
 app-shell caching for application routes. Existing browser sessions receive the
 updated service worker when they reload the app.
+
+Validated on dev after deployment (Helm revision 14): the same persisted Chrome
+profile that reproduced both 404s reached OAuth sign-in/consent and the exact
+reported public PDF page after its worker updated. The unauthenticated PDF
+attachment download completed. Six production PWA browser checks and the
+server-side PKCE/loopback OAuth flow passed; authentication secrets were unchanged.
