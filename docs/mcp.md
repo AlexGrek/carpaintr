@@ -182,6 +182,19 @@ chart uses `publicBaseUrl`, defaulting to `https://<ingress.host>`. Its ingress
 must route `/mcp`, `/oauth/*`, `/.well-known/*`, `/public/pdfs/*`, `/api/*` and
 `/app/*` to Autolab. Disable intermediary caching of public PDFs.
 
+The PWA's cached app-shell fallback is limited to `/` and `/app/*`. OAuth,
+MCP, discovery, API and public PDF navigations reach the server. An unrestricted
+fallback can display React's 404 page even when the authorization/PDF endpoint
+returns a valid response; browser tests must include an active service worker.
+The production regression can be run after building the frontend and starting
+`npm run preview -- --port 13000`:
+
+```bash
+cd carpaintr-front
+npx cypress run --config baseUrl=http://localhost:13000,video=false --spec cypress/e2e/pwa-navigation.cy.js
+```
+
+
 `MCP_ALLOWED_ORIGINS` is an optional comma-separated list of additional exact
 origins permitted by MCP transport validation (Helm: `mcpAllowedOrigins`). The
 configured public origin is always allowed. Requests without an Origin header

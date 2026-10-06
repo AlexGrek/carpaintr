@@ -603,3 +603,12 @@ Vite proxies OAuth/discovery/MCP/PDF
 routes; Docker copies shared modules to both build stages.
 Checks: `cargo test mcp::`, shared/frontend Node suites, API `test_mcp.py`, and
 Cypress `mcp.cy.js`, `calculation-document.cy.js`, `norm-rates.cy.js`.
+
+
+## PWA server route boundaries
+
+`vite.config.js` limits Workbox `navigateFallbackAllowlist` to `/` and `/app/*`.
+OAuth, MCP, discovery, API and public PDF routes must reach the server even when
+a service worker controls the browser. Test a production build via Vite preview
+with `cypress/e2e/pwa-navigation.cy.js`; HTTP-only and Vite-dev checks miss an
+installed worker serving the cached React 404 page for server-owned URLs.

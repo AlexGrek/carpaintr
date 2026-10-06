@@ -51,3 +51,20 @@ When a request arrives after the browser has been idle-closed, `BrowserManager.g
 - Re-run phase 3 of the `testing` skill repeatedly (including with an idle gap >180s before the PDF step) to confirm a fix actually closes the gap, not just the happy path.
 
 **We will fix this later.**
+
+
+## 2026-10-06 — PWA intercepted OAuth and public PDF navigations
+
+**Status:** Fixed by restricting Workbox navigation fallback to `/` and `/app/*`.
+
+The deployed `/oauth/authorize` request returned 303 to the consent page, and
+public PDF page/file URLs returned 200, while a browser controlled by the PWA
+service worker displayed React's 404 page. The generated worker's unrestricted
+`NavigationRoute` served cached `index.html` before the backend could handle
+these URLs. This affected returning browsers; direct HTTP checks missed it.
+
+The production browser regression in
+`carpaintr-front/cypress/e2e/pwa-navigation.cy.js` verifies OAuth-to-consent
+navigation, server handling of MCP/API/discovery/public PDF routes, and continued
+app-shell caching for application routes. Existing browser sessions receive the
+updated service worker when they reload the app.

@@ -17,6 +17,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        // Only UI routes use the app shell. OAuth, MCP, APIs and public PDFs
+        // must reach the backend, including navigations from installed PWAs.
+        navigateFallbackAllowlist: [/^\/(?:\?|$)/, /^\/app(?:\/|\?|$)/],
+      },
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
         name: "Autolab",
