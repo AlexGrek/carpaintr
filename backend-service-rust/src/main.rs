@@ -4,8 +4,8 @@ use api::v1::admin::{
 };
 use axum::{
     http::StatusCode,
-    middleware::from_fn_with_state,
-    response::IntoResponse,
+    middleware::{from_fn_with_state, map_response},
+    response::{IntoResponse, Response},
     routing::{delete, get, post},
     Router,
 };
@@ -456,6 +456,14 @@ async fn main() -> tokio::io::Result<()> {
     let app = Router::new()
         .merge(mcp::routes(shared_state.clone()))
         .nest("/api/v1", api_router) // API routes with proper 404 handling
+        // Vite build output: content-hashed file names, safe to cache forever.
+        // No SPA fallback here, so a stale hashed URL is a 404, not index.html.
+        .nest_service(
+            "/assets",
+            Router::new()
+                .fallback_service(ServeDir::new("static/assets"))
+                .layer(map_response(immutable_cache_headers)),
+        )
         // Add the static files service as a fallback before the SPA fallback
         .fallback_service(ServeDir::new("static").fallback(spa_fallback_service))
         .with_state(shared_state)
@@ -475,6 +483,16 @@ async fn main() -> tokio::io::Result<()> {
 }
 
 // check if admins file is available, if not - print error into the log, if yes - print info with admins file path
+async fn immutable_cache_headers(mut response: Response) -> Response {
+    if response.status().is_success() {
+        response.headers_mut().insert(
+            axum::http::header::CACHE_CONTROL,
+            axum::http::HeaderValue::from_static("public, max-age=31536000, immutable"),
+        );
+    }
+    response
+}
+
 fn check_admin_file(path: &str) {
     let admin_file_path = PathBuf::from(path);
     if admin_file_path.exists() {

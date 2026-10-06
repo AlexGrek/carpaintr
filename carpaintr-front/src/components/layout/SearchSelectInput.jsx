@@ -14,6 +14,7 @@ const normalize = (s) =>
  * match an item exactly, a "use as entered" option allows a custom value.
  *
  * onChange(value, isCustom) — value is null when the selection is cleared.
+ * Items may carry an optional `media` node (e.g. a thumbnail) shown before the label.
  */
 const SearchSelectInput = ({
   items = [],
@@ -112,6 +113,7 @@ const SearchSelectInput = ({
   if (selectedItem) {
     return (
       <SelectedValueRow
+        media={selectedItem.media}
         label={selectedItem.label}
         hint={selectedItem.custom ? customSelectedHint : null}
         changeLabel={changeLabel}
@@ -189,7 +191,14 @@ const SearchSelectInput = ({
                 <span>{customOptionLabel(option.label)}</span>
               </>
             ) : (
-              option.label
+              <>
+                {option.media && (
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                    {option.media}
+                  </span>
+                )}
+                <span>{option.label}</span>
+              </>
             )}
           </div>
         ))}

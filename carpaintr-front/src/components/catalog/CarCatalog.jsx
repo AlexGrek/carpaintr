@@ -80,6 +80,7 @@ const CarCatalog = () => {
         selectedValue={selectedMake}
         onChange={(value) => setSelectedMake(value)}
         placeholder={str("Select Make")}
+        dataTestId="catalog-car-make-select"
       />
       {selectedMake != null && models != null && (
         <div className="fade-in-simple">

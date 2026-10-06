@@ -190,6 +190,14 @@
   flex-shrink: 0;
 }
 
+.car-model-thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
 @media (max-width: 540px) {
   .car-model-sep { display: none; }
 }

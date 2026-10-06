@@ -4,6 +4,7 @@ import { capitalizeFirstLetter } from "../../utils/utils";
 import { Car, Search, SearchCheck, SortAsc, SortDesc, Tags, X } from "lucide-react";
 import Trans from "../../localization/Trans";
 import { registerTranslations, useLocale } from "../../localization/LocaleContext";
+import CarModelImage from "../CarModelImage";
 
 registerTranslations("ua", {
   "No data provided": "Дані відсутні",
@@ -166,6 +167,12 @@ const CarDataDisplay = ({ data, make }) => {
           {filteredAndSortedData.map(([modelName, carData]) => (
             <div key={modelName} className="car-model-row">
               <div className="car-model-name">
+                <CarModelImage
+                  make={make}
+                  model={modelName}
+                  className="car-model-thumb"
+                  testId={`catalog-car-model-image-${modelName}`}
+                />
                 {modelName}
                 {carData.is_suv && <span className="car-suv-badge">SUV</span>}
               </div>

@@ -13,6 +13,8 @@ import ChipPicker from "../layout/ChipPicker";
 import StageSection from "../layout/StageSection";
 import { Calendar, Car, CarFront, Shapes, Tag } from "lucide-react";
 import VinDecoderPanel from "./VinDecoderPanel";
+import CarModelImage from "../CarModelImage";
+import { getCarModelImage } from "../../utils/carModelImages";
 
 // Pre-map static lists for SelectPicker data to avoid re-mapping on every render
 const CAR_CLASS_OPTIONS = [
@@ -208,8 +210,20 @@ const VehicleSelect = React.memo(
     };
 
     const modelOptions = useMemo(
-      () => Object.keys(models).sort().map(m => ({ value: m, label: formatModelName(m) })),
-      [models]
+      () =>
+        Object.keys(models).sort().map((m) => ({
+          value: m,
+          label: formatModelName(m),
+          media: getCarModelImage(modelsMake, m) && (
+            <CarModelImage
+              make={modelsMake}
+              model={m}
+              className="h-full w-full"
+              testId={`calc-vehicle-model-image-${m}`}
+            />
+          ),
+        })),
+      [models, modelsMake]
     );
 
     const modelsLoaded = selectedMake !== null && modelsMake === selectedMake;

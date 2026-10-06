@@ -6,6 +6,7 @@ WORKDIR /app/carpaintr-front
 COPY carpaintr-front/package*.json ./
 RUN npm install
 COPY calculation-engine/ /app/calculation-engine/
+COPY assets/ /app/assets/
 COPY carpaintr-front/ .
 RUN npm run build --production
 

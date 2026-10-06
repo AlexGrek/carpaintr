@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { writeFileSync } from "fs";
@@ -21,6 +21,19 @@ export default defineConfig({
         // Only UI routes use the app shell. OAuth, MCP, APIs and public PDFs
         // must reach the backend, including navigations from installed PWAs.
         navigateFallbackAllowlist: [/^\/(?:\?|$)/, /^\/app(?:\/|\?|$)/],
+        // Car model photos are not precached (only fetched when shown); their
+        // fingerprinted URLs never change content, so serve them cache-first.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/.+\.jpg$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "car-model-images",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
@@ -67,6 +80,8 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(appVersion),
   },
   server: {
+    // Car model photos live in the repo-root assets/ (see src/utils/carModelImages.js)
+    fs: { allow: [searchForWorkspaceRoot(process.cwd()), path.resolve(__dirname, "../assets")] },
     port: Number(process.env.FRONTEND_PORT) || 3000,
     proxy: {
       ...Object.fromEntries(["/mcp", "/oauth", "/.well-known", "/public/pdfs"].map(prefix => [prefix, { target: `http://localhost:${process.env.BACKEND_PORT || 8080}`, changeOrigin: true }])),

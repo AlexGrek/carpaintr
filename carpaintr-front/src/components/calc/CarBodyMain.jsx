@@ -27,6 +27,8 @@ import NormRatePicker from './NormRatePicker';
 import { setRateOverride } from '../../calc/normRates';
 import { PartDebugPanel, TechDataPanel } from './CarBodyMainDebug';
 import { stripExt } from '../../utils/utils';
+import { getCarModelImage } from '../../utils/carModelImages';
+import CarModelImage from '../CarModelImage';
 import './CarBodyMain.css';
 
 registerTranslations("en", {
@@ -719,6 +721,16 @@ const CarBodyMain = ({
                         />
                     ) : (
                         <>
+                            {getCarModelImage(stageData.car?.make, stageData.car?.model) && (
+                                <div className="mb-4 flex justify-center">
+                                    <CarModelImage
+                                        make={stageData.car.make}
+                                        model={stageData.car.model}
+                                        className="aspect-[4/3] w-full max-w-[320px] rounded-2xl shadow-lg ring-1 ring-slate-900/5"
+                                        testId="calc-body-car-model-image"
+                                    />
+                                </div>
+                            )}
                             <div className="relative rounded-xl bg-slate-50 py-4">
                                 <CarDiagram
                                     selectedItems={selectedItems}
