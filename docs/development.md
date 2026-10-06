@@ -11,6 +11,7 @@ This guide covers local development setup and workflows for Carpaintr (Autolab).
 - [Testing](#testing)
 - [Code Organization](#code-organization)
 - [Frontend Development](#frontend-development)
+- [Autolab MCP](mcp.md)
 - [Notifications](#notifications)
 - [Backend Development](#backend-development)
 - [PDF Service Development](#pdf-service-development)
@@ -726,3 +727,14 @@ npm run dev
 - **Rust backend:** Check `backend-service-rust/README.md` (if exists)
 - **Frontend:** Check `carpaintr-front/README.md` (if exists)
 - **Issues:** https://github.com/AlexGrek/carpaintr/issues
+
+
+## MCP development
+
+[Autolab MCP](mcp.md) documents tools, scopes, OAuth and public PDF storage.
+The browser and backend share pure calculation modules in `calculation-engine/`;
+frontend `src/calc/` modules re-export them. The Rust backend embeds them at build
+time and executes bounded QuickJS runtimes in `src/mcp/engine.rs`. Rebuild the
+backend after editing shared modules. Vite also proxies `/mcp`, `/oauth`,
+`/.well-known` and `/public/pdfs`. Configure `PUBLIC_BASE_URL` to the origin used
+by the client; normal local development defaults to the Vite port.

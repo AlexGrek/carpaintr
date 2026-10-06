@@ -1,4 +1,5 @@
 /* eslint-disable react/display-name */
+import { mcpApi } from "../utils/mcpApi";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -35,6 +36,9 @@ const DOCUMENT_PREVIEWS = {
 };
 
 registerTranslations("ua", {
+  "Save and share PDF": "Зберегти та поширити PDF",
+  "PDF saved. Manage its link in PDF history.": "PDF збережено. Керуйте посиланням в історії PDF.",
+  "Saved PDF link (valid for 30 days)": "Посилання на збережений PDF (діє 30 днів)",
   "Show JSON payload": "Показати JSON-дані",
   "Hide JSON payload": "Сховати JSON-дані",
   "Generation JSON payload": "JSON-дані для генерації",
@@ -89,6 +93,8 @@ const PrintDocumentGenerator = React.memo(
     const [clickedPreview, setClickedPreview] = useState(false);
     const [loadingDownload, setLoadingDownload] = useState(false);
     const [loadingExcel, setLoadingExcel] = useState(false);
+    const [savedPdf, setSavedPdf] = useState(null);
+    const [savingPdf, setSavingPdf] = useState(false);
     const [showPayload, setShowPayload] = useState(false);
 
     const showMessage = useCallback(
@@ -190,6 +196,16 @@ const PrintDocumentGenerator = React.memo(
         setLoadingPreview(false);
       }
     }, [buildRequestPayload, showMessage, str]);
+
+    const handleSavePdf = useCallback(async () => {
+      setSavingPdf(true);
+      try {
+        let pdf = await mcpApi('/api/v1/pdfs', { method: 'POST', body: buildRequestPayload() });
+        if (!pdf.public_url) pdf = await mcpApi(`/api/v1/pdfs/${pdf.document_id}/share`, { method: 'POST' });
+        setSavedPdf(pdf);
+      } catch (error) { showMessage('error', error.message); }
+      finally { setSavingPdf(false); }
+    }, [buildRequestPayload, showMessage]);
 
     const handleDownloadPdf = useCallback(async () => {
       setLoadingDownload(true);
@@ -328,6 +344,14 @@ const PrintDocumentGenerator = React.memo(
             >
               <Trans>Generate Preview</Trans>
             </Button>
+            <Button data-testid="print-save-share-pdf-button" loading={savingPdf} disabled={loadingPreview || loadingDownload} onClick={handleSavePdf}>
+              <Trans>Save and share PDF</Trans>
+            </Button>
+            {savedPdf && <Message type="info">
+              <Trans>{savedPdf.public_url ? "Saved PDF link (valid for 30 days)" : "PDF saved. Manage its link in PDF history."}</Trans>
+              {savedPdf.public_url && <a data-testid="print-saved-pdf-link" href={savedPdf.public_url} rel="noreferrer" style={{ display: 'block', overflowWrap: 'anywhere' }}>{savedPdf.public_url}</a>}
+              <a data-testid="print-pdf-history-link" href="/app/history"><Trans>History</Trans></a>
+            </Message>}
             <Button
               appearance="green"
               onClick={handleDownloadPdf}

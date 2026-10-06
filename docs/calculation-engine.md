@@ -307,3 +307,13 @@ CalcMain document/reducer
 
 See [the refactoring plan](calc2-refactoring-plan.md) for the edit contract and
 acceptance scenarios.
+
+
+## Shared execution for MCP
+
+Pure document, processing, context, output and rate modules now live in the
+repository-root `calculation-engine/` package. The existing frontend module paths
+re-export these modules. `index.js` supplies the JSON bridge for server execution;
+Rust embeds the same sources in bounded QuickJS runtimes with no filesystem or
+network APIs. MCP uses saved snapshots and the same resolution/print adapters as
+Calc2. See [mcp.md](mcp.md) for tools, revision checks and PDF persistence.

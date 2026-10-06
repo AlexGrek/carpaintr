@@ -951,3 +951,43 @@ All errors return a JSON body with an error message:
 | `LOG_FILE_PATH` | `application.log` | Application log path |
 | `PDF_GEN_URL_POST` | `localhost:5000/generate` | PDF service endpoint |
 | `LICENSE_CACHE_SIZE` | `100` | Max cached licenses |
+
+
+## MCP and saved PDFs
+
+See [Autolab MCP](mcp.md) for tool schemas, interaction flow, OAuth and deployment.
+`POST /mcp` uses Streamable HTTP with OAuth access tokens or scoped MCP API keys;
+application JWTs authenticate the management and owner-download routes below.
+
+| Method | Path | Request / result |
+|---|---|---|
+| GET | `/api/v1/mcp/keys` | `{keys, mcp_url, scopes}`; key metadata, never secrets. |
+| POST | `/api/v1/mcp/keys` | `{name, scopes?}` → `{id, key, name, expires_at, mcp_url}`. Secret shown once. |
+| DELETE | `/api/v1/mcp/keys/{id}` | Revoke an owned API key. |
+| GET | `/api/v1/mcp/connections` | Owned OAuth connections with names and scopes. |
+| DELETE | `/api/v1/mcp/connections/{id}` | Revoke a connection and all its tokens. |
+| POST | `/api/v1/mcp/authorize` | `{request}` previews consent; `{request, decision}` (approve or deny) → `{redirect}`. |
+| POST | `/api/v1/pdfs` | Existing `GeneratePdfRequest` (calculation, metadata, template) → saved PDF metadata. Active license required. |
+| GET | `/api/v1/pdfs` | Array of owned PDF metadata, newest first. |
+| GET | `/api/v1/pdfs/{id}` | Owned PDF bytes, also available after share/license expiry. |
+| POST | `/api/v1/pdfs/{id}/share` | Rotate public capability and renew 30-day expiry. Active license required. |
+| DELETE | `/api/v1/pdfs/{id}/share` | Revoke public link while retaining owner download. |
+| GET | `/public/pdfs/{token}.pdf` | Public PDF download without auth; 404 for invalid, expired or revoked links. |
+
+PDF metadata fields: `document_id`, `filename`, `created_at`, `calculation_id`,
+`revision`, `public_url` (null when inactive), `download_url`, `expires_at`,
+`revoked`. Times are Unix seconds. Saving an identical request returns the same
+document. The existing transient PDF generation endpoints remain available.
+MCP-managed calculation saves must include the last returned `lastSavedRevision`
+and preserve `calculationId`; stale saves fail with HTTP 400.
+
+Public OAuth endpoints: discovery at `/.well-known/oauth-protected-resource/mcp`
+and `/.well-known/oauth-authorization-server`; JSON dynamic registration at
+`POST /oauth/register` (201); redirecting `GET /oauth/authorize`; form-encoded
+`POST /oauth/token` and `POST /oauth/revoke`. PKCE S256 and the configured `/mcp`
+resource indicator are required.
+
+| Environment variable | Default | Purpose |
+|---|---|---|
+| `PUBLIC_BASE_URL` | `http://localhost:${FRONTEND_PORT:-3000}` | External origin for OAuth, MCP and public PDF URLs. HTTPS required except on loopback. |
+| `MCP_ALLOWED_ORIGINS` | empty | Additional comma-separated exact origins permitted by MCP validation. |

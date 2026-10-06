@@ -690,3 +690,19 @@ For deployment issues:
 2. Check events: `kubectl get events -n autolab --sort-by='.lastTimestamp'`
 3. Review troubleshooting section above
 4. Check [GitHub issues](https://github.com/AlexGrek/carpaintr/issues)
+
+
+## MCP and public PDF links
+
+Set Helm `publicBaseUrl` (backend `PUBLIC_BASE_URL`) to the public HTTPS origin.
+It defaults to `https://<ingress.host>`. Route `/mcp`, `/oauth/*`,
+`/.well-known/*`, `/public/pdfs/*`, `/api/*` and `/app/*` through the same ingress.
+Preserve the Host header and bypass caching for public PDF responses so expiry
+and revocation take effect on every download. Optional `mcpAllowedOrigins` maps
+to `MCP_ALLOWED_ORIGINS`; use exact comma-separated origins.
+
+Saved PDF bytes use the existing user-data PVC and metadata uses the Sled `mcp`
+tree. Back up both together and retain `JWT_SECRET`; rotating it also invalidates
+existing PDF capability URLs. OAuth resource binding means changing the public
+origin requires reconnecting clients and creating replacement API keys.
+See [Autolab MCP](mcp.md) for client setup and deployment acceptance checks.

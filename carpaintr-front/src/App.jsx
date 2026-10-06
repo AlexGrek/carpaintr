@@ -14,6 +14,8 @@ import CreateProcPage from "./components/pages/CreateProcPage.jsx";
 import NotFoundPage from "./components/pages/NotFoundPage.jsx";
 
 // Lazy-loaded pages
+const McpPage = lazy(() => import('./components/pages/McpPage.jsx'));
+const McpAuthorizePage = lazy(() => import('./components/pages/McpAuthorizePage.jsx'));
 const LandingPage = lazy(() => import("./components/pages/LandingPage.jsx"));
 const LoginPage = lazy(() => import("./components/pages/LoginPage.jsx"));
 const RegistrationPage = lazy(
@@ -74,6 +76,8 @@ function App() {
                   />
                   <Route path="/app/calc2/*" element={<CalcPageV2 />} />
                   <Route path="/app/admin/*" element={<AdminPage />} />
+                  <Route path="/app/mcp" element={<McpPage />} />
+                  <Route path="/app/mcp/authorize" element={<McpAuthorizePage />} />
                   <Route path="/app/company" element={<CompanyInfoPage />} />
                   <Route path="/app/catalog" element={<Navigate to="/app/catalog/cars" replace />} />
                   <Route path="/app/catalog/:tab" element={<CatalogPage />} />

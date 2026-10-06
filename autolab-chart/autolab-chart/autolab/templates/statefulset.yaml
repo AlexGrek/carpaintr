@@ -61,6 +61,10 @@ spec:
             secretKeyRef:
               name: {{ .Values.secretName }}
               key: SECRET_KEY_LICENSE
+        - name: MCP_ALLOWED_ORIGINS
+          value: {{ .Values.mcpAllowedOrigins | quote }}
+        - name: PUBLIC_BASE_URL
+          value: {{ default (printf "https://%s" .Values.ingress.host) .Values.publicBaseUrl | quote }}
         - name: DATABASE_URL
           value: "/app/data/sled_db"
         - name: ADMIN_FILE_PATH

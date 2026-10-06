@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Navbar, Dropdown, Nav } from "rsuite";
 import { useNavigate } from "react-router-dom";
+import { useLocale, registerTranslations } from "../../localization/LocaleContext";
 import { logout } from "../../utils/authFetch";
 import { useNotificationCount } from "../NotificationCountContext";
 import NotificationsDrawer from "../NotificationsDrawer";
@@ -8,7 +9,10 @@ import "./TopBarUser.css";
 import { handleOpenNewTab } from "../../utils/utils";
 import { Bell, Menu } from "lucide-react";
 
+registerTranslations("ua", { "AI assistants": "AI-асистенти", "PDF history": "Історія PDF" });
+
 const TopBarUser = () => {
+  const { str } = useLocale();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationCount();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -27,6 +31,8 @@ const TopBarUser = () => {
         case "notifications":
           navigate("/app/notifications");
           break;
+        case "mcp": navigate("/app/mcp"); break;
+        case "pdf-history": navigate("/app/history"); break;
         case "report":
           handleOpenNewTab("/report");
           break;
@@ -81,6 +87,8 @@ const TopBarUser = () => {
             <Dropdown.Item eventKey="notifications" onSelect={handleSelect}>
               Мої сповіщення
             </Dropdown.Item>
+            <Dropdown.Item data-testid="nav-mcp" eventKey="mcp" onSelect={handleSelect}>{str("AI assistants")}</Dropdown.Item>
+            <Dropdown.Item data-testid="nav-pdf-history" eventKey="pdf-history" onSelect={handleSelect}>{str("PDF history")}</Dropdown.Item>
             <Dropdown.Separator />
             <Dropdown.Item eventKey="report" onSelect={handleSelect}>
               Надіслати відгук

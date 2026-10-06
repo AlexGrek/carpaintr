@@ -64,6 +64,7 @@ export default defineConfig({
   server: {
     port: Number(process.env.FRONTEND_PORT) || 3000,
     proxy: {
+      ...Object.fromEntries(["/mcp", "/oauth", "/.well-known", "/public/pdfs"].map(prefix => [prefix, { target: `http://localhost:${process.env.BACKEND_PORT || 8080}`, changeOrigin: true }])),
       "/api": {
         target: `http://localhost:${process.env.BACKEND_PORT || 8080}`,
         changeOrigin: true,

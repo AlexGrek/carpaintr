@@ -17,18 +17,20 @@ pub struct AppDb {
     pub requests_tree: Tree,
     pub notifications_tree: Tree,
     pub attachments_tree: Tree,
+    pub mcp_tree: Tree,
     pub last_visit_tree: Tree
 }
 
 impl AppDb {
     pub fn new(db_path: &str) -> Result<Self, AppError> {
         let db = sled::open(db_path)?;
+        let mcp_tree = db.open_tree("mcp")?;
         let users_tree = db.open_tree(USERS_TREE_NAME)?;
         let requests_tree = db.open_tree(REQUESTS_TREE_NAME)?;
         let notifications_tree = db.open_tree(NOTIFICATIONS_TREE_NAME)?;
         let attachments_tree = db.open_tree(ATTACHMENTS_TREE_NAME)?;
         let last_visit_tree = db.open_tree(LAST_VISIT_TREE_NAME)?;
-        Ok(Self { users_tree, requests_tree, notifications_tree, attachments_tree, last_visit_tree })
+        Ok(Self { mcp_tree, users_tree, requests_tree, notifications_tree, attachments_tree, last_visit_tree })
     }
 
     pub fn insert_user(&self, user: &User) -> Result<(), AppError> {

@@ -565,7 +565,7 @@ This skill engages whenever you're:
 
 ---
 
-**Last Updated:** 2026-03-25
+**Last Updated:** 2026-10-06
 **Scope:** Autolab Frontend (carpaintr-front)
 **Expertise Level:** Senior Frontend Engineer
 
@@ -583,3 +583,20 @@ only. Rust serde flattening preserves V2 fields, and `car.year` stays a string.
 Tests: calculationDocument/Persistence/processingPipeline/output Node suites,
 API `test_calculation_document.py`, actual Jinja rendering, and Cypress
 `calculation-document.cy.js` plus table-value-propagation/norm-rates.
+
+
+## Autolab MCP and durable PDFs
+
+See `docs/mcp.md`. `backend-service-rust/src/mcp/` provides account-bound
+Streamable HTTP tools, OAuth PKCE/consent, hashed scoped keys, revision-guarded
+Calc2 drafts and saved PDFs with 30-day public capabilities. Sled's `mcp` tree
+holds metadata; PDFs use user `pdfs/`, drafts use `stored_calculations/`.
+`PUBLIC_BASE_URL` is the externally reachable HTTPS origin (loopback HTTP allowed).
+Preserve `JWT_SECRET` because public PDF capabilities depend on it.
+Pure modules moved to root `calculation-engine/` with frontend re-exports; Rust
+embeds the same code in bounded QuickJS runtimes. Frontend routes `/app/mcp`,
+`/app/mcp/authorize` and `/app/history` manage keys, consent and saved PDF links.
+PrintCalculationDrawer can save/share PDFs. Vite proxies OAuth/discovery/MCP/PDF
+routes; Docker copies shared modules to both build stages.
+Checks: `cargo test mcp::`, shared/frontend Node suites, API `test_mcp.py`, and
+Cypress `mcp.cy.js`, `calculation-document.cy.js`, `norm-rates.cy.js`.

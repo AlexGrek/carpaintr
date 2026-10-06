@@ -106,7 +106,7 @@ impl IntoResponse for AppError {
             AppError::FileNotFound => StatusCode::NOT_FOUND,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::ConfigError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::InvalidData(_) => StatusCode::BAD_REQUEST,
+            AppError::InvalidData(_) | AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::MissingExtension(_) => StatusCode::INTERNAL_SERVER_ERROR, // Indicates a middleware setup issue
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };

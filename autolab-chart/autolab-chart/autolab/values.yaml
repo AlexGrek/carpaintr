@@ -1,3 +1,8 @@
+# -- Public HTTPS origin for MCP OAuth and shared PDFs; defaults to ingress host.
+publicBaseUrl: ""
+# Extra exact origins permitted to call MCP, comma separated.
+mcpAllowedOrigins: ""
+
 # -- Environment identifier (development, staging, production)
 environment: production
 

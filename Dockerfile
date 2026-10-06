@@ -5,6 +5,7 @@ FROM node:24-slim AS frontend
 WORKDIR /app/carpaintr-front
 COPY carpaintr-front/package*.json ./
 RUN npm install
+COPY calculation-engine/ /app/calculation-engine/
 COPY carpaintr-front/ .
 RUN npm run build --production
 
@@ -21,6 +22,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
 RUN rm -rf src
 
 # Copy all backend source
+COPY calculation-engine/ /app/calculation-engine/
 COPY backend-service-rust/ .
 # Copy frontend build artifacts
 COPY --from=frontend /app/carpaintr-front/dist ./static

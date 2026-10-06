@@ -162,53 +162,52 @@ pub async fn update_company_info(
     State(app_state): State<Arc<AppState>>,
     Json(mut company_info_input): Json<CompanyInfo>,
 ) -> Result<impl IntoResponse, AppError> {
-    let mut rate_ids = std::collections::HashSet::new();
-    for rate in &company_info_input.pricing_preferences.norm_rates {
+    let account_lock = app_state.mcp.account_lock(&user_email).await;
+    let _lock = account_lock.lock().await;
+    save_company_info(&app_state, &user_email, &mut company_info_input).await?;
+    Ok(Json(company_info_input))
+}
+
+pub fn validate_pricing(pricing: &PricingPreferences) -> Result<(), AppError> {
+    let base: f64 = pricing.norm_price.amount.clone().into();
+    if base < 0.0 || pricing.norm_price.currency.trim().is_empty() {
+        return Err(AppError::InvalidData(
+            "Base labor rate must be non-negative with a currency".into(),
+        ));
+    }
+    let mut ids = std::collections::HashSet::new();
+    for rate in &pricing.norm_rates {
         if rate.id.trim().is_empty()
             || rate.id == "base"
-            || !rate_ids.insert(&rate.id)
+            || !ids.insert(&rate.id)
             || rate.name.trim().is_empty()
             || !rate.amount.is_finite()
             || rate.amount < 0.0
         {
             return Err(AppError::InvalidData(
-                "Labor rates require unique IDs, names and non-negative amounts".to_string(),
+                "Labor rates require unique IDs, names and non-negative amounts".into(),
             ));
         }
     }
-    // Get the user's data directory path
-    let user_dir = utils::user_personal_directory_from_email(&app_state.data_dir_path, &user_email)
-        .map_err(|e| {
-            AppError::InternalServerError(format!("Failed to get user directory: {}", e))
-        })?;
+    Ok(())
+}
 
-    let company_info_path = user_dir.join("company.json");
-
-    company_info_input.current_time = Utc::now();
-
-    let json = serde_json::to_string_pretty(&company_info_input).map_err(|e| {
-        AppError::BadRequest(format!("Failed to serialize dummy company info: {}", e))
-    })?;
-
-    fs::write(&company_info_path, json).await.map_err(|e| {
-        AppError::InternalServerError(format!("Failed to write company.json: {}", e))
-    })?;
-
-    // let json = serde_json::to_string_pretty(&dummy_info);
-    // fs::write(&company_info_path, json).await.map_err(|e| AppError::InternalServerError(format!("Failed to write company.json: {}", e)))?;
-
-    // Read the content of company.json
-    let company_info_content = fs::read_to_string(&company_info_path).await.map_err(|e| {
-        AppError::InternalServerError(format!("Failed to read company.json: {}", e))
-    })?;
-
-    // Deserialize the JSON content into CompanyInfo struct
-    let company_info: CompanyInfo = serde_json::from_str(&company_info_content).map_err(|e| {
-        AppError::InternalServerError(format!("Failed to parse company.json: {}", e))
-    })?;
-
-    // Return the CompanyInfo as a JSON response
-    Ok(Json(company_info))
+pub async fn save_company_info(
+    state: &Arc<AppState>,
+    email: &str,
+    company: &mut CompanyInfo,
+) -> Result<(), AppError> {
+    validate_pricing(&company.pricing_preferences)?;
+    company.current_time = Utc::now();
+    let path = utils::user_personal_directory_from_email(&state.data_dir_path, email)?;
+    utils::safe_write_overwrite(
+        path,
+        std::path::PathBuf::from("company.json"),
+        serde_json::to_vec_pretty(company)?,
+        &state.cache,
+    )
+    .await?;
+    Ok(())
 }
 
 // New handler to check if the authenticated user has an active license

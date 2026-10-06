@@ -35,6 +35,7 @@ mod errors;
 mod exlogging;
 mod license_manager;
 mod middleware;
+mod mcp;
 mod models;
 mod state;
 mod transactionalfs;
@@ -101,6 +102,7 @@ async fn main() -> tokio::io::Result<()> {
         });
 
     let shared_state = Arc::new(AppState {
+        mcp: mcp::McpState::new(),
         db,
         auth,
         license_cache,
@@ -452,6 +454,7 @@ async fn main() -> tokio::io::Result<()> {
     let spa_fallback_service = Router::new().fallback(spa_fallback);
 
     let app = Router::new()
+        .merge(mcp::routes(shared_state.clone()))
         .nest("/api/v1", api_router) // API routes with proper 404 handling
         // Add the static files service as a fallback before the SPA fallback
         .fallback_service(ServeDir::new("static").fallback(spa_fallback_service))

@@ -836,3 +836,12 @@ For issues or questions:
 - Check logs: `kubectl logs -f job/<backup-job-name>`
 - Review this documentation
 - Check Kubernetes events: `kubectl get events --sort-by='.lastTimestamp'`
+
+
+## MCP and saved PDFs
+
+Existing full-data backups include Sled's `mcp` tree and per-user
+`stored_calculations/` and `pdfs/` directories. Restore them together to retain
+OAuth/key revocations, drafts, PDF metadata and share expiry. Keep the environment's
+existing `JWT_SECRET` and `PUBLIC_BASE_URL`; the secret protects PDF capability
+URLs and the origin binds MCP credentials. Restore does not extend share expiry.

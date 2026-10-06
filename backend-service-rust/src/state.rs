@@ -3,6 +3,7 @@ use std::{collections::HashSet, path::{PathBuf}, sync::Arc};
 
 pub struct AppState {
     pub db: AppDb,
+    pub mcp: crate::mcp::McpState,
     pub auth: Auth,
     pub license_cache: Arc<LicenseCache>,
     pub admin_file_path: PathBuf,

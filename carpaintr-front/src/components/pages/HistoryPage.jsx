@@ -1,3 +1,4 @@
+import SavedPdfList from "../SavedPdfList";
 import TopBarUser from "../layout/TopBarUser";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
@@ -10,6 +11,7 @@ const HistoryPage = () => {
         className="fade-in-simple"
         style={{ maxWidth: "800px", margin: "0 auto", padding: "1em" }}
       >
+        <SavedPdfList />
       </div>
     </div>
   );
