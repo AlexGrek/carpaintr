@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Замовлення №{{ data.metadata.order_number }}</title>
+    <title>Замовлення №{{ data.metadata.order_number or '001' }}</title>
     <style>
         @media print {
             body {
@@ -120,7 +120,7 @@
                 <p>Email: {{ data.company_info.email }}</p>
             </div>
             <div class="order-info">
-                <p>ЗАМОВЛЕННЯ №{{ data.metadata.order_number }}</p>
+                <p>ЗАМОВЛЕННЯ №{{ data.metadata.order_number or '001' }}</p>
             </div>
         </div>
     </div>

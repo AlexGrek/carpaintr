@@ -349,7 +349,7 @@ const PrintDocumentGenerator = React.memo(
             </Button>
             {savedPdf && <Message type="info">
               <Trans>{savedPdf.public_url ? "Saved PDF link (valid for 30 days)" : "PDF saved. Manage its link in PDF history."}</Trans>
-              {savedPdf.public_url && <a data-testid="print-saved-pdf-link" href={savedPdf.public_url} rel="noreferrer" style={{ display: 'block', overflowWrap: 'anywhere' }}>{savedPdf.public_url}</a>}
+              {savedPdf.public_url && <a data-testid="print-saved-pdf-link" href={savedPdf.public_page_url || savedPdf.public_url} rel="noreferrer" style={{ display: 'block', overflowWrap: 'anywhere' }}>{savedPdf.public_page_url || savedPdf.public_url}</a>}
               <a data-testid="print-pdf-history-link" href="/app/history"><Trans>History</Trans></a>
             </Message>}
             <Button

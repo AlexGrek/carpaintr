@@ -15,6 +15,7 @@ export function execute({ document: raw, changes = {}, process = false, inspect_
   for (const field of ['car', 'paint', 'order', 'normRates', 'normRateOverrides', 'inputOverrides']) {
     if (changes[field] !== undefined) doc = { ...doc, [field]: { ...doc[field], ...changes[field] } };
   }
+  if (!doc.order?.orderNumber?.trim()) doc = { ...doc, order: { ...doc.order, orderNumber: '001' } };
   if (changes.repairQuality !== undefined) doc = { ...doc, parts: { ...doc.parts, repairQuality: changes.repairQuality } };
   if (changes.parts !== undefined) {
     doc = selectParts(doc, changes.parts);

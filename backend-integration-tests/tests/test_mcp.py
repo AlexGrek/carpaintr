@@ -81,12 +81,13 @@ async def test_protocol_and_scoped_keys(licensed_client):
 
 @pytest.mark.pdf
 @pytest.mark.usefixtures("pdfgen_mock_configured")
-async def test_interactive_calculation_and_public_pdf(licensed_client, http_client):
+async def test_interactive_calculation_and_public_pdf(licensed_client, http_client, pdfgen_mock):
     client = licensed_client
     token = (await key(client))["key"]
     company_before = await call(client, token, "get_company_info")
     draft = await call(client, token, "create_calculation", {"language": "uk"})
     assert draft["missing_inputs"] and not draft["ready_to_finalize"]
+    assert draft["order"]["orderNumber"] == "001"
     parts = await call(client, token, "search_catalog", {"kind": "parts", "car_class": "B", "body_type": "sedan", "query": "hood"})
     assert parts["items"]
     part = parts["items"][0]["name"]
@@ -94,9 +95,33 @@ async def test_interactive_calculation_and_public_pdf(licensed_client, http_clie
     action = next(choice["id"] for choice in choices["items"] if "з зовнішнім фарбуванням" in choice["id"])
     result = await call(client, token, "update_calculation", {
         "calculation_id": draft["calculation_id"], "expected_revision": draft["revision"],
-        "changes": {"car": {"carClass": "B", "bodyType": "sedan", "year": "2020"}, "paint": {"paintType": "metallic"}, "parts": [{"name": part, "selectedAction": action}]}, "language": "en",
+        "changes": {"car": {"make": "Custom Ukrainian brand", "model": "Prototype X", "vin": "CUSTOM VIN", "licensePlate": "MY PLATE", "notes": "Unverified vehicle", "carClass": "B", "bodyType": "sedan", "year": "2020"}, "paint": {"paintType": "metallic"}, "parts": [{"name": part, "selectedAction": action}]}, "language": "en",
     })
     assert result["rows"] and result["ready_to_finalize"], result
+    assert result["car"]["make"] == "Custom Ukrainian brand"
+    assert result["car"]["model"] == "Prototype X"
+    assert result["car"]["vin"] == "CUSTOM VIN"
+    custom_name = f"mcp-custom-{secrets.token_hex(6)}.html"
+    custom_template = "<html><body>My custom template {{ data.metadata.order_number }} {{ data.calculation.car.make }}</body></html>"
+    upload = await client.post(f"/editor/upload_user_file/doc_templates%2F{custom_name}", files={"file": (custom_name, custom_template, "text/html")})
+    assert upload.status_code == 200, upload.text
+    templates = await call(client, token, "search_catalog", {"kind": "templates", "limit": 100})
+    assert custom_name in templates["items"]
+    assert {"calculation_ua.html", "work_order_category_ua.html"} <= set(templates["items"])
+    pdfgen_mock.reset_requests()
+    template_ids = set()
+    for template_name in templates["items"]:
+        pdf = (await call(client, token, "finalize_calculation", {
+            "calculation_id": result["calculation_id"], "expected_revision": result["revision"], "template_name": template_name,
+        }))["pdf"]
+        template_ids.add(pdf["document_id"])
+        assert (await http_client.get(pdf["public_url"])).content.startswith(b"%PDF")
+    assert len(template_ids) == len(templates["items"])
+    requests = [r["body"] for r in pdfgen_mock.fetch_requests() if r["path"] == "/generate/pdf"]
+    assert len(requests) == len(templates["items"])
+    assert all(r["metadata"]["order_number"] == "001" for r in requests)
+    assert all(r["calculation"]["car"]["make"] == "Custom Ukrainian brand" for r in requests)
+    assert any(r["custom_template_content"] == custom_template for r in requests)
     assert result["revision"] == 1
     stale = await rpc(client, token, "tools/call", {"name": "update_calculation", "arguments": {"calculation_id": draft["calculation_id"], "expected_revision": 0, "changes": {}}})
     assert stale.json()["result"]["isError"]
@@ -123,6 +148,12 @@ async def test_interactive_calculation_and_public_pdf(licensed_client, http_clie
     final_args = {"calculation_id": edited["calculation_id"], "expected_revision": edited["revision"]}
     pdf = (await call(client, token, "finalize_calculation", final_args))["pdf"]
     assert pdf["public_url"] and pdf["expires_at"] - pdf["created_at"] == 30 * 86400
+    page = await http_client.get(pdf["public_page_url"])
+    assert page.status_code == 200 and page.headers["content-type"].startswith("text/html")
+    assert "Your PDF is ready" in page.text and "Ваш PDF готовий" in page.text
+    assert 'download referrerpolicy="no-referrer"' in page.text
+    assert urlparse(pdf["public_url"]).path in page.text
+    assert "no-store" in page.headers["cache-control"]
     public = await http_client.get(pdf["public_url"])
     assert public.status_code == 200 and public.content.startswith(b"%PDF")
     assert public.headers["content-type"] == "application/pdf" and "no-store" in public.headers["cache-control"]
@@ -133,9 +164,11 @@ async def test_interactive_calculation_and_public_pdf(licensed_client, http_clie
     rotated = rotation.json()
     assert rotated["public_url"] != pdf["public_url"]
     assert (await http_client.get(pdf["public_url"])).status_code == 404
+    assert (await http_client.get(pdf["public_page_url"])).status_code == 404
     assert (await http_client.get(rotated["public_url"])).status_code == 200
     assert (await client.delete(f"/pdfs/{pdf['document_id']}/share")).status_code == 200
     assert (await http_client.get(rotated["public_url"])).status_code == 404
+    assert (await http_client.get(rotated["public_page_url"])).status_code == 404
     assert (await client.get(f"/pdfs/{pdf['document_id']}")).status_code == 200
     assert (await http_client.get(f"/pdfs/{pdf['document_id']}")).status_code == 401
 
@@ -182,8 +215,8 @@ async def test_invalid_inputs_and_account_isolation(licensed_client, seed_authen
     assert other.json()["result"]["isError"]
     invalid = await rpc(licensed_client, token, "tools/call", {"name": "create_calculation", "arguments": {"inputs": {"parts": "bad"}}})
     assert invalid.json()["result"]["isError"]
-    invalid_year = await rpc(licensed_client, token, "tools/call", {"name":"update_calculation","arguments":{"calculation_id":draft["calculation_id"],"expected_revision":draft["revision"],"changes":{"car":{"year":"unknown"}}}})
-    assert invalid_year.json()["result"]["isError"]
+    custom = await call(licensed_client, token, "update_calculation", {"calculation_id": draft["calculation_id"], "expected_revision": draft["revision"], "changes": {"car": {"make": "audi", "model": "Unlisted prototype", "year": "unknown", "vin": "NOT-A-VALID-VIN", "licensePlate": "Any plate"}}})
+    assert custom["car"]["model"] == "Unlisted prototype" and custom["car"]["year"] == "unknown"
     traversal = await rpc(licensed_client, token, "tools/call", {"name": "create_calculation", "arguments": {"saved_filename": "../company.json"}})
     assert traversal.json()["result"]["isError"]
     hostile = await licensed_client.post(origin(licensed_client) + "/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"}, headers={"Authorization": f"Bearer {token}", "Origin": "https://evil.example"})

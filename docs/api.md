@@ -972,12 +972,13 @@ application JWTs authenticate the management and owner-download routes below.
 | GET | `/api/v1/pdfs/{id}` | Owned PDF bytes, also available after share/license expiry. |
 | POST | `/api/v1/pdfs/{id}/share` | Rotate public capability and renew 30-day expiry. Active license required. |
 | DELETE | `/api/v1/pdfs/{id}/share` | Revoke public link while retaining owner download. |
+| GET | `/public/pdfs/{token}` | Public bilingual download page; starts attachment download without navigating away. Same expiry/revocation as the file. |
 | GET | `/public/pdfs/{token}.pdf` | Public PDF download without auth; 404 for invalid, expired or revoked links. |
 
 PDF metadata fields: `document_id`, `filename`, `created_at`, `calculation_id`,
-`revision`, `public_url` (null when inactive), `download_url`, `expires_at`,
+`revision`, `public_url` (direct PDF bytes), `public_page_url` (browser download page; both null when inactive), `download_url`, `expires_at`,
 `revoked`. Times are Unix seconds. Saving an identical request returns the same
-document. The existing transient PDF generation endpoints remain available.
+document. Omitted/null/blank order numbers default to `001` for saved/transient PDF and HTML generation, including custom templates. The existing transient PDF generation endpoints remain available.
 MCP-managed calculation saves must include the last returned `lastSavedRevision`
 and preserve `calculationId`; stale saves fail with HTTP 400.
 

@@ -8,6 +8,16 @@ const input = () => ({ schemaVersion: 2, car: { year: '2020', carClass: 'B', bod
   sourceSnapshot: { Hood: { tables: [] } }, generatedCalculations: {},
 });
 describe('MCP shared engine bridge', () => {
+  it('defaults absent or blank order numbers and preserves custom metadata', () => {
+    for (const orderNumber of [undefined, null, '', '  ']) {
+      const result = execute({document: input(), changes: {order: {orderNumber}, car: {make: 'Custom brand', model: 'Unknown model', vin: 'Custom VIN', licensePlate: 'Custom plate', year: 'unknown'}}});
+      assert.equal(result.document.order.orderNumber, '001');
+      assert.equal(result.document.car.make, 'Custom brand');
+      assert.equal(result.document.car.vin, 'Custom VIN');
+      assert.equal(result.document.car.year, 'unknown');
+    }
+    assert.equal(execute({document: input(), changes: {order: {orderNumber: '0'}}}).document.order.orderNumber, '0');
+  });
   it('processes, edits and exports the same resolved values', () => {
     const generated = execute({document: input(), process: true});
     assert.equal(generated.document.grandTotal, 125);

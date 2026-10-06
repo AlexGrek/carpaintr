@@ -92,3 +92,44 @@ def test_stable_keys_keep_colliding_labels_as_separate_sections(source):
     part_html = env.get_template("calculation_ua.html").render(data=data)
     assert part_html.count('<div class="calc-title">Edited part</div>') == 2
     assert "Hood row" in part_html and "Door row" in part_html
+
+
+@pytest.mark.parametrize("source,filename", [
+    ("common/doc_templates", "calculation_ua.html"),
+    ("common/doc_templates", "work_order_category_ua.html"),
+    ("data/common/doc_templates", "calculation_ua.html"),
+    ("data/common/doc_templates", "work_order_category_ua.html"),
+    ("pdf_backend_playwright/templates", "paycheck.html"),
+])
+@pytest.mark.parametrize("metadata,expected", [({}, "001"), ({"order_number": None}, "001"), ({"order_number": ""}, "001"), ({"order_number": "CUSTOM-7"}, "CUSTOM-7")])
+def test_order_number_fallback_in_every_template(source, filename, metadata, expected):
+    env = Environment(loader=FileSystemLoader(ROOT / source), autoescape=True)
+    data = {
+        "company_info": {"company_name": "Test", "email": "test@example.com", "pricing_preferences": {"preferred_currency": "UAH"}},
+        "metadata": metadata,
+        "calculation": {"car": {}, "paint": {}, "order": {}, "calc": {}, "calc_by_category": {}, "grand_total": 0},
+    }
+    html = env.get_template(filename).render(data=data)
+    assert f"№{expected}" in html
+    assert "№None" not in html
+
+
+@pytest.mark.parametrize("custom", [None, "<html><body>{{ data.company_info.company_name }} {{ data.calculation.car.make }}</body></html>"])
+def test_actual_service_preserves_free_form_text_as_text(custom, monkeypatch):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("autolab_pdf_app", ROOT / "pdf_backend_playwright/app.py")
+    service = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(service)
+    monkeypatch.chdir(ROOT / "pdf_backend_playwright")
+    data = {
+        "company_info": {"company_name": "Shop <custom> & repair", "email": "test@example.com", "pricing_preferences": {"preferred_currency": "UAH"}},
+        "custom_template_content": custom,
+        "metadata": {},
+        "calculation": {"car": {"make": "Brand <prototype>"}, "order": {}, "calc": {}},
+    }
+    html, error = service.render_template_from_data(data)
+    assert error is None
+    assert "Shop &lt;custom&gt; &amp; repair" in html
+    assert "<custom>" not in html
+    if custom:
+        assert "Brand &lt;prototype&gt;" in html

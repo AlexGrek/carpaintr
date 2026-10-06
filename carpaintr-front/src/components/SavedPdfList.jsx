@@ -31,8 +31,8 @@ const SavedPdfList = () => {
       <Button data-testid={`pdf-share-${pdf.document_id}`} disabled={busy} onClick={() => act(() => mcpApi(`/api/v1/pdfs/${pdf.document_id}/share`, { method: 'POST' }))}>{str('Share for another 30 days')}</Button>
       {pdf.public_url ? <>
         <p>{str('Public link expires')}: {new Date(pdf.expires_at * 1000).toLocaleString()}</p>
-        <p><a data-testid={`pdf-public-${pdf.document_id}`} href={pdf.public_url} rel="noreferrer">{pdf.public_url}</a></p>
-        <Button data-testid={`pdf-copy-${pdf.document_id}`} disabled={busy} onClick={() => navigator.clipboard.writeText(pdf.public_url).catch(e => setError(e.message))}>{str('Copy PDF link')}</Button>{' '}
+        <p><a data-testid={`pdf-public-${pdf.document_id}`} href={pdf.public_page_url || pdf.public_url} rel="noreferrer">{pdf.public_page_url || pdf.public_url}</a></p>
+        <Button data-testid={`pdf-copy-${pdf.document_id}`} disabled={busy} onClick={() => navigator.clipboard.writeText(pdf.public_page_url || pdf.public_url).catch(e => setError(e.message))}>{str('Copy PDF link')}</Button>{' '}
         <Button data-testid={`pdf-revoke-${pdf.document_id}`} disabled={busy} onClick={() => act(() => mcpApi(`/api/v1/pdfs/${pdf.document_id}/share`, { method: 'DELETE' }))}>{str('Revoke PDF link')}</Button>
       </> : <p>{str('Public link expired or revoked')}</p>}
     </Panel>)}

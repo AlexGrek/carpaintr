@@ -48,7 +48,13 @@ fn capability(state: &AppState, pdf: &SavedPdf) -> String {
     URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes())
 }
 fn view(state: &AppState, pdf: &SavedPdf) -> Value {
-    json!({"document_id":pdf.id,"filename":pdf.filename,"created_at":pdf.created_at,"calculation_id":pdf.calculation_id,"revision":pdf.revision,"expires_at":pdf.expires_at,"revoked":pdf.revoked,"public_url":if pdf.revoked || pdf.expires_at<=Utc::now().timestamp(){None}else{Some(format!("{}/public/pdfs/{}.pdf",state.mcp.base_url,capability(state,pdf)))},"download_url":format!("{}/api/v1/pdfs/{}",state.mcp.base_url,pdf.id)})
+    let active = !pdf.revoked && pdf.expires_at > Utc::now().timestamp();
+    let public = format!(
+        "{}/public/pdfs/{}",
+        state.mcp.base_url,
+        capability(state, pdf)
+    );
+    json!({"document_id":pdf.id,"filename":pdf.filename,"created_at":pdf.created_at,"calculation_id":pdf.calculation_id,"revision":pdf.revision,"expires_at":pdf.expires_at,"revoked":pdf.revoked,"public_url":active.then(|| format!("{public}.pdf")),"public_page_url":active.then_some(public),"download_url":format!("{}/api/v1/pdfs/{}",state.mcp.base_url,pdf.id)})
 }
 fn publish(
     state: &AppState,
@@ -264,7 +270,27 @@ pub async fn public_download(
     State(state): State<Arc<AppState>>,
     Path(token): Path<String>,
 ) -> Result<Response, AppError> {
-    let token = token.strip_suffix(".pdf").ok_or(AppError::NotFound)?;
+    let direct = token.ends_with(".pdf");
+    let token = token.strip_suffix(".pdf").unwrap_or(&token);
+    let pdf = public_pdf(&state, token)?;
+    if direct {
+        return bytes(&state, pdf).await;
+    }
+    // Keep the browser on a real page while the attachment downloads. Tokens
+    // are validated before substitution and the page loads no external assets.
+    let html = include_str!("pdf_download.html").replace("{{token}}", token);
+    Ok((
+        [
+            (header::CONTENT_TYPE, "text/html; charset=utf-8"),
+            (header::CACHE_CONTROL, "private, no-store, max-age=0"),
+            (header::REFERRER_POLICY, "no-referrer"),
+            (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+        ],
+        html,
+    )
+        .into_response())
+}
+fn public_pdf(state: &Arc<AppState>, token: &str) -> Result<SavedPdf, AppError> {
     if token.len() != 43
         || !token
             .bytes()
@@ -273,8 +299,8 @@ pub async fn public_download(
         return Err(AppError::NotFound);
     }
     let hash = digest(token.as_bytes());
-    let id = get::<String>(&state, &format!("pdf-token:{hash}"))?.ok_or(AppError::NotFound)?;
-    let pdf = get::<SavedPdf>(&state, &format!("pdf:{id}"))?.ok_or(AppError::NotFound)?;
+    let id = get::<String>(state, &format!("pdf-token:{hash}"))?.ok_or(AppError::NotFound)?;
+    let pdf = get::<SavedPdf>(state, &format!("pdf:{id}"))?.ok_or(AppError::NotFound)?;
     if pdf.revoked
         || pdf.expires_at <= Utc::now().timestamp()
         || pdf.token_hash != hash
@@ -285,7 +311,7 @@ pub async fn public_download(
     {
         return Err(AppError::NotFound);
     }
-    bytes(&state, pdf).await
+    Ok(pdf)
 }
 pub async fn share(
     AuthenticatedUser(email): AuthenticatedUser,
@@ -352,6 +378,35 @@ mod tests {
         .unwrap();
         publish(state, &pdf, None, None).unwrap();
         pdf
+    }
+    #[tokio::test]
+    async fn public_page_and_pdf_share_the_same_capability_lifecycle() {
+        let (_dir, state) = super::super::test_state();
+        let mut pdf = stored(&state).await;
+        let token = capability(&state, &pdf);
+        let page = public_download(State(state.clone()), Path(token.clone()))
+            .await
+            .unwrap();
+        assert_eq!(
+            page.headers()[header::CONTENT_TYPE],
+            "text/html; charset=utf-8"
+        );
+        let body = axum::body::to_bytes(page.into_body(), 64 * 1024)
+            .await
+            .unwrap();
+        let html = String::from_utf8(body.to_vec()).unwrap();
+        assert!(html.contains(&format!("/public/pdfs/{token}.pdf")));
+        assert!(html.contains("Your PDF is ready"));
+        assert!(view(&state, &pdf)["public_page_url"]
+            .as_str()
+            .unwrap()
+            .ends_with(&token));
+        pdf.revoked = true;
+        publish(&state, &pdf, Some(&pdf.token_hash), None).unwrap();
+        assert!(matches!(
+            public_download(State(state), Path(token)).await,
+            Err(AppError::NotFound)
+        ));
     }
     #[tokio::test]
     async fn expires_at_boundary_and_owner_retains_download() {

@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 from playwright.sync_api import sync_playwright, Browser, Playwright
 import io
 import os
@@ -17,7 +17,7 @@ if not app.debug:
 # --- End of Production Mode Configuration ---
 
 # Configure Jinja2 environment
-template_env = Environment(loader=FileSystemLoader("templates"))
+template_env = Environment(loader=FileSystemLoader("templates"), autoescape=True)
 
 # --- Browser Lifecycle Management ---
 class BrowserManager:
@@ -103,7 +103,7 @@ def render_template_from_data(data, default_template="paycheck.html"):
     custom_template_content = data.get("custom_template_content")
     try:
         if custom_template_content:
-            template = Template(custom_template_content)
+            template = template_env.from_string(custom_template_content)
         else:
             template = template_env.get_template(default_template)
 

@@ -73,10 +73,25 @@ pub async fn list_samples(
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Metadata {
     /// Optional order number for the document (e.g., invoice or job ID).
+    #[serde(serialize_with = "serialize_order_number")]
     order_number: Option<String>,
 
     /// Optional notes or comments associated with the order.
     order_notes: Option<String>,
+}
+
+// Apply the fallback at the shared PDF/HTML boundary, including legacy web
+// requests and user templates. Explicit nonblank order numbers are preserved.
+fn serialize_order_number<S: serde::Serializer>(
+    number: &Option<String>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    serializer.serialize_str(
+        number
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or("001"),
+    )
 }
 
 /// Internal request payload for PDF generation.
@@ -118,7 +133,7 @@ pub async fn send_gen_doc_request(
     internal_request: GeneratePdfInternalRequest,
     pdf_gen_api_url_post: &str,
     user_email: &str,
-    format: &str
+    format: &str,
 ) -> Result<Response, AppError> {
     let client = Client::new();
     client
@@ -134,4 +149,27 @@ pub async fn send_gen_doc_request(
             );
             AppError::InternalServerError(err.to_string())
         })
+}
+
+#[cfg(test)]
+mod metadata_tests {
+    use super::*;
+    use serde_json::json;
+    #[test]
+    fn order_number_defaults_and_preserves_custom_values() {
+        for input in [
+            json!({}),
+            json!({"order_number":null}),
+            json!({"order_number":""}),
+            json!({"order_number":"  "}),
+        ] {
+            let metadata: Metadata = serde_json::from_value(input).unwrap();
+            assert_eq!(
+                serde_json::to_value(metadata).unwrap()["order_number"],
+                "001"
+            );
+        }
+        let metadata: Metadata = serde_json::from_value(json!({"order_number":"0"})).unwrap();
+        assert_eq!(serde_json::to_value(metadata).unwrap()["order_number"], "0");
+    }
 }

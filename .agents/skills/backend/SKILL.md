@@ -205,6 +205,12 @@ See `docs/mcp.md`. `backend-service-rust/src/mcp/` provides account-bound
 Streamable HTTP tools, OAuth PKCE/consent, hashed scoped keys, revision-guarded
 Calc2 drafts and saved PDFs with 30-day public capabilities. Sled's `mcp` tree
 holds metadata; PDFs use user `pdfs/`, drafts use `stored_calculations/`.
+Vehicle identity accepts unverified free-form text; catalog matches only infer
+missing calculation class/body. All shared/personal templates can be finalized.
+Metadata serialization defaults absent/null/blank order numbers to `001`.
+Public `/public/pdfs/{token}` serves a bilingual download page; `.pdf` serves
+the attachment. Prefer `public_page_url` in browser links, retain `public_url`
+for direct bytes. Both validate the same account-bound capability lifecycle.
 OAuth permits ephemeral ports for HTTP loopback callbacks (RFC 8252), keeping
 host/path/query exact and binding token exchange to the selected callback.
 `PUBLIC_BASE_URL` is the externally reachable HTTPS origin (loopback HTTP allowed).

@@ -596,7 +596,10 @@ Preserve `JWT_SECRET` because public PDF capabilities depend on it.
 Pure modules moved to root `calculation-engine/` with frontend re-exports; Rust
 embeds the same code in bounded QuickJS runtimes. Frontend routes `/app/mcp`,
 `/app/mcp/authorize` and `/app/history` manage keys, consent and saved PDF links.
-PrintCalculationDrawer can save/share PDFs. Vite proxies OAuth/discovery/MCP/PDF
+PrintCalculationDrawer can save/share PDFs. Prefer `public_page_url` for links and
+clipboard (fall back to `public_url` for older servers). The public bilingual
+page stays visible while the browser downloads the PDF attachment.
+Vite proxies OAuth/discovery/MCP/PDF
 routes; Docker copies shared modules to both build stages.
 Checks: `cargo test mcp::`, shared/frontend Node suites, API `test_mcp.py`, and
 Cypress `mcp.cy.js`, `calculation-document.cy.js`, `norm-rates.cy.js`.

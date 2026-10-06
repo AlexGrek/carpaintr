@@ -55,6 +55,7 @@ class TestPdfGeneration:
         pdf_calls = [r for r in requests if r["path"] == "/generate/pdf"]
         assert len(pdf_calls) == 1
         assert pdf_calls[0]["body"]["calculation"]["identifier"] == "ITEST-001"
+        assert pdf_calls[0]["body"]["metadata"]["order_number"] == "001"
 
     async def test_generate_html_table_returns_html(
         self,

@@ -44,19 +44,26 @@ rows/totals, `missing_inputs`, `warnings`, `processing_errors`, `invalid_cells`,
 maximum 100); follow `next_offset`. Use `get_calculation` with
 `include_sources: true` to inspect saved lookup tables and overrides. Catalog
 searches use the same pagination.
-Use returned identifiers exactly; display bilingual labels and ask the user to
+Vehicle `car.make` (brand), `model`, `year`, `vin`, `licensePlate` and `notes` accept
+custom text without catalog, registry, VIN checksum or format verification.
+Entered text is preserved. A unique catalog match can fill missing `carClass`
+and `bodyType`; otherwise request those calculation classifications separately.
+Catalog searching for vehicle identity is optional.
+
+Use returned calculation identifiers exactly; display bilingual labels and ask the user to
 choose ambiguous matches. `language` accepts `en`, `uk` or the frontend alias
 `ua`; omission follows the company's preference.
 
 Typical interaction:
 
-1. Read company information and search catalogs for the requested vehicle/parts.
+1. Read company information, accept the supplied vehicle details, and search catalogs for the requested parts/classifications.
 2. Start a draft, then ask for missing values instead of guessing them.
 3. Update the draft using its latest `expected_revision`. Show intermediate
    work rows and totals so the user can review and adjust them.
 4. Set rates for the current calculation, edit cells using stable entity IDs,
    and resolve validation or processing errors.
-5. Finalize the reviewed revision and return `pdf.public_url` with its expiry.
+5. If the user requests a template, use `search_catalog` with `kind: "templates"` (follow pagination), then pass its exact filename as `template_name` to `finalize_calculation`. Every shared and personal template is supported; the default is `calculation_ua.html`. Missing/blank order numbers default to `001`.
+6. Return `pdf.public_page_url` with its expiry for browser downloads. It shows a bilingual ready/download page and starts the download while keeping the page visible. `pdf.public_url` remains the direct PDF file for programmatic downloads. Both work without authentication and share the same revocation/expiry.
 
 Example Ukrainian request: «Розрахуй ремонт капота з зовнішнім фарбуванням,
 ставка 800 грн за нормо-годину». Example English request: “Estimate exterior
@@ -195,3 +202,11 @@ frontend builds, Helm rendering and restart recovery passed. Changed-file lint
 passed; full frontend lint has five existing duplicate-key errors in
 `src/vindecoder.js`. Live hosted assistant acceptance and a deployed real-PDF
 service check remain deployment validation steps.
+
+
+Follow-up validation on 2026-10-06: 19 Rust checks, 96 shared/frontend engine
+checks, 30 template/service rendering checks, 10 MCP/PDF integration checks and
+eight consent/download browser checks passed. Coverage includes unverified
+vehicle identity, all shared/personal templates, default order number `001`,
+HTML escaping, automatic downloads at 320px and capability revocation. Changed
+frontend files pass lint; the five existing `vindecoder.js` duplicate keys remain.

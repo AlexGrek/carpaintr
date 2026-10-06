@@ -376,61 +376,39 @@ async fn hydrate(
     doc: &mut Value,
     refresh: bool,
 ) -> Result<(), AppError> {
-    // Model metadata may uniquely resolve the class, but multiple bodies remain
-    // explicit missing inputs so the assistant can ask the user to choose.
-    if let Some(make) = doc["car"]["make"]
-        .as_str()
-        .filter(|s| !s.is_empty())
-        .map(String::from)
-    {
-        let makers =
-            utils::list_catalog_files_user_common(&state.data_dir_path, email, &"cars").await?;
+    // Vehicle identity is free-form. Catalog matches only help fill missing
+    // calculation classifications; never validate or rewrite the user's text.
+    if let (Some(make), Some(model)) = (doc["car"]["make"].as_str(), doc["car"]["model"].as_str()) {
+        let makers = utils::list_catalog_files_user_common(&state.data_dir_path, email, &"cars")
+            .await
+            .unwrap_or_default();
         let matches: Vec<_> = makers
             .iter()
-            .filter(|name| name.trim_end_matches(".yaml").eq_ignore_ascii_case(&make))
+            .filter(|name| name.trim_end_matches(".yaml").eq_ignore_ascii_case(make))
             .collect();
-        if matches.len() != 1 {
-            return Err(bad(
-                "Unknown or ambiguous make; search vehicles / Невідома або неоднозначна марка",
-            ));
-        }
-        let filename = matches[0];
-        doc["car"]["make"] = json!(filename.trim_end_matches(".yaml"));
-        if let Some(model) = doc["car"]["model"]
-            .as_str()
-            .filter(|s| !s.is_empty())
-            .map(String::from)
-        {
-            let models = yaml(state, email, &format!("cars/{filename}")).await?;
-            let matches: Vec<_> = models
-                .as_object()
-                .into_iter()
-                .flat_map(|o| o.iter())
-                .filter(|(name, _)| name.eq_ignore_ascii_case(&model))
-                .collect();
-            if matches.len() != 1 {
-                return Err(bad("Unknown or ambiguous model; search vehicles with make / Невідома або неоднозначна модель"));
-            }
-            let (name, metadata) = matches[0];
-            doc["car"]["model"] = json!(name);
-            if doc["car"]["carClass"].as_str().unwrap_or("").is_empty() {
-                doc["car"]["carClass"] = metadata["euro_class"].clone();
-            }
-            if doc["car"]["bodyType"].as_str().unwrap_or("").is_empty() {
-                if let Some(bodies) = metadata["euro_body_types"]
-                    .as_array()
-                    .filter(|a| a.len() == 1)
-                {
-                    doc["car"]["bodyType"] = bodies[0].clone();
+        if matches.len() == 1 {
+            if let Ok(models) = yaml(state, email, &format!("cars/{}", matches[0])).await {
+                let matches: Vec<_> = models
+                    .as_object()
+                    .into_iter()
+                    .flat_map(|o| o.iter())
+                    .filter(|(name, _)| name.eq_ignore_ascii_case(model))
+                    .collect();
+                if matches.len() == 1 {
+                    let metadata = matches[0].1;
+                    if doc["car"]["carClass"].as_str().unwrap_or("").is_empty() {
+                        doc["car"]["carClass"] = metadata["euro_class"].clone();
+                    }
+                    if doc["car"]["bodyType"].as_str().unwrap_or("").is_empty() {
+                        if let Some(bodies) = metadata["euro_body_types"]
+                            .as_array()
+                            .filter(|a| a.len() == 1)
+                        {
+                            doc["car"]["bodyType"] = bodies[0].clone();
+                        }
+                    }
                 }
             }
-        }
-    }
-    if let Some(year) = doc["car"]["year"].as_str().filter(|s| !s.is_empty()) {
-        if year.len() != 4 || !year.bytes().all(|b| b.is_ascii_digit()) || year == "0000" {
-            return Err(bad(
-                "Year must contain four digits / Рік має містити чотири цифри",
-            ));
         }
     }
     let class = doc["car"]["carClass"].as_str().unwrap_or("").to_string();

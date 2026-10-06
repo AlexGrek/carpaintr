@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Autolab — PDF</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: #f5f6f8; color: #252a34; font: 16px/1.55 system-ui, sans-serif; }
+    main { width: 100%; max-width: 480px; padding: 32px; background: white; border: 1px solid #e4e7ec; border-radius: 24px; box-shadow: 0 16px 48px #252a3408; }
+    .brand { font-size: 20px; font-weight: 700; letter-spacing: -.5px; }
+    .icon { margin: 32px 0 20px; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: #fff1eb; color: #d34a27; }
+    h1 { margin: 0 0 4px; font-size: 26px; line-height: 1.25; letter-spacing: -.5px; }
+    p { margin: 0; }
+    .english { color: #667085; }
+    .status { margin: 20px 0 24px; font-size: 14px; }
+    a { display: block; padding: 12px 16px; border-radius: 12px; background: #d34a27; color: white; font-weight: 600; text-align: center; text-decoration: none; }
+    a:hover { background: #ba3e1e; }
+    a:focus-visible { outline: 3px solid #252a34; outline-offset: 4px; }
+    .footnote { margin-top: 24px; font-size: 12px; color: #667085; }
+    @media (max-width: 360px) { main { padding: 24px; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <main data-testid="pdf-download-page">
+    <div class="brand">Autolab</div>
+    <div class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 11v7m-3-3 3 3 3-3"/></svg></div>
+    <h1>Ваш PDF готовий</h1>
+    <p class="english" lang="en">Your PDF is ready</p>
+    <div class="status" role="status">
+      <p>Завантаження почнеться автоматично. Якщо файл не збережено, натисніть кнопку нижче.</p>
+      <p class="english" lang="en">Your download will start automatically. If it doesn’t start, use the button below.</p>
+    </div>
+    <a id="download" data-testid="pdf-download-button" href="/public/pdfs/{{token}}.pdf" download referrerpolicy="no-referrer">Завантажити PDF · <span lang="en">Download</span></a>
+    <p class="footnote">Без входу в обліковий запис · <span lang="en">No sign-in required</span></p>
+  </main>
+  <script>document.getElementById('download').click();</script>
+</body>
+</html>
