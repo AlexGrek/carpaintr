@@ -956,6 +956,7 @@ All errors return a JSON body with an error message:
 ## MCP and saved PDFs
 
 See [Autolab MCP](mcp.md) for tool schemas, interaction flow, OAuth and deployment.
+The deployed dev MCP endpoint is **`https://autolab-dev.alexgr.space/mcp`**.
 `POST /mcp` uses Streamable HTTP with OAuth access tokens or scoped MCP API keys;
 application JWTs authenticate the management and owner-download routes below.
 

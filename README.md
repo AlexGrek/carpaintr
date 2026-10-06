@@ -21,6 +21,29 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 
 **Fresh local database:** `task reset` wipes Sled + user files and re-syncs `data/common`. Use `task reset POPULATE=1` to also create 30 seed logins (`user1@example.com` / `test1`, …).
 
+## Autolab MCP
+
+**Dev MCP URL:** [https://autolab-dev.alexgr.space/mcp](https://autolab-dev.alexgr.space/mcp)
+
+```text
+https://autolab-dev.alexgr.space/mcp
+```
+
+Add this URL to a remote MCP client that supports **Streamable HTTP**. Authenticate
+with OAuth using your Autolab account, or create a scoped Bearer API key in
+[AI assistants](https://autolab-dev.alexgr.space/app/mcp).
+
+MCP provides interactive repair calculations with intermediate results, company
+information, hourly rates and PDF generation. Tool descriptions are available in
+English and Ukrainian. Vehicle brand, model, VIN, plate, year and notes accept
+custom text without verification. All shared and personal PDF templates are
+supported; missing or blank order numbers default to `001`.
+
+Generated PDFs are saved. Public download pages and direct PDF links work without
+sign-in for 30 days; the owner can renew or revoke them. See the
+[Autolab MCP guide](docs/mcp.md) for the seven tools, scopes, template selection,
+PDF sharing and deployment configuration.
+
 ## Documentation
 
 📚 **Comprehensive documentation available in [docs/](docs/):**
@@ -30,6 +53,7 @@ Access the application at http://localhost:5173 (Vite default; API proxied to :8
 - **[Backup & Restore](docs/backup.md)** - Automated backups, restore procedures, disaster recovery
 - **[Secrets Management](docs/secrets-management.md)** - JWT & license secret initialization
 - **[API Documentation](docs/api.md)** - Full REST API reference
+- **[Autolab MCP](docs/mcp.md)** - Dev connection URL, assistant authentication, tools, templates and public PDF links
 - **[Calc2 Refactoring Plan](docs/calc2-refactoring-plan.md)** - Preserve all cell edits through stages, save/load, and document generation
 - **[Known Issues](known-issues.md)** - Tracked, reproducible problems not yet fixed
 
@@ -48,6 +72,7 @@ carpaintr/
 │   ├── backup.md
 │   ├── deployment.md
 │   ├── development.md
+│   ├── mcp.md
 │   └── secrets-management.md
 ├── data/                       # Initial data for deployment
 ├── Taskfile.yml                # Task runner configuration

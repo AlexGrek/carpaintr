@@ -7,6 +7,16 @@ not require client-side sampling, elicitation or model-specific extensions.
 
 ## Connecting an assistant
 
+**Deployed dev MCP URL:** [https://autolab-dev.alexgr.space/mcp](https://autolab-dev.alexgr.space/mcp)
+
+```text
+https://autolab-dev.alexgr.space/mcp
+```
+
+Use that complete URL as the remote server URL with Streamable HTTP transport.
+The management page is [AI assistants](https://autolab-dev.alexgr.space/app/mcp).
+Authenticated tools require an active Autolab license.
+
 Sign in to Autolab and open **AI assistants** (`/app/mcp`). Copy the displayed MCP
 URL into a remote MCP client's connection settings. OAuth opens Autolab's login
 and consent screen; the user reviews the requested permissions before approving.
@@ -100,9 +110,16 @@ Both MCP finalization and **Save and share PDF** in the web print drawer persist
 the generated PDF. **History** (`/app/history`) lists saved documents and supports
 owner downloads, sharing for another 30 days, copying links and revocation.
 
-Public URLs have a 256-bit unguessable capability:
-`/public/pdfs/<43-character-token>.pdf`. They work without authentication, return
-`application/pdf` with an attachment disposition, and expire after 30 days.
+Public URLs have a 256-bit unguessable capability and expire after 30 days.
+Both public URL types work without authentication:
+
+| Response field | URL / behavior |
+|---|---|
+| `pdf.public_page_url` | `/public/pdfs/<43-character-token>` — bilingual download page that starts the download and stays visible. Prefer this when sharing a browser link. |
+| `pdf.public_url` | `/public/pdfs/<43-character-token>.pdf` — direct `application/pdf` bytes with an attachment disposition. Use this for programmatic downloads. |
+| `pdf.download_url` | `/api/v1/pdfs/<document-id>` — authenticated owner download; requires the application JWT. |
+
+The public page and file share the same capability, expiry and revocation.
 Anyone who has the link can download the PDF. Expiry and revocation are checked
 on every request; responses are marked `no-store`. Re-sharing rotates the URL
 and immediately invalidates the previous one. Missing, expired, revoked and
@@ -201,7 +218,8 @@ also cover legacy imports and the print drawer's save/share action. Backend and
 frontend builds, Helm rendering and restart recovery passed. Changed-file lint
 passed; full frontend lint has five existing duplicate-key errors in
 `src/vindecoder.js`. Live hosted assistant acceptance and a deployed real-PDF
-service check remain deployment validation steps.
+service check were still pending at that initial validation. See the deployed
+checks below.
 
 
 Follow-up validation on 2026-10-06: 19 Rust checks, 96 shared/frontend engine
@@ -209,4 +227,27 @@ checks, 30 template/service rendering checks, 10 MCP/PDF integration checks and
 eight consent/download browser checks passed. Coverage includes unverified
 vehicle identity, all shared/personal templates, default order number `001`,
 HTML escaping, automatic downloads at 320px and capability revocation. Changed
-frontend files pass lint; the five existing `vindecoder.js` duplicate keys remain.
+frontend files passed lint; full lint reported five existing `vindecoder.js`
+duplicate keys at that check.
+
+
+Deployed dev validation on 2026-10-06 (Helm revision 13): API image `4c19525e`
+and PDF image `9dcf33f6`. Both shared templates (`calculation_ua.html` and
+`work_order_category_ua.html`) and a temporary personal template generated real
+PDFs. Extracted text and visual inspection confirmed unverified vehicle identity,
+custom characters such as `<` and `&`, order number `001` and calculation rates.
+Public pages/files worked without authentication; revocation invalidated both
+while retaining owner downloads. Three additional fresh revisions rendered
+successfully, exercising browser reuse rather than PDF deduplication.
+
+The live checks reproduced memory exhaustion while starting a second Chromium
+instance under dev's old 256Mi limit. The PDF container now uses one Gunicorn
+worker with one request thread, preserving synchronous Playwright thread
+ownership. Dev PDF limits are 500m CPU / 512Mi memory. Remaining idle-lifecycle
+investigation is tracked in [Known Issues](../known-issues.md).
+
+The ChatGPT/Codex URL-client OAuth flow also passed server-side validation:
+native loopback callback port, consent, PKCE, one-use authorization code and
+an OAuth-authenticated MCP tool call. Existing authentication secrets were
+unchanged. Completing sign-in within each assistant is part of client
+application acceptance testing.

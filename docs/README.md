@@ -6,6 +6,8 @@ Welcome to the Carpaintr (Autolab) documentation. This directory contains compre
 
 ### Core Guides
 
+- **[Autolab MCP](mcp.md)** - Connect to `https://autolab-dev.alexgr.space/mcp`; tools, OAuth/API keys, custom vehicles, PDF templates and sharing
+
 - **[Calc2 Refactoring Plan](calc2-refactoring-plan.md)** - Persistent cell edits, processor reconciliation, stage state, save/load, and document output
 
 - **[Development Guide](development.md)** 🔧
@@ -39,6 +41,7 @@ Welcome to the Carpaintr (Autolab) documentation. This directory contains compre
 | Task | Documentation |
 |------|---------------|
 | Set up local development | [Development Guide → Quick Start](development.md#quick-start) |
+| Connect an AI assistant | [Autolab MCP → Connecting an assistant](mcp.md#connecting-an-assistant) |
 | Run tests | [Development Guide → Testing](development.md#testing) |
 | Add a new API endpoint | [Development Guide → Backend Development](development.md#backend-development) |
 | Add a new frontend page | [Development Guide → Frontend Development](development.md#frontend-development) |
@@ -82,7 +85,7 @@ Welcome to the Carpaintr (Autolab) documentation. This directory contains compre
 |-----------|-------------|
 | **Backend** | Rust, Axum 0.8, Tokio, Sled (embedded DB), JWT, bcrypt |
 | **Frontend** | React 19, TypeScript, Vite 7, RSuite, TailwindCSS 4 |
-| **PDF Service** | Python, Flask, WeasyPrint, Jinja2 |
+| **PDF Service** | Python, Flask, Playwright/Chromium, Jinja2 |
 | **Testing** | pytest, httpx (async), coverage |
 | **Deployment** | Docker, Kubernetes, Helm, k3s, Traefik |
 | **CI/CD** | Drone CI, GitHub Actions |
