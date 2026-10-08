@@ -575,7 +575,28 @@ async fn language(state: &Arc<AppState>, email: &str, args: &Value) -> Result<St
     }
     Ok(if value == "en" { "en" } else { "uk" }.into())
 }
-fn summary(evaluation: &Value, args: &Value, lang: &str) -> Value {
+/// Browser link that opens the saved draft in the calculation wizard. The web app
+/// addresses saved files by stem (`?id=`); drafts with a vehicle class/body open
+/// on the estimate table, others on vehicle selection to fill missing inputs.
+fn app_url(base_url: &str, doc: &Value) -> Option<String> {
+    let stem = doc["car"]["storeFileName"]
+        .as_str()?
+        .strip_suffix(".json")?;
+    let complete = ["carClass", "bodyType"]
+        .iter()
+        .all(|field| doc["car"][field].as_str().is_some_and(|v| !v.is_empty()));
+    let mut url = url::Url::parse(base_url).ok()?.join("/app/calc2").ok()?;
+    url.query_pairs_mut().append_pair("id", stem).append_pair(
+        "stage",
+        if complete {
+            "tableStage"
+        } else {
+            "carSelectStage"
+        },
+    );
+    Some(url.into())
+}
+fn summary(state: &AppState, evaluation: &Value, args: &Value, lang: &str) -> Value {
     let doc = &evaluation["document"];
     let offset = args["offset"].as_u64().unwrap_or(0) as usize;
     let limit = args["limit"].as_u64().unwrap_or(50).clamp(1, 100) as usize;
@@ -588,7 +609,7 @@ fn summary(evaluation: &Value, args: &Value, lang: &str) -> Value {
     };
     let mut response = json!({
         "calculation_id":doc["calculationId"], "revision":doc["revision"],
-        "saved_filename":doc["car"]["storeFileName"], "language":lang,
+        "saved_filename":doc["car"]["storeFileName"], "app_url":app_url(&state.mcp.base_url, doc), "language":lang,
         "car":doc["car"], "paint":doc["paint"], "order":doc["order"], "parts":doc["parts"],
         "rates":doc["normRates"], "rate_assignments":doc["normRateOverrides"],
         "part_totals":totals("totalTables"), "category_totals":totals("categoryTables"),
@@ -599,11 +620,11 @@ fn summary(evaluation: &Value, args: &Value, lang: &str) -> Value {
         "ready_to_finalize":evaluation["ready"], "rows":rows.into_iter().skip(offset).take(limit).collect::<Vec<_>>(),
         "total_rows":total, "next_offset":if offset+limit<total{Some(offset+limit)}else{None},
         "next_step":if lang=="en" {
-            if evaluation["ready"]==true {"Review the estimate and finalize_calculation, or update cells using returned IDs."}
-            else {"Ask the user for missing inputs; use search_catalog for valid choices."}
+            if evaluation["ready"]==true {"Review the estimate and finalize_calculation, or update cells using returned IDs. Share app_url when the user wants to continue in the Autolab web app."}
+            else {"Ask the user for missing inputs; use search_catalog for valid choices. Share app_url when the user wants to continue in the Autolab web app."}
         } else {
-            if evaluation["ready"]==true {"Перегляньте кошторис і створіть PDF або змініть комірки за поверненими ID."}
-            else {"Запитайте відсутні дані; використовуйте search_catalog для вибору допустимих значень."}
+            if evaluation["ready"]==true {"Перегляньте кошторис і створіть PDF або змініть комірки за поверненими ID. Надайте app_url, якщо користувач хоче продовжити у вебзастосунку Autolab."}
+            else {"Запитайте відсутні дані; використовуйте search_catalog для вибору допустимих значень. Надайте app_url, якщо користувач хоче продовжити у вебзастосунку Autolab."}
         }
     });
     if args["include_sources"] == true {
@@ -661,7 +682,7 @@ pub async fn create(state: &Arc<AppState>, email: &str, args: &Value) -> Result<
     )
     .await?;
     result["document"] = save(state, email, result["document"].clone()).await?;
-    Ok(summary(&result, args, &lang))
+    Ok(summary(state, &result, args, &lang))
 }
 pub async fn inspect(state: &Arc<AppState>, email: &str, args: &Value) -> Result<Value, AppError> {
     let account_lock = state.mcp.account_lock(email).await;
@@ -669,7 +690,7 @@ pub async fn inspect(state: &Arc<AppState>, email: &str, args: &Value) -> Result
     let lang = language(state, email, args).await?;
     let doc = load(state, email, required(args, "calculation_id")?).await?;
     let result = engine::evaluate(state, json!({"document":doc,"language":lang})).await?;
-    Ok(summary(&result, args, &lang))
+    Ok(summary(state, &result, args, &lang))
 }
 pub async fn update(state: &Arc<AppState>, email: &str, args: &Value) -> Result<Value, AppError> {
     let account_lock = state.mcp.account_lock(email).await;
@@ -696,7 +717,7 @@ pub async fn update(state: &Arc<AppState>, email: &str, args: &Value) -> Result<
     result=engine::evaluate(state,json!({"document":result["document"],"changes":{"edits":edits.unwrap_or(json!([])),"restore_rows":restore.unwrap_or(json!([]))},"process":true,"language":lang})).await?;
     result["document"]["revision"] = json!(doc["revision"].as_u64().unwrap_or(0) + 1);
     result["document"] = save(state, email, result["document"].clone()).await?;
-    Ok(summary(&result, args, &lang))
+    Ok(summary(state, &result, args, &lang))
 }
 pub async fn finalize(state: &Arc<AppState>, email: &str, args: &Value) -> Result<Value, AppError> {
     let account_lock = state.mcp.account_lock(email).await;
@@ -706,7 +727,7 @@ pub async fn finalize(state: &Arc<AppState>, email: &str, args: &Value) -> Resul
     check_revision(&doc, args)?;
     let result = engine::evaluate(state, json!({"document":doc,"language":lang})).await?;
     if result["ready"] != true {
-        return Ok(summary(&result, args, &lang));
+        return Ok(summary(state, &result, args, &lang));
     }
     let mut calculation = result["output"].clone();
     calculation["car"] = doc["car"].clone();
@@ -723,7 +744,7 @@ pub async fn finalize(state: &Arc<AppState>, email: &str, args: &Value) -> Resul
         doc["revision"].as_u64(),
     )
     .await?;
-    Ok(json!({"pdf":pdf,"calculation":summary(&result,args,&lang)}))
+    Ok(json!({"pdf":pdf,"calculation":summary(state,&result,args,&lang)}))
 }
 pub async fn rates(state: &Arc<AppState>, email: &str, args: &Value) -> Result<Value, AppError> {
     let account_lock = state.mcp.account_lock(email).await;
@@ -834,7 +855,7 @@ pub async fn rates(state: &Arc<AppState>, email: &str, args: &Value) -> Result<V
         .await?;
         result["document"]["revision"] = json!(doc["revision"].as_u64().unwrap_or(0) + 1);
         result["document"] = save(state, email, result["document"].clone()).await?;
-        Ok(summary(&result, args, &lang))
+        Ok(summary(state, &result, args, &lang))
     } else {
         if args.get("assignments").is_some() {
             return Err(bad("Part/table assignments require calculation scope"));
@@ -842,5 +863,26 @@ pub async fn rates(state: &Arc<AppState>, email: &str, args: &Value) -> Result<V
         company.pricing_preferences = pricing;
         save_company_info(state, email, &mut company).await?;
         Ok(json!({"scope":"company","company":company}))
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::app_url;
+    use serde_json::json;
+    #[test]
+    fn app_url_opens_saved_draft_on_the_relevant_stage() {
+        let complete =
+            json!({"car":{"storeFileName":"mcp-1a2b.json","carClass":"A","bodyType":"седан"}});
+        assert_eq!(
+            app_url("https://autolab.example.com", &complete).as_deref(),
+            Some("https://autolab.example.com/app/calc2?id=mcp-1a2b&stage=tableStage")
+        );
+        let incomplete =
+            json!({"car":{"storeFileName":"my file&x.json","carClass":"","bodyType":null}});
+        assert_eq!(
+            app_url("http://localhost:3000", &incomplete).as_deref(),
+            Some("http://localhost:3000/app/calc2?id=my+file%26x&stage=carSelectStage")
+        );
+        assert_eq!(app_url("http://localhost:3000", &json!({"car":{}})), None);
     }
 }

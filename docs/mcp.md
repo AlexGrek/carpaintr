@@ -50,7 +50,7 @@ ID is needed for persistence: estimates are addressed by calculation ID.
 
 Every estimate response includes `calculation_id`, `revision`, intermediate
 rows/totals, `missing_inputs`, `warnings`, `processing_errors`, `invalid_cells`,
-`ready_to_finalize` and a suggested next step. Rows are paginated (default 50,
+`ready_to_finalize`, `app_url` and a suggested next step. Rows are paginated (default 50,
 maximum 100); follow `next_offset`. Use `get_calculation` with
 `include_sources: true` to inspect saved lookup tables and overrides. Catalog
 searches use the same pagination.
@@ -73,7 +73,8 @@ Typical interaction:
 4. Set rates for the current calculation, edit cells using stable entity IDs,
    and resolve validation or processing errors.
 5. If the user requests a template, use `search_catalog` with `kind: "templates"` (follow pagination), then pass its exact filename as `template_name` to `finalize_calculation`. Every shared and personal template is supported; the default is `calculation_ua.html`. Missing/blank order numbers default to `001`.
-6. Return `pdf.public_page_url` with its expiry for browser downloads. It shows a bilingual ready/download page and starts the download while keeping the page visible. `pdf.public_url` remains the direct PDF file for programmatic downloads. Both work without authentication and share the same revocation/expiry.
+6. Whenever the user wants to review or keep editing in the browser, give them `app_url` (see [Continuing in the web app](#continuing-in-the-web-app)).
+7. Return `pdf.public_page_url` with its expiry for browser downloads. It shows a bilingual ready/download page and starts the download while keeping the page visible. `pdf.public_url` remains the direct PDF file for programmatic downloads. Both work without authentication and share the same revocation/expiry.
 
 Example Ukrainian request: «Розрахуй ремонт капота з зовнішнім фарбуванням,
 ставка 800 грн за нормо-годину». Example English request: “Estimate exterior
@@ -103,6 +104,31 @@ archives. Cell edits accept literal values, including explicit zero and blank;
 committed cell and block PDF finalization. Lookup overrides apply only to the
 estimate. Saved source and processor snapshots remain until explicitly refreshed.
 A stale revision fails without overwriting newer changes; read and retry.
+
+## Continuing in the web app
+
+Every estimate response (`create_calculation`, `get_calculation`,
+`update_calculation`, `set_hour_rates` with calculation scope and
+`finalize_calculation`'s `calculation`) carries `app_url`:
+
+```text
+https://<autolab-host>/app/calc2?id=mcp-<calculation-id>&stage=tableStage
+```
+
+`id` is the saved file stem (`saved_filename` without `.json`), the same
+`?id=` the web app's saved-calculation links use. `stage` is `tableStage` once
+the vehicle class and body type are set, otherwise `carSelectStage` so the user
+can fill them in. The link is built from `PUBLIC_BASE_URL` and is **not** a
+capability: it only works for the owning account. A signed-out user is sent to
+login and returned to the calculation; another account, or a missing file,
+gets an error and the calculation start menu.
+
+The browser and MCP edit the same file. Saving in the web app bumps the
+revision, so the assistant's next write with the old `expected_revision` fails
+as stale; it should call `get_calculation` and continue from the browser's
+changes. Likewise, after an MCP update the browser's save is rejected with
+"Calculation changed in another client. Reload before saving." Reopening
+`app_url` loads the latest version.
 
 ## PDF storage and sharing
 

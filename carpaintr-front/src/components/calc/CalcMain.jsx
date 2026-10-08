@@ -3,7 +3,10 @@ import "./CarPaintEstimator.css";
 import "./calc_translations";
 import { patchDocument, resolveDocument } from "../../calc/calculationDocument";
 import { acknowledgeSaved, createSaveCoordinator, shouldRecordUndo } from "../../calc/calculationPersistence";
-import { authFetch } from "../../utils/authFetch";
+import { authFetch, handleAuthResponse } from "../../utils/authFetch";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Loader, Message, useToaster } from "rsuite";
+import { useLocale } from "../../localization/LocaleContext";
 import StageView from "../layout/StageView";
 import { Car, CarFront, Paintbrush, Table2 } from "lucide-react";
 import CalcMainMenuStage from "./CalcMainMenuStage";
@@ -40,7 +43,15 @@ const stages = [
 ];
 
 const CalcMain = () => {
+  const [searchParams] = useSearchParams();
+  // `?id=<saved file stem>` (history links, MCP app_url) opens that calculation directly.
+  const savedId = searchParams.get("id");
   const [isMainMenuStage, setIsMainMenuStage] = useState(true);
+  const [openingSaved, setOpeningSaved] = useState(Boolean(savedId));
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toaster = useToaster();
+  const { str } = useLocale();
   const [savePending, setSavePending] = useState(false);
   const owner = useRef({ epoch: 0, calculationId: null });
   const [state, dispatch] = useReducer((state, action) => {
@@ -88,12 +99,46 @@ const CalcMain = () => {
     setIsMainMenuStage(false);
   }, []);
 
+  useEffect(() => {
+    if (!savedId) return;
+    let cancelled = false;
+    const filename = savedId.endsWith(".json") ? savedId : `${savedId}.json`;
+    (async () => {
+      try {
+        const response = await authFetch(`/api/v1/user/calculationstore?filename=${encodeURIComponent(filename)}`);
+        if (cancelled || handleAuthResponse(response, navigate, location)) return;
+        if (!response.ok) throw new Error(response.status === 404 ? str("Calculation not found") : `HTTP ${response.status}`);
+        const data = await response.json();
+        if (!cancelled) handleLoadData(data);
+      } catch (error) {
+        if (cancelled) return;
+        toaster.push(
+          <Message type="error" showIcon closable data-testid="calc-open-error">
+            {`${str("Error loading calculation:")} ${error.message}`}
+          </Message>,
+          { placement: "topCenter", duration: 8000 },
+        );
+        const url = new URL(window.location);
+        url.searchParams.delete("id");
+        url.searchParams.delete("stage");
+        window.history.replaceState({}, "", url);
+      } finally {
+        if (!cancelled) setOpeningSaved(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  // Open once per id; auth redirect state is read at fetch time.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedId]);
+
   const handleNext = useCallback((mode) => {
     const calculationId = crypto.randomUUID();
     owner.current = { epoch: owner.current.epoch + 1, calculationId };
     dispatch({ type: "load", data: { carSelectionMode: mode, calculationId } });
     setIsMainMenuStage(false);
   }, []);
+
+  if (openingSaved) return <Loader center size="md" content={str("Loading...")} data-testid="calc-open-loader" />;
 
   return isMainMenuStage ? (
     <CalcMainMenuStage

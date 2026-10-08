@@ -44,7 +44,7 @@ describe('MCP connections and saved PDFs', () => {
     authRequest('POST', '/api/v1/pdfs', payload).then(({ body: pdf }) => {
       cy.request(pdf.public_url).its('headers.content-type').should('eq', 'application/pdf');
       cy.visit('/app/history');
-      cy.getByTestId(`pdf-public-${pdf.document_id}`).should('have.attr', 'href', pdf.public_url);
+      cy.getByTestId(`pdf-public-${pdf.document_id}`).should('have.attr', 'href', pdf.public_page_url);
       cy.intercept('POST', `/api/v1/pdfs/${pdf.document_id}/share`).as('reshare');
       cy.getByTestId(`pdf-share-${pdf.document_id}`).click();
       cy.wait('@reshare').then(({ response }) => {
@@ -73,12 +73,11 @@ describe('MCP connections and saved PDFs', () => {
           const action = actions.items.find(item => item.id.includes('з зовнішнім фарбуванням')).id;
           call('create_calculation', { inputs: { car: { carClass: 'B', bodyType: 'sedan', year: '2020' }, paint: { paintType: 'metallic' }, parts: [{ name: part, selectedAction: action }] } }).then(draft => {
             const row = draft.rows.find(entry => entry.row.kind === 'labor').row;
-            authRequest('GET', `/api/v1/user/calculationstore?filename=${encodeURIComponent(draft.saved_filename)}`).then(({ body: doc }) => {
-              cy.window().then(win => win.localStorage.setItem('unsaved_calculation', JSON.stringify(doc)));
-            });
-            cy.visit('/app/calc2?stage=tableStage');
-            cy.window().then(win => win.history.replaceState(null, '', '/app/calc2?stage=tableStage'));
-            cy.getByTestId('calc-main-resume-previous-button').click();
+            // The assistant hands the user app_url; it opens the shared draft on the estimate table.
+            const appUrl = new URL(draft.app_url);
+            expect(appUrl.pathname).to.eq('/app/calc2');
+            expect(appUrl.searchParams.get('stage')).to.eq('tableStage');
+            cy.visit(appUrl.pathname + appUrl.search);
             cy.getByTestId(`calc-cell-${row.id}-sum`).scrollIntoView().clear().type('606,06').blur();
             cy.intercept('POST', '**/calculationstore').as('crossClientSave');
             cy.getByTestId('calc-final-stage-save-button').click();
@@ -93,7 +92,7 @@ describe('MCP connections and saved PDFs', () => {
             cy.getByTestId('print-save-share-pdf-button').scrollIntoView().click();
             cy.wait('@saveSharedPrint').then(({ response }) => {
               expect(response.statusCode).to.eq(200);
-              cy.getByTestId('print-saved-pdf-link').should('have.attr', 'href', response.body.public_url);
+              cy.getByTestId('print-saved-pdf-link').should('have.attr', 'href', response.body.public_page_url);
               cy.request(response.body.public_url).its('headers.content-type').should('eq', 'application/pdf');
             });
           });
@@ -101,5 +100,29 @@ describe('MCP connections and saved PDFs', () => {
       });
     });
   });
+  it('sends a signed-out user through login and back to the MCP estimate', () => {
+    authRequest('POST', '/api/v1/mcp/keys', { name: 'App link browser test' }).then(({ body: key }) => {
+      cy.request({
+        method: 'POST', url: key.mcp_url,
+        headers: { Authorization: `Bearer ${key.key}`, Accept: 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-11-25' },
+        body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'create_calculation', arguments: { inputs: { car: { make: 'Linked brand', carClass: 'B', bodyType: 'sedan', year: '2020' } } } } },
+      }).then(({ body }) => {
+        const appUrl = new URL(body.result.structuredContent.app_url);
+        cy.clearLocalStorage();
+        cy.visit(appUrl.pathname + appUrl.search);
+        cy.url().should('include', '/app/login?redirect=');
+        cy.getByTestId('login-email-input').type('user26@example.com');
+        cy.getByTestId('login-password-input').type('test26', { log: false });
+        cy.getByTestId('login-submit-button').click();
+        cy.url({ timeout: 20000 }).should('include', `id=${appUrl.searchParams.get('id')}`);
+        cy.getByTestId('calc-final-stage-save-button', { timeout: 20000 }).should('be.visible');
+      });
+    });
+  });
 
+  it('reports a missing calculation and falls back to the start menu', () => {
+    cy.visit('/app/calc2?id=does-not-exist&stage=tableStage');
+    cy.getByTestId('calc-open-error').should('be.visible');
+    cy.location('search').should('not.include', 'id=');
+  });
 });

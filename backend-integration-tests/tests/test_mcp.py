@@ -223,6 +223,28 @@ async def test_invalid_inputs_and_account_isolation(licensed_client, seed_authen
     assert hostile.status_code == 403
 
 
+async def test_app_url_opens_draft_in_web_app(licensed_client, seed_authenticated_client):
+    client = licensed_client
+    token = (await key(client))["key"]
+    draft = await call(client, token, "create_calculation")
+    url = urlparse(draft["app_url"])
+    query = parse_qs(url.query)
+    assert url.path == "/app/calc2"
+    assert query["id"] == [draft["saved_filename"].removesuffix(".json")]
+    assert query["stage"] == ["carSelectStage"]
+    # The web wizard loads `?id=` through the owner's calculation store.
+    stored = await client.get("/user/calculationstore", params={"filename": query["id"][0] + ".json"})
+    assert stored.status_code == 200 and stored.json()["calculationId"] == draft["calculation_id"]
+    assert (await seed_authenticated_client.get("/user/calculationstore", params={"filename": query["id"][0] + ".json"})).status_code != 200
+    updated = await call(client, token, "update_calculation", {
+        "calculation_id": draft["calculation_id"], "expected_revision": draft["revision"],
+        "changes": {"car": {"carClass": "B", "bodyType": "sedan", "year": "2020"}},
+    })
+    assert parse_qs(urlparse(updated["app_url"]).query)["stage"] == ["tableStage"]
+    resumed = await call(client, token, "get_calculation", {"calculation_id": draft["calculation_id"]})
+    assert resumed["app_url"] == updated["app_url"]
+
+
 @pytest.mark.pdf
 @pytest.mark.usefixtures("pdfgen_mock_configured")
 async def test_web_saved_pdf_and_cross_client_revision_guard(licensed_client, seed_authenticated_client, http_client):

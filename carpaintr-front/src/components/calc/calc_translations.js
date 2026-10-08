@@ -31,6 +31,7 @@ registerTranslations("ua", {
   "Calculation loaded successfully!": "Розрахунок успішно завантажено!",
   "Failed to load calculation:": "Не вдалося завантажити розрахунок:",
   "Error loading calculation:": "Помилка при завантаженні розрахунку:",
+  "Calculation not found": "Розрахунок не знайдено",
   "Paint type": "Тип фарби",
   New: "Новий",
   Print: "Друк",

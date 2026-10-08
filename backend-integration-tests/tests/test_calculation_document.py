@@ -85,7 +85,7 @@ async def test_resolved_document_forwarded_without_repricing(
     })
     assert response.status_code == 200, response.text
     calls = [r for r in pdfgen_mock.fetch_requests() if r["path"] == f"/generate/{format_name}"
-             and r["body"]["metadata"]["order_number"] == identifier]
+             and (r["body"].get("metadata") or {}).get("order_number") == identifier]
     assert len(calls) == 1
     forwarded = calls[0]["body"]
     assert forwarded["calculation"] == output

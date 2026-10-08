@@ -4,6 +4,16 @@ Tracked, reproducible problems that are understood but not yet fixed. Each entry
 
 ---
 
+## 2026-10-08 — Two Calc2 Cypress specs look for a removed test ID
+
+**Where:** `carpaintr-front/cypress/e2e/collapse-tables.cy.js` (6 of 7 tests fail) and `carpaintr-front/cypress/e2e/full-calc-to-pdf.cy.js` (its single test fails).
+
+**Symptom:** `Expected to find element: [data-testid="calc-final-collapse-readonly-note"], but never found it.`
+
+**Cause:** Commit `67fc616b` ("Pipeline refactoring") removed that read-only note from `TableFinalStage.jsx`; the specs were not updated (`git log -S calc-final-collapse-readonly-note -- carpaintr-front/src`). The other Calc2 specs (`calculation-document`, `car-model-images`, `main-path`, `norm-rates`, `table-value-propagation`, `mcp`) pass. Fix by asserting whatever collapsed mode now shows instead of the note, after confirming the removal was intended.
+
+---
+
 ## 2026-08-07 — `autolab-pdfgen` (Playwright) can hang for minutes and crash its worker
 
 **Status:** Partially mitigated on 2026-10-06. Live MCP testing reproduced a stalled second Chromium launch at the dev container's 256Mi memory ceiling after the first PDF succeeded. The PDF container now uses one Gunicorn worker with one request thread (one Chromium instance, consistent Playwright thread ownership); dev limits are 500m CPU / 512Mi memory. The remaining idle lifecycle/cold-start investigation below is still open.

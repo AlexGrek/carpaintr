@@ -5,7 +5,6 @@ import VehicleSelect from "./VehicleSelect";
 import Trans from "../../localization/Trans";
 import { useLocale } from "../../localization/LocaleContext";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import BottomStickyLayout from "../layout/BottomStickyLayout";
 import StageSection from "../layout/StageSection";
 
@@ -38,8 +37,6 @@ const CarSelectStage = ({
   const [isFromLoading, setIsFromLoading] = useState(false);
   const storeFileName = stageData.car?.storeFileName ?? null;
   const [selectModelMode, setSelectModelMode] = useState(false);
-
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const mode = stageData["carSelectionMode"];
@@ -105,13 +102,6 @@ const CarSelectStage = ({
     stageData.car,
     year,
   ]);
-
-  useEffect(() => {
-    const idFromUrl = searchParams.get("id");
-    if (idFromUrl) {
-      //handleLoad(idFromUrl);
-    }
-  }, [searchParams]);
 
   const { str } = useLocale();
 
