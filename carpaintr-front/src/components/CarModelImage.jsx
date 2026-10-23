@@ -3,7 +3,7 @@ import { getCarModelImage } from "../utils/carModelImages";
 
 /**
  * Photo of a catalog car model; renders nothing when the model has no photo.
- * Photos are square with a white background, so object-cover crops evenly.
+ * Keep the complete square photo visible in thumbnails and larger previews.
  */
 const CarModelImage = ({ make, model, className = "", style, testId }) => {
   const src = getCarModelImage(make, model);
@@ -13,11 +13,13 @@ const CarModelImage = ({ make, model, className = "", style, testId }) => {
     <img
       src={src}
       alt={`${make} ${model}`}
+      width={256}
+      height={256}
       loading="lazy"
       decoding="async"
       draggable={false}
       onError={() => setFailedSrc(src)}
-      className={`bg-white object-cover ${className}`}
+      className={`bg-white object-contain ${className}`}
       style={style}
       data-testid={testId}
     />

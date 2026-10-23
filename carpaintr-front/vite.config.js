@@ -25,7 +25,7 @@ export default defineConfig({
         // fingerprinted URLs never change content, so serve them cache-first.
         runtimeCaching: [
           {
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/.+\.jpg$/.test(url.pathname),
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/.+\.webp$/.test(url.pathname),
             handler: "CacheFirst",
             options: {
               cacheName: "car-model-images",

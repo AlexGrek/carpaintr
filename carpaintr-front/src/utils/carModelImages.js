@@ -1,10 +1,10 @@
-// Car model photos from the repo-root assets/{make}/{model}_{color}.jpg, bundled by Vite.
+// 256×256 WebP copies of the original car model photos, bundled by Vite.
 // Only URLs are inlined here; the images themselves are fetched lazily when
-// rendered. Vite fingerprints each file (/assets/x5_black-<hash>.jpg), so the backend
+// rendered. Vite fingerprints each file (/assets/x5_black-<hash>.webp), so the backend
 // serves them as immutable and the service worker caches them cache-first.
-const modules = import.meta.glob("../../../assets/*/*.jpg", {
+const modules = import.meta.glob("../../../assets/*/*.webp", {
   eager: true,
-  query: "?url",
+  query: "?url&no-inline",
   import: "default",
 });
 
@@ -16,7 +16,7 @@ const normalize = (s) =>
 
 const IMAGES = Object.fromEntries(
   Object.entries(modules).map(([path, url]) => {
-    const [, make, model] = path.match(/assets\/([^/]+)\/([^/]+?)(?:_[a-z]+)?\.jpg$/);
+    const [, make, model] = path.match(/assets\/([^/]+)\/([^/]+?)(?:_[a-z]+)?\.webp$/);
     return [`${normalize(make)}/${normalize(model)}`, url];
   }),
 );

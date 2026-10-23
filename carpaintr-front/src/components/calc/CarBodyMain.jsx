@@ -726,7 +726,7 @@ const CarBodyMain = ({
                                     <CarModelImage
                                         make={stageData.car.make}
                                         model={stageData.car.model}
-                                        className="aspect-[4/3] w-full max-w-[320px] rounded-2xl shadow-lg ring-1 ring-slate-900/5"
+                                        className="aspect-square w-full max-w-[256px] rounded-2xl shadow-lg ring-1 ring-slate-900/5"
                                         testId="calc-body-car-model-image"
                                     />
                                 </div>

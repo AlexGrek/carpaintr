@@ -1,7 +1,10 @@
 // Car model photos: shown in the model picker, the selected-model row and on
 // the calc2 parts picker; models without a photo render no image at all.
-const expectLoaded = ($img) =>
-  expect($img[0].naturalWidth, "image decoded").to.be.greaterThan(0);
+const expectLoaded = ($img) => {
+  expect($img.attr("src"), "optimized image URL").to.match(/\.webp(?:\?|$)/);
+  expect($img[0].naturalWidth, "image width").to.equal(256);
+  expect($img[0].naturalHeight, "image height").to.equal(256);
+};
 
 describe("Car model images", () => {
   before(() => {
