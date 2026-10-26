@@ -1,5 +1,5 @@
 use crate::{
-    api::v1::calc::data_endpoints::T1, calc::car_class_to_body_type::{self, CLASS_TYPE_MAPPING_FILE}, errors::AppError, exlogging::{self, log_event}, middleware::AuthenticatedUser, state::AppState, transactionalfs::list_files_raw, utils::get_file_as_string_by_path // Import the new CompanyInfo struct
+    api::v1::calc::data_endpoints::T1, calc::car_class_to_body_type::{self, CLASS_TYPE_MAPPING_FILE}, errors::AppError, exlogging::{self, log_event}, middleware::AuthenticatedUser, state::AppState, transactionalfs::{list_files_raw, GitTransactionalFs, TransactionalFs}, utils::{get_file_as_string_by_path, safe_write, CATALOG, USERS} // Import the new CompanyInfo struct
 };
 use axum::{
     extract::{Multipart, State},
@@ -8,6 +8,25 @@ use axum::{
 };
 use tokio::fs;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
+
+/// If `path` (relative to the data dir) points inside a user's catalog (`users/<email>/catalog/...`),
+/// returns the catalog directory (the user's git repo root) and the path relative to it.
+/// Anything else (common data, calculations, attachments, ...) is not a git repo and returns `None`.
+fn split_user_catalog_path(data_dir: &PathBuf, path: &str) -> Option<(PathBuf, PathBuf)> {
+    let parts: Vec<&str> = path.split('/').collect();
+    match parts.as_slice() {
+        [users, user_dir, catalog, rest @ ..]
+            if *users == USERS
+                && *catalog == CATALOG
+                && !matches!(*user_dir, "" | "." | "..")
+                && !rest.is_empty() =>
+        {
+            let root = data_dir.join(USERS).join(user_dir).join(CATALOG);
+            Some((root, rest.iter().collect()))
+        }
+        _ => None,
+    }
+}
 
 pub async fn get_file_list(
     AuthenticatedUser(_user_email): AuthenticatedUser, // Get user email from the authenticated user
@@ -66,7 +85,16 @@ pub async fn delete_file(
 ) -> Result<impl IntoResponse, AppError> {
     exlogging::log_event(exlogging::LogLevel::Info, format!("Delete file admin request: {:?}", &path.to_string()), Some(user_email.as_str()));
     let user_path = &app_state.data_dir_path;
-    let end_path = user_path.join(path);
+    let end_path = user_path.join(&path);
+    if let Some((root, relative)) = split_user_catalog_path(user_path, &path) {
+        // Other user's catalog is a git repo: commit as the admin instead of leaving it dirty
+        let fs_manager = GitTransactionalFs::new(root, user_email.clone(), &app_state.cache).await?;
+        fs_manager
+            .delete_file(&relative, &format!("File {} deleted by admin {}", relative.display(), user_email))
+            .await?;
+        app_state.cache.invalidate_all().await;
+        return Ok("File deleted");
+    }
     app_state.cache.invalidate(&end_path).await;
     fs::remove_file(end_path).await?;
     Ok("File deleted")
@@ -96,8 +124,35 @@ pub async fn upload_file(
         .bytes()
         .await
         .map_err(|_| AppError::InternalServerError("Failed to read file data".to_string()))?;
+    if let Some((root, relative)) = split_user_catalog_path(user_path, &path) {
+        // Other user's catalog is a git repo: commit as the admin instead of leaving it dirty
+        safe_write(&root, &relative, data, &app_state.cache).await?;
+        let fs_manager = GitTransactionalFs::new(root, user_email.clone(), &app_state.cache).await?;
+        fs_manager
+            .commit_all_if_changed(&format!("File {} updated by admin {}", relative.display(), user_email))
+            .await?;
+        return Ok(Json("File uploaded and validated successfully"));
+    }
     let end_path = user_path.join(PathBuf::from(&path));
     app_state.cache.invalidate(&end_path).await;
     tokio::fs::write(end_path, data).await?;
     Ok(Json("File uploaded and validated successfully"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn splits_user_catalog_paths_only() {
+        let data = PathBuf::from("data");
+        let (root, rel) = split_user_catalog_path(&data, "users/a%40b/catalog/dir/t1.csv").unwrap();
+        assert_eq!(root, PathBuf::from("data/users/a%40b/catalog"));
+        assert_eq!(rel, PathBuf::from("dir/t1.csv"));
+
+        assert!(split_user_catalog_path(&data, "common/t1.csv").is_none());
+        assert!(split_user_catalog_path(&data, "users/a%40b/calculations/x.json").is_none());
+        assert!(split_user_catalog_path(&data, "users/a%40b/catalog").is_none());
+        assert!(split_user_catalog_path(&data, "users/../catalog/x.csv").is_none());
+    }
 }
