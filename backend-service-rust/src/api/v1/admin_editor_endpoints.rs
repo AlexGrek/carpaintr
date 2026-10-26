@@ -92,11 +92,11 @@ pub async fn delete_file(
         fs_manager
             .delete_file(&relative, &format!("File {} deleted by admin {}", relative.display(), user_email))
             .await?;
-        app_state.cache.invalidate_all().await;
-        return Ok("File deleted");
+    } else {
+        fs::remove_file(end_path).await?;
     }
-    app_state.cache.invalidate(&end_path).await;
-    fs::remove_file(end_path).await?;
+    // Parsed/derived entries may depend on the removed file, not just its own path
+    app_state.cache.invalidate_all().await;
     Ok("File deleted")
 }
 
@@ -131,11 +131,12 @@ pub async fn upload_file(
         fs_manager
             .commit_all_if_changed(&format!("File {} updated by admin {}", relative.display(), user_email))
             .await?;
-        return Ok(Json("File uploaded and validated successfully"));
+    } else {
+        let end_path = user_path.join(PathBuf::from(&path));
+        tokio::fs::write(end_path, data).await?;
     }
-    let end_path = user_path.join(PathBuf::from(&path));
-    app_state.cache.invalidate(&end_path).await;
-    tokio::fs::write(end_path, data).await?;
+    // Parsed/derived entries may depend on the uploaded file, not just its own path
+    app_state.cache.invalidate_all().await;
     Ok(Json("File uploaded and validated successfully"))
 }
 
