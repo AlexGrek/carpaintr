@@ -86,8 +86,14 @@ const ColumnMenu = ({
     });
   };
 
+  // Everything ticked is "no filter": storing it would keep the column
+  // flagged as filtered (and block adding rows) while hiding nothing.
   const apply = () => {
-    onApplyFilter(pending);
+    const everythingChecked =
+      pending != null &&
+      uniqueValues.every((v) => pending.has(v)) &&
+      (!hasBlanks || pending.has(""));
+    onApplyFilter(everythingChecked ? null : pending);
     onClose();
   };
 

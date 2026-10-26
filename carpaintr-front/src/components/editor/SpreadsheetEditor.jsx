@@ -60,6 +60,11 @@ import {
   estimateColumnWidth,
   computeFillRect,
   parseAddress,
+  selectionStats,
+  clampSelection,
+  columnAfterInsert,
+  columnAfterDelete,
+  remapColumnKeys,
 } from "./spreadsheet/sheetOps";
 import "./SpreadsheetEditor.css";
 
@@ -130,6 +135,7 @@ registerTranslations("ua", {
     "У вас є незбережені зміни. Зберегти їх перед закриттям?",
   Min: "Мін",
   Max: "Макс",
+  "Row is hidden by the current filter": "Рядок приховано поточним фільтром",
 });
 
 const ROW_H = 28;
@@ -148,6 +154,17 @@ const ARROW_DELTA = {
   ArrowDown: [1, 0],
   ArrowLeft: [0, -1],
   ArrowRight: [0, 1],
+};
+
+// Tracks a mouse drag on the window until release; `onEnd` runs on mouseup.
+const trackDrag = (onMove, onEnd) => {
+  const onUp = () => {
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+    onEnd?.();
+  };
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
 };
 
 const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
@@ -383,34 +400,72 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
   }, [open]);
 
   // ---- History ----
-  const pushHistory = useCallback(() => {
-    pastRef.current.push({ headers, rows, colWidths });
-    if (pastRef.current.length > MAX_HISTORY) pastRef.current.shift();
-    futureRef.current = [];
-    forceHistory((n) => n + 1);
-  }, [headers, rows, colWidths]);
+  // Snapshots always hold the grid content. Column insert/delete also stash
+  // the column-keyed view state (filters, sort, freeze) so undoing them puts
+  // those back in step with the columns; other edits leave that state alone.
+  const takeSnapshot = useCallback(
+    (withColState) => ({
+      headers,
+      rows,
+      colWidths,
+      ...(withColState
+        ? { colState: { filters, valueFilters, sort, frozenCols } }
+        : {}),
+    }),
+    [headers, rows, colWidths, filters, valueFilters, sort, frozenCols],
+  );
+
+  const applySnapshot = useCallback((snap) => {
+    setHeaders(snap.headers);
+    setRows(snap.rows);
+    setColWidths(snap.colWidths);
+    if (snap.colState) {
+      setFilters(snap.colState.filters);
+      setValueFilters(snap.colState.valueFilters);
+      setSort(snap.colState.sort);
+      setFrozenCols(snap.colState.frozenCols);
+    }
+    setEditing(null);
+  }, []);
+
+  const pushHistory = useCallback(
+    (withColState = false) => {
+      pastRef.current.push(takeSnapshot(withColState));
+      if (pastRef.current.length > MAX_HISTORY) pastRef.current.shift();
+      futureRef.current = [];
+      forceHistory((n) => n + 1);
+    },
+    [takeSnapshot],
+  );
 
   const undo = useCallback(() => {
     if (!pastRef.current.length) return;
     const snap = pastRef.current.pop();
-    futureRef.current.unshift({ headers, rows, colWidths });
-    setHeaders(snap.headers);
-    setRows(snap.rows);
-    setColWidths(snap.colWidths);
-    setEditing(null);
+    futureRef.current.unshift(takeSnapshot(!!snap.colState));
+    applySnapshot(snap);
     forceHistory((n) => n + 1);
-  }, [headers, rows, colWidths]);
+  }, [takeSnapshot, applySnapshot]);
 
   const redo = useCallback(() => {
     if (!futureRef.current.length) return;
     const snap = futureRef.current.shift();
-    pastRef.current.push({ headers, rows, colWidths });
-    setHeaders(snap.headers);
-    setRows(snap.rows);
-    setColWidths(snap.colWidths);
-    setEditing(null);
+    pastRef.current.push(takeSnapshot(!!snap.colState));
+    applySnapshot(snap);
     forceHistory((n) => n + 1);
-  }, [headers, rows, colWidths]);
+  }, [takeSnapshot, applySnapshot]);
+
+  // A copy/cut marquee and a pending cut only make sense for the data they
+  // were taken from: any change to the rows, columns, filters or sort ends
+  // them (Excel cancels the marquee on edit too).
+  useEffect(() => {
+    cutSourceRef.current = null;
+    setCopied(null);
+  }, [viewOrder, headers]);
+
+  // Rows/columns can vanish under the selection (delete, filter, undo).
+  useEffect(() => {
+    setSelection((prev) => clampSelection(prev, rowCount, colCount));
+  }, [rowCount, colCount]);
 
   // ---- Selection helpers ----
   const selRect = useMemo(() => {
@@ -537,6 +592,9 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
 
   useEffect(() => {
     if (editing && editInputRef.current) {
+      // The formula bar starts an edit too and keeps the caret.
+      if (document.activeElement?.dataset?.testid === "sheet-formulabar-input")
+        return;
       const el = editInputRef.current;
       el.focus();
       const len = el.value.length;
@@ -582,9 +640,9 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     [],
   );
 
-  const doCopy = useCallback(
+  // Puts the selection on the clipboard; returns the text that was written.
+  const writeSelectionToClipboard = useCallback(
     (e) => {
-      if (isEditingActive()) return;
       const { r1, r2, c1, c2 } = selRect;
       const text = buildClipboardText(rows, viewOrder, r1, r2, c1, c2);
       if (e?.clipboardData) {
@@ -593,33 +651,37 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       } else if (navigator.clipboard) {
         navigator.clipboard.writeText(text).catch(() => {});
       }
+      return text;
+    },
+    [selRect, rows, viewOrder],
+  );
+
+  const doCopy = useCallback(
+    (e) => {
+      if (isEditingActive()) return;
+      const { r1, r2, c1, c2 } = selRect;
+      writeSelectionToClipboard(e);
       cutSourceRef.current = null;
       setCopied({ r1, r2, c1, c2, cut: false });
     },
-    [selRect, rows, viewOrder, isEditingActive],
+    [selRect, isEditingActive, writeSelectionToClipboard],
   );
 
   const doCut = useCallback(
     (e) => {
       if (isEditingActive()) return;
       const { r1, r2, c1, c2 } = selRect;
-      const text = buildClipboardText(rows, viewOrder, r1, r2, c1, c2);
-      if (e?.clipboardData) {
-        e.clipboardData.setData("text/plain", text);
-        e.preventDefault();
-      } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).catch(() => {});
-      }
+      const text = writeSelectionToClipboard(e);
       const baseRows = [];
       for (let vr = r1; vr <= r2; vr++) baseRows.push(viewOrder[vr]);
-      cutSourceRef.current = { baseRows, c1, c2 };
+      cutSourceRef.current = { baseRows, c1, c2, text };
       setCopied({ r1, r2, c1, c2, cut: true });
     },
-    [selRect, rows, viewOrder, isEditingActive],
+    [selRect, viewOrder, isEditingActive, writeSelectionToClipboard],
   );
 
   const applyPaste = useCallback(
-    (matrix) => {
+    (matrix, sourceText) => {
       if (!matrix.length) return;
       const { r1, c1 } = selRect;
       const pRows = matrix.length;
@@ -666,7 +728,14 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         setColWidths(workingWidths);
       }
 
-      const cutInfo = cutSourceRef.current;
+      // Only finish a cut when the clipboard still holds what was cut;
+      // text copied elsewhere in the meantime must not wipe the source.
+      const normalize = (t) => String(t).replace(/\r\n?/g, "\n").replace(/\n$/, "");
+      const cutInfo =
+        cutSourceRef.current &&
+        normalize(cutSourceRef.current.text) === normalize(sourceText ?? "")
+          ? cutSourceRef.current
+          : null;
       const pastedKeys = new Set();
 
       setRows((prev) => {
@@ -733,11 +802,11 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       if (e?.clipboardData) {
         const text = e.clipboardData.getData("text/plain");
         e.preventDefault();
-        applyPaste(parseClipboard(text));
+        applyPaste(parseClipboard(text), text);
       } else if (navigator.clipboard) {
         navigator.clipboard
           .readText()
-          .then((t) => applyPaste(parseClipboard(t)))
+          .then((t) => applyPaste(parseClipboard(t), t))
           .catch(() =>
             toaster.push(
               <Message type="error" showIcon closable>
@@ -784,8 +853,13 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
 
   const insertColumns = useCallback(
     (at, count = 1) => {
-      pushHistory();
+      pushHistory(true);
       const pos = clamp(at, 0, colCount);
+      const mapCol = (col) => columnAfterInsert(col, pos, count);
+      setFilters((prev) => remapColumnKeys(prev, mapCol));
+      setValueFilters((prev) => remapColumnKeys(prev, mapCol));
+      setSort((prev) => (prev ? { ...prev, col: mapCol(prev.col) } : prev));
+      setFrozenCols((f) => (pos < f ? f + count : f));
       setHeaders((prev) => {
         const next = prev.slice();
         for (let i = 0; i < count; i++)
@@ -811,8 +885,17 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
   const deleteColumns = useCallback(() => {
     const { c1, c2 } = selRect;
     if (colCount - (c2 - c1 + 1) < 1) return;
-    pushHistory();
+    pushHistory(true);
     const keep = (arr) => arr.filter((_, i) => i < c1 || i > c2);
+    const mapCol = (col) => columnAfterDelete(col, c1, c2);
+    setFilters((prev) => remapColumnKeys(prev, mapCol));
+    setValueFilters((prev) => remapColumnKeys(prev, mapCol));
+    // A sort on a deleted column goes away with it.
+    setSort((prev) => {
+      if (!prev) return prev;
+      const col = mapCol(prev.col);
+      return col == null ? null : { ...prev, col };
+    });
     setHeaders((prev) => keep(prev));
     setColWidths((prev) => keep(prev));
     setRows((prev) => prev.map((r) => keep(r)));
@@ -821,7 +904,8 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       focus: { r: selection.focus.r, c: Math.min(selection.focus.c, c1) },
       active: { r: selection.active.r, c: Math.min(selection.active.c, c1) },
     });
-    setFrozenCols((f) => Math.max(0, f - (c2 - c1 + 1)));
+    // Only the deleted columns that were actually frozen shrink the freeze.
+    setFrozenCols((f) => Math.max(0, f - Math.max(0, Math.min(c2 + 1, f) - c1)));
   }, [selRect, colCount, pushHistory, selection]);
 
   const insertRowsAtSelection = useCallback(
@@ -892,13 +976,14 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     (c) => {
       const values = [headers[c], ...rows.map((r) => r[c])];
       const w = estimateColumnWidth(values, { min: MIN_COL_W, max: MAX_COL_W });
+      pushHistory();
       setColWidths((prev) => {
         const next = prev.slice();
         next[c] = w;
         return next;
       });
     },
-    [headers, rows],
+    [headers, rows, pushHistory],
   );
 
   // ---- Fill (handle drag, Ctrl+D, Ctrl+R) ----
@@ -1121,7 +1206,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     const m = findMatchList[findActiveIndex % findMatchList.length];
     const base = viewOrder[m.vr];
     const current = rows[base]?.[m.c] ?? "";
-    const next = replaceInCell(current, findQuery, findReplacement, {
+    const next = replaceInCell(current, deferredFindQuery, findReplacement, {
       matchCase: findMatchCase,
       wholeCell: findWholeCell,
     });
@@ -1131,7 +1216,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     findActiveIndex,
     viewOrder,
     rows,
-    findQuery,
+    deferredFindQuery,
     findReplacement,
     findMatchCase,
     findWholeCell,
@@ -1146,7 +1231,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       return {
         r: base,
         c: m.c,
-        value: replaceInCell(current, findQuery, findReplacement, {
+        value: replaceInCell(current, deferredFindQuery, findReplacement, {
           matchCase: findMatchCase,
           wholeCell: findWholeCell,
         }),
@@ -1163,7 +1248,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     findMatchList,
     viewOrder,
     rows,
-    findQuery,
+    deferredFindQuery,
     findReplacement,
     findMatchCase,
     findWholeCell,
@@ -1253,12 +1338,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         const cell = pointerToCell(ev.clientX, ev.clientY);
         setSelection((prev) => ({ anchor: prev.anchor, focus: cell, active: cell }));
       };
-      const onUp = () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      trackDrag(onMove);
     },
     [editing, commitEdit, pointerToCell, selRect],
   );
@@ -1281,12 +1361,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
           active: { r: 0, c: cell.c },
         }));
       };
-      const onUp = () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      trackDrag(onMove);
     },
     [editing, commitEdit, rowCount, pointerToCell],
   );
@@ -1309,12 +1384,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
           active: { r: cell.r, c: 0 },
         }));
       };
-      const onUp = () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      trackDrag(onMove);
     },
     [editing, commitEdit, colCount, pointerToCell],
   );
@@ -1329,14 +1399,10 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         last = pointerToCell(ev.clientX, ev.clientY);
         setFillPreview(computeFillRect(selRect, last));
       };
-      const onUp = () => {
+      trackDrag(onMove, () => {
         if (last) applyFill(last);
         setFillPreview(null);
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      });
     },
     [pointerToCell, applyFill, selRect],
   );
@@ -1369,11 +1435,6 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         setFindShowReplace(true);
         return;
       }
-      if (meta && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        handleSaveRef.current();
-        return;
-      }
       if (meta && e.shiftKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
         setShowFilters((s) => !s);
@@ -1393,14 +1454,14 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         });
         return;
       }
-      if (meta && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        undo();
-        return;
-      }
       if (meta && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))) {
         e.preventDefault();
         redo();
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        undo();
         return;
       }
       if (meta && e.key.toLowerCase() === "d") {
@@ -1552,7 +1613,12 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       const startW = colWidths[col] || DEFAULT_COL_W;
       resizeRef.current = col;
       forceHistory((n) => n + 1);
+      let recorded = false;
       const onMove = (ev) => {
+        if (!recorded) {
+          recorded = true;
+          pushHistory();
+        }
         const w = Math.max(MIN_COL_W, startW + ev.clientX - startX);
         setColWidths((prev) => {
           const next = prev.slice();
@@ -1560,16 +1626,12 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
           return next;
         });
       };
-      const onUp = () => {
+      trackDrag(onMove, () => {
         resizeRef.current = null;
         forceHistory((n) => n + 1);
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
+      });
     },
-    [colWidths],
+    [colWidths, pushHistory],
   );
 
   // ---- Context menu ----
@@ -1581,31 +1643,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
   // ---- Selection statistics ----
   const stats = useMemo(() => {
     const { r1, r2, c1, c2 } = selRect;
-    const total = (r2 - r1 + 1) * (c2 - c1 + 1);
-    if (total > STATS_LIMIT) return { total, count: null };
-    let count = 0;
-    let numCount = 0;
-    let sum = 0;
-    let min = null;
-    let max = null;
-    for (let vr = r1; vr <= r2; vr++) {
-      const row = rows[viewOrder[vr]];
-      if (!row) continue;
-      for (let c = c1; c <= c2; c++) {
-        const v = row[c];
-        if (v !== "" && v != null) {
-          count++;
-          if (isNumeric(v)) {
-            const num = parseFloat(v);
-            numCount++;
-            sum += num;
-            if (min === null || num < min) min = num;
-            if (max === null || num > max) max = num;
-          }
-        }
-      }
-    }
-    return { total, count, numCount, sum, min, max };
+    return selectionStats(rows, viewOrder, r1, r2, c1, c2, STATS_LIMIT);
   }, [selRect, rows, viewOrder]);
 
   // ---- Save ----
@@ -1637,25 +1675,47 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     onClose();
   }, [editing, editValue, viewOrder, colCount, headers, rows, onSave, onClose]);
 
-  // handleSave is referenced from the Ctrl+S handler above via a ref so the
-  // (long) onKeyDown dependency list doesn't need to change every render.
+  // Ctrl/Cmd+S saves from anywhere in the editor (grid, cell editor, formula
+  // bar, name box, find panel). Captured on the root because those inputs stop
+  // key propagation, and the browser would otherwise open "Save page as".
+  // Goes through a ref so the handler doesn't change on every render.
   const handleSaveRef = useRef(handleSave);
   useEffect(() => {
     handleSaveRef.current = handleSave;
   }, [handleSave]);
 
+  const onRootKeyDownCapture = useCallback((e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSaveRef.current();
+    }
+  }, []);
+
   // ---- Render helpers ----
+  // Frozen columns sit in a `position: sticky` wrapper that is a flex sibling
+  // of the row-number gutter, so they stay put on horizontal scroll yet occupy
+  // the same row band. Their cells are positioned relative to the wrapper.
+  const frozenWrapperStyle = (height) => ({
+    position: "sticky",
+    left: gutterW,
+    flex: "none",
+    width: frozenWidth,
+    height,
+  });
+
   const renderHeaderCells = () => {
     const cells = [];
+    const frozenCells = [];
     for (let c = 0; c < colCount; c++) {
       if (!isColVisible(c)) continue;
-      const left = gutterW + colOffsets[c];
+      const frozen = c < frozenColsClamped;
+      const left = frozen ? colOffsets[c] : gutterW + colOffsets[c];
       const width = colWidths[c] || DEFAULT_COL_W;
       const isColSel = c >= selRect.c1 && c <= selRect.c2;
       const dir = sort && sort.col === c ? sort.dir : null;
       const isFilteredCol = !!valueFilters[c] || !!filters[c];
-      const frozen = c < frozenColsClamped;
-      cells.push(
+      (frozen ? frozenCells : cells).push(
         <div
           key={c}
           ref={(el) => {
@@ -1664,7 +1724,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
           className={`sheet-head-cell${isColSel ? " is-col-selected" : ""}${frozen ? " sheet-frozen" : ""}${
             frozen && c === frozenColsClamped - 1 ? " is-frozen-edge" : ""
           }`}
-          style={{ position: frozen ? "sticky" : "absolute", left, width, height: HEADER_H }}
+          style={{ position: "absolute", left, width, height: HEADER_H }}
           data-testid={`sheet-head-${c}`}
           onMouseDown={(e) => onHeaderMouseDown(e, c)}
         >
@@ -1727,24 +1787,25 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         </div>,
       );
     }
-    return cells;
+    return { cells, frozenCells };
   };
 
   const renderFilterCells = () => {
-    if (!showFilters) return null;
+    if (!showFilters) return { cells: [], frozenCells: [] };
     const cells = [];
+    const frozenCells = [];
     for (let c = 0; c < colCount; c++) {
       if (!isColVisible(c)) continue;
-      const left = gutterW + colOffsets[c];
-      const width = colWidths[c] || DEFAULT_COL_W;
       const frozen = c < frozenColsClamped;
-      cells.push(
+      const left = frozen ? colOffsets[c] : gutterW + colOffsets[c];
+      const width = colWidths[c] || DEFAULT_COL_W;
+      (frozen ? frozenCells : cells).push(
         <div
           key={c}
           className={`sheet-filter-cell${frozen ? " sheet-frozen" : ""}${
             frozen && c === frozenColsClamped - 1 ? " is-frozen-edge" : ""
           }`}
-          style={{ position: frozen ? "sticky" : "absolute", left, width, top: HEADER_H, height: FILTER_H }}
+          style={{ position: "absolute", left, width, top: HEADER_H, height: FILTER_H }}
         >
           <input
             className="sheet-filter-input"
@@ -1752,11 +1813,18 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
             value={filters[c] || ""}
             data-testid={`sheet-filter-${c}`}
             onChange={(e) => setFilters((prev) => ({ ...prev, [c]: e.target.value }))}
+            // The grid owns key/clipboard/context-menu handling on its scroll
+            // container; typing or pasting here must not leak into the cells.
+            onKeyDown={(e) => e.stopPropagation()}
+            onCopy={(e) => e.stopPropagation()}
+            onCut={(e) => e.stopPropagation()}
+            onPaste={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.stopPropagation()}
           />
         </div>,
       );
     }
-    return cells;
+    return { cells, frozenCells };
   };
 
   const renderRows = () => {
@@ -1766,20 +1834,21 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       const row = rows[base] || [];
       const rowSel = vr >= selRect.r1 && vr <= selRect.r2;
       const cells = [];
+      const frozenCells = [];
       for (let c = 0; c < colCount; c++) {
         if (!isColVisible(c)) continue;
-        const left = gutterW + colOffsets[c];
+        const frozen = c < frozenColsClamped;
+        const left = frozen ? colOffsets[c] : gutterW + colOffsets[c];
         const width = colWidths[c] || DEFAULT_COL_W;
         const val = row[c] == null ? "" : row[c];
         const isEditing = editing && editing.r === vr && editing.c === c;
-        const frozen = c < frozenColsClamped;
-        cells.push(
+        (frozen ? frozenCells : cells).push(
           <div
             key={c}
             className={`sheet-cell${vr % 2 ? " is-alt" : ""}${frozen ? " sheet-frozen" : ""}${
               frozen && c === frozenColsClamped - 1 ? " is-frozen-edge" : ""
             }`}
-            style={{ position: frozen ? "sticky" : "absolute", top: 0, left, width, height: ROW_H }}
+            style={{ position: "absolute", top: 0, left, width, height: ROW_H }}
             data-testid={`sheet-cell-${vr}-${c}`}
             onMouseDown={(e) => onCellMouseDown(e, vr, c)}
             onDoubleClick={() => startEdit(vr, c, null, "edit")}
@@ -1800,6 +1869,9 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
           >
             {base + 1}
           </div>
+          {frozenColsClamped > 0 && (
+            <div style={frozenWrapperStyle(ROW_H)}>{frozenCells}</div>
+          )}
           {cells}
         </div>,
       );
@@ -1807,56 +1879,69 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     return els;
   };
 
+  const headerCellEls = renderHeaderCells();
+  const filterCellEls = renderFilterCells();
+
+  // Overlay boxes in canvas coordinates. A rectangle crossing the freeze line
+  // is split in two: the frozen part rides along with the horizontal scroll,
+  // the scrolling part is clipped where it slides under the frozen columns.
+  const overlayLeft = frozenColsClamped > 0 ? scroll.left : 0;
+  const overlayBoxes = useCallback(
+    (r1, r2, c1, c2) => {
+      const top = r1 * ROW_H;
+      const height = (r2 - r1 + 1) * ROW_H;
+      const fc = frozenColsClamped;
+      const boxes = [];
+      if (fc > 0 && c1 < fc) {
+        const last = Math.min(c2, fc - 1);
+        boxes.push({
+          left: gutterW + colOffsets[c1] + overlayLeft,
+          width: colOffsets[last + 1] - colOffsets[c1],
+          top,
+          height,
+        });
+      }
+      if (c2 >= fc) {
+        let l = colOffsets[Math.max(c1, fc)];
+        if (fc > 0) l = Math.max(l, overlayLeft + frozenWidth);
+        const r = colOffsets[c2 + 1];
+        if (r > l) boxes.push({ left: gutterW + l, width: r - l, top, height });
+      }
+      return boxes;
+    },
+    [frozenColsClamped, frozenWidth, gutterW, colOffsets, overlayLeft],
+  );
+
   const overlays = useMemo(() => {
     if (!rowCount || !colCount) return null;
     const { r1, r2, c1, c2 } = selRect;
-    const selStyle = {
-      left: gutterW + colOffsets[c1],
-      top: r1 * ROW_H,
-      width: colOffsets[c2 + 1] - colOffsets[c1],
-      height: (r2 - r1 + 1) * ROW_H,
-    };
     const { r, c } = selection.active;
-    const activeStyle = {
-      left: gutterW + colOffsets[c],
-      top: r * ROW_H,
-      width: colWidths[c] || DEFAULT_COL_W,
-      height: ROW_H,
-    };
+    const handleBoxes = overlayBoxes(r2, r2, c2, c2);
+    const handleBox = handleBoxes.length ? handleBoxes[handleBoxes.length - 1] : null;
     return (
       <>
-        <div className="sheet-selection" style={selStyle} />
-        <div className="sheet-active" style={activeStyle} />
-        {!editing && (
+        {overlayBoxes(r1, r2, c1, c2).map((b, i) => (
+          <div key={`sel${i}`} className="sheet-selection" style={b} />
+        ))}
+        {overlayBoxes(r, r, c, c).map((b, i) => (
+          <div key={`act${i}`} className="sheet-active" style={b} />
+        ))}
+        {!editing && handleBox && (
           <div
             className="sheet-fill-handle"
             data-testid="sheet-fill-handle"
-            style={{ left: gutterW + colOffsets[c2 + 1] - 4, top: (r2 + 1) * ROW_H - 4 }}
+            style={{ left: handleBox.left + handleBox.width - 4, top: (r2 + 1) * ROW_H - 4 }}
             onMouseDown={onFillMouseDown}
           />
         )}
-        {copied && (
-          <div
-            className={`sheet-copied${copied.cut ? " is-cut" : ""}`}
-            style={{
-              left: gutterW + colOffsets[copied.c1],
-              top: copied.r1 * ROW_H,
-              width: colOffsets[copied.c2 + 1] - colOffsets[copied.c1],
-              height: (copied.r2 - copied.r1 + 1) * ROW_H,
-            }}
-          />
-        )}
-        {fillPreview && (
-          <div
-            className="sheet-fill-preview"
-            style={{
-              left: gutterW + colOffsets[fillPreview.c1],
-              top: fillPreview.r1 * ROW_H,
-              width: colOffsets[fillPreview.c2 + 1] - colOffsets[fillPreview.c1],
-              height: (fillPreview.r2 - fillPreview.r1 + 1) * ROW_H,
-            }}
-          />
-        )}
+        {copied &&
+          overlayBoxes(copied.r1, copied.r2, copied.c1, copied.c2).map((b, i) => (
+            <div key={`cp${i}`} className={`sheet-copied${copied.cut ? " is-cut" : ""}`} style={b} />
+          ))}
+        {fillPreview &&
+          overlayBoxes(fillPreview.r1, fillPreview.r2, fillPreview.c1, fillPreview.c2).map((b, i) => (
+            <div key={`fp${i}`} className="sheet-fill-preview" style={b} />
+          ))}
       </>
     );
   }, [
@@ -1864,9 +1949,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     colCount,
     selRect,
     selection.active,
-    colOffsets,
-    colWidths,
-    gutterW,
+    overlayBoxes,
     editing,
     copied,
     fillPreview,
@@ -1876,7 +1959,9 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
   const editOverlay = useMemo(() => {
     if (!editing) return null;
     const frozen = editing.c < frozenColsClamped;
-    const left = gutterW + colOffsets[editing.c];
+    // The editor lives outside the frozen wrapper, so a frozen cell's box
+    // follows the horizontal scroll by hand.
+    const left = gutterW + colOffsets[editing.c] + (frozen ? overlayLeft : 0);
     const top = headerTotal + editing.r * ROW_H;
     const width = Math.max(colWidths[editing.c] || DEFAULT_COL_W, 80);
     return (
@@ -1884,7 +1969,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
         ref={editInputRef}
         className="sheet-cell-input"
         style={{
-          position: frozen ? "sticky" : "absolute",
+          position: "absolute",
           left,
           top,
           width,
@@ -1909,6 +1994,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
     colWidths,
     headerTotal,
     frozenColsClamped,
+    overlayLeft,
     commitEdit,
     editOverlayKeyDown,
   ]);
@@ -1941,7 +2027,7 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
       </Drawer.Header>
       <Drawer.Body style={{ padding: 0, height: "100%", overflow: "hidden" }}>
         {open && (
-          <div className="sheet-editor-root">
+          <div className="sheet-editor-root" onKeyDownCapture={onRootKeyDownCapture}>
             <div className="sheet-editor-toolbar">
               <IconButton
                 size="sm"
@@ -2172,12 +2258,27 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
                   );
                   return;
                 }
-                const r1 = clamp(addr.r1, 0, Math.max(0, rowCount - 1));
-                const r2 = clamp(addr.r2, 0, Math.max(0, rowCount - 1));
+                // Labels show original row numbers; translate to view rows.
+                const lastBase = Math.max(0, rows.length - 1);
+                const r1 = viewOrder.indexOf(Math.min(addr.r1, lastBase));
+                const r2 = viewOrder.indexOf(Math.min(addr.r2, lastBase));
+                if (r1 < 0 || r2 < 0) {
+                  toaster.push(
+                    <Message type="warning" showIcon closable>
+                      {str("Row is hidden by the current filter")}
+                    </Message>,
+                    { placement: "topCenter" },
+                  );
+                  return;
+                }
                 const c1 = clamp(addr.c1, 0, Math.max(0, colCount - 1));
                 const c2 = clamp(addr.c2, 0, Math.max(0, colCount - 1));
-                setSelection({ anchor: { r: r1, c: c1 }, focus: { r: r2, c: c2 }, active: { r: r1, c: c1 } });
-                scrollCellIntoView(r1, c1);
+                setSelection({
+                  anchor: { r: r1, c: c1 },
+                  focus: { r: r2, c: c2 },
+                  active: { r: Math.min(r1, r2), c: c1 },
+                });
+                scrollCellIntoView(Math.min(r1, r2), c1);
                 scrollRef.current?.focus();
               }}
               onFocusContent={() => {
@@ -2216,14 +2317,20 @@ const SpreadsheetEditor = ({ open, onClose, onSave, fileName, csvData }) => {
                         })
                       }
                     />
-                    {renderHeaderCells()}
+                    {frozenColsClamped > 0 && (
+                      <div style={{ ...frozenWrapperStyle(headerTotal), zIndex: 5 }}>
+                        {headerCellEls.frozenCells}
+                        {filterCellEls.frozenCells}
+                      </div>
+                    )}
+                    {headerCellEls.cells}
                     {showFilters && (
                       <div
                         className="sheet-filter-corner"
                         style={{ width: gutterW, top: HEADER_H, height: FILTER_H }}
                       />
                     )}
-                    {renderFilterCells()}
+                    {filterCellEls.cells}
                   </div>
                   <div
                     className="sheet-body"

@@ -165,11 +165,15 @@
   position: sticky;
   top: 0;
   z-index: 4;
+  /* gutter corner + frozen-column wrapper share one row band */
+  display: flex;
+  align-items: flex-start;
   background: var(--sheet-header-bg);
   border-bottom: 1px solid var(--sheet-border);
 }
 
 .sheet-corner {
+  flex: none;
   position: sticky;
   left: 0;
   top: 0;
@@ -302,11 +306,17 @@
   background: var(--sheet-accent);
 }
 
-/* ---- Frozen columns ---- */
+/* ---- Frozen columns ----
+   Cells sit in a sticky wrapper (see frozenWrapperStyle in the component);
+   the wrapper outranks the scrolling cells, the gutter outranks the wrapper. */
 .sheet-head-cell.sheet-frozen,
 .sheet-filter-cell.sheet-frozen,
 .sheet-cell.sheet-frozen {
   z-index: 5;
+}
+
+.sheet-filter-cell.sheet-frozen {
+  background: #fff;
 }
 
 .sheet-head-cell.sheet-frozen {
@@ -373,9 +383,13 @@
   position: absolute;
   left: 0;
   box-sizing: border-box;
+  /* gutter + frozen-column wrapper share one row band */
+  display: flex;
+  align-items: flex-start;
 }
 
 .sheet-rownum {
+  flex: none;
   position: sticky;
   left: 0;
   z-index: 10; /* above selection overlays within the body stacking context */

@@ -18,6 +18,10 @@ import {
   advanceActiveInBlock,
   estimateColumnWidth,
   computeFillRect,
+  clampSelection,
+  columnAfterInsert,
+  columnAfterDelete,
+  remapColumnKeys,
 } from "./sheetOps.js";
 
 describe("colLabel / colIndexFromLabel", () => {
@@ -380,5 +384,61 @@ describe("isNumeric", () => {
     assert.equal(isNumeric(""), false);
     assert.equal(isNumeric(null), false);
     assert.equal(isNumeric("abc"), false);
+  });
+});
+
+describe("regressions: review fixes", () => {
+  it("parseCsv widens the sheet for rows wider than the header", () => {
+    const { headers, rows } = parseCsv("a,b\n1,2,3\n4,5\n");
+    assert.deepEqual(headers, ["a", "b", "C"]);
+    assert.deepEqual(rows, [
+      ["1", "2", "3"],
+      ["4", "5", ""],
+    ]);
+    assert.equal(serializeCsv(headers, rows), "a,b,C\r\n1,2,3\r\n4,5,");
+  });
+
+  it("fillSeries treats a hyphen as a separator, not a minus sign", () => {
+    assert.deepEqual(fillSeries(["T2-05"], 3), ["T2-05", "T2-06", "T2-07"]);
+    assert.deepEqual(fillSeries(["2024-01"], 3), ["2024-01", "2024-02", "2024-03"]);
+    assert.deepEqual(fillSeries(["A-1", "A-3"], 4), ["A-1", "A-3", "A-5", "A-7"]);
+  });
+
+  it("replaceInCell inserts the replacement literally", () => {
+    assert.equal(replaceInCell("price", "price", "$$5"), "$$5");
+    assert.equal(replaceInCell("ab", "a", "$&$&"), "$&$&b");
+  });
+
+  it("clampSelection pulls the selection back inside the sheet", () => {
+    const sel = {
+      anchor: { r: 9, c: 4 },
+      focus: { r: 12, c: 6 },
+      active: { r: 9, c: 4 },
+    };
+    assert.deepEqual(clampSelection(sel, 3, 5), {
+      anchor: { r: 2, c: 4 },
+      focus: { r: 2, c: 4 },
+      active: { r: 2, c: 4 },
+    });
+    const ok = { anchor: { r: 0, c: 0 }, focus: { r: 1, c: 1 }, active: { r: 0, c: 0 } };
+    assert.equal(clampSelection(ok, 3, 3), ok);
+    assert.deepEqual(clampSelection(sel, 0, 0).active, { r: 0, c: 0 });
+  });
+
+  it("remaps column-keyed state across column insert and delete", () => {
+    assert.equal(columnAfterInsert(2, 2, 2), 4);
+    assert.equal(columnAfterInsert(1, 2, 2), 1);
+    assert.equal(columnAfterDelete(1, 2, 3), 1);
+    assert.equal(columnAfterDelete(2, 2, 3), null);
+    assert.equal(columnAfterDelete(5, 2, 3), 3);
+    const filters = { 0: "a", 2: "c", 3: "d" };
+    assert.deepEqual(remapColumnKeys(filters, (c) => columnAfterDelete(c, 0, 0)), {
+      1: "c",
+      2: "d",
+    });
+    assert.deepEqual(remapColumnKeys(filters, (c) => columnAfterDelete(c, 2, 2)), {
+      0: "a",
+      2: "d",
+    });
   });
 });

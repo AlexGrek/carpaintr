@@ -73,10 +73,13 @@ export const parseCsv = (csv) => {
   ) {
     matrix.pop();
   }
-  const headers = (matrix[0] || ["Column A"]).map((h, i) =>
-    h == null || h === "" ? colLabel(i) : String(h),
-  );
-  const width = headers.length;
+  // Rows can be wider than the header line; widen the sheet instead of
+  // silently dropping those cells on the next save.
+  const width = Math.max(1, ...matrix.map((r) => r.length));
+  const headers = Array.from({ length: width }, (_, i) => {
+    const h = matrix[0]?.[i];
+    return h == null || h === "" ? colLabel(i) : String(h);
+  });
   const rows = matrix.slice(1).map((r) => {
     const row = new Array(width);
     for (let i = 0; i < width; i++) row[i] = r[i] == null ? "" : String(r[i]);
@@ -121,7 +124,7 @@ export const parseClipboard = (text) => {
 // in the fill direction); returns an array of length `totalCount` starting
 // with `baseValues`. Caller is responsible for reversing when filling
 // backwards (up / left).
-const TRAILING_NUM_RE = /^(.*?)(-?\d+)$/;
+const TRAILING_NUM_RE = /^(.*?)(\d+)$/;
 
 export const fillSeries = (baseValues, totalCount) => {
   const n = baseValues.length;
@@ -163,7 +166,7 @@ export const fillSeries = (baseValues, totalCount) => {
         step = Math.round(sum / (nums.length - 1));
       }
       const lastMatch = matches[matches.length - 1];
-      const digits = lastMatch[2].replace("-", "").length;
+      const digits = lastMatch[2].length;
       let last = nums[nums.length - 1];
       for (let i = n; i < totalCount; i++) {
         last += step;
@@ -392,5 +395,42 @@ export const replaceInCell = (value, query, replacement, opts = {}) => {
     return cell === q ? replacement : raw;
   }
   const flags = matchCase ? "g" : "gi";
-  return raw.replace(new RegExp(escapeRegExp(query), flags), replacement);
+  return raw.replace(new RegExp(escapeRegExp(query), flags), () => replacement);
+};
+
+// Keep a selection ({ anchor, focus, active }, view coordinates) inside the
+// sheet after rows/columns disappear (delete, filter, undo of an insert).
+// Returns the same object when nothing needs to change.
+export const clampSelection = (sel, rowCount, colCount) => {
+  const maxR = Math.max(0, rowCount - 1);
+  const maxC = Math.max(0, colCount - 1);
+  const fix = (p) => ({ r: clamp(p.r, 0, maxR), c: clamp(p.c, 0, maxC) });
+  const anchor = fix(sel.anchor);
+  const focus = fix(sel.focus);
+  const active = fix(sel.active);
+  const same = (a, b) => a.r === b.r && a.c === b.c;
+  if (same(anchor, sel.anchor) && same(focus, sel.focus) && same(active, sel.active))
+    return sel;
+  return { anchor, focus, active };
+};
+
+// Column-index bookkeeping for state keyed by column (filters, sort...).
+// `null` means the column no longer exists.
+export const columnAfterInsert = (col, at, count) => (col >= at ? col + count : col);
+
+export const columnAfterDelete = (col, c1, c2) => {
+  if (col < c1) return col;
+  if (col <= c2) return null;
+  return col - (c2 - c1 + 1);
+};
+
+// Re-key an object of { [colIndex]: value } through `mapCol`, dropping
+// entries whose column was removed.
+export const remapColumnKeys = (obj, mapCol) => {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const nc = mapCol(Number(k));
+    if (nc != null) out[nc] = v;
+  }
+  return out;
 };

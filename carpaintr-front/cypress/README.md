@@ -28,6 +28,8 @@ This will:
 | `catalog-tabs.cy.js` | Catalog tab switching |
 | `collapse-tables.cy.js` | Final-stage collapsed/detailed table mode + print payload shape |
 | `full-calc-to-pdf.cy.js` | Full wizard (4+ parts) → HTML preview → PDF download via mock |
+| `spreadsheet-editor.cy.js` | CSV table editor: formula bar, fill, find & replace, AutoFilter, dedupe, exact save |
+| `spreadsheet-editor-regressions.cy.js` | CSV table editor regressions: frozen columns, filters vs column delete, cut safety, redo, formula-bar focus, name box in sorted view, Ctrl+S in cell editor, selection clamp |
 | `table-value-propagation.cy.js` | Uploads a per-user norm-hours table override, verifies the resulting calculation (collapsed view, by-category view, print payload) changes to match — proves table edits actually reach the final result, not just that the code path exists |
 
 Route list is centralized in `cypress/support/app-routes.js`.
