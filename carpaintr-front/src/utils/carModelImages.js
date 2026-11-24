@@ -14,12 +14,12 @@ const normalize = (s) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
-const IMAGES = Object.fromEntries(
-  Object.entries(modules).map(([path, url]) => {
-    const [, make, model] = path.match(/assets\/([^/]+)\/([^/]+?)(?:_[a-z]+)?\.webp$/);
-    return [`${normalize(make)}/${normalize(model)}`, url];
-  }),
-);
+const IMAGES = {};
+for (const [path, url] of Object.entries(modules)) {
+  const [, make, model, color] = path.match(/assets\/([^/]+)\/([^/]+?)_([a-z]+)\.webp$/);
+  const key = `${normalize(make)}/${normalize(model)}`;
+  (IMAGES[key] ??= {})[color] = url;
+}
 
 // Catalog keys whose photo is stored under a different model name
 const ALIASES = {
@@ -28,8 +28,9 @@ const ALIASES = {
 };
 
 /** URL of the bundled photo for a make/model, or null when there is none. */
-export const getCarModelImage = (make, model) => {
+export const getCarModelImage = (make, model, color = "black") => {
   if (!make || !model) return null;
   const key = `${normalize(make)}/${normalize(model)}`;
-  return IMAGES[key] ?? IMAGES[ALIASES[key]] ?? null;
+  const variants = IMAGES[key] ?? IMAGES[ALIASES[key]];
+  return variants?.[color] ?? variants?.black ?? variants?.blue ?? variants?.white ?? null;
 };

@@ -726,6 +726,7 @@ const CarBodyMain = ({
                                     <CarModelImage
                                         make={stageData.car.make}
                                         model={stageData.car.model}
+                                        paintColor={stageData.paint?.color}
                                         className="aspect-square w-full max-w-[256px] rounded-2xl shadow-lg ring-1 ring-slate-900/5"
                                         testId="calc-body-car-model-image"
                                     />
